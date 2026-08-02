@@ -1,0 +1,6 @@
+{
+  "name": "Speedcubing Progression Analyzer",
+  "description": "Upload csTimer session logs to analyze solve time progression, moving averages, daily variance, distribution density shifts, and consistency metrics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
