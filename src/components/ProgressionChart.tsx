@@ -9,7 +9,6 @@ import {
   Tooltip,
   Legend,
   ReferenceLine,
-  Brush,
 } from 'recharts';
 import {
   Filter,
@@ -62,6 +61,18 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [isRangePanelOpen, setIsRangePanelOpen] = useState<boolean>(true);
+
+  // Detect mobile viewport to optimize touch interactions & disable SVG Brush on touch screens
+  const [isMobileScreen, setIsMobileScreen] = useState<boolean>(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobileScreen(window.innerWidth < 640);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const unitInfo = getPeriodUnitInfo(groupingPeriod);
   const totalCount = solves.length;
@@ -242,25 +253,6 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
 
   const minY = yValues.length > 0 ? Math.max(0, Math.floor(Math.min(...yValues) - 2)) : 0;
   const maxY = yValues.length > 0 ? Math.ceil(Math.max(...yValues) + 3) : 50;
-
-  // Handle Recharts Brush onChange callback
-  const handleBrushChange = (brushState: any) => {
-    if (
-      brushState &&
-      brushState.startIndex !== undefined &&
-      brushState.endIndex !== undefined &&
-      chartData.length > 0
-    ) {
-      const sIdx = chartData[brushState.startIndex]?.index;
-      const eIdx = chartData[brushState.endIndex]?.index;
-      if (sIdx && eIdx && (sIdx !== startSolve || eIdx !== endSolve)) {
-        setStartSolve(sIdx);
-        setEndSolve(eIdx);
-        setRangeMode('solveIndex');
-        setPreset('custom');
-      }
-    }
-  };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || !payload.length) return null;
@@ -656,6 +648,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                       min={1}
                       max={totalCount}
                       value={startSolve}
+                      style={{ touchAction: 'pan-x' }}
                       onChange={(e) => {
                         const val = parseInt(e.target.value);
                         if (val <= endSolve) {
@@ -663,7 +656,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                           setPreset('custom');
                         }
                       }}
-                      className="accent-sky-400 flex-1 h-1.5 bg-stone-800 rounded-lg cursor-pointer"
+                      className="accent-sky-400 flex-1 h-2 sm:h-1.5 bg-stone-800 rounded-lg cursor-pointer"
                     />
                   </div>
 
@@ -687,6 +680,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                       min={1}
                       max={totalCount}
                       value={endSolve}
+                      style={{ touchAction: 'pan-x' }}
                       onChange={(e) => {
                         const val = parseInt(e.target.value);
                         if (val >= startSolve) {
@@ -694,7 +688,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                           setPreset('custom');
                         }
                       }}
-                      className="accent-sky-400 flex-1 h-1.5 bg-stone-800 rounded-lg cursor-pointer"
+                      className="accent-sky-400 flex-1 h-2 sm:h-1.5 bg-stone-800 rounded-lg cursor-pointer"
                     />
                   </div>
                 </div>
@@ -783,7 +777,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
         {/* CHART DISPLAY */}
         <div className="w-full h-[420px] pt-1">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={{ top: 25, right: 30, left: 10, bottom: 20 }}>
+            <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 10, bottom: 10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
               <XAxis
                 dataKey="index"
@@ -791,13 +785,6 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                 fontSize={11}
                 tickLine={false}
                 axisLine={{ stroke: '#475569' }}
-                label={{
-                  value: `Solve Number (${periodGroups.length > 0 ? `~${Math.round(filteredSolves.length / (periodGroups.length || 1))} ${unitInfo.solvesPerUnit}` : ''})`,
-                  position: 'insideBottom',
-                  offset: -10,
-                  fill: '#94a3b8',
-                  fontSize: 12,
-                }}
               />
               <YAxis
                 stroke="#94a3b8"
@@ -932,16 +919,6 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                   dot={false}
                 />
               )}
-
-              {/* Interactive Recharts Brush for direct graph zooming */}
-              <Brush
-                dataKey="index"
-                height={26}
-                stroke="#0284c7"
-                fill="#1c1917"
-                tickFormatter={(val) => `#${val}`}
-                onChange={handleBrushChange}
-              />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
