@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Calendar, Layers, FileUp, Sparkles, FileText, Timer, CheckCircle2 } from 'lucide-react';
+import { Calendar, Layers, FileUp, Sparkles, FileText, Timer, Database, HardDrive, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Session, GroupingPeriod } from '../types';
 import { CubeLoadingSpinner } from './CubeLoadingSpinner';
@@ -19,6 +19,10 @@ interface FileUploaderProps {
   loadingProgress?: number;
   loadingStage?: string;
   uploadingFileName?: string;
+  isSaved?: boolean;
+  storageUsageMB?: number;
+  savedNotice?: string | null;
+  onClearStorage?: () => void;
 }
 
 export const FileUploader: React.FC<FileUploaderProps> = ({
@@ -36,6 +40,10 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   loadingProgress = 0,
   loadingStage = 'Processing csTimer file...',
   uploadingFileName = 'cstimer_export.txt',
+  isSaved = false,
+  storageUsageMB,
+  savedNotice,
+  onClearStorage,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -302,6 +310,49 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Storage Status & Persistence Info */}
+      {isSaved && (
+        <div className="bg-stone-950/80 border border-stone-800 rounded-xl px-4 py-2.5 text-xs flex flex-wrap items-center justify-between gap-3 text-stone-300">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <Database className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span className="font-semibold text-stone-200">
+              Persistent Storage Active (IndexedDB)
+            </span>
+            <span className="text-stone-500 hidden sm:inline">&bull;</span>
+            <span className="text-stone-400 text-[11px] hidden sm:inline">
+              Your dataset stays saved across browser reloads
+            </span>
+            {storageUsageMB !== undefined && storageUsageMB > 0 && (
+              <span className="px-2 py-0.5 rounded bg-stone-800 text-stone-300 font-mono text-[10px] ml-1">
+                {storageUsageMB} MB
+              </span>
+            )}
+          </div>
+
+          {onClearStorage && (
+            <button
+              onClick={onClearStorage}
+              className="text-stone-400 hover:text-rose-400 hover:underline flex items-center gap-1 font-medium transition-colors cursor-pointer ml-auto"
+              title="Clear saved data from browser storage"
+            >
+              <Trash2 className="w-3 h-3" />
+              <span>Clear Saved Storage</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Notice string if provided */}
+      {savedNotice && !errorMsg && (
+        <div className="bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 rounded-xl px-3.5 py-2 text-xs flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Database className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span>{savedNotice}</span>
+          </div>
+        </div>
+      )}
 
       {/* Error Message if any */}
       {errorMsg && (

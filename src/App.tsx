@@ -13,6 +13,12 @@ import { Session, GroupingPeriod } from './types';
 import { parseCsTimerFile } from './utils/csTimerParser';
 import { generateSampleData } from './utils/sampleData';
 import { groupSolvesByPeriod, calculateGlobalStats } from './utils/statsMath';
+import {
+  saveDataset,
+  getSavedDataset,
+  clearSavedDataset,
+  getStorageInfo,
+} from './utils/dbStorage';
 
 export default function App() {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -22,16 +28,63 @@ export default function App() {
   const [fileName, setFileName] = useState<string>('cstimer_demo.txt');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Storage states
+  const [isSaved, setIsSaved] = useState<boolean>(false);
+  const [storageUsageMB, setStorageUsageMB] = useState<number | undefined>(undefined);
+  const [savedNotice, setSavedNotice] = useState<string | null>(null);
+
   // Loading animation states
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
   const [loadingStage, setLoadingStage] = useState<string>('');
   const [uploadingFileName, setUploadingFileName] = useState<string>('');
 
-  // Load sample dataset by default on mount
+  // Initial check for stored dataset in IndexedDB on mount
   useEffect(() => {
-    loadSampleData();
+    initDataset();
   }, []);
+
+  const initDataset = async () => {
+    setIsLoading(true);
+    setUploadingFileName('browser_storage');
+    setLoadingProgress(20);
+    setLoadingStage('Checking IndexedDB storage for saved csTimer data...');
+    setErrorMsg(null);
+
+    try {
+      const saved = await getSavedDataset();
+      if (saved && saved.sessions && saved.sessions.length > 0) {
+        setLoadingProgress(60);
+        setLoadingStage(`Restoring saved dataset (${saved.fileName})...`);
+
+        setSessions(saved.sessions);
+        setSelectedSessionId(saved.selectedSessionId || saved.sessions[0].id);
+        setFileName(saved.fileName || 'cstimer_saved.txt');
+        if (saved.groupingPeriod) setGroupingPeriod(saved.groupingPeriod);
+        if (saved.customBatchSize) setCustomBatchSize(saved.customBatchSize);
+
+        setIsSaved(true);
+        const info = await getStorageInfo();
+        if (info) setStorageUsageMB(info.usageMB);
+
+        const totalSolvesCount = saved.sessions.reduce((acc, s) => acc + s.solves.length, 0);
+        setSavedNotice(
+          `Restored ${totalSolvesCount.toLocaleString()} solves across ${saved.sessions.length} sessions from IndexedDB (${saved.fileName})`
+        );
+
+        setLoadingProgress(100);
+        setLoadingStage('Loaded saved data successfully!');
+        await new Promise((res) => setTimeout(res, 120));
+        setIsLoading(false);
+        return;
+      }
+    } catch (err) {
+      console.error('Failed to load dataset from IndexedDB:', err);
+    }
+
+    // Fall back to sample dataset if nothing was saved
+    await loadSampleData();
+  };
 
   const loadSampleData = async () => {
     setIsLoading(true);
@@ -39,6 +92,7 @@ export default function App() {
     setLoadingProgress(15);
     setLoadingStage('Initializing sample csTimer dataset...');
     setErrorMsg(null);
+    setSavedNotice(null);
 
     try {
       await new Promise((res) => setTimeout(res, 120));
@@ -46,14 +100,30 @@ export default function App() {
       setLoadingStage('Generating 350 solve logs & session history...');
       const demoSessions = generateSampleData();
 
-      await new Promise((res) => setTimeout(res, 150));
-      setLoadingProgress(85);
+      await new Promise((res) => setTimeout(res, 80));
+      setLoadingProgress(80);
       setLoadingStage('Computing rolling averages & variance...');
 
-      await new Promise((res) => setTimeout(res, 150));
+      const demoFileName = 'cstimer_demo_350solves.txt';
+      const initialSessId = demoSessions[0].id;
+
       setSessions(demoSessions);
-      setSelectedSessionId(demoSessions[0].id);
-      setFileName('cstimer_demo_350solves.txt');
+      setSelectedSessionId(initialSessId);
+      setFileName(demoFileName);
+
+      // Save sample data to IndexedDB
+      await saveDataset({
+        fileName: demoFileName,
+        sessions: demoSessions,
+        selectedSessionId: initialSessId,
+        groupingPeriod,
+        customBatchSize,
+      });
+
+      setIsSaved(true);
+      const info = await getStorageInfo();
+      if (info) setStorageUsageMB(info.usageMB);
+
       setLoadingProgress(100);
       setLoadingStage('Complete!');
 
@@ -72,6 +142,7 @@ export default function App() {
     setLoadingProgress(15);
     setLoadingStage('Reading csTimer file format...');
     setErrorMsg(null);
+    setSavedNotice(null);
 
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -83,19 +154,39 @@ export default function App() {
         const content = e.target?.result as string;
         if (!content) throw new Error('File is empty.');
 
-        setLoadingProgress(65);
+        setLoadingProgress(60);
         setLoadingStage('Parsing solves, timestamps & scrambles...');
         await new Promise((res) => setTimeout(res, 180));
 
         const parsedSessions = parseCsTimerFile(content);
 
-        setLoadingProgress(90);
-        setLoadingStage('Aggregating statistics & progression curves...');
+        setLoadingProgress(80);
+        setLoadingStage('Persisting dataset to IndexedDB browser storage...');
         await new Promise((res) => setTimeout(res, 150));
 
+        const initialSessionId = parsedSessions[0].id;
         setSessions(parsedSessions);
-        setSelectedSessionId(parsedSessions[0].id);
+        setSelectedSessionId(initialSessionId);
         setFileName(file.name);
+
+        // Save to IndexedDB (supports 100s of MBs)
+        await saveDataset({
+          fileName: file.name,
+          sessions: parsedSessions,
+          selectedSessionId: initialSessionId,
+          groupingPeriod,
+          customBatchSize,
+        });
+
+        setIsSaved(true);
+        const info = await getStorageInfo();
+        if (info) setStorageUsageMB(info.usageMB);
+
+        const totalSolvesCount = parsedSessions.reduce((acc, s) => acc + s.solves.length, 0);
+        setSavedNotice(
+          `Saved ${totalSolvesCount.toLocaleString()} solves across ${parsedSessions.length} sessions to browser storage (${file.name})`
+        );
+
         setLoadingProgress(100);
         setLoadingStage('Done!');
 
@@ -112,6 +203,56 @@ export default function App() {
       setIsLoading(false);
     };
     reader.readAsText(file);
+  };
+
+  const handleClearStorage = () => {
+    setIsSaved(false);
+    setStorageUsageMB(undefined);
+    setSavedNotice(null);
+    setSessions([]);
+    setSelectedSessionId('');
+    setFileName('');
+    setErrorMsg(null);
+    clearSavedDataset().catch((err) => console.error('Failed to clear storage:', err));
+  };
+
+  const handleSelectSession = (id: string) => {
+    setSelectedSessionId(id);
+    if (sessions.length > 0) {
+      saveDataset({
+        fileName,
+        sessions,
+        selectedSessionId: id,
+        groupingPeriod,
+        customBatchSize,
+      }).catch((e) => console.error(e));
+    }
+  };
+
+  const handleChangeGrouping = (period: GroupingPeriod) => {
+    setGroupingPeriod(period);
+    if (sessions.length > 0) {
+      saveDataset({
+        fileName,
+        sessions,
+        selectedSessionId,
+        groupingPeriod: period,
+        customBatchSize,
+      }).catch((e) => console.error(e));
+    }
+  };
+
+  const handleChangeCustomBatchSize = (size: number) => {
+    setCustomBatchSize(size);
+    if (sessions.length > 0) {
+      saveDataset({
+        fileName,
+        sessions,
+        selectedSessionId,
+        groupingPeriod,
+        customBatchSize: size,
+      }).catch((e) => console.error(e));
+    }
   };
 
   const activeSession = useMemo(() => {
@@ -164,13 +305,11 @@ export default function App() {
       <Navbar
         fileName={fileName}
         onLoadDemo={loadSampleData}
-        onReset={() => {
-          setSessions([]);
-          setSelectedSessionId('');
-          setFileName('');
-          setErrorMsg(null);
-        }}
+        onReset={handleClearStorage}
         onExportCSV={handleExportCSV}
+        isSaved={isSaved}
+        storageUsageMB={storageUsageMB}
+        onClearStorage={handleClearStorage}
       />
 
       {/* Main Container */}
@@ -179,11 +318,11 @@ export default function App() {
         <FileUploader
           sessions={sessions}
           selectedSessionId={selectedSessionId}
-          onSelectSession={setSelectedSessionId}
+          onSelectSession={handleSelectSession}
           groupingPeriod={groupingPeriod}
-          onChangeGrouping={setGroupingPeriod}
+          onChangeGrouping={handleChangeGrouping}
           customBatchSize={customBatchSize}
-          onChangeCustomBatchSize={setCustomBatchSize}
+          onChangeCustomBatchSize={handleChangeCustomBatchSize}
           onFileUpload={handleFileUpload}
           onLoadDemo={loadSampleData}
           errorMsg={errorMsg}
@@ -191,6 +330,10 @@ export default function App() {
           loadingProgress={loadingProgress}
           loadingStage={loadingStage}
           uploadingFileName={uploadingFileName}
+          isSaved={isSaved}
+          storageUsageMB={storageUsageMB}
+          savedNotice={savedNotice}
+          onClearStorage={handleClearStorage}
         />
 
         {/* Global Summary Metric Cards */}

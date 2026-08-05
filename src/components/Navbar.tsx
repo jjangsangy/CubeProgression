@@ -1,11 +1,14 @@
 import React from 'react';
-import { Timer, Download, RefreshCw, BarChart2, FileText, Sparkles } from 'lucide-react';
+import { Timer, Download, RefreshCw, FileText, Sparkles, Database, Trash2 } from 'lucide-react';
 
 interface NavbarProps {
   fileName?: string;
   onLoadDemo: () => void;
   onReset: () => void;
   onExportCSV: () => void;
+  isSaved?: boolean;
+  storageUsageMB?: number;
+  onClearStorage?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -13,6 +16,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLoadDemo,
   onReset,
   onExportCSV,
+  isSaved,
+  storageUsageMB,
+  onClearStorage,
 }) => {
   return (
     <header className="border-b border-stone-800 bg-stone-950 relative">
@@ -39,8 +45,21 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right Action Buttons */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {isSaved && (
+            <div
+              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-medium"
+              title="Data is persisted across reloads in browser IndexedDB storage"
+            >
+              <Database className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span>Saved locally</span>
+              {storageUsageMB !== undefined && storageUsageMB > 0 && (
+                <span className="text-emerald-500/80 font-mono text-[11px]">({storageUsageMB} MB)</span>
+              )}
+            </div>
+          )}
+
           {fileName && (
-            <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-lg bg-stone-800/80 border border-stone-700/60 text-stone-300 text-xs font-mono">
+            <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-lg bg-stone-800/80 border border-stone-700/60 text-stone-300 text-xs font-mono">
               <FileText className="w-3.5 h-3.5 text-amber-400" />
               <span className="truncate max-w-[140px]">{fileName}</span>
             </div>
@@ -64,15 +83,26 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="hidden sm:inline">Export CSV</span>
           </button>
 
-          <button
-            onClick={onReset}
-            className="p-1.5 rounded-xl text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-all cursor-pointer"
-            title="Reset Data"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
+          {isSaved && onClearStorage ? (
+            <button
+              onClick={onClearStorage}
+              className="p-1.5 rounded-xl text-stone-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all cursor-pointer"
+              title="Reset Data"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              onClick={onReset}
+              className="p-1.5 rounded-xl text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-all cursor-pointer"
+              title="Reset Data"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
     </header>
   );
 };
+
