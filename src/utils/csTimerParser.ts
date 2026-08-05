@@ -158,10 +158,12 @@ export function parseSolvesList(rawSolves: any[]): Solve[] {
   }
 
   // Ensure timestamps are sorted sequentially if they were out of order, or keep natural order
-  // Compute rolling Ao12 and Ao50
+  // Compute rolling Ao5, Ao12, Ao50, and Ao100
   for (let i = 0; i < solves.length; i++) {
+    solves[i].ao5 = calculateAoN(solves, i, 5);
     solves[i].ao12 = calculateAoN(solves, i, 12);
     solves[i].ao50 = calculateAoN(solves, i, 50);
+    solves[i].ao100 = calculateAoN(solves, i, 100);
   }
 
   return solves;

@@ -66,8 +66,10 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
             <tr>
               <th className="py-3 px-4 w-16">#</th>
               <th className="py-3 px-4 w-28">Time</th>
-              <th className="py-3 px-4 w-24">Ao12</th>
-              <th className="py-3 px-4 w-24">Ao50</th>
+              <th className="py-3 px-4 w-20">Ao5</th>
+              <th className="py-3 px-4 w-20">Ao12</th>
+              <th className="py-3 px-4 w-20">Ao50</th>
+              <th className="py-3 px-4 w-20">Ao100</th>
               <th className="py-3 px-4 w-28">Date</th>
               <th className="py-3 px-4">Scramble</th>
             </tr>
@@ -88,11 +90,17 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
                     </span>
                   )}
                 </td>
+                <td className="py-2.5 px-4 text-emerald-400">
+                  {solve.ao5 !== null && solve.ao5 !== undefined ? `${solve.ao5.toFixed(2)}s` : '—'}
+                </td>
                 <td className="py-2.5 px-4 text-orange-400">
                   {solve.ao12 !== null && solve.ao12 !== undefined ? `${solve.ao12.toFixed(2)}s` : '—'}
                 </td>
                 <td className="py-2.5 px-4 text-sky-400">
                   {solve.ao50 !== null && solve.ao50 !== undefined ? `${solve.ao50.toFixed(2)}s` : '—'}
+                </td>
+                <td className="py-2.5 px-4 text-purple-400">
+                  {solve.ao100 !== null && solve.ao100 !== undefined ? `${solve.ao100.toFixed(2)}s` : '—'}
                 </td>
                 <td className="py-2.5 px-4 text-stone-400 text-[11px] font-sans">{solve.dateStr}</td>
                 <td className="py-2.5 px-4 text-stone-400 text-[11px] truncate max-w-xs font-mono">
@@ -102,7 +110,7 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
             ))}
             {currentSolves.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-stone-500">
+                <td colSpan={8} className="py-8 text-center text-stone-500">
                   No solves found matching your query.
                 </td>
               </tr>

@@ -20,8 +20,10 @@ export interface Solve {
   timestamp: number; // Unix timestamp in ms
   date: Date;
   dateStr: string; // YYYY-MM-DD format
+  ao5?: number | null;
   ao12?: number | null;
   ao50?: number | null;
+  ao100?: number | null;
 }
 
 export interface Session {
