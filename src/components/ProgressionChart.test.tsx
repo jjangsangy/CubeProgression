@@ -70,13 +70,31 @@ describe('ProgressionChart component', () => {
     );
 
     expect(screen.getByText('Progression Over Solves')).toBeInTheDocument();
-    expect(screen.getByText('-0.0100s/solve')).toBeInTheDocument();
-    expect(screen.getByText('R² = 50.0%')).toBeInTheDocument();
+    expect(screen.getByText('Range Selector')).toBeInTheDocument();
+    expect(screen.getAllByText('All Solves')[0]).toBeInTheDocument();
 
     expect(screen.getByText('Muted')).toBeInTheDocument();
     expect(screen.getByText('Unmuted')).toBeInTheDocument();
     expect(screen.getByText('With Dots')).toBeInTheDocument();
     expect(screen.getByText('Hidden')).toBeInTheDocument();
+  });
+
+  it('renders range selector preset controls and modes', () => {
+    render(
+      <ProgressionChart
+        solves={mockSolves}
+        periodGroups={mockPeriodGroups}
+        regression={mockRegression}
+        groupingPeriod="daily"
+        title="Progression Over Solves"
+      />
+    );
+
+    expect(screen.getByText('Range Mode:')).toBeInTheDocument();
+    expect(screen.getByText('Solve # Interval')).toBeInTheDocument();
+    expect(screen.getByText('Date Range')).toBeInTheDocument();
+    expect(screen.getByText('Last 50')).toBeInTheDocument();
+    expect(screen.getByText('Last 100')).toBeInTheDocument();
   });
 
   it('renders correctly with weekly groupingPeriod', () => {
