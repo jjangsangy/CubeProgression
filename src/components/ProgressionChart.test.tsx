@@ -111,4 +111,19 @@ describe('ProgressionChart component', () => {
     expect(screen.getByText('Progression Over Solves')).toBeInTheDocument();
     expect(container).toBeInTheDocument();
   });
+
+  it('renders correctly with automatic period boundary ticks', () => {
+    const { container } = render(
+      <ProgressionChart
+        solves={mockSolves}
+        periodGroups={mockPeriodGroups}
+        regression={mockRegression}
+        groupingPeriod="daily"
+        title="Progression Over Solves"
+      />
+    );
+
+    expect(screen.getByText('Progression Over Solves')).toBeInTheDocument();
+    expect(container).toBeInTheDocument();
+  });
 });

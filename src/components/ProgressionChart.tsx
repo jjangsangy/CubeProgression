@@ -19,7 +19,6 @@ import {
   TrendingDown,
   TrendingUp,
   Sparkles,
-  Layers,
 } from 'lucide-react';
 import { Solve, PeriodGroup, LinearRegression, GroupingPeriod } from '../types';
 import { ChartCardWrapper } from './ChartCardWrapper';
@@ -62,16 +61,20 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
   const [endDate, setEndDate] = useState<string>('');
   const [isRangePanelOpen, setIsRangePanelOpen] = useState<boolean>(true);
 
-  // Detect mobile viewport to optimize touch interactions & disable SVG Brush on touch screens
+  // Viewport width tracking for responsive tick calculations
+  const [windowWidth, setWindowWidth] = useState<number>(
+    typeof window !== 'undefined' ? window.innerWidth : 1024
+  );
   const [isMobileScreen, setIsMobileScreen] = useState<boolean>(false);
 
   useEffect(() => {
-    const checkMobile = () => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
       setIsMobileScreen(window.innerWidth < 640);
     };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const unitInfo = getPeriodUnitInfo(groupingPeriod);
@@ -168,6 +171,20 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
     return calculateLinearRegression(filteredSolves);
   }, [filteredSolves]);
 
+  // Map solve index to period group info for hover tooltips
+  const solvePeriodMap = useMemo(() => {
+    const map = new Map<number, { periodNumber: number; periodLabel: string }>();
+    periodGroups.forEach((group, gIdx) => {
+      group.solves.forEach((s) => {
+        map.set(s.index, {
+          periodNumber: gIdx + 1,
+          periodLabel: group.label || `${unitInfo.unitSingular} ${gIdx + 1}`,
+        });
+      });
+    });
+    return map;
+  }, [periodGroups, unitInfo]);
+
   // Construct chart data for filtered range
   const chartData = useMemo(() => {
     return filteredSolves.map((solve) => {
@@ -179,6 +196,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
       const ao50 = solve.ao50 ?? calculateAoN(solves, fullIdx, 50);
       const ao100 = solve.ao100 ?? calculateAoN(solves, fullIdx, 100);
       const customAo = showCustomAo && customAoN >= 3 ? calculateAoN(solves, fullIdx, customAoN) : null;
+      const pInfo = solvePeriodMap.get(solve.index);
 
       return {
         index: solve.index,
@@ -192,9 +210,11 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
         dateStr: solve.dateStr,
         scramble: solve.scramble,
         penalty: solve.penalty,
+        periodNumber: pInfo?.periodNumber,
+        periodLabel: pInfo?.periodLabel,
       };
     });
-  }, [filteredSolves, filteredRegression, solves, showCustomAo, customAoN]);
+  }, [filteredSolves, filteredRegression, solves, showCustomAo, customAoN, solvePeriodMap]);
 
   // Calculate high level stats for the focused range
   const rangeStats = useMemo(() => {
@@ -214,19 +234,28 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
     };
   }, [filteredSolves, totalCount]);
 
-  // Filter vertical period reference lines to those matching the active range
-  const periodBoundaries = useMemo(() => {
+  // Raw period boundaries matching the filtered solves range
+  const rawPeriodBoundaries = useMemo(() => {
     let acc = 0;
-    const boundaries: { index: number; label: string; groupLabel: string; midIndex: number }[] = [];
+    const boundaries: {
+      index: number;
+      periodNumber: number;
+      label: string;
+      groupLabel: string;
+      midIndex: number;
+    }[] = [];
 
     periodGroups.forEach((group, idx) => {
       const count = group.solves.length;
       acc += count;
+      const periodNumber = idx + 1;
       const inRange = filteredSolves.some((s) => s.index === acc);
       if (inRange) {
+        const unitSingular = unitInfo.unitSingular;
         boundaries.push({
           index: acc,
-          label: `${unitInfo.unitSingular} ${idx + 1}`,
+          periodNumber,
+          label: `${unitSingular} ${periodNumber}`,
           groupLabel: group.label,
           midIndex: Math.round(acc - count / 2),
         });
@@ -235,6 +264,38 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
 
     return boundaries;
   }, [periodGroups, unitInfo, filteredSolves]);
+
+  // Responsive tick calculation for vertical period boundary labels (maximizes visible ticks without overlapping)
+  const responsiveBoundaryInfo = useMemo(() => {
+    const totalCount = rawPeriodBoundaries.length;
+    if (totalCount === 0) {
+      return { boundaries: [], step: 1, isDownsampled: false, totalCount };
+    }
+
+    // Since tick labels are rotated vertically, each tick needs only ~15px horizontal spacing
+    const minLabelWidth = 15;
+    const estimatedChartWidth = Math.max(280, Math.min(windowWidth - 70, 1150));
+    const maxTicks = Math.max(2, Math.floor(estimatedChartWidth / minLabelWidth));
+
+    if (totalCount <= maxTicks) {
+      return { boundaries: rawPeriodBoundaries, step: 1, isDownsampled: false, totalCount };
+    }
+
+    // Compute minimal integer step to maximize displayed ticks without text collision
+    const step = Math.ceil(totalCount / maxTicks);
+
+    let filtered = rawPeriodBoundaries.filter((b) => b.periodNumber % step === 0);
+    if (filtered.length === 0) {
+      filtered = rawPeriodBoundaries.filter((_, idx) => idx % step === 0);
+    }
+
+    return {
+      boundaries: filtered,
+      step,
+      isDownsampled: true,
+      totalCount,
+    };
+  }, [rawPeriodBoundaries, windowWidth]);
 
   // Y domain with padding based on active visible metrics in filtered dataset
   const yValues = useMemo(() => {
@@ -260,8 +321,13 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
 
     return (
       <div className="bg-stone-900/95 border border-stone-700/80 rounded-xl p-3 shadow-2xl text-xs text-stone-200 backdrop-blur-md max-w-xs">
-        <div className="font-semibold text-stone-100 border-b border-stone-800 pb-1.5 mb-2 flex justify-between items-center">
-          <span>Solve #{label}</span>
+        <div className="font-semibold text-stone-100 border-b border-stone-800 pb-1.5 mb-2 flex justify-between items-center gap-2">
+          <span>
+            Solve #{label}
+            {data.periodLabel && (
+              <span className="text-sky-400 font-normal ml-1.5 text-[11px]">({data.periodLabel})</span>
+            )}
+          </span>
           <span className="text-stone-400 font-normal">{data.dateStr}</span>
         </div>
         <div className="space-y-1">
@@ -777,7 +843,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
         {/* CHART DISPLAY */}
         <div className="w-full h-[420px] pt-1">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 10, bottom: 10 }}>
+            <ComposedChart data={chartData} margin={{ top: 65, right: 30, left: 10, bottom: 10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
               <XAxis
                 dataKey="index"
@@ -803,26 +869,38 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend
-                verticalAlign="top"
-                align="right"
-                wrapperStyle={{ paddingBottom: '12px', fontSize: '12px' }}
+                verticalAlign="bottom"
+                align="center"
+                wrapperStyle={{ paddingTop: '14px', fontSize: '12px' }}
               />
 
-              {/* Vertical Period Boundaries */}
-              {periodBoundaries.map((b, idx) => (
+              {/* Vertical Period Boundaries (Responsive Ticks rendered vertically) */}
+              {responsiveBoundaryInfo.boundaries.map((b, idx) => (
                 <ReferenceLine
-                  key={idx}
+                  key={`period-boundary-${b.periodNumber}-${idx}`}
                   x={b.index}
                   stroke="#64748b"
                   strokeDasharray="3 3"
                   strokeWidth={1.2}
-                  label={{
-                    value: b.label,
-                    position: 'top',
-                    fill: '#cbd5e1',
-                    fontSize: 11,
-                    fontWeight: 600,
-                    offset: 8,
+                  label={(props: any) => {
+                    const { viewBox } = props || {};
+                    if (!viewBox || typeof viewBox.x !== 'number' || typeof viewBox.y !== 'number') return null;
+                    const { x, y } = viewBox;
+                    const tx = x + 4;
+                    const ty = y - 8;
+                    return (
+                      <text
+                        x={tx}
+                        y={ty}
+                        fill="#cbd5e1"
+                        fontSize={10}
+                        fontWeight={600}
+                        textAnchor="start"
+                        transform={`rotate(-90, ${tx}, ${ty})`}
+                      >
+                        {b.label}
+                      </text>
+                    );
                   }}
                 />
               ))}

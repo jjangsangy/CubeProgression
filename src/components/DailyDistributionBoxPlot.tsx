@@ -278,27 +278,42 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                   );
                 })}
 
-                {/* X Axis Period Label */}
-                <text
-                  x={cx}
-                  y={height - padding.bottom + 22}
-                  fill="#cbd5e1"
-                  fontSize="11"
-                  fontWeight="600"
-                  textAnchor="middle"
-                >
-                  {idx + 1}
-                </text>
+                {/* X Axis Period Label (Responsive tick filtering) */}
+                {(() => {
+                  const totalGroups = periodGroups.length;
+                  let step = 1;
+                  if (totalGroups > 35) step = 5;
+                  else if (totalGroups > 20) step = 3;
+                  else if (totalGroups > 12) step = 2;
 
-                <text
-                  x={cx}
-                  y={height - padding.bottom + 38}
-                  fill="#64748b"
-                  fontSize="10"
-                  textAnchor="middle"
-                >
-                  n={group.solves.length}
-                </text>
+                  const isVisible = (idx + 1) % step === 0 || idx === 0 || idx === totalGroups - 1;
+                  if (!isVisible) return null;
+
+                  return (
+                    <>
+                      <text
+                        x={cx}
+                        y={height - padding.bottom + 22}
+                        fill="#cbd5e1"
+                        fontSize="11"
+                        fontWeight="600"
+                        textAnchor="middle"
+                      >
+                        {idx + 1}
+                      </text>
+
+                      <text
+                        x={cx}
+                        y={height - padding.bottom + 38}
+                        fill="#64748b"
+                        fontSize="10"
+                        textAnchor="middle"
+                      >
+                        n={group.solves.length}
+                      </text>
+                    </>
+                  );
+                })()}
               </g>
             );
           })}
