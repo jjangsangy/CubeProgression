@@ -241,58 +241,69 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
         isMaximized ? 'w-full h-full max-w-7xl mx-auto overflow-y-auto' : ''
       }`}
     >
-      {/* Header Row */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-stone-800/80 pb-4 w-full min-w-0">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            {headerBadge}
-            <h2 className="text-lg font-bold text-stone-100 tracking-tight leading-tight">
-              {title}
-            </h2>
+      {/* Header Container */}
+      <div className="flex flex-col gap-3 border-b border-stone-800/80 pb-4 w-full min-w-0">
+        {/* Top Header Row: Title & Action Export Buttons */}
+        <div className="flex items-start justify-between gap-4 w-full">
+          {/* Title & Badge */}
+          <div className="flex-1 min-w-0 pr-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {headerBadge}
+              <h2 className="text-base sm:text-lg font-bold text-stone-100 tracking-tight leading-snug">
+                {title}
+              </h2>
+            </div>
+            {subtitle && (
+              <p className="text-xs text-stone-400 mt-1 leading-relaxed max-w-3xl">
+                {subtitle}
+              </p>
+            )}
           </div>
-          {subtitle && <p className="text-xs text-stone-400 mt-1 leading-relaxed">{subtitle}</p>}
-        </div>
 
-        {/* Right Action Controls */}
-        <div className="flex flex-wrap items-center gap-2 self-start lg:self-auto max-w-full min-w-0">
-          {headerControls}
-
-          <div className="flex items-center gap-1 border-l border-stone-800 pl-2 shrink-0 export-exclude">
+          {/* Export / Fullscreen Action Buttons */}
+          <div className="flex items-center gap-1.5 shrink-0 export-exclude self-start pt-0.5">
             {/* Download Button */}
             <button
               onClick={handleDownloadImage}
               disabled={isDownloading}
               title="Download Plot as PNG Image"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700/80 text-stone-300 hover:text-stone-100 border border-stone-700/60 text-xs font-medium transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700/80 text-stone-300 hover:text-stone-100 border border-stone-700/60 text-xs font-medium transition-all active:scale-95 disabled:opacity-50 cursor-pointer shadow-sm"
             >
               {isDownloading ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
               ) : (
                 <Download className="w-3.5 h-3.5 text-stone-400" />
               )}
-              <span className="hidden md:inline">PNG</span>
+              <span className="hidden sm:inline">PNG</span>
             </button>
 
             {/* Maximize / Minimize Button */}
             <button
               onClick={() => setIsMaximized(!isMaximized)}
               title={isMaximized ? 'Restore View (Esc)' : 'Maximize to Fullscreen'}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700/80 text-stone-300 hover:text-stone-100 border border-stone-700/60 text-xs font-medium transition-all active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700/80 text-stone-300 hover:text-stone-100 border border-stone-700/60 text-xs font-medium transition-all active:scale-95 cursor-pointer shadow-sm"
             >
               {isMaximized ? (
                 <>
                   <Minimize2 className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="hidden md:inline">Exit Fullscreen</span>
+                  <span className="hidden sm:inline">Exit Fullscreen</span>
                 </>
               ) : (
                 <>
                   <Maximize2 className="w-3.5 h-3.5 text-stone-400" />
-                  <span className="hidden md:inline">Maximize</span>
+                  <span className="hidden sm:inline">Maximize</span>
                 </>
               )}
             </button>
           </div>
         </div>
+
+        {/* Secondary Toolbar Row (Controls) */}
+        {headerControls && (
+          <div className="flex flex-wrap items-center gap-2.5 pt-1.5 border-t border-stone-800/50 w-full min-w-0">
+            {headerControls}
+          </div>
+        )}
       </div>
 
       {/* Main Body Chart Container */}
