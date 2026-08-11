@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { PeriodGroup, GroupingPeriod } from '../types';
 import { ChartCardWrapper } from './ChartCardWrapper';
 import { getPeriodUnitInfo } from '../utils/statsMath';
@@ -17,6 +17,35 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
   const unitInfo = getPeriodUnitInfo(groupingPeriod);
   const displayTitle = title || `${unitInfo.adjective} Solve Time Distribution & Variance`;
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(1000);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const updateWidth = () => {
+      if (containerRef.current && containerRef.current.clientWidth > 0) {
+        setContainerWidth(containerRef.current.clientWidth);
+      }
+    };
+
+    updateWidth();
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0) {
+          setContainerWidth(Math.floor(entry.contentRect.width));
+        }
+      }
+    });
+
+    observer.observe(containerRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   const [hoveredPoint, setHoveredPoint] = useState<{
     periodIdx: number;
     time: number;
@@ -24,10 +53,10 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
     y: number;
   } | null>(null);
 
-  // Compute SVG dimensions and scale mappings
-  const width = 800;
+  // Compute SVG dimensions and scale mappings dynamically based on container width
+  const width = Math.max(300, containerWidth);
   const height = 400;
-  const padding = { top: 40, right: 40, bottom: 60, left: 60 };
+  const padding = { top: 40, right: 25, bottom: 60, left: 50 };
 
   const plotWidth = width - padding.left - padding.right;
   const plotHeight = height - padding.top - padding.bottom;
@@ -120,10 +149,11 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
       }
     >
       {/* SVG Canvas Container */}
-      <div className="relative w-full overflow-x-auto">
+      <div ref={containerRef} className="relative w-full overflow-hidden">
         <svg
           viewBox={`0 0 ${width} ${height}`}
-          className="w-full h-auto max-h-[440px] font-sans selection:bg-none"
+          className="w-full h-[380px] sm:h-[400px] font-sans selection:bg-none block"
+          preserveAspectRatio="none"
         >
           {/* Background Grid Lines */}
           {yTicks.map((tick) => {
