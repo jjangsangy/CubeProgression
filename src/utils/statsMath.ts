@@ -477,13 +477,20 @@ export function calculateGlobalStats(solves: Solve[]): GlobalStats {
 }
 
 /**
-  * Calculates chronological PB (Personal Best) step-down progression over time for Singles, Ao5, Ao12, and Ao50
+  * Calculates chronological PB (Personal Best) step-down progression over time for Singles, Ao5, Ao12, Ao50, and Ao100
   */
 export function calculatePbProgression(solves: Solve[]): PbProgressionResult {
   let currentPbSingle: number | null = null;
   let currentPbAo5: number | null = null;
   let currentPbAo12: number | null = null;
   let currentPbAo50: number | null = null;
+  let currentPbAo100: number | null = null;
+
+  let activeDropSingle = 0;
+  let activeDropAo5 = 0;
+  let activeDropAo12 = 0;
+  let activeDropAo50 = 0;
+  let activeDropAo100 = 0;
 
   let initialPbSingle: number | null = null;
 
@@ -491,30 +498,29 @@ export function calculatePbProgression(solves: Solve[]): PbProgressionResult {
   let totalAo5Pbs = 0;
   let totalAo12Pbs = 0;
   let totalAo50Pbs = 0;
+  let totalAo100Pbs = 0;
 
   const milestones: PbMilestone[] = [];
 
   const dataPoints: PbDataPoint[] = solves.map((solve, idx) => {
     const single = solve.penalty === 'DNF' ? null : solve.finalTimeSec;
     const ao5 = calculateAoN(solves, idx, 5);
-    const ao12 = solve.ao12 ?? null;
-    const ao50 = solve.ao50 ?? null;
+    const ao12 = solve.ao12 ?? calculateAoN(solves, idx, 12);
+    const ao50 = solve.ao50 ?? calculateAoN(solves, idx, 50);
+    const ao100 = solve.ao100 ?? calculateAoN(solves, idx, 100);
 
     let isNewPbSingle = false;
     let isNewPbAo5 = false;
     let isNewPbAo12 = false;
     let isNewPbAo50 = false;
-
-    let dropSingle = 0;
-    let dropAo5 = 0;
-    let dropAo12 = 0;
-    let dropAo50 = 0;
+    let isNewPbAo100 = false;
 
     // Check Single PB
     if (single !== null) {
       if (currentPbSingle === null) {
         currentPbSingle = single;
         initialPbSingle = single;
+        activeDropSingle = 0;
         isNewPbSingle = true;
         totalSinglePbs++;
         milestones.push({
@@ -526,7 +532,8 @@ export function calculatePbProgression(solves: Solve[]): PbProgressionResult {
           scramble: solve.scramble,
         });
       } else if (single < currentPbSingle) {
-        dropSingle = Number((currentPbSingle - single).toFixed(2));
+        const drop = Number((currentPbSingle - single).toFixed(2));
+        activeDropSingle = drop;
         currentPbSingle = single;
         isNewPbSingle = true;
         totalSinglePbs++;
@@ -535,7 +542,7 @@ export function calculatePbProgression(solves: Solve[]): PbProgressionResult {
           dateStr: solve.dateStr,
           type: 'Single',
           timeSec: single,
-          dropSec: dropSingle,
+          dropSec: drop,
           scramble: solve.scramble,
         });
       }
@@ -545,6 +552,7 @@ export function calculatePbProgression(solves: Solve[]): PbProgressionResult {
     if (ao5 !== null) {
       if (currentPbAo5 === null) {
         currentPbAo5 = ao5;
+        activeDropAo5 = 0;
         isNewPbAo5 = true;
         totalAo5Pbs++;
         milestones.push({
@@ -555,7 +563,8 @@ export function calculatePbProgression(solves: Solve[]): PbProgressionResult {
           dropSec: 0,
         });
       } else if (ao5 < currentPbAo5) {
-        dropAo5 = Number((currentPbAo5 - ao5).toFixed(2));
+        const drop = Number((currentPbAo5 - ao5).toFixed(2));
+        activeDropAo5 = drop;
         currentPbAo5 = ao5;
         isNewPbAo5 = true;
         totalAo5Pbs++;
@@ -564,7 +573,7 @@ export function calculatePbProgression(solves: Solve[]): PbProgressionResult {
           dateStr: solve.dateStr,
           type: 'Ao5',
           timeSec: ao5,
-          dropSec: dropAo5,
+          dropSec: drop,
         });
       }
     }
@@ -573,6 +582,7 @@ export function calculatePbProgression(solves: Solve[]): PbProgressionResult {
     if (ao12 !== null) {
       if (currentPbAo12 === null) {
         currentPbAo12 = ao12;
+        activeDropAo12 = 0;
         isNewPbAo12 = true;
         totalAo12Pbs++;
         milestones.push({
@@ -583,7 +593,8 @@ export function calculatePbProgression(solves: Solve[]): PbProgressionResult {
           dropSec: 0,
         });
       } else if (ao12 < currentPbAo12) {
-        dropAo12 = Number((currentPbAo12 - ao12).toFixed(2));
+        const drop = Number((currentPbAo12 - ao12).toFixed(2));
+        activeDropAo12 = drop;
         currentPbAo12 = ao12;
         isNewPbAo12 = true;
         totalAo12Pbs++;
@@ -592,7 +603,7 @@ export function calculatePbProgression(solves: Solve[]): PbProgressionResult {
           dateStr: solve.dateStr,
           type: 'Ao12',
           timeSec: ao12,
-          dropSec: dropAo12,
+          dropSec: drop,
         });
       }
     }
@@ -601,6 +612,7 @@ export function calculatePbProgression(solves: Solve[]): PbProgressionResult {
     if (ao50 !== null) {
       if (currentPbAo50 === null) {
         currentPbAo50 = ao50;
+        activeDropAo50 = 0;
         isNewPbAo50 = true;
         totalAo50Pbs++;
         milestones.push({
@@ -611,7 +623,8 @@ export function calculatePbProgression(solves: Solve[]): PbProgressionResult {
           dropSec: 0,
         });
       } else if (ao50 < currentPbAo50) {
-        dropAo50 = Number((currentPbAo50 - ao50).toFixed(2));
+        const drop = Number((currentPbAo50 - ao50).toFixed(2));
+        activeDropAo50 = drop;
         currentPbAo50 = ao50;
         isNewPbAo50 = true;
         totalAo50Pbs++;
@@ -620,7 +633,37 @@ export function calculatePbProgression(solves: Solve[]): PbProgressionResult {
           dateStr: solve.dateStr,
           type: 'Ao50',
           timeSec: ao50,
-          dropSec: dropAo50,
+          dropSec: drop,
+        });
+      }
+    }
+
+    // Check Ao100 PB
+    if (ao100 !== null) {
+      if (currentPbAo100 === null) {
+        currentPbAo100 = ao100;
+        activeDropAo100 = 0;
+        isNewPbAo100 = true;
+        totalAo100Pbs++;
+        milestones.push({
+          index: solve.index,
+          dateStr: solve.dateStr,
+          type: 'Ao100',
+          timeSec: ao100,
+          dropSec: 0,
+        });
+      } else if (ao100 < currentPbAo100) {
+        const drop = Number((currentPbAo100 - ao100).toFixed(2));
+        activeDropAo100 = drop;
+        currentPbAo100 = ao100;
+        isNewPbAo100 = true;
+        totalAo100Pbs++;
+        milestones.push({
+          index: solve.index,
+          dateStr: solve.dateStr,
+          type: 'Ao100',
+          timeSec: ao100,
+          dropSec: drop,
         });
       }
     }
@@ -637,16 +680,19 @@ export function calculatePbProgression(solves: Solve[]): PbProgressionResult {
       pbAo5: currentPbAo5,
       pbAo12: currentPbAo12,
       pbAo50: currentPbAo50,
+      pbAo100: currentPbAo100,
 
       isNewPbSingle,
       isNewPbAo5,
       isNewPbAo12,
       isNewPbAo50,
+      isNewPbAo100,
 
-      dropSingle,
-      dropAo5,
-      dropAo12,
-      dropAo50,
+      dropSingle: activeDropSingle,
+      dropAo5: activeDropAo5,
+      dropAo12: activeDropAo12,
+      dropAo50: activeDropAo50,
+      dropAo100: activeDropAo100,
     };
   });
 
@@ -662,10 +708,12 @@ export function calculatePbProgression(solves: Solve[]): PbProgressionResult {
       currentPbAo5,
       currentPbAo12,
       currentPbAo50,
+      currentPbAo100,
       totalSinglePbs,
       totalAo5Pbs,
       totalAo12Pbs,
       totalAo50Pbs,
+      totalAo100Pbs,
       singlePbImprovement,
     },
     pbMilestones: milestones,

@@ -30,9 +30,10 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
   const [showAo5, setShowAo5] = useState(true);
   const [showAo12, setShowAo12] = useState(true);
   const [showAo50, setShowAo50] = useState(true);
+  const [showAo100, setShowAo100] = useState(true);
   const [showRawSolves, setShowRawSolves] = useState(false);
   const [showMilestoneList, setShowMilestoneList] = useState(false);
-  const [milestoneFilter, setMilestoneFilter] = useState<'All' | 'Single' | 'Ao5' | 'Ao12' | 'Ao50'>('All');
+  const [milestoneFilter, setMilestoneFilter] = useState<'All' | 'Single' | 'Ao5' | 'Ao12' | 'Ao50' | 'Ao100'>('All');
 
   const unitInfo = getPeriodUnitInfo(groupingPeriod);
 
@@ -51,11 +52,12 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
       if (showAo5 && dp.pbAo5) validPbs.push(dp.pbAo5);
       if (showAo12 && dp.pbAo12) validPbs.push(dp.pbAo12);
       if (showAo50 && dp.pbAo50) validPbs.push(dp.pbAo50);
+      if (showAo100 && dp.pbAo100) validPbs.push(dp.pbAo100);
       if (showRawSolves && dp.single) validPbs.push(dp.single);
     });
     if (validPbs.length === 0) return 0;
     return Math.max(0, Math.floor(Math.min(...validPbs) - 1));
-  }, [dataPoints, showSingle, showAo5, showAo12, showAo50, showRawSolves]);
+  }, [dataPoints, showSingle, showAo5, showAo12, showAo50, showAo100, showRawSolves]);
 
   const maxY = useMemo(() => {
     if (dataPoints.length === 0) return 30;
@@ -65,11 +67,12 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
       if (showAo5 && dp.pbAo5) validPbs.push(dp.pbAo5);
       if (showAo12 && dp.pbAo12) validPbs.push(dp.pbAo12);
       if (showAo50 && dp.pbAo50) validPbs.push(dp.pbAo50);
+      if (showAo100 && dp.pbAo100) validPbs.push(dp.pbAo100);
       if (showRawSolves && dp.single) validPbs.push(dp.single);
     });
     if (validPbs.length === 0) return 30;
     return Math.ceil(Math.max(...validPbs) + 2);
-  }, [dataPoints, showSingle, showAo5, showAo12, showAo50, showRawSolves]);
+  }, [dataPoints, showSingle, showAo5, showAo12, showAo50, showAo100, showRawSolves]);
 
   const filteredMilestones = useMemo(() => {
     if (milestoneFilter === 'All') return pbMilestones;
@@ -80,7 +83,12 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
     if (!active || !payload || !payload.length) return null;
     const data = payload[0].payload;
 
-    const hasNewPb = data.isNewPbSingle || data.isNewPbAo5 || data.isNewPbAo12 || data.isNewPbAo50;
+    const hasNewPb =
+      data.isNewPbSingle ||
+      data.isNewPbAo5 ||
+      data.isNewPbAo12 ||
+      data.isNewPbAo50 ||
+      data.isNewPbAo100;
 
     return (
       <div className="bg-stone-900/95 border border-stone-700/80 rounded-xl p-3 shadow-2xl text-xs text-stone-200 backdrop-blur-md max-w-xs">
@@ -101,6 +109,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                 data.isNewPbAo5 && 'Ao5',
                 data.isNewPbAo12 && 'Ao12',
                 data.isNewPbAo50 && 'Ao50',
+                data.isNewPbAo100 && 'Ao100',
               ]
                 .filter(Boolean)
                 .join(', ')}
@@ -125,7 +134,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               </span>
               <span className="font-mono font-semibold text-amber-300">
                 {data.pbSingle.toFixed(2)}s
-                {data.isNewPbSingle && data.dropSingle > 0 && (
+                {data.dropSingle > 0 && (
                   <span className="text-emerald-400 text-[10px] ml-1">(-{data.dropSingle.toFixed(2)}s)</span>
                 )}
               </span>
@@ -138,7 +147,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               </span>
               <span className="font-mono font-semibold text-orange-300">
                 {data.pbAo5.toFixed(2)}s
-                {data.isNewPbAo5 && data.dropAo5 > 0 && (
+                {data.dropAo5 > 0 && (
                   <span className="text-emerald-400 text-[10px] ml-1">(-{data.dropAo5.toFixed(2)}s)</span>
                 )}
               </span>
@@ -151,7 +160,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               </span>
               <span className="font-mono font-semibold text-sky-300">
                 {data.pbAo12.toFixed(2)}s
-                {data.isNewPbAo12 && data.dropAo12 > 0 && (
+                {data.dropAo12 > 0 && (
                   <span className="text-emerald-400 text-[10px] ml-1">(-{data.dropAo12.toFixed(2)}s)</span>
                 )}
               </span>
@@ -164,8 +173,21 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               </span>
               <span className="font-mono font-semibold text-purple-300">
                 {data.pbAo50.toFixed(2)}s
-                {data.isNewPbAo50 && data.dropAo50 > 0 && (
+                {data.dropAo50 > 0 && (
                   <span className="text-emerald-400 text-[10px] ml-1">(-{data.dropAo50.toFixed(2)}s)</span>
+                )}
+              </span>
+            </div>
+          )}
+          {data.pbAo100 !== null && (
+            <div className="flex justify-between items-center gap-4">
+              <span className="text-emerald-400 flex items-center gap-1">
+                <Award className="w-3 h-3" /> PB Ao100:
+              </span>
+              <span className="font-mono font-semibold text-emerald-300">
+                {data.pbAo100.toFixed(2)}s
+                {data.dropAo100 > 0 && (
+                  <span className="text-emerald-400 text-[10px] ml-1">(-{data.dropAo100.toFixed(2)}s)</span>
                 )}
               </span>
             </div>
@@ -243,6 +265,17 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             </button>
             <button
               type="button"
+              onClick={() => setShowAo100(!showAo100)}
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                showAo100
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
+                  : 'text-stone-400 hover:text-stone-200'
+              }`}
+            >
+              Ao100
+            </button>
+            <button
+              type="button"
               onClick={() => setShowRawSolves(!showRawSolves)}
               className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
                 showRawSolves
@@ -257,7 +290,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
       }
     >
       {/* Top Stat Badges Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-2">
         <div className="bg-stone-950/60 border border-amber-500/20 rounded-xl p-3 flex flex-col gap-1">
           <div className="flex items-center justify-between text-xs text-amber-400 font-medium">
             <span className="flex items-center gap-1">
@@ -316,6 +349,20 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
           </div>
           <div className="text-xl font-bold font-mono text-purple-200">
             {summary.currentPbAo50 ? `${summary.currentPbAo50.toFixed(2)}s` : '—'}
+          </div>
+        </div>
+
+        <div className="bg-stone-950/60 border border-emerald-500/20 rounded-xl p-3 flex flex-col gap-1">
+          <div className="flex items-center justify-between text-xs text-emerald-400 font-medium">
+            <span className="flex items-center gap-1">
+              <Award className="w-3.5 h-3.5" /> PB Ao100
+            </span>
+            <span className="text-[10px] bg-emerald-500/10 text-emerald-300 px-1.5 py-0.5 rounded-full border border-emerald-500/20">
+              {summary.totalAo100Pbs} set
+            </span>
+          </div>
+          <div className="text-xl font-bold font-mono text-emerald-200">
+            {summary.currentPbAo100 ? `${summary.currentPbAo100.toFixed(2)}s` : '—'}
           </div>
         </div>
       </div>
@@ -490,6 +537,35 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                 activeDot={{ r: 6, fill: '#8b5cf6', stroke: '#ffffff', strokeWidth: 2 }}
               />
             )}
+
+            {/* PB Ao100 Step Line */}
+            {showAo100 && (
+              <Line
+                type="stepAfter"
+                dataKey="pbAo100"
+                name="PB Ao100"
+                stroke="#10b981"
+                strokeWidth={2.5}
+                dot={(props: any) => {
+                  const { cx, cy, payload } = props;
+                  if (payload.isNewPbAo100) {
+                    return (
+                      <circle
+                        key={`pb-ao100-${payload.index}`}
+                        cx={cx}
+                        cy={cy}
+                        r={4}
+                        fill="#10b981"
+                        stroke="#ffffff"
+                        strokeWidth={1.5}
+                      />
+                    );
+                  }
+                  return <React.Fragment key={`dot-${payload.index}`} />;
+                }}
+                activeDot={{ r: 6, fill: '#10b981', stroke: '#ffffff', strokeWidth: 2 }}
+              />
+            )}
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -517,7 +593,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             {/* Filter Pills */}
             <div className="flex flex-wrap items-center gap-1.5 text-xs">
               <span className="text-stone-400 text-[11px] mr-1">Filter Record Type:</span>
-              {(['All', 'Single', 'Ao5', 'Ao12', 'Ao50'] as const).map((cat) => (
+              {(['All', 'Single', 'Ao5', 'Ao12', 'Ao50', 'Ao100'] as const).map((cat) => (
                 <button
                   key={cat}
                   type="button"
@@ -543,6 +619,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                   if (m.type === 'Ao5') badgeColor = 'bg-orange-500/10 text-orange-300 border-orange-500/30';
                   if (m.type === 'Ao12') badgeColor = 'bg-sky-500/10 text-sky-300 border-sky-500/30';
                   if (m.type === 'Ao50') badgeColor = 'bg-purple-500/10 text-purple-300 border-purple-500/30';
+                  if (m.type === 'Ao100') badgeColor = 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30';
 
                   return (
                     <div

@@ -239,7 +239,7 @@ describe('statsMath utils', () => {
   });
 
   describe('calculatePbProgression', () => {
-    it('accurately calculates running Personal Bests and milestones', () => {
+    it('accurately calculates running Personal Bests, active drops on all points, and milestones', () => {
       // Mock times: 12.0, 10.0, 15.0, 11.0, 13.0
       const result = calculatePbProgression(mockSolves);
 
@@ -253,14 +253,34 @@ describe('statsMath utils', () => {
       expect(result.dataPoints[1].isNewPbSingle).toBe(true);
       expect(result.dataPoints[1].dropSingle).toBe(2.0);
 
-      // Solve 3: PB Single remains 10.0
+      // Solve 3: PB Single remains 10.0, but dropSingle stays 2.0 (active drop over previous PB)
       expect(result.dataPoints[2].pbSingle).toBe(10.0);
       expect(result.dataPoints[2].isNewPbSingle).toBe(false);
+      expect(result.dataPoints[2].dropSingle).toBe(2.0);
 
       // Ao5 on Solve 5 (index 4) should be 12.0
       expect(result.summary.currentPbAo5).toBe(12.0);
       expect(result.summary.currentPbSingle).toBe(10.0);
       expect(result.pbMilestones.length).toBeGreaterThan(0);
+    });
+
+    it('calculates Ao100 when solves reach or exceed 100 solves', () => {
+      const hundredSolves: Solve[] = Array.from({ length: 105 }, (_, i) => ({
+        id: i + 1,
+        index: i + 1,
+        timeMs: 15000 - i * 10,
+        rawTimeSec: (15000 - i * 10) / 1000,
+        finalTimeSec: (15000 - i * 10) / 1000,
+        penalty: 'OK',
+        timestamp: 1600000000000 + i * 1000,
+        date: new Date(1600000000000 + i * 1000),
+        dateStr: '2020-09-13',
+      }));
+
+      const result = calculatePbProgression(hundredSolves);
+      expect(result.dataPoints[98].pbAo100).toBeNull();
+      expect(result.dataPoints[99].pbAo100).not.toBeNull();
+      expect(result.summary.totalAo100Pbs).toBeGreaterThan(0);
     });
   });
 });

@@ -72,13 +72,18 @@ describe('PbProgressionChart component', () => {
     expect(screen.getByText('9.00s')).toBeInTheDocument();
   });
 
-  it('allows toggling line visibility buttons', () => {
+  it('allows toggling line visibility buttons including Ao100', () => {
     render(<PbProgressionChart solves={mockSolves} />);
 
     const singleBtn = screen.getByRole('button', { name: /^Single$/i });
     expect(singleBtn).toBeInTheDocument();
     fireEvent.click(singleBtn);
     expect(singleBtn).toBeInTheDocument();
+
+    const ao100Btn = screen.getByRole('button', { name: /^Ao100$/i });
+    expect(ao100Btn).toBeInTheDocument();
+    fireEvent.click(ao100Btn);
+    expect(ao100Btn).toBeInTheDocument();
   });
 
   it('allows expanding record milestone history drawer', () => {

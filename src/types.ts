@@ -78,20 +78,23 @@ export interface PbDataPoint {
   pbAo5: number | null;
   pbAo12: number | null;
   pbAo50: number | null;
+  pbAo100: number | null;
   isNewPbSingle: boolean;
   isNewPbAo5: boolean;
   isNewPbAo12: boolean;
   isNewPbAo50: boolean;
+  isNewPbAo100: boolean;
   dropSingle?: number;
   dropAo5?: number;
   dropAo12?: number;
   dropAo50?: number;
+  dropAo100?: number;
 }
 
 export interface PbMilestone {
   index: number;
   dateStr: string;
-  type: 'Single' | 'Ao5' | 'Ao12' | 'Ao50';
+  type: 'Single' | 'Ao5' | 'Ao12' | 'Ao50' | 'Ao100';
   timeSec: number;
   dropSec: number;
   scramble?: string;
@@ -102,10 +105,12 @@ export interface PbSummary {
   currentPbAo5: number | null;
   currentPbAo12: number | null;
   currentPbAo50: number | null;
+  currentPbAo100: number | null;
   totalSinglePbs: number;
   totalAo5Pbs: number;
   totalAo12Pbs: number;
   totalAo50Pbs: number;
+  totalAo100Pbs: number;
   singlePbImprovement: number;
 }
 
