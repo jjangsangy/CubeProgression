@@ -10,22 +10,22 @@ subtitle, badge, PNG export, fullscreen modal).
 
 ## `App` (`src/App.tsx`)
 
-The stateful shell and the only place that owns dataset state.
+The main shell component connecting `useCubeDataset()` to presentational layout components.
 
-- **Owns**: `sessions`, `selectedSessionId`, `groupingPeriod`, `customBatchSize`, `fileName`,
-  `errorMsg`, loading/storage UI state (see [`architecture.md`](./architecture.md)).
-- **Loads on mount**: tries `getSavedDataset()`; if empty, generates and persists the demo
-  dataset. Uses artificial `setTimeout` delays to drive the loading animation stages.
-- **Derives** with `useMemo`: `activeSession`, `periodGroups` (`groupSolvesByPeriod`),
-  `globalStats` (`calculateGlobalStats`).
-- **Handlers**: `handleFileUpload` (FileReader → `parseCsTimerFile` → `saveDataset`),
-  `loadSampleData`, `handleClearStorage`, `handleSelectSession`, `handleChangeGrouping`,
-  `handleChangeCustomBatchSize`, `handleExportCSV`.
-- **Layout order**: `Navbar` → `FileUploader` → `MetricsOverviewCards` →
-  `ProgressionChart` → `PbProgressionChart` → `DailyDistributionBoxPlot` →
-  (`DensityShiftChart` + `MetricsEvolutionChart` in a 2-col grid) → `SolvesTable` → footer.
-- Charts render only when `activeSession && globalStats` exist, so clearing storage leaves
-  an empty shell.
+- **Coordinates**: `Navbar`, `FileUploader`, `DashboardView`, and `Footer`.
+- **State source**: `useCubeDataset()` custom hook (`src/hooks/useCubeDataset.ts`).
+
+## `DashboardView` (`DashboardView.tsx`)
+
+Presentational container for session metrics and progression charts. Props: `session`, `stats`, `periodGroups`, `groupingPeriod`.
+
+- Renders `MetricsOverviewCards`, `ProgressionChart`, `PbProgressionChart`, `DailyDistributionBoxPlot`, `DensityShiftChart`, `MetricsEvolutionChart`, and `SolvesTable`.
+- Renders `null` when `session` or `stats` are empty.
+- Enables isolated testing of the entire progression visualization grid without mounting dataset storage hooks.
+
+## `Footer` (`Footer.tsx`)
+
+Presentational footer component with safe-area styling (`safe-area-x safe-area-bottom`).
 
 ## `Navbar` (`Navbar.tsx`)
 

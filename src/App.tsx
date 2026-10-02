@@ -1,349 +1,35 @@
-import { useEffect, useMemo, useState } from 'react';
-import { DailyDistributionBoxPlot } from './components/DailyDistributionBoxPlot';
-import { DensityShiftChart } from './components/DensityShiftChart';
+import { DashboardView } from './components/DashboardView';
 import { FileUploader } from './components/FileUploader';
-import { MetricsEvolutionChart } from './components/MetricsEvolutionChart';
-import { MetricsOverviewCards } from './components/MetricsOverviewCards';
+import { Footer } from './components/Footer';
 import { Navbar } from './components/Navbar';
-import { PbProgressionChart } from './components/PbProgressionChart';
-import { ProgressionChart } from './components/ProgressionChart';
-import { SolvesTable } from './components/SolvesTable';
-
-import type { GroupingPeriod, Session } from './types';
-import { parseCsTimerFile } from './utils/csTimerParser';
-import { clearSavedDataset, getSavedDataset, getStorageInfo, saveDataset } from './utils/dbStorage';
-import { generateSampleData } from './utils/sampleData';
-import { calculateGlobalStats, groupSolvesByPeriod } from './utils/statsMath';
-
-const stepDelay = (ms: number) =>
-  new Promise((res) => setTimeout(res, import.meta.env.MODE === 'test' ? 0 : ms));
+import { useCubeDataset } from './hooks/useCubeDataset';
 
 export default function App() {
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [selectedSessionId, setSelectedSessionId] = useState<string>('');
-  const [groupingPeriod, setGroupingPeriod] = useState<GroupingPeriod>('daily');
-  const [customBatchSize, setCustomBatchSize] = useState<number>(50);
-  const [fileName, setFileName] = useState<string>('cstimer_demo.txt');
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  // Storage states
-  const [isSaved, setIsSaved] = useState<boolean>(false);
-  const [storageUsageMB, setStorageUsageMB] = useState<number | undefined>(undefined);
-  const [savedNotice, setSavedNotice] = useState<string | null>(null);
-
-  // Loading animation states
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [loadingProgress, setLoadingProgress] = useState<number>(20);
-  const [loadingStage, setLoadingStage] = useState<string>(
-    'Checking IndexedDB storage for saved csTimer data...',
-  );
-  const [uploadingFileName, setUploadingFileName] = useState<string>('browser_storage');
-
-  // Initial check for stored dataset in IndexedDB on mount
-  useEffect(() => {
-    const initializeDataset = async () => {
-      setIsLoading(true);
-      setUploadingFileName('browser_storage');
-      setLoadingProgress(20);
-      setLoadingStage('Checking IndexedDB storage for saved csTimer data...');
-      setErrorMsg(null);
-
-      try {
-        const saved = await getSavedDataset();
-        if (saved?.sessions && saved.sessions.length > 0) {
-          setLoadingProgress(60);
-          setLoadingStage(`Restoring saved dataset (${saved.fileName})...`);
-
-          setSessions(saved.sessions);
-          setSelectedSessionId(saved.selectedSessionId || saved.sessions[0].id);
-          setFileName(saved.fileName || 'cstimer_saved.txt');
-          if (saved.groupingPeriod) setGroupingPeriod(saved.groupingPeriod);
-          if (saved.customBatchSize) setCustomBatchSize(saved.customBatchSize);
-
-          setIsSaved(true);
-          const info = await getStorageInfo();
-          if (info) setStorageUsageMB(info.usageMB);
-
-          const totalSolvesCount = saved.sessions.reduce((acc, s) => acc + s.solves.length, 0);
-          setSavedNotice(
-            `Restored ${totalSolvesCount.toLocaleString()} solves across ${saved.sessions.length} sessions from IndexedDB (${saved.fileName})`,
-          );
-
-          setLoadingProgress(100);
-          setLoadingStage('Loaded saved data successfully!');
-          await stepDelay(120);
-          setIsLoading(false);
-          return;
-        }
-      } catch (err) {
-        console.error('Failed to load dataset from IndexedDB:', err);
-      }
-
-      // Fall back to sample dataset if nothing was saved
-      setIsLoading(true);
-      setUploadingFileName('cstimer_demo_350solves.txt');
-      setLoadingProgress(15);
-      setLoadingStage('Initializing sample csTimer dataset...');
-      setErrorMsg(null);
-      setSavedNotice(null);
-
-      try {
-        await stepDelay(120);
-        setLoadingProgress(50);
-        setLoadingStage('Generating 350 solve logs & session history...');
-        const demoSessions = generateSampleData();
-
-        await stepDelay(80);
-        setLoadingProgress(80);
-        setLoadingStage('Computing rolling averages & variance...');
-
-        const demoFileName = 'cstimer_demo_350solves.txt';
-        const initialSessId = demoSessions[0].id;
-
-        setSessions(demoSessions);
-        setSelectedSessionId(initialSessId);
-        setFileName(demoFileName);
-
-        await saveDataset({
-          fileName: demoFileName,
-          sessions: demoSessions,
-          selectedSessionId: initialSessId,
-          groupingPeriod: 'daily',
-          customBatchSize: 50,
-        });
-
-        setIsSaved(true);
-        const info = await getStorageInfo();
-        if (info) setStorageUsageMB(info.usageMB);
-
-        setLoadingProgress(100);
-        setLoadingStage('Complete!');
-
-        await stepDelay(120);
-        setIsLoading(false);
-      } catch (err) {
-        console.error(err);
-        setErrorMsg('Failed to load sample dataset.');
-        setIsLoading(false);
-      }
-    };
-
-    initializeDataset();
-  }, []);
-
-  const loadSampleData = async () => {
-    setIsLoading(true);
-    setUploadingFileName('cstimer_demo_350solves.txt');
-    setLoadingProgress(15);
-    setLoadingStage('Initializing sample csTimer dataset...');
-    setErrorMsg(null);
-    setSavedNotice(null);
-
-    try {
-      await stepDelay(120);
-      setLoadingProgress(50);
-      setLoadingStage('Generating 350 solve logs & session history...');
-      const demoSessions = generateSampleData();
-
-      await stepDelay(80);
-      setLoadingProgress(80);
-      setLoadingStage('Computing rolling averages & variance...');
-
-      const demoFileName = 'cstimer_demo_350solves.txt';
-      const initialSessId = demoSessions[0].id;
-
-      setSessions(demoSessions);
-      setSelectedSessionId(initialSessId);
-      setFileName(demoFileName);
-
-      // Save sample data to IndexedDB
-      await saveDataset({
-        fileName: demoFileName,
-        sessions: demoSessions,
-        selectedSessionId: initialSessId,
-        groupingPeriod,
-        customBatchSize,
-      });
-
-      setIsSaved(true);
-      const info = await getStorageInfo();
-      if (info) setStorageUsageMB(info.usageMB);
-
-      setLoadingProgress(100);
-      setLoadingStage('Complete!');
-
-      await stepDelay(120);
-      setIsLoading(false);
-    } catch (err) {
-      console.error(err);
-      setErrorMsg('Failed to load sample dataset.');
-      setIsLoading(false);
-    }
-  };
-
-  const handleFileUpload = (file: File) => {
-    setIsLoading(true);
-    setUploadingFileName(file.name);
-    setLoadingProgress(15);
-    setLoadingStage('Reading csTimer file format...');
-    setErrorMsg(null);
-    setSavedNotice(null);
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        setLoadingProgress(35);
-        setLoadingStage('Decoding session export JSON/Text...');
-        await stepDelay(150);
-
-        const content = e.target?.result as string;
-        if (!content) throw new Error('File is empty.');
-
-        setLoadingProgress(60);
-        setLoadingStage('Parsing solves, timestamps & scrambles...');
-        await stepDelay(180);
-
-        const parsedSessions = parseCsTimerFile(content);
-
-        setLoadingProgress(80);
-        setLoadingStage('Persisting dataset to IndexedDB browser storage...');
-        await stepDelay(150);
-
-        const initialSessionId = parsedSessions[0].id;
-        setSessions(parsedSessions);
-        setSelectedSessionId(initialSessionId);
-        setFileName(file.name);
-
-        // Save to IndexedDB (supports 100s of MBs)
-        await saveDataset({
-          fileName: file.name,
-          sessions: parsedSessions,
-          selectedSessionId: initialSessionId,
-          groupingPeriod,
-          customBatchSize,
-        });
-
-        setIsSaved(true);
-        const info = await getStorageInfo();
-        if (info) setStorageUsageMB(info.usageMB);
-
-        const totalSolvesCount = parsedSessions.reduce((acc, s) => acc + s.solves.length, 0);
-        setSavedNotice(
-          `Saved ${totalSolvesCount.toLocaleString()} solves across ${parsedSessions.length} sessions to browser storage (${file.name})`,
-        );
-
-        setLoadingProgress(100);
-        setLoadingStage('Done!');
-
-        await stepDelay(120);
-        setIsLoading(false);
-      } catch (err: unknown) {
-        console.error(err);
-        const message = err instanceof Error ? err.message : 'Error parsing csTimer file.';
-        setErrorMsg(message);
-        setIsLoading(false);
-      }
-    };
-    reader.onerror = () => {
-      setErrorMsg('Error reading uploaded file.');
-      setIsLoading(false);
-    };
-    reader.readAsText(file);
-  };
-
-  const handleClearStorage = () => {
-    setIsSaved(false);
-    setStorageUsageMB(undefined);
-    setSavedNotice(null);
-    setSessions([]);
-    setSelectedSessionId('');
-    setFileName('');
-    setErrorMsg(null);
-    clearSavedDataset().catch((err) => console.error('Failed to clear storage:', err));
-  };
-
-  const handleSelectSession = (id: string) => {
-    setSelectedSessionId(id);
-    if (sessions.length > 0) {
-      saveDataset({
-        fileName,
-        sessions,
-        selectedSessionId: id,
-        groupingPeriod,
-        customBatchSize,
-      }).catch((e) => console.error(e));
-    }
-  };
-
-  const handleChangeGrouping = (period: GroupingPeriod) => {
-    setGroupingPeriod(period);
-    if (sessions.length > 0) {
-      saveDataset({
-        fileName,
-        sessions,
-        selectedSessionId,
-        groupingPeriod: period,
-        customBatchSize,
-      }).catch((e) => console.error(e));
-    }
-  };
-
-  const handleChangeCustomBatchSize = (size: number) => {
-    setCustomBatchSize(size);
-    if (sessions.length > 0) {
-      saveDataset({
-        fileName,
-        sessions,
-        selectedSessionId,
-        groupingPeriod,
-        customBatchSize: size,
-      }).catch((e) => console.error(e));
-    }
-  };
-
-  const activeSession = useMemo(() => {
-    return sessions.find((s) => s.id === selectedSessionId) || sessions[0] || null;
-  }, [sessions, selectedSessionId]);
-
-  const periodGroups = useMemo(() => {
-    if (!activeSession) return [];
-    return groupSolvesByPeriod(activeSession.solves, groupingPeriod, customBatchSize);
-  }, [activeSession, groupingPeriod, customBatchSize]);
-
-  const globalStats = useMemo(() => {
-    if (!activeSession) return null;
-    return calculateGlobalStats(activeSession.solves);
-  }, [activeSession]);
-
-  const handleExportCSV = () => {
-    if (!periodGroups.length) return;
-
-    let csvContent = 'data:text/csv;charset=utf-8,';
-    csvContent += 'Period,Solves,Mean(s),Median(s),Min(s),Max(s),Q1(s),Q3(s),StdDev(s)\n';
-
-    periodGroups.forEach((g) => {
-      const row = [
-        `"${g.label}"`,
-        g.solves.length,
-        g.mean,
-        g.median,
-        g.min,
-        g.max,
-        g.q1,
-        g.q3,
-        g.stdDev,
-      ].join(',');
-      csvContent += `${row}\n`;
-    });
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `${activeSession?.name || 'csTimer'}_period_stats.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  const {
+    sessions,
+    selectedSessionId,
+    groupingPeriod,
+    customBatchSize,
+    fileName,
+    errorMsg,
+    isSaved,
+    storageUsageMB,
+    savedNotice,
+    isLoading,
+    loadingProgress,
+    loadingStage,
+    uploadingFileName,
+    activeSession,
+    periodGroups,
+    globalStats,
+    loadSampleData,
+    handleFileUpload,
+    handleClearStorage,
+    handleSelectSession,
+    handleChangeGrouping,
+    handleChangeCustomBatchSize,
+    handleExportCSV,
+  } = useCubeDataset();
 
   return (
     <div className="flex min-h-screen flex-col bg-stone-950 font-sans text-stone-100 antialiased selection:bg-amber-500/30 selection:text-amber-200">
@@ -382,56 +68,17 @@ export default function App() {
           onClearStorage={handleClearStorage}
         />
 
-        {/* Global Summary Metric Cards */}
-        {globalStats && activeSession && (
-          <MetricsOverviewCards stats={globalStats} sessionName={activeSession.name} />
-        )}
-
-        {/* The 4 Progression Plots */}
-        {activeSession && globalStats && (
-          <div className="flex flex-col gap-8">
-            {/* Plot 1: Overall Progression & Moving Averages */}
-            <ProgressionChart
-              solves={activeSession.solves}
-              periodGroups={periodGroups}
-              regression={globalStats.regression}
-              groupingPeriod={groupingPeriod}
-              title={`${activeSession.name}: Progression Over ${activeSession.solves.length} Solves`}
-            />
-
-            {/* Plot 2: Personal Best Progression Over Time */}
-            <PbProgressionChart
-              solves={activeSession.solves}
-              groupingPeriod={groupingPeriod}
-              title={`${activeSession.name}: PB Progression Over Time`}
-            />
-
-            {/* Plot 3: Solve Time Distribution & Variance */}
-            <DailyDistributionBoxPlot periodGroups={periodGroups} groupingPeriod={groupingPeriod} />
-
-            {/* Grid for Plot 3 & Plot 4 */}
-            <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
-              {/* Plot 3: Distribution Density Shift */}
-              <DensityShiftChart
-                solves={activeSession.solves}
-                groupingPeriod={groupingPeriod}
-                title="Time Distribution Shift: Baseline vs. Recent Solves"
-              />
-
-              {/* Plot 4: Metrics Summary / Evolution */}
-              <MetricsEvolutionChart periodGroups={periodGroups} groupingPeriod={groupingPeriod} />
-            </div>
-
-            {/* Detailed Solve Log Table */}
-            <SolvesTable solves={activeSession.solves} />
-          </div>
-        )}
+        {/* Dashboard: Metric Cards, 4 Progression Plots & Solves Table */}
+        <DashboardView
+          session={activeSession}
+          stats={globalStats}
+          periodGroups={periodGroups}
+          groupingPeriod={groupingPeriod}
+        />
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-stone-800/80 bg-stone-950 px-4 py-6 text-center text-xs text-stone-500 sm:px-6 safe-area-x safe-area-bottom">
-        Speedcubing Progression Analyzer &bull; Built with React, Recharts & TypeScript
-      </footer>
+      <Footer />
     </div>
   );
 }

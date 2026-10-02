@@ -38,10 +38,12 @@ CubeProgression/
 ├── assets/.aistudio/         # AI Studio metadata (not imported by app code)
 ├── src/
 │   ├── components/           # all React components (+ colocated *.test.tsx)
-│   ├── utils/                # pure logic: parsing, stats, storage, sample data (+ *.test.ts)
-│   ├── App.tsx               # stateful shell: owns sessions, selection, grouping, loading
+│   ├── hooks/                # custom React hooks (useCubeDataset + *.test.ts)
+│   ├── utils/                # pure logic: parsing, stats, storage, sample data, csv export (+ *.test.ts)
+│   ├── App.tsx               # presentation shell connecting useCubeDataset to layout
 │   ├── App.test.tsx          # integration test of the shell
-│   ├── main.tsx              # React root (createRoot + StrictMode)
+│   ├── main.tsx              # testable React root entrypoint (mountApp)
+│   ├── main.test.tsx         # unit test for root mounting
 │   ├── index.css             # Tailwind entrypoint
 │   ├── setupTests.tsx        # Vitest/jsdom polyfills + Recharts mock
 │   ├── types.ts              # all domain interfaces
@@ -90,10 +92,10 @@ flowchart TD
     P --> Q
 ```
 
-The single source of truth is `sessions: Session[]` in `App.tsx`. Everything downstream is
+The single source of truth is `sessions: Session[]` managed by `useCubeDataset()` in `src/hooks/useCubeDataset.ts`. Everything downstream is
 derived with `useMemo` from `activeSession`, `groupingPeriod`, and `customBatchSize`.
 
-## State ownership (`App.tsx`)
+## State ownership (`useCubeDataset.ts`)
 
 | State | Purpose |
 | --- | --- |
@@ -115,10 +117,12 @@ Persisted settings: whenever the user changes session, grouping period, or batch
 
 ## Rendering pipeline
 
-1. `main.tsx` mounts `<App />` in `StrictMode`.
-2. `App` shows `FileUploader` (upload + session/grouping controls) and, when a session and
-   stats exist, `MetricsOverviewCards`, four charts, and `SolvesTable`.
-3. Every chart is wrapped by `ChartCardWrapper`, which provides the card chrome, a
+1. `main.tsx` mounts `<App />` in `StrictMode` via `mountApp()`.
+2. `App` integrates state from `useCubeDataset()` and coordinates `Navbar`, `FileUploader`,
+   `DashboardView`, and `Footer`.
+3. `DashboardView` conditionally renders `MetricsOverviewCards`, the four progression charts,
+   and `SolvesTable` when an active session and stats exist.
+4. Every chart is wrapped by `ChartCardWrapper`, which provides the card chrome, a
    fullscreen modal, and PNG export via `html-to-image`.
 4. Grouping metadata (labels/axis names) comes from `getPeriodUnitInfo` so charts stay
    consistent across grouping modes.
