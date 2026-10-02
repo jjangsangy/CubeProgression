@@ -119,7 +119,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          className={`lg:col-span-5 border-2 border-dashed rounded-2xl p-5 flex flex-col items-center justify-center text-center transition-all min-h-[220px] relative overflow-hidden ${
+          className={`lg:col-span-5 border-2 border-dashed rounded-2xl p-5 flex flex-col items-center justify-center text-center transition-all min-h-[250px] relative overflow-hidden ${
             isLoading
               ? 'border-amber-500/60 bg-stone-950/80 cursor-wait'
               : isDragging
@@ -127,7 +127,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                 : 'border-stone-700/80 hover:border-amber-500/50 hover:bg-stone-800/40 bg-stone-950/40'
           }`}
         >
-          <AnimatePresence>
+          <AnimatePresence mode="wait">
             {isLoading ? (
               <motion.div
                 key="loading-container"

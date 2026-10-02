@@ -12,6 +12,10 @@ describe('App component', () => {
     render(<App />);
 
     expect(screen.getByText('CubeProgression')).toBeInTheDocument();
+    expect(
+      screen.getByText('Checking IndexedDB storage for saved csTimer data...'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('browser_storage')).toBeInTheDocument();
 
     await waitFor(() => {
       expect(

@@ -288,6 +288,8 @@ describe('FileUploader component', () => {
 
     expect(screen.getByText('Loaded saved data successfully!')).toBeInTheDocument();
     expect(screen.getByText('browser_storage')).toBeInTheDocument();
+    expect(screen.queryByText(/cstimer\.txt/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('File upload dropzone')).toHaveClass('min-h-[250px]');
 
     rerender(
       <FileUploader

@@ -32,10 +32,12 @@ export default function App() {
   const [savedNotice, setSavedNotice] = useState<string | null>(null);
 
   // Loading animation states
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [loadingProgress, setLoadingProgress] = useState<number>(0);
-  const [loadingStage, setLoadingStage] = useState<string>('');
-  const [uploadingFileName, setUploadingFileName] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [loadingProgress, setLoadingProgress] = useState<number>(20);
+  const [loadingStage, setLoadingStage] = useState<string>(
+    'Checking IndexedDB storage for saved csTimer data...',
+  );
+  const [uploadingFileName, setUploadingFileName] = useState<string>('browser_storage');
 
   // Initial check for stored dataset in IndexedDB on mount
   useEffect(() => {

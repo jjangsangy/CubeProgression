@@ -28,6 +28,71 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       });
       expect(hasHorizontalScroll).toBe(false);
     });
+
+    test(`ensures loading animation maintains stable position without layout shift on ${name} (${width}x${height})`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height });
+
+      // First ensure dataset exists in IndexedDB for realistic reload test (as shown in user report)
+      await page.goto('/');
+      await waitForReady(page);
+
+      // Track bounding box and layout stability during page load
+      const frames: Array<{
+        dropHeight: number;
+        distTop: number;
+        distBottom: number;
+        childCount: number;
+      }> = [];
+
+      await page.exposeFunction(
+        'recordLoadingMetrics',
+        (data: { dropHeight: number; distTop: number; distBottom: number; childCount: number }) => {
+          frames.push(data);
+        },
+      );
+
+      await page.addInitScript(() => {
+        const check = () => {
+          const dropzone = document.querySelector('section[aria-label="File upload dropzone"]');
+          if (dropzone) {
+            const dropRect = dropzone.getBoundingClientRect();
+            const loadingContainer = dropzone.querySelector(
+              '.cursor-wait div.flex.w-full.flex-col',
+            );
+            if (loadingContainer) {
+              const loadRect = loadingContainer.getBoundingClientRect();
+              // @ts-expect-error
+              window.recordLoadingMetrics({
+                dropHeight: Math.round(dropRect.height),
+                distTop: Math.round(loadRect.y - dropRect.y),
+                distBottom: Math.round(
+                  dropRect.y + dropRect.height - (loadRect.y + loadRect.height),
+                ),
+                childCount: dropzone.children.length,
+              });
+            }
+          }
+          requestAnimationFrame(check);
+        };
+        requestAnimationFrame(check);
+      });
+
+      await page.reload();
+      await waitForReady(page);
+
+      expect(frames.length).toBeGreaterThan(0);
+
+      for (const frame of frames) {
+        // Dropzone never stacks upload prompt and loading animation simultaneously
+        expect(frame.childCount).toBe(1);
+        // Dropzone height never doubles to ~392px
+        expect(frame.dropHeight).toBeLessThanOrEqual(260);
+        // Loading animation remains vertically centered (never pushed down to the bottom)
+        expect(Math.abs(frame.distTop - frame.distBottom)).toBeLessThanOrEqual(12);
+      }
+    });
   }
 
   test.describe('Mobile Portrait Mode (390x844)', () => {
