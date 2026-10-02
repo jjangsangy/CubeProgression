@@ -6,7 +6,15 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!!**/dist", "!!**/coverage", "!!**/.tmp"]
+    "includes": [
+      "**",
+      "!!**/dist",
+      "!!**/coverage",
+      "!!**/.tmp",
+      "!!**/playwright-report",
+      "!!**/test-results",
+      "!!**/blob-report"
+    ]
   },
   "formatter": {
     "enabled": true,
