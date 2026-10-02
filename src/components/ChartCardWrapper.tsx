@@ -250,23 +250,10 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
     >
       {/* Header Container */}
       <div className="flex w-full min-w-0 flex-col gap-3 border-b border-stone-800/80 pb-4">
-        {/* Top Header Row: Title & Action Export Buttons */}
-        <div className="flex w-full items-start justify-between gap-4">
-          {/* Title & Badge */}
-          <div className="min-w-0 flex-1 pr-2">
-            <div className="flex flex-wrap items-center gap-2">
-              {headerBadge}
-              <h2 className="text-base leading-snug font-bold tracking-tight text-stone-100 sm:text-lg">
-                {title}
-              </h2>
-            </div>
-            {subtitle && (
-              <p className="mt-1 max-w-3xl text-xs leading-relaxed text-stone-400">{subtitle}</p>
-            )}
-          </div>
-
+        {/* Top Header Content: Action Buttons Floated Right so Title & Subtitle Reflow Around Them */}
+        <div className="w-full min-w-0">
           {/* Export / Fullscreen Action Buttons */}
-          <div className="export-exclude flex shrink-0 items-center gap-1.5 self-start pt-0.5">
+          <div className="export-exclude float-right ml-4 mb-1 flex shrink-0 items-center gap-1.5 pt-0.5">
             {/* Download Button */}
             <button
               type="button"
@@ -305,6 +292,19 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
               )}
             </button>
           </div>
+
+          {/* Title & Badge */}
+          <h2 className="text-base leading-snug font-bold tracking-tight text-stone-100 sm:text-lg">
+            {headerBadge && (
+              <span className="mr-2 inline-flex items-center align-middle">{headerBadge}</span>
+            )}
+            <span className="align-middle">{title}</span>
+          </h2>
+
+          {/* Subtitle */}
+          {subtitle && <p className="mt-1 text-xs leading-relaxed text-stone-400">{subtitle}</p>}
+
+          <div className="clear-both" />
         </div>
 
         {/* Secondary Toolbar Row (Controls) */}
