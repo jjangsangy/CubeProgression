@@ -82,9 +82,46 @@ describe('ChartCardWrapper component', () => {
     // Maximizing again and pressing Escape
     fireEvent.click(screen.getByTitle('Maximize to Fullscreen'));
     expect(document.body.style.overflow).toBe('hidden');
+    // Non-escape key does not restore view
+    fireEvent.keyDown(window, { key: 'Enter' });
+    expect(document.body.style.overflow).toBe('hidden');
+
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(document.body.style.overflow).toBe('');
     expect(screen.getByTitle('Maximize to Fullscreen')).toBeInTheDocument();
+
+    // Pressing Escape while already not maximized does nothing
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(document.body.style.overflow).toBe('');
+  });
+
+  it('prevents concurrent download attempts while download is in progress', async () => {
+    let resolvePng: (val: string) => void = () => {};
+    const pendingPromise = new Promise<string>((res) => {
+      resolvePng = res;
+    });
+    vi.mocked(toPng).mockReturnValue(pendingPromise);
+
+    render(
+      <ChartCardWrapper title="Test Concurrent">
+        <div>Content</div>
+      </ChartCardWrapper>,
+    );
+
+    const pngBtn = screen.getByTitle('Download Plot as PNG Image');
+    fireEvent.click(pngBtn);
+
+    // Clicking again immediately while downloading is ignored
+    fireEvent.click(pngBtn);
+
+    await waitFor(() => {
+      expect(toPng).toHaveBeenCalledTimes(1);
+    });
+
+    resolvePng(sampleDataUrl);
+    await waitFor(() => {
+      expect(screen.getByTitle('Download Plot as PNG Image')).not.toBeDisabled();
+    });
   });
 
   it('triggers PNG image export download with base64 dataUrl and onClone / filter hooks', async () => {

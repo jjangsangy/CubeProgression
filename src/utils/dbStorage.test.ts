@@ -207,6 +207,68 @@ describe('dbStorage IndexedDB utility', () => {
     expect(dataset?.sessions[0].solves[2].date).toBeInstanceOf(Date);
   });
 
+  it('handles existing valid Date instances, invalid Date instances, and non-array sessions', async () => {
+    const { mockFactory, store } = createMockIndexedDB();
+    Object.defineProperty(window, 'indexedDB', {
+      value: mockFactory,
+      configurable: true,
+      writable: true,
+    });
+
+    const validDate = new Date(1690000000000);
+    const invalidDate = new Date(Number.NaN);
+
+    // Save directly to the map to preserve Date instances without JSON serialization
+    store.set('active_dataset', {
+      id: 'active_dataset',
+      fileName: 'dates.txt',
+      selectedSessionId: 's1',
+      sessions: [
+        {
+          id: 's1',
+          name: 'Session with Date objects',
+          solves: [
+            {
+              id: 1,
+              index: 1,
+              timeMs: 10000,
+              rawTimeSec: 10,
+              finalTimeSec: 10,
+              penalty: 'OK',
+              timestamp: 1690000000000,
+              date: validDate,
+            },
+            {
+              id: 2,
+              index: 2,
+              timeMs: 11000,
+              rawTimeSec: 11,
+              finalTimeSec: 11,
+              penalty: 'OK',
+              timestamp: 1690000000000,
+              date: invalidDate,
+            },
+          ],
+        },
+      ],
+      updatedAt: Date.now(),
+    });
+
+    const dataset = await getSavedDataset();
+    expect(dataset?.sessions[0].solves[0].date).toBe(validDate);
+    expect(dataset?.sessions[0].solves[1].date).toBeInstanceOf(Date);
+    expect(!Number.isNaN(dataset?.sessions[0].solves[1].date.getTime())).toBe(true);
+
+    // Corrupted record with non-array sessions
+    store.set('active_dataset', {
+      id: 'active_dataset',
+      fileName: 'corrupt.txt',
+      sessions: null,
+    });
+    const corruptDataset = await getSavedDataset();
+    expect(corruptDataset?.sessions).toEqual([]);
+  });
+
   it('returns null when dataset is not in storage', async () => {
     const { mockFactory } = createMockIndexedDB();
     Object.defineProperty(window, 'indexedDB', {

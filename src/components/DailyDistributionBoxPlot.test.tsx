@@ -101,9 +101,15 @@ describe('DailyDistributionBoxPlot component', () => {
     expect(tooltip).not.toBeNull();
     expect(tooltip).toHaveTextContent('Day 1 (2020-09-13)');
     expect(tooltip).toHaveTextContent('Solve: 12.00s');
+    expect(tooltip?.getAttribute('style')).toContain('calc(');
 
     fireEvent.pointerLeave(solveCircle);
     expect(container.querySelector('.pointer-events-none')).toBeNull();
+
+    // Verify outlier diamond polygon is rendered for the 18s solve
+    const polygons = container.querySelectorAll('polygon');
+    expect(polygons.length).toBeGreaterThan(0);
+    expect(polygons[0].getAttribute('fill')).toBe('#ef4444');
   });
 
   it('renders box plot chart with weekly axis label when grouping by week', () => {
@@ -116,6 +122,57 @@ describe('DailyDistributionBoxPlot component', () => {
   it('handles empty periodGroups gracefully', () => {
     render(<DailyDistributionBoxPlot periodGroups={[]} groupingPeriod="daily" />);
     expect(screen.getByText('Daily Solve Time Distribution & Variance')).toBeInTheDocument();
+  });
+
+  it('handles single-solve groups with IQR = 0 and suppresses median polyline', () => {
+    const singleSolveGroup: PeriodGroup[] = [
+      {
+        ...mockPeriodGroups[0],
+        solves: [mockPeriodGroups[0].solves[0]],
+        timesSec: [12.0],
+        mean: 12.0,
+        median: 12.0,
+        min: 12.0,
+        max: 12.0,
+        q1: 12.0,
+        q3: 12.0,
+        iqr: 0,
+        whiskerLow: 12.0,
+        whiskerHigh: 12.0,
+        outliers: [],
+      },
+    ];
+
+    const { container } = render(
+      <DailyDistributionBoxPlot periodGroups={singleSolveGroup} groupingPeriod="daily" />,
+    );
+
+    // Box height should clamp to at least 2px
+    const rects = container.querySelectorAll('rect');
+    const boxRect = Array.from(rects).find((r) => r.getAttribute('stroke') === '#1e293b');
+    expect(boxRect?.getAttribute('height')).toBe('2');
+
+    // Median trend polyline is only drawn if medianPoints.length > 1
+    const polylines = container.querySelectorAll('polyline');
+    expect(polylines.length).toBe(0);
+  });
+
+  it('filters X-axis ticks responsively when period group count is high', () => {
+    const manyGroups: PeriodGroup[] = Array.from({ length: 40 }, (_, idx) => ({
+      ...mockPeriodGroups[0],
+      label: `Day ${idx + 1}`,
+    }));
+
+    const { container } = render(
+      <DailyDistributionBoxPlot periodGroups={manyGroups} groupingPeriod="daily" />,
+    );
+
+    // With 40 groups, step = 5, so idx=0 (1), idx=4 (5), and idx=39 (40) render X-axis labels
+    const texts = Array.from(container.querySelectorAll('text')).map((t) => t.textContent);
+    expect(texts).toContain('1');
+    expect(texts).not.toContain('2');
+    expect(texts).toContain('5');
+    expect(texts).toContain('40');
   });
 
   it('updates the rendered chart width when ResizeObserver reports an entry width', () => {

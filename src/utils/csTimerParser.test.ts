@@ -39,12 +39,27 @@ describe('csTimerParser utils', () => {
         'invalid',
         [[0, -500]], // negative time
         [[0, 'NaN']], // NaN time
+        [null, 'scramble'], // null timeInfo
+        [12000, 'scramble'], // primitive timeInfo
+        [[0], 'scramble'], // timeInfo length < 2
         [[0, 10000], 'R2 U2 R2', '', 1600000000],
       ];
 
       const solves = parseSolvesList(rawSolves);
       expect(solves.length).toBe(1);
       expect(solves[0].timeMs).toBe(10000);
+    });
+
+    it('falls back to Date.now() when timestamp is missing or NaN', () => {
+      const solvesWithoutTs = parseSolvesList([
+        [[0, 10000], 'R U R'], // missing timestamp
+        [[0, 11000], 'R U R', '', Number.NaN], // NaN timestamp
+      ]);
+      expect(solvesWithoutTs.length).toBe(2);
+      expect(Number.isFinite(solvesWithoutTs[0].timestamp)).toBe(true);
+      expect(solvesWithoutTs[0].dateStr).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(Number.isFinite(solvesWithoutTs[1].timestamp)).toBe(true);
+      expect(solvesWithoutTs[1].dateStr).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     });
 
     it('handles timestamps in seconds vs milliseconds', () => {
@@ -116,6 +131,44 @@ describe('csTimerParser utils', () => {
       expect(sessions[0].solves.length).toBe(2);
       expect(sessions[1].name).toBe('One Handed');
       expect(sessions[1].solves.length).toBe(1);
+    });
+
+    it('parses csTimer JSON when sessionData is an object or missing name properties', () => {
+      const csTimerJson = JSON.stringify({
+        properties: {
+          sessionData: {
+            '1': { name: 'Direct Object Name' },
+            '2': { opt: { scrType: '333' } }, // no name
+          },
+        },
+        session1: [[[0, 12000], 'R2 U2', '', 1600000000]],
+        session2: [[[0, 22000], 'L2 D2', '', 1600000100]],
+      });
+
+      const sessions = parseCsTimerFile(csTimerJson);
+      expect(sessions.length).toBe(2);
+      expect(sessions[0].name).toBe('Direct Object Name');
+      expect(sessions[1].name).toBe('Session 2');
+    });
+
+    it('skips sessions containing only invalid solves and rejects file if no valid solves remain', () => {
+      const jsonWithInvalidSolves = JSON.stringify({
+        session1: [[]],
+        session2: [[[0, -500]]],
+      });
+      expect(() => parseCsTimerFile(jsonWithInvalidSolves)).toThrow(
+        'No valid csTimer sessions or solves found in the uploaded file.',
+      );
+
+      const arrayWithInvalidSolves = JSON.stringify([[], [[0, -100]]]);
+      expect(() => parseCsTimerFile(arrayWithInvalidSolves)).toThrow(
+        'No valid csTimer sessions or solves found in the uploaded file.',
+      );
+
+      const primitiveJson = JSON.stringify('just a string');
+      expect(() => parseCsTimerFile(primitiveJson)).toThrow(
+        'No valid csTimer sessions or solves found in the uploaded file.',
+      );
     });
 
     it('parses csTimer JSON with surrounding text/comments', () => {

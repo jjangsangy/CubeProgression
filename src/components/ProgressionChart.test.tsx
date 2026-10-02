@@ -1,7 +1,40 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import React from 'react';
+import { describe, expect, it, vi } from 'vitest';
 import type { LinearRegression, PeriodGroup, Solve } from '../types';
 import { ProgressionChart } from './ProgressionChart';
+
+const captured = vi.hoisted(() => ({
+  tooltipContent: null as React.ReactElement | null,
+  referenceLineLabels: [] as Array<(props: unknown) => React.ReactNode>,
+}));
+
+vi.mock('recharts', async (importOriginal) => {
+  const original = await importOriginal<typeof import('recharts')>();
+  return {
+    ...original,
+    ResponsiveContainer: ({ children }: { children: React.ReactNode }) => children,
+    ComposedChart: ({ children }: { children: React.ReactNode }) => (
+      <svg role="img" aria-label="Mock ComposedChart">
+        {children}
+      </svg>
+    ),
+    CartesianGrid: () => null,
+    XAxis: () => null,
+    YAxis: () => null,
+    Legend: () => null,
+    Tooltip: (props: { content?: React.ReactElement }) => {
+      captured.tooltipContent = props.content ?? null;
+      return null;
+    },
+    ReferenceLine: (props: { label?: (props: unknown) => React.ReactNode }) => {
+      if (typeof props.label === 'function') {
+        captured.referenceLineLabels.push(props.label);
+      }
+      return null;
+    },
+  };
+});
 
 const mockSolves: Solve[] = Array.from({ length: 120 }, (_, idx) => ({
   id: idx + 1,
@@ -144,8 +177,11 @@ describe('ProgressionChart component', () => {
 
     const customAoInput = screen.getByRole('spinbutton');
     expect(customAoInput).toHaveValue(25);
-    fireEvent.change(customAoInput, { target: { value: '25' } });
-    expect(customAoInput).toHaveValue(25);
+    fireEvent.change(customAoInput, { target: { value: '15' } });
+    expect(customAoInput).toHaveValue(15);
+    // Invalid/negative clamps to 3
+    fireEvent.change(customAoInput, { target: { value: '1' } });
+    expect(customAoInput).toHaveValue(3);
   });
 
   it('handles range presets and interval mode changes', () => {
@@ -184,6 +220,11 @@ describe('ProgressionChart component', () => {
     const solveIntervalBtn = screen.getByRole('button', { name: /Solve # Interval/i });
     fireEvent.click(solveIntervalBtn);
     expect(solveIntervalBtn.className).toContain('bg-sky-500');
+
+    // Switch back to All Solves mode button
+    const allSolvesModeBtn = screen.getAllByRole('button', { name: /All Solves/i })[0];
+    fireEvent.click(allSolvesModeBtn);
+    expect(allSolvesModeBtn.className).toContain('bg-sky-500');
   });
 
   it('renders correctly with weekly and monthly groupingPeriod', () => {
@@ -211,5 +252,191 @@ describe('ProgressionChart component', () => {
   it('renders gracefully when solves array is empty', () => {
     render(<ProgressionChart solves={[]} periodGroups={[]} regression={mockRegression} />);
     expect(screen.getByText('Overall Progression & Moving Averages')).toBeInTheDocument();
+  });
+
+  it('renders CustomTooltip correctly across normal, +2, DNF, and inactive states', () => {
+    render(
+      <ProgressionChart
+        solves={mockSolves}
+        periodGroups={mockPeriodGroups}
+        regression={mockRegression}
+      />,
+    );
+
+    const content = captured.tooltipContent as React.ReactElement<{
+      active?: boolean;
+      payload?: Array<{ payload: unknown }>;
+      label?: string | number;
+    }> | null;
+    expect(content).not.toBeNull();
+    if (!content) return;
+
+    // Inactive tooltip returns null
+    const inactive = render(React.cloneElement(content, { active: false, payload: [] }));
+    expect(inactive.container).toBeEmptyDOMElement();
+    inactive.unmount();
+
+    // Normal solve point
+    const normalPayload = [
+      {
+        payload: {
+          index: 1,
+          single: 12.0,
+          ao5: 11.5,
+          ao12: 11.8,
+          trend: 12.0,
+          dateStr: '2020-09-13',
+          scramble: 'R2 U2 F2',
+          penalty: 'OK',
+          periodLabel: 'Period 1',
+        },
+      },
+    ];
+    const normalTooltip = render(
+      React.cloneElement(content, { active: true, payload: normalPayload, label: 1 }),
+    );
+    expect(normalTooltip.getByText('Solve #1')).toBeInTheDocument();
+    expect(normalTooltip.getByText('(Period 1)')).toBeInTheDocument();
+    expect(normalTooltip.getAllByText(/12\.00/)[0]).toBeInTheDocument();
+    expect(normalTooltip.getByText('11.50s')).toBeInTheDocument();
+    expect(normalTooltip.getByText('11.80s')).toBeInTheDocument();
+    expect(normalTooltip.getByText(/Scramble: R2 U2 F2/)).toBeInTheDocument();
+    normalTooltip.unmount();
+
+    // +2 solve point
+    const plusTwoPayload = [
+      {
+        payload: {
+          index: 10,
+          single: 14.0,
+          dateStr: '2020-09-23',
+          penalty: '+2',
+        },
+      },
+    ];
+    const plusTwoTooltip = render(
+      React.cloneElement(content, { active: true, payload: plusTwoPayload, label: 10 }),
+    );
+    expect(plusTwoTooltip.getByText('14.00s')).toBeInTheDocument();
+    expect(plusTwoTooltip.getByText('(+2)')).toBeInTheDocument();
+    plusTwoTooltip.unmount();
+
+    // DNF solve point (verifying single time DNF is displayed)
+    const dnfPayload = [
+      {
+        payload: {
+          index: 6,
+          single: null,
+          dateStr: '2020-09-19',
+          penalty: 'DNF',
+        },
+      },
+    ];
+    const dnfTooltip = render(
+      React.cloneElement(content, { active: true, payload: dnfPayload, label: 6 }),
+    );
+    expect(dnfTooltip.getByText('DNF')).toBeInTheDocument();
+    dnfTooltip.unmount();
+  });
+
+  it('handles solve interval inputs, sliders, and range panel toggling', () => {
+    const { container } = render(
+      <ProgressionChart
+        solves={mockSolves}
+        periodGroups={mockPeriodGroups}
+        regression={mockRegression}
+      />,
+    );
+
+    // Switch to Solve # Interval mode
+    const solveIntervalBtn = screen.getByRole('button', { name: /Solve # Interval/i });
+    fireEvent.click(solveIntervalBtn);
+
+    // Find "From Solve #" and "To Solve #" number inputs
+    const numberInputs = Array.from(container.querySelectorAll('input[type="number"]'));
+    // The first is From Solve #, the second is To Solve #
+    const fromInput = numberInputs[numberInputs.length - 2];
+    const toInput = numberInputs[numberInputs.length - 1];
+
+    // Change start solve number
+    fireEvent.change(fromInput, { target: { value: '30' } });
+    expect(fromInput).toHaveValue(30);
+
+    // Change end solve number
+    fireEvent.change(toInput, { target: { value: '90' } });
+    expect(toInput).toHaveValue(90);
+
+    // Range stats banner should update
+    expect(screen.getByText(/Solves #30/)).toBeInTheDocument();
+
+    // Find sliders (type="range")
+    const sliders = screen.getAllByRole('slider');
+    expect(sliders.length).toBe(2);
+    fireEvent.change(sliders[0], { target: { value: '35' } });
+    expect(fromInput).toHaveValue(35);
+    fireEvent.change(sliders[1], { target: { value: '85' } });
+    expect(toInput).toHaveValue(85);
+
+    // Toggle Range Selector panel collapse and expand
+    const rangeToggleBtn = screen.getByRole('button', { name: /Range Selector/i });
+    fireEvent.click(rangeToggleBtn);
+    // After collapsing, the interval controls should not be visible
+    expect(container.querySelector('input[type="range"]')).toBeNull();
+    fireEvent.click(rangeToggleBtn);
+    expect(container.querySelector('input[type="range"]')).not.toBeNull();
+  });
+
+  it('handles date range filtering and Reset Range button', () => {
+    const { container } = render(
+      <ProgressionChart
+        solves={mockSolves}
+        periodGroups={mockPeriodGroups}
+        regression={mockRegression}
+      />,
+    );
+
+    // Switch to Date Range mode
+    const dateRangeBtn = screen.getByRole('button', { name: /Date Range/i });
+    fireEvent.click(dateRangeBtn);
+
+    // Date inputs
+    const dateInputs = container.querySelectorAll('input[type="date"]');
+    expect(dateInputs.length).toBe(2);
+
+    fireEvent.change(dateInputs[0], { target: { value: '2020-10-01' } });
+    fireEvent.change(dateInputs[1], { target: { value: '2020-10-20' } });
+
+    // Reset button should now be visible since range is filtered
+    const resetBtn = screen.getByRole('button', { name: /Reset Range/i });
+    expect(resetBtn).toBeInTheDocument();
+
+    // Click Reset button to return to all solves
+    fireEvent.click(resetBtn);
+    expect(screen.queryByRole('button', { name: /Reset Range/i })).toBeNull();
+  });
+
+  it('renders period boundary reference line label callback', () => {
+    render(
+      <ProgressionChart
+        solves={mockSolves}
+        periodGroups={mockPeriodGroups}
+        regression={mockRegression}
+      />,
+    );
+
+    expect(captured.referenceLineLabels.length).toBeGreaterThan(0);
+    const labelFn = captured.referenceLineLabels[0];
+
+    // With valid viewBox
+    const rendered = render(
+      <svg role="img" aria-label="Reference line label test">
+        {labelFn({ viewBox: { x: 100, y: 50 } }) as React.ReactElement}
+      </svg>,
+    );
+    expect(rendered.container.querySelector('text')).not.toBeNull();
+    rendered.unmount();
+
+    // Without viewBox
+    expect(labelFn({})).toBeNull();
   });
 });

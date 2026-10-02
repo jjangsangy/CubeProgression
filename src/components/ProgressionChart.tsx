@@ -365,7 +365,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
           <span className="font-normal text-stone-400">{data.dateStr}</span>
         </div>
         <div className="space-y-1">
-          {data.single !== null && solveVisibility !== 'hidden' && (
+          {(data.single !== null || data.penalty === 'DNF') && solveVisibility !== 'hidden' && (
             <div className="flex items-center justify-between gap-4">
               <span className="text-stone-400">Single Time:</span>
               <span className="font-mono font-bold text-stone-100">

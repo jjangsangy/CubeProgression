@@ -155,13 +155,13 @@ export function parseSolvesList(rawSolves: unknown[]): Solve[] {
 
     // Extract timestamp
     let ts = Date.now();
-    if (typeof item[3] === 'number') {
+    if (typeof item[3] === 'number' && Number.isFinite(item[3])) {
       ts = item[3];
       // If timestamp is in seconds, convert to ms
       if (ts < 10000000000) {
         ts = ts * 1000;
       }
-    } else if (typeof item[1] === 'number') {
+    } else if (typeof item[1] === 'number' && Number.isFinite(item[1])) {
       ts = item[1] < 10000000000 ? item[1] * 1000 : item[1];
     }
 

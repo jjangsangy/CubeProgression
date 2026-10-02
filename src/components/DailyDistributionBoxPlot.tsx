@@ -412,7 +412,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
           <div
             style={{
               left: `${(hoveredPoint.x / width) * 100}%`,
-              top: `${(hoveredPoint.y / height) * 100 - 45}px`,
+              top: `calc(${(hoveredPoint.y / height) * 100}% - 45px)`,
             }}
             className="pointer-events-none absolute z-20 -translate-x-1/2 transform rounded border border-stone-700 bg-stone-900 px-2.5 py-1 font-mono text-[11px] text-stone-100 shadow-xl"
           >

@@ -249,4 +249,73 @@ describe('App component', () => {
     });
     consoleErrorSpy.mockRestore();
   });
+
+  it('falls back to demo data when IndexedDB getSavedDataset fails on initial mount', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(dbStorage, 'getSavedDataset').mockRejectedValueOnce(
+      new Error('IndexedDB blocked by browser security'),
+    );
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
+      ).toBeInTheDocument();
+    });
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('displays error message when an empty (0-byte) file is uploaded and recovers when loading sample data', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    render(<App />);
+
+    const fileInput = screen.getByLabelText('Upload csTimer file');
+    await waitFor(() => {
+      expect(fileInput).not.toBeDisabled();
+    });
+
+    const emptyFile = new File([''], 'empty.txt', { type: 'text/plain' });
+    fireEvent.change(fileInput, { target: { files: [emptyFile] } });
+
+    await waitFor(() => {
+      expect(screen.getByText('File is empty.')).toBeInTheDocument();
+    });
+
+    // Recover by clicking Load Sample Data
+    const loadSampleBtns = screen.getAllByRole('button', { name: /Load Sample Data/i });
+    fireEvent.click(loadSampleBtns[0]);
+
+    await waitFor(() => {
+      expect(screen.queryByText('File is empty.')).toBeNull();
+      expect(
+        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('safely handles user interactions and CSV export when dataset is cleared/empty', async () => {
+    render(<App />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
+      ).toBeInTheDocument();
+    });
+
+    // Reset Data
+    const resetBtn = screen.getByTitle('Reset Data');
+    fireEvent.click(resetBtn);
+
+    // Grouping change and CSV export should not throw or download
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click');
+    const weeklyBtn = screen.getByText('Weekly');
+    fireEvent.click(weeklyBtn);
+
+    const exportBtn = screen.getByTitle('Export Period Summary Stats as CSV');
+    fireEvent.click(exportBtn);
+    expect(clickSpy).not.toHaveBeenCalled();
+  });
 });

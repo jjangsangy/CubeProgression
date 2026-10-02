@@ -15,7 +15,7 @@ import type {
  * Calculates official WCA Average of N (Ao5, Ao12, Ao50) ending at solve index
  */
 export function calculateAoN(solves: Solve[], currentIndex: number, n: number): number | null {
-  if (currentIndex < n - 1) return null;
+  if (currentIndex < n - 1 || currentIndex >= solves.length) return null;
 
   const window = solves.slice(currentIndex - n + 1, currentIndex + 1);
   const times: number[] = [];
@@ -472,7 +472,9 @@ export function calculateGlobalStats(solves: Solve[]): GlobalStats {
   // Improvement comparison (First 15% vs Last 15%)
   const sampleSize = Math.max(5, Math.floor(validSolves.length * 0.15));
   const initialTimes = validSolves.slice(0, sampleSize).map((s) => s.finalTimeSec);
-  const recentTimes = validSolves.slice(validSolves.length - sampleSize).map((s) => s.finalTimeSec);
+  const recentTimes = validSolves
+    .slice(Math.max(0, validSolves.length - sampleSize))
+    .map((s) => s.finalTimeSec);
 
   const initialAvg =
     initialTimes.length > 0 ? initialTimes.reduce((a, b) => a + b, 0) / initialTimes.length : 0;
