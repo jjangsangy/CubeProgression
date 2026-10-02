@@ -137,4 +137,19 @@ describe('DensityShiftChart component', () => {
     expect(activeTooltip.getByText('0.0543')).toBeInTheDocument();
     activeTooltip.unmount();
   });
+
+  it('renders mean shift banner with responsive single-column mobile and 3-column tablet/desktop classes', () => {
+    const { container } = render(
+      <DensityShiftChart solves={mockSolves} title="Responsive Banner Test" />,
+    );
+
+    const banner = container.querySelector('.grid.grid-cols-1.sm\\:grid-cols-3');
+    expect(banner).toBeInTheDocument();
+  });
+
+  it('renders compact split sample buttons for mobile headers', () => {
+    render(<DensityShiftChart solves={mockSolves} />);
+    const btn20 = screen.getByRole('button', { name: '20%' });
+    expect(btn20).toHaveClass('text-xs');
+  });
 });

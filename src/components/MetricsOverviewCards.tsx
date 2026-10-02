@@ -72,7 +72,11 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
           </div>
         </div>
         <div className="mt-2">
-          <div className="font-mono text-xl font-black text-emerald-400">
+          <div
+            className={`font-mono text-lg xl:text-xl font-black truncate ${
+              stats.regression.slope <= 0 ? 'text-emerald-400' : 'text-rose-400'
+            }`}
+          >
             {stats.regression.slopeFormatted}
           </div>
           <p className="mt-1 text-[11px] text-stone-400">Linear OLS trend rate</p>
@@ -98,7 +102,11 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
                   ? `+${Math.abs(stats.improvementSec)}s`
                   : '0s'}
             </span>
-            <span className="text-xs font-semibold text-emerald-400">
+            <span
+              className={`text-xs font-semibold ${
+                stats.improvementPct >= 0 ? 'text-emerald-400' : 'text-rose-400'
+              }`}
+            >
               ({stats.improvementPct > 0 ? `+${stats.improvementPct}%` : `${stats.improvementPct}%`}
               )
             </span>
@@ -110,7 +118,7 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
       </div>
 
       {/* 5. Session Solves Summary */}
-      <div className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-4 shadow-lg">
+      <div className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-4 shadow-lg sm:col-span-2 lg:col-span-1">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold tracking-wider text-stone-400 uppercase">
             Session Solves

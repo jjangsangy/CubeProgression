@@ -99,7 +99,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-6 rounded-2xl border border-stone-800 bg-stone-900 p-6 text-stone-100 shadow-xl">
+    <div className="flex flex-col gap-6 rounded-2xl border border-stone-800 bg-stone-900 p-4 sm:p-6 text-stone-100 shadow-xl">
       {/* File Dropzone & Session Controls Grid */}
       <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-12">
         {/* Hidden File Input */}
@@ -241,7 +241,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
               id="session-selector"
               value={selectedSessionId}
               onChange={(e) => onSelectSession(e.target.value)}
-              className="w-full cursor-pointer rounded-xl border border-stone-700 bg-stone-900 px-3.5 py-2.5 text-xs font-medium text-stone-100 transition-colors focus:border-amber-500 focus:outline-none"
+              className="w-full cursor-pointer rounded-xl border border-stone-700 bg-stone-900 px-3.5 py-2.5 text-sm sm:text-xs font-medium text-stone-100 transition-colors focus:border-amber-500 focus:outline-none"
             >
               {sessions.map((sess) => (
                 <option key={sess.id} value={sess.id}>
@@ -330,7 +330,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                         onChangeCustomBatchSize(val);
                       }
                     }}
-                    className="w-16 rounded-lg border border-stone-700 bg-stone-950 px-2 py-1 text-center font-mono text-xs text-stone-100 focus:border-amber-400 focus:outline-none"
+                    className="w-16 rounded-lg border border-stone-700 bg-stone-950 px-2 py-1 text-center font-mono text-sm sm:text-xs text-stone-100 focus:border-amber-400 focus:outline-none"
                   />
                   <span className="text-xs text-stone-400">solves</span>
                 </div>

@@ -356,4 +356,67 @@ describe('FileUploader component', () => {
     );
     expect(screen.queryByText(/0.42\s*MB/i)).not.toBeInTheDocument();
   });
+
+  it('renders grouping period selector with responsive 2-column mobile and 4-column desktop grid', () => {
+    render(
+      <FileUploader
+        sessions={mockSessions}
+        selectedSessionId="s1"
+        onSelectSession={vi.fn()}
+        groupingPeriod="daily"
+        onChangeGrouping={vi.fn()}
+        customBatchSize={50}
+        onChangeCustomBatchSize={vi.fn()}
+        onFileUpload={vi.fn()}
+        onLoadDemo={vi.fn()}
+      />,
+    );
+
+    const dailyBtn = screen.getByText('Daily').closest('button');
+    const gridContainer = dailyBtn?.parentElement;
+    expect(gridContainer).toHaveClass('grid-cols-2');
+    expect(gridContainer).toHaveClass('sm:grid-cols-4');
+  });
+
+  it('hides persistence explanation subtitle on small mobile viewports', () => {
+    render(
+      <FileUploader
+        sessions={mockSessions}
+        selectedSessionId="s1"
+        onSelectSession={vi.fn()}
+        groupingPeriod="daily"
+        onChangeGrouping={vi.fn()}
+        customBatchSize={50}
+        onChangeCustomBatchSize={vi.fn()}
+        onFileUpload={vi.fn()}
+        onLoadDemo={vi.fn()}
+        isSaved={true}
+      />,
+    );
+
+    const subtitle = screen.getByText('Your dataset stays saved across browser reloads');
+    expect(subtitle).toHaveClass('hidden');
+    expect(subtitle).toHaveClass('sm:inline');
+  });
+
+  it('renders saved notice banner when savedNotice is provided without error', () => {
+    render(
+      <FileUploader
+        sessions={mockSessions}
+        selectedSessionId="s1"
+        onSelectSession={vi.fn()}
+        groupingPeriod="daily"
+        onChangeGrouping={vi.fn()}
+        customBatchSize={50}
+        onChangeCustomBatchSize={vi.fn()}
+        onFileUpload={vi.fn()}
+        onLoadDemo={vi.fn()}
+        savedNotice="Restored 350 solves across 1 sessions from IndexedDB"
+      />,
+    );
+
+    expect(
+      screen.getByText('Restored 350 solves across 1 sessions from IndexedDB'),
+    ).toBeInTheDocument();
+  });
 });

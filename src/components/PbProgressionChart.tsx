@@ -236,7 +236,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
       headerControls={
         <div className="flex flex-wrap items-center gap-2">
           {/* Controls to toggle line visibility */}
-          <div className="inline-flex items-center gap-1 rounded-xl border border-stone-700/60 bg-stone-800/80 p-1 text-xs">
+          <div className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-stone-700/60 bg-stone-800/80 p-1 text-xs">
             <span className="px-1 text-[11px] font-medium text-stone-400">Metrics:</span>
             <button
               type="button"
@@ -371,7 +371,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
           </div>
         </div>
 
-        <div className="flex flex-col gap-1 rounded-xl border border-emerald-500/20 bg-stone-950/60 p-3">
+        <div className="flex flex-col gap-1 rounded-xl border border-emerald-500/20 bg-stone-950/60 p-3 col-span-2 sm:col-span-1">
           <div className="flex items-center justify-between text-xs font-medium text-emerald-400">
             <span className="flex items-center gap-1">
               <Award className="h-3.5 w-3.5" /> PB Ao100

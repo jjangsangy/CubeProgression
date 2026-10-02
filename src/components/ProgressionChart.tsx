@@ -66,7 +66,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
   const [windowWidth, setWindowWidth] = useState<number>(
     typeof window !== 'undefined' ? window.innerWidth : 1024,
   );
-  const [_isMobileScreen, setIsMobileScreen] = useState<boolean>(false);
+  const [isMobileScreen, setIsMobileScreen] = useState<boolean>(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -559,7 +559,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
           </div>
 
           {/* Controls to toggle single solve visibility */}
-          <div className="inline-flex items-center gap-1 rounded-lg border border-stone-700/60 bg-stone-800/80 p-1 text-xs">
+          <div className="inline-flex flex-wrap items-center gap-1 rounded-lg border border-stone-700/60 bg-stone-800/80 p-1 text-xs">
             <span className="px-1.5 text-[11px] font-medium text-stone-400">Solves:</span>
             <button
               type="button"
@@ -854,7 +854,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
 
             {/* Focused Range Stats Banner */}
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-stone-700/60 bg-stone-900/90 p-2.5 font-mono text-xs">
-              <div className="flex items-center gap-2 text-stone-300">
+              <div className="flex flex-wrap items-center gap-2 text-stone-300">
                 <Sparkles className="h-3.5 w-3.5 text-amber-400" />
                 <span className="font-sans text-[11px] font-medium text-stone-400">
                   Range Focus:
@@ -900,7 +900,15 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
         {/* CHART DISPLAY */}
         <div className="h-[420px] w-full pt-1">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={{ top: 65, right: 30, left: 10, bottom: 10 }}>
+            <ComposedChart
+              data={chartData}
+              margin={{
+                top: 65,
+                right: isMobileScreen ? 12 : 30,
+                left: isMobileScreen ? 4 : 10,
+                bottom: 10,
+              }}
+            >
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke="#334155"

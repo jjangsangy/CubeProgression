@@ -392,4 +392,44 @@ describe('ChartCardWrapper component', () => {
       expect(consoleSpy).toHaveBeenCalledWith('Failed to export chart image:', expect.any(Error));
     });
   });
+
+  it('hides button text labels on mobile screens using hidden sm:inline and sets accessible aria-labels', () => {
+    render(
+      <ChartCardWrapper title="Responsive Header Chart">
+        <div>Chart Content</div>
+      </ChartCardWrapper>,
+    );
+
+    const pngLabel = screen.getByText('PNG');
+    expect(pngLabel).toHaveClass('hidden');
+    expect(pngLabel).toHaveClass('sm:inline');
+
+    const maxLabel = screen.getByText('Maximize');
+    expect(maxLabel).toHaveClass('hidden');
+    expect(maxLabel).toHaveClass('sm:inline');
+
+    const downloadButton = screen.getByRole('button', { name: 'Download Plot as PNG Image' });
+    expect(downloadButton).toBeInTheDocument();
+
+    const maxButton = screen.getByRole('button', { name: 'Maximize to Fullscreen' });
+    expect(maxButton).toBeInTheDocument();
+  });
+
+  it('applies responsive padding classes to the card and fullscreen backdrop', () => {
+    const { container } = render(
+      <ChartCardWrapper title="Padding Test Chart">
+        <div>Chart Content</div>
+      </ChartCardWrapper>,
+    );
+
+    const card = container.firstElementChild as HTMLElement;
+    expect(card).toHaveClass('p-4');
+    expect(card).toHaveClass('sm:p-6');
+
+    // Maximize to check fullscreen backdrop padding
+    fireEvent.click(screen.getByRole('button', { name: 'Maximize to Fullscreen' }));
+    const backdrop = document.querySelector('.fixed.inset-0.z-\\[100\\]');
+    expect(backdrop).toHaveClass('p-4');
+    expect(backdrop).toHaveClass('sm:p-8');
+  });
 });

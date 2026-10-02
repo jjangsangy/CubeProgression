@@ -32,7 +32,7 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
   }, [filteredSolves, currentPage]);
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-stone-800 bg-stone-900 p-6 text-stone-100 shadow-xl">
+    <div className="flex flex-col gap-4 rounded-2xl border border-stone-800 bg-stone-900 p-4 sm:p-6 text-stone-100 shadow-xl">
       {/* Table Header Controls */}
       <div className="flex flex-col justify-between gap-3 border-b border-stone-800/80 pb-4 sm:flex-row sm:items-center">
         <div>
@@ -56,7 +56,7 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
               setCurrentPage(1);
             }}
             placeholder="Search solves or scrambles..."
-            className="w-full rounded-xl border border-stone-700/80 bg-stone-950/70 py-1.5 pr-3 pl-9 text-xs text-stone-200 placeholder-stone-500 focus:border-amber-500 focus:outline-none"
+            className="w-full rounded-xl border border-stone-700/80 bg-stone-950/70 py-1.5 pr-3 pl-9 text-sm sm:text-xs text-stone-200 placeholder-stone-500 focus:border-amber-500 focus:outline-none"
           />
         </div>
       </div>
@@ -115,8 +115,8 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
                 <td className="px-4 py-2.5 font-sans text-[11px] text-stone-400">
                   {solve.dateStr}
                 </td>
-                <td className="max-w-xs truncate px-4 py-2.5 font-mono text-[11px] text-stone-400">
-                  {solve.scramble || '—'}
+                <td className="px-4 py-2.5 font-mono text-[11px] text-stone-400">
+                  <div className="max-w-xs truncate">{solve.scramble || '—'}</div>
                 </td>
               </tr>
             ))}
@@ -132,20 +132,20 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
       </div>
 
       {/* Pagination Footer */}
-      <div className="flex items-center justify-between pt-2 text-xs text-stone-400">
+      <div className="flex flex-col gap-3 pt-2 text-xs text-stone-400 sm:flex-row sm:items-center sm:justify-between">
         <span>
           Showing {Math.min(filteredSolves.length, (currentPage - 1) * pageSize + 1)} to{' '}
           {Math.min(filteredSolves.length, currentPage * pageSize)} of {filteredSolves.length}{' '}
           solves
         </span>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-end sm:self-auto">
           <button
             type="button"
             aria-label="Previous page"
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            className="rounded-lg bg-stone-800 p-1.5 text-stone-300 transition-colors hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex min-h-[36px] min-w-[36px] items-center justify-center rounded-lg bg-stone-800 p-2 sm:p-1.5 text-stone-300 transition-colors hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -157,7 +157,7 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
             aria-label="Next page"
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            className="rounded-lg bg-stone-800 p-1.5 text-stone-300 transition-colors hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex min-h-[36px] min-w-[36px] items-center justify-center rounded-lg bg-stone-800 p-2 sm:p-1.5 text-stone-300 transition-colors hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ChevronRight className="h-4 w-4" />
           </button>

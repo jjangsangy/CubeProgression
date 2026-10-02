@@ -271,6 +271,7 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
               onClick={handleDownloadImage}
               disabled={isDownloading}
               title="Download Plot as PNG Image"
+              aria-label="Download Plot as PNG Image"
               className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800 px-2.5 py-1.5 text-xs font-medium text-stone-300 shadow-sm transition-all hover:bg-stone-700/80 hover:text-stone-100 active:scale-95 disabled:opacity-50"
             >
               {isDownloading ? (
@@ -286,6 +287,7 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
               type="button"
               onClick={() => setIsMaximized(!isMaximized)}
               title={isMaximized ? 'Restore View (Esc)' : 'Maximize to Fullscreen'}
+              aria-label={isMaximized ? 'Restore View (Esc)' : 'Maximize to Fullscreen'}
               className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800 px-2.5 py-1.5 text-xs font-medium text-stone-300 shadow-sm transition-all hover:bg-stone-700/80 hover:text-stone-100 active:scale-95"
             >
               {isMaximized ? (
@@ -312,7 +314,11 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
       </div>
 
       {/* Main Body Chart Container */}
-      <div className={`flex-1 w-full ${isMaximized ? 'min-h-[550px]' : ''}`}>{children}</div>
+      <div
+        className={`flex-1 w-full ${isMaximized ? 'min-h-[300px] sm:min-h-[450px] md:min-h-[550px]' : ''}`}
+      >
+        {children}
+      </div>
     </div>
   );
 

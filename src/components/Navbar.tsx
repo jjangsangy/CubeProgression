@@ -24,16 +24,16 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="relative border-b border-stone-800 bg-stone-950">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
         {/* Brand Logo & Title */}
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-rose-500 font-black text-stone-950 shadow-lg shadow-amber-500/10">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-rose-500 font-black text-stone-950 shadow-lg shadow-amber-500/10">
             <Timer className="h-6 w-6 stroke-[2.5]" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-base leading-tight font-bold tracking-tight text-stone-100 sm:text-lg">
+              <h1 className="truncate text-base leading-tight font-bold tracking-tight text-stone-100 sm:text-lg">
                 CubeProgression
               </h1>
-              <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-amber-400 uppercase">
+              <span className="hidden rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-amber-400 uppercase sm:inline-block">
                 csTimer Analytics
               </span>
             </div>
@@ -80,6 +80,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             type="button"
             onClick={onExportCSV}
+            aria-label="Export CSV"
             className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800 px-3 py-1.5 text-xs font-medium text-stone-200 transition-all hover:bg-stone-700/80 active:scale-95"
             title="Export Period Summary Stats as CSV"
           >
@@ -91,7 +92,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={onClearStorage}
-              className="cursor-pointer rounded-xl p-1.5 text-stone-400 transition-all hover:bg-rose-500/10 hover:text-rose-400"
+              aria-label="Reset Data"
+              className="cursor-pointer rounded-xl p-2 text-stone-400 transition-all hover:bg-rose-500/10 hover:text-rose-400"
               title="Reset Data"
             >
               <Trash2 className="h-4 w-4" />
@@ -100,7 +102,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={onReset}
-              className="cursor-pointer rounded-xl p-1.5 text-stone-400 transition-all hover:bg-stone-800 hover:text-stone-200"
+              aria-label="Reset Data"
+              className="cursor-pointer rounded-xl p-2 text-stone-400 transition-all hover:bg-stone-800 hover:text-stone-200"
               title="Reset Data"
             >
               <RefreshCw className="h-4 w-4" />

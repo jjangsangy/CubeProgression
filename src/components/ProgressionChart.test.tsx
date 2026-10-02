@@ -439,4 +439,54 @@ describe('ProgressionChart component', () => {
     // Without viewBox
     expect(labelFn({})).toBeNull();
   });
+
+  it('applies touchAction pan-x to solve range sliders for mobile gesture compatibility', () => {
+    render(
+      <ProgressionChart
+        solves={mockSolves}
+        periodGroups={mockPeriodGroups}
+        regression={mockRegression}
+      />,
+    );
+
+    const solveIntervalBtn = screen.getByRole('button', { name: /Solve # Interval/i });
+    fireEvent.click(solveIntervalBtn);
+
+    const sliders = screen.getAllByRole('slider');
+    expect(sliders[0]).toHaveStyle({ touchAction: 'pan-x' });
+    expect(sliders[1]).toHaveStyle({ touchAction: 'pan-x' });
+  });
+
+  it('renders slider container with responsive flex-col md:flex-row layout', () => {
+    const { container } = render(
+      <ProgressionChart
+        solves={mockSolves}
+        periodGroups={mockPeriodGroups}
+        regression={mockRegression}
+      />,
+    );
+
+    const solveIntervalBtn = screen.getByRole('button', { name: /Solve # Interval/i });
+    fireEvent.click(solveIntervalBtn);
+
+    const sliderGroup = container.querySelector('.flex-col.md\\:flex-row');
+    expect(sliderGroup).toBeInTheDocument();
+  });
+
+  it('clamps date range inputs to earliest and latest dates in dataset', () => {
+    const { container } = render(
+      <ProgressionChart
+        solves={mockSolves}
+        periodGroups={mockPeriodGroups}
+        regression={mockRegression}
+      />,
+    );
+
+    const dateRangeBtn = screen.getByRole('button', { name: /Date Range/i });
+    fireEvent.click(dateRangeBtn);
+
+    const dateInputs = container.querySelectorAll('input[type="date"]');
+    expect(dateInputs[0]).toHaveAttribute('min', mockSolves[0].dateStr);
+    expect(dateInputs[1]).toHaveAttribute('max', mockSolves[mockSolves.length - 1].dateStr);
+  });
 });

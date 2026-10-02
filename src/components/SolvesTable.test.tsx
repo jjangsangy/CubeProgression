@@ -68,4 +68,38 @@ describe('SolvesTable component', () => {
     expect(screen.getByText('Showing 1 to 15 of 20 solves')).toBeInTheDocument();
     expect(screen.getByText('1 / 2')).toBeInTheDocument();
   });
+
+  it('contains responsive classes for header and search input', () => {
+    const { container } = render(<SolvesTable solves={mockSolves} />);
+    const header = container.querySelector('.border-b');
+    expect(header).toHaveClass('flex-col');
+    expect(header).toHaveClass('sm:flex-row');
+
+    const searchInput = screen.getByPlaceholderText('Search solves or scrambles...');
+    expect(searchInput.parentElement).toHaveClass('w-full');
+    expect(searchInput.parentElement).toHaveClass('sm:w-64');
+  });
+
+  it('renders table within an overflow-x-auto container for mobile horizontal scrolling', () => {
+    const { container } = render(<SolvesTable solves={mockSolves} />);
+    const scrollContainer = container.querySelector('.overflow-x-auto');
+    expect(scrollContainer).toBeInTheDocument();
+    expect(scrollContainer?.querySelector('table')).toBeInTheDocument();
+  });
+
+  it('wraps scramble strings in max-w-xs truncate containers', () => {
+    const { container } = render(<SolvesTable solves={mockSolves} />);
+    const scrambleWrapper = container.querySelector('td .max-w-xs.truncate');
+    expect(scrambleWrapper).toBeInTheDocument();
+    expect(scrambleWrapper?.textContent).toContain('R2 U2 F2 #1');
+  });
+
+  it('provides accessible names and touch target classes on pagination buttons', () => {
+    render(<SolvesTable solves={mockSolves} />);
+    const prevBtn = screen.getByRole('button', { name: 'Previous page' });
+    const nextBtn = screen.getByRole('button', { name: 'Next page' });
+
+    expect(prevBtn).toHaveClass('min-h-[36px]', 'min-w-[36px]');
+    expect(nextBtn).toHaveClass('min-h-[36px]', 'min-w-[36px]');
+  });
 });

@@ -213,4 +213,49 @@ describe('DailyDistributionBoxPlot component', () => {
 
     expect(chartSvg()?.getAttribute('viewBox')).toBe('0 0 950 400');
   });
+
+  it('clamps SVG viewBox width to minimum 300px when container is narrower than 300px', () => {
+    let capturedCallback: ResizeObserverCallback | undefined;
+
+    class TestResizeObserver {
+      constructor(callback: ResizeObserverCallback) {
+        capturedCallback = callback;
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    }
+
+    vi.stubGlobal('ResizeObserver', TestResizeObserver);
+
+    const { container } = render(
+      <DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="daily" />,
+    );
+
+    act(() => {
+      capturedCallback?.(
+        [
+          {
+            contentRect: { width: 280 } as DOMRectReadOnly,
+            target: container,
+          } as unknown as ResizeObserverEntry,
+        ],
+        {} as ResizeObserver,
+      );
+    });
+
+    const svg = container.querySelector('svg[preserveAspectRatio="none"]');
+    expect(svg?.getAttribute('viewBox')).toBe('0 0 300 400');
+  });
+
+  it('includes mobile and tablet/desktop responsive height classes on the SVG element', () => {
+    const { container } = render(
+      <DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="daily" />,
+    );
+
+    const svg = container.querySelector('svg[preserveAspectRatio="none"]');
+    const classes = svg?.getAttribute('class') || '';
+    expect(classes).toContain('h-[380px]');
+    expect(classes).toContain('sm:h-[400px]');
+  });
 });

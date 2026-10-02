@@ -270,4 +270,36 @@ describe('PbProgressionChart component', () => {
     expect(inactiveTooltip.container).toBeEmptyDOMElement();
     inactiveTooltip.unmount();
   });
+
+  it('renders PB stat summary grid with responsive 2/3/5 column classes and symmetrical 5th card', () => {
+    const { container } = render(<PbProgressionChart solves={longSolves} />);
+
+    const grid = container.querySelector('.grid-cols-2.sm\\:grid-cols-3.lg\\:grid-cols-5');
+    expect(grid).toBeInTheDocument();
+
+    const statCards = grid?.children;
+    expect(statCards).toHaveLength(5);
+    const fifthCard = statCards?.[4];
+    expect(fifthCard).toHaveClass('col-span-2');
+    expect(fifthCard).toHaveClass('sm:col-span-1');
+  });
+
+  it('wraps header controls with flex-wrap to prevent horizontal overflow on narrow mobile screens', () => {
+    const { container } = render(<PbProgressionChart solves={longSolves} />);
+    const controlsContainer = container.querySelector('.inline-flex.flex-wrap');
+    expect(controlsContainer).toBeInTheDocument();
+  });
+
+  it('renders milestone cards with flex-col sm:flex-row for mobile readability and max-h-60 scroll container', () => {
+    const { container } = render(<PbProgressionChart solves={longSolves} />);
+
+    const historyBtn = screen.getByText(/Record Milestones History/i);
+    fireEvent.click(historyBtn);
+
+    const scrollContainer = container.querySelector('.max-h-60.overflow-y-auto');
+    expect(scrollContainer).toBeInTheDocument();
+
+    const milestoneItem = scrollContainer?.querySelector('.flex-col.sm\\:flex-row');
+    expect(milestoneItem).toBeInTheDocument();
+  });
 });

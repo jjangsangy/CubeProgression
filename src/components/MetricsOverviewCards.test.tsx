@@ -99,4 +99,42 @@ describe('MetricsOverviewCards component', () => {
     expect(screen.getByText('0s')).toBeInTheDocument();
     expect(screen.getByText('(0%)')).toBeInTheDocument();
   });
+
+  it('renders with responsive grid classes and symmetrical 5th card span on 2-column viewports', () => {
+    const { container } = render(
+      <MetricsOverviewCards stats={mockGlobalStats} sessionName="Grid Test" />,
+    );
+
+    const grid = container.firstElementChild as HTMLElement;
+    expect(grid).toHaveClass('grid-cols-1');
+    expect(grid).toHaveClass('sm:grid-cols-2');
+    expect(grid).toHaveClass('lg:grid-cols-5');
+
+    const cards = grid.children;
+    expect(cards).toHaveLength(5);
+    const fifthCard = cards[4];
+    expect(fifthCard).toHaveClass('sm:col-span-2');
+    expect(fifthCard).toHaveClass('lg:col-span-1');
+  });
+
+  it('applies emerald color for negative/improving slope and rose color for positive/slowing slope', () => {
+    const improvingStats = {
+      ...mockGlobalStats,
+      regression: { ...mockGlobalStats.regression, slope: -0.02, slopeFormatted: '-0.0200s/solve' },
+      improvementPct: 15.5,
+    };
+    const { rerender } = render(<MetricsOverviewCards stats={improvingStats} sessionName="Fast" />);
+    expect(screen.getByText('-0.0200s/solve')).toHaveClass('text-emerald-400');
+    expect(screen.getByText('(+15.5%)')).toHaveClass('text-emerald-400');
+
+    const degradingStats = {
+      ...mockGlobalStats,
+      regression: { ...mockGlobalStats.regression, slope: 0.03, slopeFormatted: '+0.0300s/solve' },
+      improvementSec: -1.5,
+      improvementPct: -8.2,
+    };
+    rerender(<MetricsOverviewCards stats={degradingStats} sessionName="Slow" />);
+    expect(screen.getByText('+0.0300s/solve')).toHaveClass('text-rose-400');
+    expect(screen.getByText('(-8.2%)')).toHaveClass('text-rose-400');
+  });
 });
