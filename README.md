@@ -22,6 +22,7 @@ A modern, high-performance web application built for speedcubers to analyze **cs
 
 ## 🛠️ Tech Stack
 
+- **Runtime & Package Manager**: [Bun](https://bun.sh/)
 - **Framework**: [React 19](https://react.dev/) + [TypeScript 7](https://www.typescriptlang.org/)
 - **Build Tool**: [Vite 8](https://vite.dev/) (via `@tailwindcss/vite` & `@vitejs/plugin-react`)
 - **Styling & UI**: [Tailwind CSS v4](https://tailwindcss.com/), [Lucide React](https://lucide.dev/), [Motion](https://motion.dev/)
@@ -37,17 +38,15 @@ A modern, high-performance web application built for speedcubers to analyze **cs
 
 ### Prerequisites
 
-Ensure you have either **Bun** (v1.1+ recommended) or **Node.js** (v20 or higher) installed on your system.
+Ensure you have [**Bun**](https://bun.sh/) (v1.1 or higher) installed on your system.
 
 ### Installation
 
 1. Clone or download the repository.
-2. Install dependencies using your preferred package manager:
+2. Install dependencies:
 
 ```bash
 bun install
-# or
-npm install
 ```
 
 ### Development Server
@@ -56,8 +55,6 @@ Start the local development server:
 
 ```bash
 bun run dev
-# or
-npm run dev
 ```
 
 Open your browser and navigate to `http://localhost:3000`.
@@ -68,24 +65,18 @@ Run TypeScript type-checking:
 
 ```bash
 bun run typecheck
-# or
-npm run typecheck
 ```
 
 Check code quality and formatting with [Biome](https://biomejs.dev/):
 
 ```bash
 bun run check
-# or
-npm run check
 ```
 
 Automatically apply formatting and safe lint fixes:
 
 ```bash
 bun run check:write
-# or
-npm run check:write
 ```
 
 To run formatting or linting specifically:
@@ -102,16 +93,12 @@ Run the test suite powered by [Vitest](https://vitest.dev/):
 
 ```bash
 bun run test
-# or
-npm run test
 ```
 
 To run tests with code coverage reporting (via `@vitest/coverage-v8`):
 
 ```bash
 bun run test:coverage
-# or
-npm run test:coverage
 ```
 
 ### Production Build
@@ -120,16 +107,12 @@ Build the production distribution bundle with [Vite 8](https://vite.dev/):
 
 ```bash
 bun run build
-# or
-npm run build
 ```
 
 Preview the production build locally:
 
 ```bash
 bun run preview
-# or
-npm run preview
 ```
 
 ---
