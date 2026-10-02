@@ -1,18 +1,10 @@
-import {
-  Calendar,
-  Database,
-  FileText,
-  FileUp,
-  Layers,
-  Sparkles,
-  Timer,
-  Trash2,
-} from 'lucide-react';
+import { Calendar, Database, FileText, FileUp, Layers, Sparkles, Trash2 } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useStorageNotice } from '../hooks/useStorageNotice';
 import type { GroupingPeriod, Session } from '../types';
 import { CubeLoadingSpinner } from './CubeLoadingSpinner';
+import { LoadingElapsedTimer } from './LoadingElapsedTimer';
 
 interface FileUploaderProps {
   sessions: Session[];
@@ -61,21 +53,6 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   const savedNotice = propSavedNotice !== undefined ? propSavedNotice : storageNotice.savedNotice;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [timerVal, setTimerVal] = useState<number>(0);
-
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | undefined;
-    if (isLoading) {
-      setTimerVal(0);
-      const startTime = Date.now();
-      interval = setInterval(() => {
-        setTimerVal((Date.now() - startTime) / 1000);
-      }, 35);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isLoading]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -148,10 +125,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
               {/* Progress Bar */}
               <div className="flex w-full max-w-xs flex-col gap-1.5">
                 <div className="flex items-center justify-between font-mono text-[11px] text-stone-300">
-                  <span className="flex items-center gap-1 font-semibold text-amber-400">
-                    <Timer className="h-3 w-3 animate-spin text-amber-400" />
-                    {timerVal.toFixed(2)}s
-                  </span>
+                  <LoadingElapsedTimer />
                   <span className="font-bold text-amber-300">{loadingProgress}%</span>
                 </div>
 

@@ -495,6 +495,29 @@ describe('statsMath utils', () => {
       expect(res.pbMilestones.length).toBe(0);
       expect(res.summary.singlePbImprovement).toBe(0);
     });
+
+    it('leverages precomputed solve.ao5 and produces identical PB milestones', () => {
+      const solvesWithAo5: Solve[] = Array.from({ length: 20 }, (_, i) => {
+        const finalTimeSec = 15 - i * 0.2;
+        return {
+          id: i + 1,
+          index: i + 1,
+          timeMs: Math.round(finalTimeSec * 1000),
+          rawTimeSec: finalTimeSec,
+          finalTimeSec,
+          penalty: 'OK' as const,
+          timestamp: 1600000000000 + i * 1000,
+          date: new Date(1600000000000 + i * 1000),
+          dateStr: '2020-09-13',
+          ao5: i >= 4 ? Number((finalTimeSec + 0.2).toFixed(2)) : null,
+        };
+      });
+
+      const resultWithPrecomputed = calculatePbProgression(solvesWithAo5);
+      const ao5Milestones = resultWithPrecomputed.pbMilestones.filter((m) => m.type === 'Ao5');
+      expect(ao5Milestones.length).toBeGreaterThan(0);
+      expect(resultWithPrecomputed.summary.currentPbAo5).toBe(solvesWithAo5[19].ao5);
+    });
   });
 
   describe('getPeriodUnitInfo', () => {

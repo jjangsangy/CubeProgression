@@ -63,14 +63,16 @@ export default function App() {
         />
 
         {/* Dashboard: Metric Cards, 4 Progression Plots & Solves Table */}
-        <Suspense fallback={null}>
-          <DashboardView
-            session={activeSession}
-            stats={globalStats}
-            periodGroups={periodGroups}
-            groupingPeriod={groupingPeriod}
-          />
-        </Suspense>
+        {!isLoading && activeSession && globalStats && (
+          <Suspense fallback={null}>
+            <DashboardView
+              session={activeSession}
+              stats={globalStats}
+              periodGroups={periodGroups}
+              groupingPeriod={groupingPeriod}
+            />
+          </Suspense>
+        )}
       </main>
 
       {/* Footer */}

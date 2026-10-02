@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Session } from '../types';
 import { FileUploader } from './FileUploader';
@@ -507,5 +507,41 @@ describe('FileUploader component', () => {
     progressbar = screen.getByRole('progressbar');
     expect(progressbar).toHaveStyle({ width: '72%' });
     expect(progressbar).toHaveAttribute('aria-valuenow', '72');
+  });
+
+  it('renders LoadingElapsedTimer during loading and updates timer correctly', () => {
+    vi.useFakeTimers();
+    try {
+      render(
+        <FileUploader
+          sessions={mockSessions}
+          selectedSessionId="s1"
+          onSelectSession={vi.fn()}
+          groupingPeriod="daily"
+          onChangeGrouping={vi.fn()}
+          customBatchSize={50}
+          onChangeCustomBatchSize={vi.fn()}
+          onFileUpload={vi.fn()}
+          onLoadDemo={vi.fn()}
+          isLoading={true}
+          loadingProgress={50}
+          loadingStage="Calculating averages..."
+        />,
+      );
+
+      expect(screen.getByText('0.00s')).toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(250);
+      });
+      expect(screen.getByText('0.25s')).toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(750);
+      });
+      expect(screen.getByText('1.00s')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

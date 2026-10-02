@@ -259,4 +259,47 @@ describe('progressionMath pure helpers', () => {
       expect(boundaries[0].label).toBe('Day 1');
     });
   });
+
+  describe('buildProgressionChartData optimization validation', () => {
+    it('produces identical output for filtered subset with non-contiguous IDs', () => {
+      const fullSolves: Solve[] = Array.from({ length: 50 }, (_, i) => ({
+        id: 100 + i,
+        index: i + 1,
+        timeMs: 12000 + (i % 5) * 100,
+        rawTimeSec: (12000 + (i % 5) * 100) / 1000,
+        finalTimeSec: (12000 + (i % 5) * 100) / 1000,
+        penalty: 'OK',
+        timestamp: 1600000000000 + i * 60000,
+        date: new Date(1600000000000 + i * 60000),
+        dateStr: '2020-09-13',
+      }));
+
+      const filtered = [fullSolves[5], fullSolves[15], fullSolves[30]];
+      const reg: LinearRegression = {
+        slope: -0.01,
+        intercept: 12,
+        r2: 0.8,
+        slopeFormatted: '-0.0100s/solve',
+      };
+      const periodMap = new Map<number, { periodNumber: number; periodLabel: string }>();
+
+      const result = buildProgressionChartData(filtered, fullSolves, reg, periodMap, true, 5);
+
+      expect(result).toHaveLength(3);
+      expect(result[0].index).toBe(6);
+      expect(result[1].index).toBe(16);
+      expect(result[2].index).toBe(31);
+    });
+
+    it('handles solves missing from fullSolves gracefully without error', () => {
+      const fullSolves: Solve[] = [mockSolves[0], mockSolves[1]];
+      const phantomSolve: Solve = { ...mockSolves[2], id: 9999 };
+      const reg = { slope: 0, intercept: 10, r2: 0, slopeFormatted: '0s/solve' };
+
+      const result = buildProgressionChartData([phantomSolve], fullSolves, reg, new Map(), true, 5);
+      expect(result).toHaveLength(1);
+      expect(result[0].ao5).toBeNull();
+      expect(result[0].customAo).toBeNull();
+    });
+  });
 });

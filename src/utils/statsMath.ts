@@ -178,9 +178,21 @@ export function computeGroupStats(
   const lowLimit = q1 - 1.5 * iqr;
   const highLimit = q3 + 1.5 * iqr;
 
-  const insideTimes = validTimes.filter((t) => t >= lowLimit && t <= highLimit);
-  const whiskerLow = insideTimes.length > 0 ? insideTimes[0] : q1;
-  const whiskerHigh = insideTimes.length > 0 ? insideTimes[insideTimes.length - 1] : q3;
+  let whiskerLow = q1;
+  for (let i = 0; i < validTimes.length; i++) {
+    if (validTimes[i] >= lowLimit) {
+      whiskerLow = validTimes[i];
+      break;
+    }
+  }
+
+  let whiskerHigh = q3;
+  for (let i = validTimes.length - 1; i >= 0; i--) {
+    if (validTimes[i] <= highLimit) {
+      whiskerHigh = validTimes[i];
+      break;
+    }
+  }
 
   const outliers = validTimes.filter((t) => t < lowLimit || t > highLimit);
 
@@ -278,14 +290,13 @@ export function groupSolvesByPeriod(
   // Time-based grouping
   const mapKeyToSolves = new Map<string, Solve[]>();
   const mapKeyToDates = new Map<string, { start: Date; end: Date; label: string }>();
+  const tz = Temporal.Now.timeZoneId();
 
   solves.forEach((s) => {
     let key = '';
     let label = '';
     const d = new Date(s.timestamp);
-    const zdt = Temporal.Instant.fromEpochMilliseconds(s.timestamp).toZonedDateTimeISO(
-      Temporal.Now.timeZoneId(),
-    );
+    const zdt = Temporal.Instant.fromEpochMilliseconds(s.timestamp).toZonedDateTimeISO(tz);
 
     if (period === 'daily') {
       key = zdt.toPlainDate().toString();
@@ -435,9 +446,15 @@ export function calculateGlobalStats(solves: Solve[]): GlobalStats {
   let worstSingle: Solve | null = null;
 
   if (validSolves.length > 0) {
-    const sorted = [...validSolves].sort((a, b) => a.finalTimeSec - b.finalTimeSec);
-    bestSingle = sorted[0];
-    worstSingle = sorted[sorted.length - 1];
+    let best = validSolves[0];
+    let worst = validSolves[0];
+    for (let i = 1; i < validSolves.length; i++) {
+      const s = validSolves[i];
+      if (s.finalTimeSec < best.finalTimeSec) best = s;
+      if (s.finalTimeSec > worst.finalTimeSec) worst = s;
+    }
+    bestSingle = best;
+    worstSingle = worst;
   }
 
   // Find best Ao5, Ao12, Ao50 across session
@@ -446,7 +463,7 @@ export function calculateGlobalStats(solves: Solve[]): GlobalStats {
   let bestAo50: number | null = null;
 
   for (let i = 0; i < solves.length; i++) {
-    const ao5 = calculateAoN(solves, i, 5);
+    const ao5 = solves[i].ao5 ?? calculateAoN(solves, i, 5);
     const ao12 = solves[i].ao12;
     const ao50 = solves[i].ao50;
 
@@ -456,7 +473,10 @@ export function calculateGlobalStats(solves: Solve[]): GlobalStats {
   }
 
   // Current Ao5 and Ao12
-  const currentAo5 = calculateAoN(solves, solves.length - 1, 5);
+  const currentAo5 =
+    solves.length > 0
+      ? (solves[solves.length - 1].ao5 ?? calculateAoN(solves, solves.length - 1, 5))
+      : null;
   const currentAo12 = solves.length > 0 ? solves[solves.length - 1].ao12 || null : null;
 
   const times = validSolves.map((s) => s.finalTimeSec);
@@ -533,7 +553,7 @@ export function calculatePbProgression(solves: Solve[]): PbProgressionResult {
 
   const dataPoints: PbDataPoint[] = solves.map((solve, idx) => {
     const single = solve.penalty === 'DNF' ? null : solve.finalTimeSec;
-    const ao5 = calculateAoN(solves, idx, 5);
+    const ao5 = solve.ao5 ?? calculateAoN(solves, idx, 5);
     const ao12 = solve.ao12 ?? calculateAoN(solves, idx, 12);
     const ao50 = solve.ao50 ?? calculateAoN(solves, idx, 50);
     const ao100 = solve.ao100 ?? calculateAoN(solves, idx, 100);

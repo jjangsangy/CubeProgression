@@ -1,6 +1,6 @@
 import { AlertCircle, ChevronLeft, ChevronRight, Clock, Search } from 'lucide-react';
 import type React from 'react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Solve } from '../types';
 
 interface SolvesTableProps {
@@ -13,20 +13,24 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
   const pageSize = 15;
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
-  const filteredSolves = !normalizedSearch
-    ? solves
-    : solves.filter(
-        (s) =>
-          s.index.toString().includes(normalizedSearch) ||
-          s.finalTimeSec.toString().includes(normalizedSearch) ||
-          s.dateStr.includes(normalizedSearch) ||
-          s.penalty?.toLowerCase().includes(normalizedSearch) ||
-          s.scramble?.toLowerCase().includes(normalizedSearch),
-      );
+  const filteredSolves = useMemo(() => {
+    if (!normalizedSearch) return solves;
+    return solves.filter(
+      (s) =>
+        s.index.toString().includes(normalizedSearch) ||
+        s.finalTimeSec.toString().includes(normalizedSearch) ||
+        s.dateStr.includes(normalizedSearch) ||
+        s.penalty?.toLowerCase().includes(normalizedSearch) ||
+        s.scramble?.toLowerCase().includes(normalizedSearch),
+    );
+  }, [solves, normalizedSearch]);
 
   const totalPages = Math.ceil(filteredSolves.length / pageSize) || 1;
   const start = (currentPage - 1) * pageSize;
-  const currentSolves = filteredSolves.slice(start, start + pageSize);
+  const currentSolves = useMemo(
+    () => filteredSolves.slice(start, start + pageSize),
+    [filteredSolves, start],
+  );
 
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-stone-800 bg-stone-900 p-4 sm:p-6 text-stone-100 shadow-xl">
@@ -59,8 +63,8 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
       </div>
 
       {/* Table Canvas */}
-      <div className="overflow-x-auto rounded-xl border border-stone-800/80">
-        <table className="w-full text-left text-xs text-stone-300">
+      <div className="min-h-[460px] overflow-x-auto rounded-xl border border-stone-800/80">
+        <table className="w-full min-w-[680px] table-fixed text-left text-xs text-stone-300">
           <thead className="border-b border-stone-800 bg-stone-950/80 font-mono text-[10px] tracking-wider text-stone-400 uppercase">
             <tr>
               <th className="w-16 px-4 py-3">#</th>

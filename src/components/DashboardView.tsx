@@ -1,5 +1,6 @@
 import type { GlobalStats, GroupingPeriod, PeriodGroup, Session } from '../types';
 import { DailyDistributionBoxPlot } from './DailyDistributionBoxPlot';
+import { DeferredChart } from './DeferredChart';
 import { DensityShiftChart } from './DensityShiftChart';
 import { MetricsEvolutionChart } from './MetricsEvolutionChart';
 import { MetricsOverviewCards } from './MetricsOverviewCards';
@@ -41,30 +42,40 @@ export function DashboardView({
         />
 
         {/* Plot 2: Personal Best Progression Over Time */}
-        <PbProgressionChart
-          solves={session.solves}
-          groupingPeriod={groupingPeriod}
-          title={`${session.name}: PB Progression Over Time`}
-        />
-
-        {/* Plot 3: Solve Time Distribution & Variance */}
-        <DailyDistributionBoxPlot periodGroups={periodGroups} groupingPeriod={groupingPeriod} />
-
-        {/* Grid for Plot 3 & Plot 4 */}
-        <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
-          {/* Plot 3: Distribution Density Shift */}
-          <DensityShiftChart
+        <DeferredChart minHeight={540} fallbackTitle="PB Progression">
+          <PbProgressionChart
             solves={session.solves}
             groupingPeriod={groupingPeriod}
-            title="Time Distribution Shift: Baseline vs. Recent Solves"
+            title={`${session.name}: PB Progression Over Time`}
           />
+        </DeferredChart>
 
-          {/* Plot 4: Metrics Summary / Evolution */}
-          <MetricsEvolutionChart periodGroups={periodGroups} groupingPeriod={groupingPeriod} />
+        {/* Plot 3: Solve Time Distribution & Variance */}
+        <DeferredChart minHeight={500} fallbackTitle="Solve Time Distribution">
+          <DailyDistributionBoxPlot periodGroups={periodGroups} groupingPeriod={groupingPeriod} />
+        </DeferredChart>
+
+        {/* Grid for Plot 4 & Plot 5 */}
+        <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
+          {/* Plot 4: Distribution Density Shift */}
+          <DeferredChart minHeight={460} fallbackTitle="Density Shift">
+            <DensityShiftChart
+              solves={session.solves}
+              groupingPeriod={groupingPeriod}
+              title="Time Distribution Shift: Baseline vs. Recent Solves"
+            />
+          </DeferredChart>
+
+          {/* Plot 5: Metrics Summary / Evolution */}
+          <DeferredChart minHeight={460} fallbackTitle="Metrics Evolution">
+            <MetricsEvolutionChart periodGroups={periodGroups} groupingPeriod={groupingPeriod} />
+          </DeferredChart>
         </div>
 
         {/* Detailed Solve Log Table */}
-        <SolvesTable solves={session.solves} />
+        <DeferredChart minHeight={600} fallbackTitle="Solves Table">
+          <SolvesTable solves={session.solves} />
+        </DeferredChart>
       </div>
     </>
   );

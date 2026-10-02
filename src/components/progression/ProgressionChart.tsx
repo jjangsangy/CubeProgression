@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { calculateLinearRegression, getPeriodUnitInfo } from '../../utils/statsMath';
 import { ChartCardWrapper } from '../ChartCardWrapper';
 import { ProgressionChartCanvas } from './ProgressionChartCanvas';
@@ -74,41 +74,57 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
   } = useProgressionRange(solves);
 
   // Re-estimate OLS Linear Regression for the filtered range
-  const filteredRegression = calculateLinearRegression(filteredSolves);
+  const filteredRegression = useMemo(
+    () => calculateLinearRegression(filteredSolves),
+    [filteredSolves],
+  );
 
   // Map solve index to period group info for hover tooltips
-  const solvePeriodMap = buildSolvePeriodMap(periodGroups, unitInfo.unitSingular);
+  const solvePeriodMap = useMemo(
+    () => buildSolvePeriodMap(periodGroups, unitInfo.unitSingular),
+    [periodGroups, unitInfo.unitSingular],
+  );
 
   // Construct chart data for filtered range
-  const chartData = buildProgressionChartData(
-    filteredSolves,
-    solves,
-    filteredRegression,
-    solvePeriodMap,
-    showCustomAo,
-    customAoN,
+  const chartData = useMemo(
+    () =>
+      buildProgressionChartData(
+        filteredSolves,
+        solves,
+        filteredRegression,
+        solvePeriodMap,
+        showCustomAo,
+        customAoN,
+      ),
+    [filteredSolves, solves, filteredRegression, solvePeriodMap, showCustomAo, customAoN],
   );
 
   // Raw period boundaries matching the filtered solves range
-  const rawPeriodBoundaries = computeRawPeriodBoundaries(
-    periodGroups,
-    filteredSolves,
-    unitInfo.unitSingular,
+  const rawPeriodBoundaries = useMemo(
+    () => computeRawPeriodBoundaries(periodGroups, filteredSolves, unitInfo.unitSingular),
+    [periodGroups, filteredSolves, unitInfo.unitSingular],
   );
 
   // Responsive tick calculation for vertical period boundary labels
-  const responsiveBoundaryInfo = downsampleBoundaryTicks(rawPeriodBoundaries, windowWidth);
+  const responsiveBoundaryInfo = useMemo(
+    () => downsampleBoundaryTicks(rawPeriodBoundaries, windowWidth),
+    [rawPeriodBoundaries, windowWidth],
+  );
 
   // Y domain with padding based on active visible metrics in filtered dataset
-  const { minY, maxY } = calculateProgressionYDomain(chartData, {
-    solveVisibility,
-    showAo5,
-    showAo12,
-    showAo50,
-    showAo100,
-    showCustomAo,
-    showTrend,
-  });
+  const { minY, maxY } = useMemo(
+    () =>
+      calculateProgressionYDomain(chartData, {
+        solveVisibility,
+        showAo5,
+        showAo12,
+        showAo50,
+        showAo100,
+        showCustomAo,
+        showTrend,
+      }),
+    [chartData, solveVisibility, showAo5, showAo12, showAo50, showAo100, showCustomAo, showTrend],
+  );
 
   const singleLineStyle = getSingleLineStyle(solveVisibility);
 

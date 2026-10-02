@@ -143,6 +143,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
           {/* 1. Single Solve Time */}
           {solveVisibility !== 'hidden' && (
             <Line
+              isAnimationActive={false}
               type="linear"
               dataKey="single"
               name="Single Solve Time"
@@ -158,6 +159,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
           {/* 2. 5-Solve Moving Average (Ao5) */}
           {showAo5 && (
             <Line
+              isAnimationActive={false}
               type="monotone"
               dataKey="ao5"
               name="5-Solve Moving Average (Ao5)"
@@ -171,6 +173,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
           {/* 3. 12-Solve Moving Average (Ao12) */}
           {showAo12 && (
             <Line
+              isAnimationActive={false}
               type="monotone"
               dataKey="ao12"
               name="12-Solve Moving Average (Ao12)"
@@ -184,6 +187,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
           {/* 4. 50-Solve Moving Average (Ao50) */}
           {showAo50 && (
             <Line
+              isAnimationActive={false}
               type="monotone"
               dataKey="ao50"
               name="50-Solve Moving Average (Ao50)"
@@ -197,6 +201,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
           {/* 5. 100-Solve Moving Average (Ao100) */}
           {showAo100 && (
             <Line
+              isAnimationActive={false}
               type="monotone"
               dataKey="ao100"
               name="100-Solve Moving Average (Ao100)"
@@ -210,6 +215,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
           {/* 6. Custom Ao N Moving Average */}
           {showCustomAo && customAoN >= 3 && (
             <Line
+              isAnimationActive={false}
               type="monotone"
               dataKey="customAo"
               name={`${customAoN}-Solve Moving Average (Ao${customAoN})`}
@@ -223,6 +229,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
           {/* 7. Overall/Range Trend Line */}
           {showTrend && (
             <Line
+              isAnimationActive={false}
               type="linear"
               dataKey="trend"
               name={`Range Trend (${slopeFormatted})`}
