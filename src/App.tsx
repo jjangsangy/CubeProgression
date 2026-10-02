@@ -1,8 +1,10 @@
-import { DashboardView } from './components/DashboardView';
+import { lazy, Suspense } from 'react';
 import { FileUploader } from './components/FileUploader';
 import { Footer } from './components/Footer';
 import { Navbar } from './components/Navbar';
 import { useCubeDatasetCore } from './hooks/useCubeDatasetCore';
+
+const DashboardView = lazy(() => import('./components/DashboardView'));
 
 export default function App() {
   const {
@@ -61,12 +63,14 @@ export default function App() {
         />
 
         {/* Dashboard: Metric Cards, 4 Progression Plots & Solves Table */}
-        <DashboardView
-          session={activeSession}
-          stats={globalStats}
-          periodGroups={periodGroups}
-          groupingPeriod={groupingPeriod}
-        />
+        <Suspense fallback={null}>
+          <DashboardView
+            session={activeSession}
+            stats={globalStats}
+            periodGroups={periodGroups}
+            groupingPeriod={groupingPeriod}
+          />
+        </Suspense>
       </main>
 
       {/* Footer */}

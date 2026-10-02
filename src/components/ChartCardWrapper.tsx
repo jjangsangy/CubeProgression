@@ -1,4 +1,3 @@
-import { toCanvas, toPng } from 'html-to-image';
 import { Download, Loader2, Maximize2, Minimize2 } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
@@ -99,6 +98,8 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
     try {
       setIsDownloading(true);
       const el = cardRef.current;
+
+      const { toCanvas, toPng } = await import('html-to-image');
 
       // Small pause to allow layout & rendering to settle
       await new Promise((resolve) => setTimeout(resolve, 150));

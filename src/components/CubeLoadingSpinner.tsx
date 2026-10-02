@@ -1,4 +1,3 @@
-import { motion } from 'motion/react';
 import type React from 'react';
 
 interface CubeLoadingSpinnerProps {
@@ -32,36 +31,39 @@ export const CubeLoadingSpinner: React.FC<CubeLoadingSpinnerProps> = ({ size = '
   ];
 
   return (
-    <div className="relative flex items-center justify-center">
+    <div
+      role="status"
+      aria-label="Loading..."
+      className="relative flex items-center justify-center"
+    >
       {/* Outer spinning ambient glow ring */}
-      <div className="absolute inset-0 animate-pulse rounded-2xl bg-amber-500/20 blur-xl" />
       <div
+        data-testid="cube-glow-ambient"
+        className="absolute inset-0 animate-pulse rounded-2xl bg-amber-500/20 blur-xl"
+      />
+      <div
+        data-testid="cube-spin-ring"
         className="absolute -inset-2 animate-spin rounded-2xl border-2 border-amber-500/30 border-t-amber-400 border-r-amber-500/10"
         style={{ animationDuration: '1.8s' }}
       />
 
       {/* 3x3 Cube Grid Visual with animated face tile shifts */}
       <div
+        data-testid="cube-spinner-grid"
         className={`relative grid grid-cols-3 gap-1 bg-stone-950/90 border border-stone-700/80 rounded-xl shadow-2xl ${sizeClasses[size]}`}
       >
         {cubeTiles.map((tile) => (
-          <motion.div
+          <div
             key={tile.id}
-            className={`${tileSizes[size]} rounded-sm ${tile.colorClass} shadow-sm`}
-            animate={{
-              scale: [1, 1.25, 0.9, 1],
-              opacity: [0.75, 1, 0.75],
-              rotate: [0, tile.rotateDir, 0],
-            }}
-            transition={{
-              duration: 1.4,
-              repeat: Infinity,
-              delay: tile.delay,
-              ease: 'easeInOut',
-            }}
+            data-testid={tile.id}
+            className={`${tileSizes[size]} rounded-sm ${tile.colorClass} shadow-sm ${
+              tile.rotateDir > 0 ? 'animate-cube-cw' : 'animate-cube-ccw'
+            }`}
+            style={{ animationDelay: `${tile.delay}s` }}
           />
         ))}
       </div>
+      <span className="sr-only">Loading solve data...</span>
     </div>
   );
 };
