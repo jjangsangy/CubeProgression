@@ -423,8 +423,8 @@ export function calculateGlobalStats(solves: Solve[]): GlobalStats {
     const ao50 = solves[i].ao50;
 
     if (ao5 !== null && (bestAo5 === null || ao5 < bestAo5)) bestAo5 = ao5;
-    if (ao12 !== null && (bestAo12 === null || ao12 < bestAo12)) bestAo12 = ao12;
-    if (ao50 !== null && (bestAo50 === null || ao50 < bestAo50)) bestAo50 = ao50;
+    if (ao12 != null && (bestAo12 === null || ao12 < bestAo12)) bestAo12 = ao12;
+    if (ao50 != null && (bestAo50 === null || ao50 < bestAo50)) bestAo50 = ao50;
   }
 
   // Current Ao5 and Ao12
