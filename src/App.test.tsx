@@ -18,6 +18,10 @@ describe('App component', () => {
         screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
       ).toBeInTheDocument();
     });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Complete!')).not.toBeInTheDocument();
+    });
   });
 
   it('restores saved dataset from IndexedDB on initial mount when available', async () => {
@@ -64,6 +68,10 @@ describe('App component', () => {
 
     await waitFor(() => {
       expect(screen.getAllByText(/Restored Session/).length).toBeGreaterThan(0);
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loaded saved data successfully!')).not.toBeInTheDocument();
     });
   });
 

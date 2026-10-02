@@ -127,7 +127,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                 : 'border-stone-700/80 hover:border-amber-500/50 hover:bg-stone-800/40 bg-stone-950/40'
           }`}
         >
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {isLoading ? (
               <motion.div
                 key="loading-container"

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Session } from '../types';
 import { FileUploader } from './FileUploader';
@@ -265,6 +265,49 @@ describe('FileUploader component', () => {
     expect(screen.getByText('Parsing solves and timestamps...')).toBeInTheDocument();
     expect(screen.getByText('cstimer_my_solves.txt')).toBeInTheDocument();
     expect(screen.getByText('65%')).toBeInTheDocument();
+  });
+
+  it('unmounts loading animation and displays upload prompt when isLoading switches to false', async () => {
+    const { rerender } = render(
+      <FileUploader
+        sessions={mockSessions}
+        selectedSessionId="s1"
+        onSelectSession={vi.fn()}
+        groupingPeriod="daily"
+        onChangeGrouping={vi.fn()}
+        customBatchSize={50}
+        onChangeCustomBatchSize={vi.fn()}
+        onFileUpload={vi.fn()}
+        onLoadDemo={vi.fn()}
+        isLoading={true}
+        loadingProgress={100}
+        loadingStage="Loaded saved data successfully!"
+        uploadingFileName="browser_storage"
+      />,
+    );
+
+    expect(screen.getByText('Loaded saved data successfully!')).toBeInTheDocument();
+    expect(screen.getByText('browser_storage')).toBeInTheDocument();
+
+    rerender(
+      <FileUploader
+        sessions={mockSessions}
+        selectedSessionId="s1"
+        onSelectSession={vi.fn()}
+        groupingPeriod="daily"
+        onChangeGrouping={vi.fn()}
+        customBatchSize={50}
+        onChangeCustomBatchSize={vi.fn()}
+        onFileUpload={vi.fn()}
+        onLoadDemo={vi.fn()}
+        isLoading={false}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loaded saved data successfully!')).not.toBeInTheDocument();
+    });
+    expect(screen.getByText(/cstimer\.txt/)).toBeInTheDocument();
   });
 
   it('renders storage status bar when isSaved is true and handles reset dataset', () => {
