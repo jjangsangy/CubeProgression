@@ -1,3 +1,4 @@
+import { Temporal } from 'temporal-polyfill';
 import {
   Solve,
   PeriodGroup,
@@ -278,27 +279,20 @@ export function groupSolvesByPeriod(
     let key = '';
     let label = '';
     const d = new Date(s.timestamp);
+    const zdt = Temporal.Instant.fromEpochMilliseconds(s.timestamp).toZonedDateTimeISO(Temporal.Now.timeZoneId());
 
     if (period === 'daily') {
-      key = s.dateStr;
-      label = s.dateStr;
+      key = zdt.toPlainDate().toString();
+      label = key;
     } else if (period === 'weekly') {
-      // ISO week
-      const tempDate = new Date(d.valueOf());
-      const dayNum = (d.getDay() + 6) % 7;
-      tempDate.setDate(tempDate.getDate() - dayNum + 3);
-      const firstThursday = tempDate.valueOf();
-      tempDate.setMonth(0, 1);
-      if (tempDate.getDay() !== 4) {
-        tempDate.setMonth(0, 1 + ((4 - tempDate.getDay() + 7) % 7));
-      }
-      const weekNum = 1 + Math.ceil((firstThursday - tempDate.valueOf()) / 604800000);
-      key = `${d.getFullYear()}-W${weekNum < 10 ? '0' + weekNum : weekNum}`;
-      label = `Week ${weekNum} (${d.getFullYear()})`;
+      const weekNum = zdt.weekOfYear;
+      const weekYear = zdt.yearOfWeek ?? zdt.year;
+      key = `${weekYear}-W${String(weekNum).padStart(2, '0')}`;
+      label = `Week ${weekNum} (${weekYear})`;
     } else if (period === 'monthly') {
       const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      key = `${d.getFullYear()}-${d.getMonth() + 1}`;
-      label = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+      key = `${zdt.year}-${String(zdt.month).padStart(2, '0')}`;
+      label = `${monthNames[zdt.month - 1]} ${zdt.year}`;
     }
 
     if (!mapKeyToSolves.has(key)) {

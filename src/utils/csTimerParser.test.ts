@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseCsTimerFile, parseSolvesList } from './csTimerParser';
+import { parseCsTimerFile, parseSolvesList, formatLocalDate, toLocalZonedDateTime } from './csTimerParser';
 
 describe('csTimerParser utils', () => {
   describe('parseSolvesList', () => {
@@ -51,6 +51,30 @@ describe('csTimerParser utils', () => {
       const solves = parseSolvesList(rawSolves);
       expect(solves[0].timestamp).toBe(1600000000000);
       expect(solves[1].timestamp).toBe(1600000000000);
+    });
+
+    it('computes dateStr matching local calendar date instead of UTC', () => {
+      // Create a local date at 11:30 PM (often the next day in UTC for western timezones)
+      const testDate = new Date(2026, 9, 1, 23, 30, 0); // Oct 1, 2026 local
+      const tsSec = Math.floor(testDate.getTime() / 1000);
+
+      const solves = parseSolvesList([[[0, 15000], 'R U R', '', tsSec]]);
+      expect(solves[0].dateStr).toBe('2026-10-01');
+      expect(solves[0].dateStr).toBe(formatLocalDate(testDate));
+    });
+
+    it('formats dates accurately across timezones using Temporal', () => {
+      // 2026-10-02T01:30:00Z: 1:30 AM Oct 2 in UTC, but 6:30 PM Oct 1 in America/Los_Angeles
+      const tsMs = Date.UTC(2026, 9, 2, 1, 30, 0);
+      expect(formatLocalDate(tsMs, 'America/Los_Angeles')).toBe('2026-10-01');
+      expect(formatLocalDate(tsMs, 'UTC')).toBe('2026-10-02');
+
+      const zdt = toLocalZonedDateTime(tsMs, 'America/Los_Angeles');
+      expect(zdt.year).toBe(2026);
+      expect(zdt.month).toBe(10);
+      expect(zdt.day).toBe(1);
+      expect(zdt.hour).toBe(18);
+      expect(zdt.minute).toBe(30);
     });
   });
 

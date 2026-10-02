@@ -1,4 +1,5 @@
 import { Session, GroupingPeriod } from '../types';
+import { formatLocalDate } from './csTimerParser';
 
 const DB_NAME = 'CubeProgressionDB';
 const DB_VERSION = 1;
@@ -59,6 +60,7 @@ function normalizeSessionsDates(sessions: Session[]): Session[] {
       return {
         ...solve,
         date: d,
+        dateStr: formatLocalDate(d),
       };
     }),
   }));

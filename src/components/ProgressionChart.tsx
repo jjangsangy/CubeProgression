@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { Temporal } from 'temporal-polyfill';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -129,15 +130,15 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
     } else if (selectedPreset === 'last7d') {
       setRangeMode('dateRange');
       const lastTs = solves[solves.length - 1]?.timestamp || Date.now();
-      const targetMs = lastTs - 7 * 24 * 60 * 60 * 1000;
-      const targetStr = new Date(targetMs).toISOString().split('T')[0];
+      const lastZdt = Temporal.Instant.fromEpochMilliseconds(lastTs).toZonedDateTimeISO(Temporal.Now.timeZoneId());
+      const targetStr = lastZdt.subtract({ days: 7 }).toPlainDate().toString();
       setStartDate(targetStr > earliestDate ? targetStr : earliestDate);
       setEndDate(latestDate);
     } else if (selectedPreset === 'last30d') {
       setRangeMode('dateRange');
       const lastTs = solves[solves.length - 1]?.timestamp || Date.now();
-      const targetMs = lastTs - 30 * 24 * 60 * 60 * 1000;
-      const targetStr = new Date(targetMs).toISOString().split('T')[0];
+      const lastZdt = Temporal.Instant.fromEpochMilliseconds(lastTs).toZonedDateTimeISO(Temporal.Now.timeZoneId());
+      const targetStr = lastZdt.subtract({ days: 30 }).toPlainDate().toString();
       setStartDate(targetStr > earliestDate ? targetStr : earliestDate);
       setEndDate(latestDate);
     }

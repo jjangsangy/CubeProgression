@@ -1,5 +1,23 @@
+import { Temporal } from 'temporal-polyfill';
 import { RawSolve, Solve, Session } from '../types';
 import { calculateAoN } from './statsMath';
+
+/**
+ * Converts a Unix epoch timestamp (ms) to Temporal.ZonedDateTime in the local or specified timezone
+ */
+export function toLocalZonedDateTime(ts: number, timeZoneId?: string): Temporal.ZonedDateTime {
+  return Temporal.Instant.fromEpochMilliseconds(ts).toZonedDateTimeISO(
+    timeZoneId || Temporal.Now.timeZoneId()
+  );
+}
+
+/**
+ * Formats a Date instance or epoch timestamp as YYYY-MM-DD using Temporal in the user's local timezone
+ */
+export function formatLocalDate(dateOrTs: Date | number, timeZoneId?: string): string {
+  const ts = typeof dateOrTs === 'number' ? dateOrTs : dateOrTs.getTime();
+  return toLocalZonedDateTime(ts, timeZoneId).toPlainDate().toString();
+}
 
 /**
  * Parses a csTimer export file content (.txt or .json)
@@ -140,7 +158,7 @@ export function parseSolvesList(rawSolves: any[]): Solve[] {
     // Default synthetic timestamps if timestamps are missing or uniform
     // (Spread solves across realistic timeline if needed)
     const solveDate = new Date(ts);
-    const dateStr = solveDate.toISOString().split('T')[0];
+    const dateStr = formatLocalDate(ts);
 
     solves.push({
       id: validSolveIndex,
