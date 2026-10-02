@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Area,
   CartesianGrid,
@@ -26,6 +26,18 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
   groupingPeriod = 'daily',
   title,
 }) => {
+  const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileScreen(window.innerWidth < 640);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const unitInfo = getPeriodUnitInfo(groupingPeriod);
   const displayTitle = title || `${unitInfo.adjective} Metrics Evolution: Speed & Consistency`;
 
@@ -62,6 +74,50 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
 
     return { minTime: min, maxTime: max, maxStdDev: maxSd };
   }, [periodGroups]);
+
+  const CustomLegend = () => {
+    return (
+      <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1.5 pb-2 text-[11px] select-none sm:gap-x-4 sm:text-xs">
+        <div className="flex items-center gap-1.5 text-teal-400">
+          <span className="inline-block h-2.5 w-4 rounded-xs border border-teal-400/80 bg-teal-500/25" />
+          <span className="recharts-legend-item-text font-medium text-teal-400">Min-Max Range</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-sky-400">
+          <svg className="h-3 w-4" viewBox="0 0 16 10" aria-hidden="true">
+            <line x1="0" y1="5" x2="16" y2="5" stroke="#0284c7" strokeWidth="2.5" />
+            <circle cx="8" cy="5" r="3" fill="#0284c7" stroke="#ffffff" strokeWidth="1.2" />
+          </svg>
+          <span className="recharts-legend-item-text font-medium text-sky-400">Mean Time (s)</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-orange-400">
+          <svg className="h-3 w-4" viewBox="0 0 16 10" aria-hidden="true">
+            <line x1="0" y1="5" x2="16" y2="5" stroke="#f97316" strokeWidth="2.5" />
+            <circle cx="8" cy="5" r="3" fill="#f97316" stroke="#ffffff" strokeWidth="1.2" />
+          </svg>
+          <span className="recharts-legend-item-text font-medium text-orange-400">
+            Median Time (s)
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 text-emerald-400">
+          <svg className="h-3 w-4" viewBox="0 0 16 10" aria-hidden="true">
+            <line
+              x1="0"
+              y1="5"
+              x2="16"
+              y2="5"
+              stroke="#22c55e"
+              strokeWidth="2"
+              strokeDasharray="2.5 2"
+            />
+            <circle cx="8" cy="5" r="3" fill="#15803d" stroke="#4ade80" strokeWidth="1.2" />
+          </svg>
+          <span className="recharts-legend-item-text font-medium text-emerald-400">
+            Std Dev / Consistency (s)
+          </span>
+        </div>
+      </div>
+    );
+  };
 
   const CustomTooltip = ({
     active,
@@ -103,7 +159,7 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
             <span>Std Dev (Consistency):</span>
             <span className="font-bold">{data.stdDev?.toFixed(2)}s</span>
           </div>
-          <div className="mt-1 flex items-center justify-between gap-4 border-t border-stone-800 pt-1 text-stone-400">
+          <div className="mt-1 flex items-center justify-between gap-4 border-t border-stone-800 pt-1 text-teal-400">
             <span>Min - Max Range:</span>
             <span>
               {data.min?.toFixed(2)}s - {data.max?.toFixed(2)}s
@@ -122,79 +178,101 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
       filenamePrefix={`${unitInfo.adjective.toLowerCase()}_metrics_evolution`}
     >
       {/* Main Chart Canvas */}
-      <div className="h-[400px] w-full pt-2">
+      <div className={`${isMobileScreen ? 'h-[380px]' : 'h-[400px]'} w-full pt-1`}>
         <ResponsiveContainer
           width="100%"
           height="100%"
-          initialDimension={{ width: 800, height: 400 }}
+          initialDimension={{ width: 800, height: isMobileScreen ? 380 : 400 }}
         >
-          <ComposedChart data={chartData} margin={{ top: 20, right: 40, left: 10, bottom: 25 }}>
+          <ComposedChart
+            data={chartData}
+            margin={{
+              top: isMobileScreen ? 15 : 20,
+              right: isMobileScreen ? 4 : 12,
+              left: isMobileScreen ? 2 : 6,
+              bottom: isMobileScreen ? 20 : 25,
+            }}
+          >
             <defs>
               <linearGradient id="colorRange" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#0284c7" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#0284c7" stopOpacity={0.05} />
+                <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="#0d9488" stopOpacity={0.06} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
 
             <XAxis
               dataKey="index"
-              interval={Math.max(1, Math.floor(chartData.length / 8))}
+              interval={Math.max(1, Math.floor(chartData.length / (isMobileScreen ? 6 : 8)))}
               stroke="#94a3b8"
-              fontSize={11}
+              fontSize={isMobileScreen ? 10 : 11}
               tickLine={false}
               axisLine={{ stroke: '#475569' }}
               label={{
                 value: unitInfo.axisLabel,
                 position: 'insideBottom',
-                offset: -15,
+                offset: isMobileScreen ? -12 : -15,
                 fill: '#94a3b8',
-                fontSize: 12,
+                fontSize: 11,
               }}
             />
 
-            {/* Left Y Axis (Time in seconds) */}
+            {/* Left Y Axis (Time in seconds) - full-width compact on mobile, labeled on desktop */}
             <YAxis
               yAxisId="left"
+              width={isMobileScreen ? 26 : 42}
               stroke="#94a3b8"
               fontSize={11}
               domain={[minTime, maxTime]}
               tickLine={false}
               axisLine={{ stroke: '#475569' }}
-              label={{
-                value: 'Time (seconds)',
-                angle: -90,
-                position: 'insideLeft',
-                offset: 5,
-                fill: '#94a3b8',
-                fontSize: 12,
-              }}
+              label={
+                isMobileScreen
+                  ? undefined
+                  : {
+                      value: 'Time (s)',
+                      angle: -90,
+                      position: 'insideLeft',
+                      offset: 4,
+                      fill: '#94a3b8',
+                      fontSize: 11,
+                    }
+              }
             />
 
-            {/* Right Y Axis (Standard Deviation in seconds) */}
+            {/* Right Y Axis (Standard Deviation in seconds) - full-width compact on mobile, labeled on desktop */}
             <YAxis
               yAxisId="right"
               orientation="right"
+              width={isMobileScreen ? 20 : 42}
               stroke="#22c55e"
               fontSize={11}
               domain={[0, maxStdDev]}
               tickLine={false}
               axisLine={{ stroke: '#15803d' }}
-              label={{
-                value: 'Standard Deviation (s)',
-                angle: 90,
-                position: 'insideRight',
-                offset: 5,
-                fill: '#22c55e',
-                fontSize: 12,
-              }}
+              label={
+                isMobileScreen
+                  ? undefined
+                  : {
+                      value: 'Std Dev (s)',
+                      angle: 90,
+                      position: 'insideRight',
+                      offset: 4,
+                      fill: '#22c55e',
+                      fontSize: 11,
+                    }
+              }
             />
 
             <Tooltip content={<CustomTooltip />} />
             <Legend
               verticalAlign="top"
               align="right"
-              wrapperStyle={{ paddingBottom: '15px', fontSize: '12px' }}
+              content={<CustomLegend />}
+              wrapperStyle={{
+                paddingBottom: '12px',
+                fontSize: isMobileScreen ? '11px' : '12px',
+              }}
             />
 
             {/* Shaded Area for Min-Max Range */}
@@ -250,6 +328,14 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
           </ComposedChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Mobile-only bottom axis titles aligned with the graph edges, using graph-matching font & color */}
+      {isMobileScreen && (
+        <div className="-mt-1.5 flex items-center justify-between px-1 text-[11px] leading-tight select-none">
+          <span style={{ color: '#94a3b8' }}>Time (s)</span>
+          <span style={{ color: '#22c55e' }}>Std Dev (s)</span>
+        </div>
+      )}
     </ChartCardWrapper>
   );
 };

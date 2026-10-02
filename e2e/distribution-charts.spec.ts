@@ -220,8 +220,8 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
     ).toBeVisible();
 
     // Verify dual Y-axis labels
-    await expect(metricsCard.locator('text=Time (seconds)')).toBeVisible();
-    await expect(metricsCard.locator('text=Standard Deviation (s)')).toBeVisible();
+    await expect(metricsCard.getByText('Time (s)', { exact: true })).toBeVisible();
+    await expect(metricsCard.getByText('Std Dev (s)', { exact: true })).toBeVisible();
   });
 
   test('grouping period controls in FileUploader update Box Plot and Metrics Evolution titles', async ({

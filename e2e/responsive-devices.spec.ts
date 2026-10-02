@@ -286,6 +286,31 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       });
       expect(hasOverflow).toBe(false);
     });
+
+    test('renders MetricsEvolutionChart with maximized horizontal plot presence and dual-axis labels on mobile portrait', async ({
+      page,
+    }) => {
+      await page.getByTestId('deferred-chart-metrics-evolution').scrollIntoViewIfNeeded();
+
+      const metricsCard = page.locator('div.rounded-2xl').filter({
+        has: page.getByRole('heading', { name: /Metrics Evolution/i }),
+      });
+      await expect(metricsCard).toBeVisible();
+
+      // Verify dual Y-axis labels remain visible
+      await expect(metricsCard.getByText('Time (s)', { exact: true })).toBeVisible();
+      await expect(metricsCard.getByText('Std Dev (s)', { exact: true })).toBeVisible();
+
+      // Verify the Cartesian grid line width (the inner plot area) maximizes horizontal presence (> 250px)
+      const gridLine = metricsCard.locator('.recharts-cartesian-grid-horizontal line').first();
+      await expect(gridLine).toBeAttached();
+      const x1 = Number(await gridLine.getAttribute('x1'));
+      const x2 = Number(await gridLine.getAttribute('x2'));
+      const plotWidth = x2 - x1;
+
+      // Previously plotWidth was only ~156px due to 170px margins + widths; now maximized to >= 250px
+      expect(plotWidth).toBeGreaterThan(250);
+    });
   });
 
   test.describe('Mobile Landscape Mode (844x390)', () => {
