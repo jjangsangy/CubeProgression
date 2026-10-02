@@ -1,5 +1,5 @@
-import React from 'react';
 import { motion } from 'motion/react';
+import type React from 'react';
 
 interface CubeLoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
@@ -19,16 +19,16 @@ export const CubeLoadingSpinner: React.FC<CubeLoadingSpinnerProps> = ({ size = '
   };
 
   // Authentic speedcube sticker colors (White, Yellow, Green, Blue, Red, Orange)
-  const cubeColors = [
-    'bg-amber-400',
-    'bg-emerald-400',
-    'bg-sky-400',
-    'bg-orange-500',
-    'bg-rose-500',
-    'bg-amber-300',
-    'bg-emerald-500',
-    'bg-sky-500',
-    'bg-orange-400',
+  const cubeTiles = [
+    { id: 'cube-tile-0', colorClass: 'bg-amber-400', rotateDir: 90, delay: 0 },
+    { id: 'cube-tile-1', colorClass: 'bg-emerald-400', rotateDir: -90, delay: 0.12 },
+    { id: 'cube-tile-2', colorClass: 'bg-sky-400', rotateDir: 90, delay: 0.24 },
+    { id: 'cube-tile-3', colorClass: 'bg-orange-500', rotateDir: -90, delay: 0.36 },
+    { id: 'cube-tile-4', colorClass: 'bg-rose-500', rotateDir: 90, delay: 0.48 },
+    { id: 'cube-tile-5', colorClass: 'bg-amber-300', rotateDir: -90, delay: 0.6 },
+    { id: 'cube-tile-6', colorClass: 'bg-emerald-500', rotateDir: 90, delay: 0.72 },
+    { id: 'cube-tile-7', colorClass: 'bg-sky-500', rotateDir: -90, delay: 0.04 },
+    { id: 'cube-tile-8', colorClass: 'bg-orange-400', rotateDir: 90, delay: 0.16 },
   ];
 
   return (
@@ -44,19 +44,19 @@ export const CubeLoadingSpinner: React.FC<CubeLoadingSpinnerProps> = ({ size = '
       <div
         className={`relative grid grid-cols-3 gap-1 bg-stone-950/90 border border-stone-700/80 rounded-xl shadow-2xl ${sizeClasses[size]}`}
       >
-        {cubeColors.map((colorClass, i) => (
+        {cubeTiles.map((tile) => (
           <motion.div
-            key={i}
-            className={`${tileSizes[size]} rounded-sm ${colorClass} shadow-sm`}
+            key={tile.id}
+            className={`${tileSizes[size]} rounded-sm ${tile.colorClass} shadow-sm`}
             animate={{
               scale: [1, 1.25, 0.9, 1],
               opacity: [0.75, 1, 0.75],
-              rotate: [0, i % 2 === 0 ? 90 : -90, 0],
+              rotate: [0, tile.rotateDir, 0],
             }}
             transition={{
               duration: 1.4,
               repeat: Infinity,
-              delay: (i * 0.12) % 0.8,
+              delay: tile.delay,
               ease: 'easeInOut',
             }}
           />

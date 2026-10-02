@@ -1,4 +1,4 @@
-import { Session, Solve } from '../types';
+import type { Session, Solve } from '../types';
 import { parseSolvesList } from './csTimerParser';
 
 /**
@@ -6,7 +6,7 @@ import { parseSolvesList } from './csTimerParser';
  * (7 days of practice, 50 solves per day, progression from ~23.5s down to ~19.8s)
  */
 export function generateSampleData(): Session[] {
-  const rawSolves: any[] = [];
+  const rawSolves: unknown[] = [];
   const baseTimestamp = new Date('2026-07-25T09:00:00Z').getTime();
 
   // Pseudo random generator with deterministic seed for reproducible nice plots
@@ -57,9 +57,9 @@ export function generateSampleData(): Session[] {
 
       // Trend component: overall slight drop over the 350 solves
       const trendFactor = -0.0095 * currentSolveNum;
-      
+
       let rawTimeSec = randomGaussian(param.mean + trendFactor, param.std);
-      
+
       // Ensure bounds
       rawTimeSec = Math.max(param.minLimit, Math.min(param.maxLimit, rawTimeSec));
 
@@ -96,6 +96,6 @@ export function generateSampleData(): Session[] {
       id: 'session2',
       name: '3x3 General Solves',
       solves: solves.slice(100, 250),
-    }
+    },
   ];
 }

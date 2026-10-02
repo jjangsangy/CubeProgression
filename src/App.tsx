@@ -1,24 +1,19 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Navbar } from './components/Navbar';
-import { FileUploader } from './components/FileUploader';
-import { MetricsOverviewCards } from './components/MetricsOverviewCards';
-import { ProgressionChart } from './components/ProgressionChart';
-import { PbProgressionChart } from './components/PbProgressionChart';
+import { useEffect, useMemo, useState } from 'react';
 import { DailyDistributionBoxPlot } from './components/DailyDistributionBoxPlot';
 import { DensityShiftChart } from './components/DensityShiftChart';
+import { FileUploader } from './components/FileUploader';
 import { MetricsEvolutionChart } from './components/MetricsEvolutionChart';
+import { MetricsOverviewCards } from './components/MetricsOverviewCards';
+import { Navbar } from './components/Navbar';
+import { PbProgressionChart } from './components/PbProgressionChart';
+import { ProgressionChart } from './components/ProgressionChart';
 import { SolvesTable } from './components/SolvesTable';
 
-import { Session, GroupingPeriod } from './types';
+import type { GroupingPeriod, Session } from './types';
 import { parseCsTimerFile } from './utils/csTimerParser';
+import { clearSavedDataset, getSavedDataset, getStorageInfo, saveDataset } from './utils/dbStorage';
 import { generateSampleData } from './utils/sampleData';
-import { groupSolvesByPeriod, calculateGlobalStats } from './utils/statsMath';
-import {
-  saveDataset,
-  getSavedDataset,
-  clearSavedDataset,
-  getStorageInfo,
-} from './utils/dbStorage';
+import { calculateGlobalStats, groupSolvesByPeriod } from './utils/statsMath';
 
 export default function App() {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -41,50 +36,95 @@ export default function App() {
 
   // Initial check for stored dataset in IndexedDB on mount
   useEffect(() => {
-    initDataset();
-  }, []);
+    const initializeDataset = async () => {
+      setIsLoading(true);
+      setUploadingFileName('browser_storage');
+      setLoadingProgress(20);
+      setLoadingStage('Checking IndexedDB storage for saved csTimer data...');
+      setErrorMsg(null);
 
-  const initDataset = async () => {
-    setIsLoading(true);
-    setUploadingFileName('browser_storage');
-    setLoadingProgress(20);
-    setLoadingStage('Checking IndexedDB storage for saved csTimer data...');
-    setErrorMsg(null);
+      try {
+        const saved = await getSavedDataset();
+        if (saved?.sessions && saved.sessions.length > 0) {
+          setLoadingProgress(60);
+          setLoadingStage(`Restoring saved dataset (${saved.fileName})...`);
 
-    try {
-      const saved = await getSavedDataset();
-      if (saved && saved.sessions && saved.sessions.length > 0) {
-        setLoadingProgress(60);
-        setLoadingStage(`Restoring saved dataset (${saved.fileName})...`);
+          setSessions(saved.sessions);
+          setSelectedSessionId(saved.selectedSessionId || saved.sessions[0].id);
+          setFileName(saved.fileName || 'cstimer_saved.txt');
+          if (saved.groupingPeriod) setGroupingPeriod(saved.groupingPeriod);
+          if (saved.customBatchSize) setCustomBatchSize(saved.customBatchSize);
 
-        setSessions(saved.sessions);
-        setSelectedSessionId(saved.selectedSessionId || saved.sessions[0].id);
-        setFileName(saved.fileName || 'cstimer_saved.txt');
-        if (saved.groupingPeriod) setGroupingPeriod(saved.groupingPeriod);
-        if (saved.customBatchSize) setCustomBatchSize(saved.customBatchSize);
+          setIsSaved(true);
+          const info = await getStorageInfo();
+          if (info) setStorageUsageMB(info.usageMB);
+
+          const totalSolvesCount = saved.sessions.reduce((acc, s) => acc + s.solves.length, 0);
+          setSavedNotice(
+            `Restored ${totalSolvesCount.toLocaleString()} solves across ${saved.sessions.length} sessions from IndexedDB (${saved.fileName})`,
+          );
+
+          setLoadingProgress(100);
+          setLoadingStage('Loaded saved data successfully!');
+          await new Promise((res) => setTimeout(res, 120));
+          setIsLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.error('Failed to load dataset from IndexedDB:', err);
+      }
+
+      // Fall back to sample dataset if nothing was saved
+      setIsLoading(true);
+      setUploadingFileName('cstimer_demo_350solves.txt');
+      setLoadingProgress(15);
+      setLoadingStage('Initializing sample csTimer dataset...');
+      setErrorMsg(null);
+      setSavedNotice(null);
+
+      try {
+        await new Promise((res) => setTimeout(res, 120));
+        setLoadingProgress(50);
+        setLoadingStage('Generating 350 solve logs & session history...');
+        const demoSessions = generateSampleData();
+
+        await new Promise((res) => setTimeout(res, 80));
+        setLoadingProgress(80);
+        setLoadingStage('Computing rolling averages & variance...');
+
+        const demoFileName = 'cstimer_demo_350solves.txt';
+        const initialSessId = demoSessions[0].id;
+
+        setSessions(demoSessions);
+        setSelectedSessionId(initialSessId);
+        setFileName(demoFileName);
+
+        await saveDataset({
+          fileName: demoFileName,
+          sessions: demoSessions,
+          selectedSessionId: initialSessId,
+          groupingPeriod: 'daily',
+          customBatchSize: 50,
+        });
 
         setIsSaved(true);
         const info = await getStorageInfo();
         if (info) setStorageUsageMB(info.usageMB);
 
-        const totalSolvesCount = saved.sessions.reduce((acc, s) => acc + s.solves.length, 0);
-        setSavedNotice(
-          `Restored ${totalSolvesCount.toLocaleString()} solves across ${saved.sessions.length} sessions from IndexedDB (${saved.fileName})`
-        );
-
         setLoadingProgress(100);
-        setLoadingStage('Loaded saved data successfully!');
+        setLoadingStage('Complete!');
+
         await new Promise((res) => setTimeout(res, 120));
         setIsLoading(false);
-        return;
+      } catch (err) {
+        console.error(err);
+        setErrorMsg('Failed to load sample dataset.');
+        setIsLoading(false);
       }
-    } catch (err) {
-      console.error('Failed to load dataset from IndexedDB:', err);
-    }
+    };
 
-    // Fall back to sample dataset if nothing was saved
-    await loadSampleData();
-  };
+    initializeDataset();
+  }, []);
 
   const loadSampleData = async () => {
     setIsLoading(true);
@@ -184,7 +224,7 @@ export default function App() {
 
         const totalSolvesCount = parsedSessions.reduce((acc, s) => acc + s.solves.length, 0);
         setSavedNotice(
-          `Saved ${totalSolvesCount.toLocaleString()} solves across ${parsedSessions.length} sessions to browser storage (${file.name})`
+          `Saved ${totalSolvesCount.toLocaleString()} solves across ${parsedSessions.length} sessions to browser storage (${file.name})`,
         );
 
         setLoadingProgress(100);
@@ -192,9 +232,10 @@ export default function App() {
 
         await new Promise((res) => setTimeout(res, 120));
         setIsLoading(false);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error(err);
-        setErrorMsg(err.message || 'Error parsing csTimer file.');
+        const message = err instanceof Error ? err.message : 'Error parsing csTimer file.';
+        setErrorMsg(message);
         setIsLoading(false);
       }
     };
@@ -287,7 +328,7 @@ export default function App() {
         g.q3,
         g.stdDev,
       ].join(',');
-      csvContent += row + '\n';
+      csvContent += `${row}\n`;
     });
 
     const encodedUri = encodeURI(csvContent);
@@ -361,10 +402,7 @@ export default function App() {
             />
 
             {/* Plot 3: Solve Time Distribution & Variance */}
-            <DailyDistributionBoxPlot
-              periodGroups={periodGroups}
-              groupingPeriod={groupingPeriod}
-            />
+            <DailyDistributionBoxPlot periodGroups={periodGroups} groupingPeriod={groupingPeriod} />
 
             {/* Grid for Plot 3 & Plot 4 */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -376,10 +414,7 @@ export default function App() {
               />
 
               {/* Plot 4: Metrics Summary / Evolution */}
-              <MetricsEvolutionChart
-                periodGroups={periodGroups}
-                groupingPeriod={groupingPeriod}
-              />
+              <MetricsEvolutionChart periodGroups={periodGroups} groupingPeriod={groupingPeriod} />
             </div>
 
             {/* Detailed Solve Log Table */}

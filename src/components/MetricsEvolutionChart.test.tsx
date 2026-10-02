@@ -1,8 +1,7 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import type { PeriodGroup } from '../types';
 import { MetricsEvolutionChart } from './MetricsEvolutionChart';
-import { PeriodGroup } from '../types';
 
 const mockPeriodGroups: PeriodGroup[] = [
   {
@@ -32,7 +31,7 @@ describe('MetricsEvolutionChart component', () => {
         periodGroups={mockPeriodGroups}
         groupingPeriod="daily"
         title="Daily Metrics Evolution: Speed & Consistency"
-      />
+      />,
     );
 
     expect(screen.getByText('Daily Metrics Evolution: Speed & Consistency')).toBeInTheDocument();
@@ -41,10 +40,7 @@ describe('MetricsEvolutionChart component', () => {
 
   it('renders with monthly title when grouping by month', () => {
     const { container } = render(
-      <MetricsEvolutionChart
-        periodGroups={mockPeriodGroups}
-        groupingPeriod="monthly"
-      />
+      <MetricsEvolutionChart periodGroups={mockPeriodGroups} groupingPeriod="monthly" />,
     );
 
     expect(screen.getByText('Monthly Metrics Evolution: Speed & Consistency')).toBeInTheDocument();

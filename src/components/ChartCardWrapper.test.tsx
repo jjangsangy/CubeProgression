@@ -1,11 +1,14 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { ChartCardWrapper } from './ChartCardWrapper';
 
 // Mock html-to-image
 vi.mock('html-to-image', () => ({
-  toPng: vi.fn().mockResolvedValue('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='),
+  toPng: vi
+    .fn()
+    .mockResolvedValue(
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+    ),
   toCanvas: vi.fn(),
 }));
 
@@ -16,10 +19,14 @@ describe('ChartCardWrapper component', () => {
         title="Test Chart Title"
         subtitle="Test Chart Subtitle"
         headerBadge={<span data-testid="badge">Badge</span>}
-        headerControls={<button data-testid="ctrl">Ctrl</button>}
+        headerControls={
+          <button type="button" data-testid="ctrl">
+            Ctrl
+          </button>
+        }
       >
         <div data-testid="chart-content">Chart Content</div>
-      </ChartCardWrapper>
+      </ChartCardWrapper>,
     );
 
     expect(screen.getByText('Test Chart Title')).toBeInTheDocument();
@@ -33,7 +40,7 @@ describe('ChartCardWrapper component', () => {
     render(
       <ChartCardWrapper title="Test Chart Title">
         <div>Chart Content</div>
-      </ChartCardWrapper>
+      </ChartCardWrapper>,
     );
 
     const maxBtn = screen.getByTitle('Maximize to Fullscreen');
@@ -51,7 +58,7 @@ describe('ChartCardWrapper component', () => {
     render(
       <ChartCardWrapper title="Test Chart Title">
         <div>Chart Content</div>
-      </ChartCardWrapper>
+      </ChartCardWrapper>,
     );
 
     const pngBtn = screen.getByTitle('Download Plot as PNG Image');

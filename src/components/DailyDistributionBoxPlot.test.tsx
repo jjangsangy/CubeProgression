@@ -1,8 +1,7 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import type { PeriodGroup } from '../types';
 import { DailyDistributionBoxPlot } from './DailyDistributionBoxPlot';
-import { PeriodGroup } from '../types';
 
 const mockPeriodGroups: PeriodGroup[] = [
   {
@@ -32,7 +31,7 @@ describe('DailyDistributionBoxPlot component', () => {
         periodGroups={mockPeriodGroups}
         groupingPeriod="daily"
         title="Daily Solve Time Distribution & Variance"
-      />
+      />,
     );
 
     expect(screen.getByText('Daily Solve Time Distribution & Variance')).toBeInTheDocument();
@@ -42,12 +41,7 @@ describe('DailyDistributionBoxPlot component', () => {
   });
 
   it('renders box plot chart with weekly axis label when grouping by week', () => {
-    render(
-      <DailyDistributionBoxPlot
-        periodGroups={mockPeriodGroups}
-        groupingPeriod="weekly"
-      />
-    );
+    render(<DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="weekly" />);
 
     expect(screen.getByText('Weekly Solve Time Distribution & Variance')).toBeInTheDocument();
     expect(screen.getByText('Week')).toBeInTheDocument();

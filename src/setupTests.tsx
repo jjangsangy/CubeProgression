@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest';
+import type React from 'react';
 import { vi } from 'vitest';
-import React from 'react';
 
 // Polyfill ResizeObserver for Recharts and responsive components
 global.ResizeObserver = class ResizeObserver {

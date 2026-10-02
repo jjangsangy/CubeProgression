@@ -1,7 +1,8 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { PeriodGroup, GroupingPeriod } from '../types';
-import { ChartCardWrapper } from './ChartCardWrapper';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { GroupingPeriod, PeriodGroup } from '../types';
 import { getPeriodUnitInfo } from '../utils/statsMath';
+import { ChartCardWrapper } from './ChartCardWrapper';
 
 interface DailyDistributionBoxPlotProps {
   periodGroups: PeriodGroup[];
@@ -81,18 +82,24 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
   }, [allTimes]);
 
   // Y-axis scale function
-  const yScale = (val: number) => {
-    return padding.top + plotHeight - ((val - minY) / (maxY - minY)) * plotHeight;
-  };
+  const yScale = useCallback(
+    (val: number) => {
+      return padding.top + plotHeight - ((val - minY) / (maxY - minY)) * plotHeight;
+    },
+    [padding.top, plotHeight, minY, maxY],
+  );
 
   // X-axis column centers
   const numGroups = periodGroups.length;
   const colWidth = numGroups > 0 ? plotWidth / numGroups : plotWidth;
   const boxWidth = Math.min(55, colWidth * 0.55);
 
-  const getGroupX = (idx: number) => {
-    return padding.left + idx * colWidth + colWidth / 2;
-  };
+  const getGroupX = useCallback(
+    (idx: number) => {
+      return padding.left + idx * colWidth + colWidth / 2;
+    },
+    [padding.left, colWidth],
+  );
 
   // Seeded deterministic jitter generator for scatter points
   const getJitterOffset = (seedIdx: number) => {
@@ -120,14 +127,14 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
       median: g.median,
       label: g.label,
     }));
-  }, [periodGroups, minY, maxY, plotWidth, numGroups]);
+  }, [periodGroups, yScale, getGroupX]);
 
   const medianPolylinePoints = medianPoints.map((p) => `${p.x},${p.y}`).join(' ');
 
   // Y ticks (e.g., 10, 15, 20, 25, 30, 35, 40)
   const yTicks = useMemo(() => {
     const ticks: number[] = [];
-    const step = (maxY - minY) > 25 ? 5 : 2;
+    const step = maxY - minY > 25 ? 5 : 2;
     for (let t = Math.ceil(minY / step) * step; t <= maxY; t += step) {
       ticks.push(t);
     }
@@ -151,10 +158,13 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
       {/* SVG Canvas Container */}
       <div ref={containerRef} className="relative w-full overflow-hidden">
         <svg
+          role="img"
+          aria-label={title}
           viewBox={`0 0 ${width} ${height}`}
           className="w-full h-[380px] sm:h-[400px] font-sans selection:bg-none block"
           preserveAspectRatio="none"
         >
+          <title>{`Box Plot Chart - ${title}`}</title>
           {/* Background Grid Lines */}
           {yTicks.map((tick) => {
             const y = yScale(tick);
@@ -217,16 +227,9 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
             const boxColor = getBoxColor(idx, periodGroups.length);
 
             return (
-              <g key={idx} className="group">
+              <g key={group.label} className="group">
                 {/* Vertical Whisker Line */}
-                <line
-                  x1={cx}
-                  y1={yWLow}
-                  x2={cx}
-                  y2={yWHigh}
-                  stroke="#64748b"
-                  strokeWidth="1.8"
-                />
+                <line x1={cx} y1={yWLow} x2={cx} y2={yWHigh} stroke="#64748b" strokeWidth="1.8" />
 
                 {/* Whisker Top Cap */}
                 <line
@@ -272,41 +275,56 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                 />
 
                 {/* Jittered Scatter Solve Dots */}
-                {group.timesSec.map((t, sIdx) => {
-                  const jX = cx + getJitterOffset(idx * 500 + sIdx);
-                  const jY = yScale(t);
-                  return (
-                    <circle
-                      key={sIdx}
-                      cx={jX}
-                      cy={jY}
-                      r={2.2}
-                      fill="#64748b"
-                      fillOpacity="0.4"
-                      stroke="#f8fafc"
-                      strokeWidth="0.3"
-                      onMouseEnter={() =>
-                        setHoveredPoint({ periodIdx: idx, time: t, x: jX, y: jY })
-                      }
-                      onMouseLeave={() => setHoveredPoint(null)}
-                      className="cursor-pointer hover:r-4 transition-all"
-                    />
-                  );
-                })}
+                {group.solves
+                  .filter((s) => s.penalty !== 'DNF')
+                  .map((solve) => {
+                    const jX = cx + getJitterOffset(solve.id);
+                    const jY = yScale(solve.finalTimeSec);
+                    return (
+                      <circle
+                        key={`solve-${solve.id}`}
+                        cx={jX}
+                        cy={jY}
+                        r={2.2}
+                        fill="#64748b"
+                        fillOpacity="0.4"
+                        stroke="#f8fafc"
+                        strokeWidth="0.3"
+                        onPointerEnter={() =>
+                          setHoveredPoint({
+                            periodIdx: idx,
+                            time: solve.finalTimeSec,
+                            x: jX,
+                            y: jY,
+                          })
+                        }
+                        onPointerLeave={() => setHoveredPoint(null)}
+                        className="cursor-pointer hover:r-4 transition-all"
+                      >
+                        <title>{`Solve: ${solve.finalTimeSec.toFixed(2)}s`}</title>
+                      </circle>
+                    );
+                  })}
 
                 {/* Outlier Diamond Markers */}
-                {group.outliers.map((outlier, oIdx) => {
-                  const oY = yScale(outlier);
-                  return (
-                    <polygon
-                      key={oIdx}
-                      points={`${cx},${oY - 4} ${cx + 4},${oY} ${cx},${oY + 4} ${cx - 4},${oY}`}
-                      fill="#ef4444"
-                      stroke="#0f172a"
-                      strokeWidth="1"
-                    />
-                  );
-                })}
+                {group.solves
+                  .filter(
+                    (s) =>
+                      s.penalty !== 'DNF' &&
+                      (s.finalTimeSec < group.whiskerLow || s.finalTimeSec > group.whiskerHigh),
+                  )
+                  .map((outlierSolve) => {
+                    const oY = yScale(outlierSolve.finalTimeSec);
+                    return (
+                      <polygon
+                        key={`outlier-${outlierSolve.id}`}
+                        points={`${cx},${oY - 4} ${cx + 4},${oY} ${cx},${oY + 4} ${cx - 4},${oY}`}
+                        fill="#ef4444"
+                        stroke="#0f172a"
+                        strokeWidth="1"
+                      />
+                    );
+                  })}
 
                 {/* X Axis Period Label (Responsive tick filtering) */}
                 {(() => {
@@ -358,8 +376,8 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                 strokeDasharray="6 4"
                 points={medianPolylinePoints}
               />
-              {medianPoints.map((p, idx) => (
-                <g key={idx}>
+              {medianPoints.map((p) => (
+                <g key={p.label}>
                   <circle
                     cx={p.x}
                     cy={p.y}
@@ -384,13 +402,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
           )}
 
           {/* X Axis Title */}
-          <text
-            x={width / 2}
-            y={height - 8}
-            fill="#94a3b8"
-            fontSize="12"
-            textAnchor="middle"
-          >
+          <text x={width / 2} y={height - 8} fill="#94a3b8" fontSize="12" textAnchor="middle">
             {unitInfo.axisLabel}
           </text>
         </svg>
@@ -405,7 +417,8 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
             className="absolute transform -translate-x-1/2 pointer-events-none bg-stone-900 border border-stone-700 rounded px-2.5 py-1 text-[11px] font-mono text-stone-100 shadow-xl z-20"
           >
             <div className="font-semibold text-amber-400">
-              {periodGroups[hoveredPoint.periodIdx]?.label || `${unitInfo.unitSingular} ${hoveredPoint.periodIdx + 1}`}
+              {periodGroups[hoveredPoint.periodIdx]?.label ||
+                `${unitInfo.unitSingular} ${hoveredPoint.periodIdx + 1}`}
             </div>
             <div>Solve: {hoveredPoint.time.toFixed(2)}s</div>
           </div>

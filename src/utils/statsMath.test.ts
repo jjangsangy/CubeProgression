@@ -1,14 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import type { Solve } from '../types';
 import {
   calculateAoN,
+  calculateGlobalStats,
+  calculateKDE,
   calculateLinearRegression,
+  calculatePbProgression,
   computeGroupStats,
   groupSolvesByPeriod,
-  calculateKDE,
-  calculateGlobalStats,
-  calculatePbProgression,
 } from './statsMath';
-import { Solve } from '../types';
 
 const mockSolves: Solve[] = [
   {
@@ -139,9 +139,7 @@ describe('statsMath utils', () => {
 
   describe('computeGroupStats', () => {
     it('returns zeroed group stats when no valid solves exist in group', () => {
-      const dnfSolves = [
-        { ...mockSolves[0], penalty: 'DNF' as const },
-      ];
+      const dnfSolves = [{ ...mockSolves[0], penalty: 'DNF' as const }];
       const stats = computeGroupStats(dnfSolves, 'Group 1', new Date(), new Date());
       expect(stats.mean).toBe(0);
       expect(stats.solves).toEqual(dnfSolves);
@@ -284,4 +282,3 @@ describe('statsMath utils', () => {
     });
   });
 });
-

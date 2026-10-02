@@ -3,9 +3,9 @@ export interface RawSolve {
   // or [[penalty, time_ms], timestamp]
   // penalty: 0 = OK, 2000 or 2 = +2, -1 = DNF
   0: [number, number]; // [penalty_code, time_in_ms]
-  1?: string | number;  // scramble or timestamp
-  2?: string | number;  // comment or timestamp
-  3?: number;           // timestamp in seconds or ms
+  1?: string | number; // scramble or timestamp
+  2?: string | number; // comment or timestamp
+  3?: number; // timestamp in seconds or ms
 }
 
 export interface Solve {
@@ -30,7 +30,7 @@ export interface Session {
   id: string;
   name: string;
   solves: Solve[];
-  stat?: any;
+  stat?: unknown;
 }
 
 export type GroupingPeriod = 'daily' | 'weekly' | 'monthly' | 'customBatch' | 'batch50';
@@ -134,7 +134,7 @@ export interface GlobalStats {
   overallMedian: number;
   regression: LinearRegression;
   initialAvg: number; // First ~10% avg
-  recentAvg: number;  // Last ~10% avg
+  recentAvg: number; // Last ~10% avg
   improvementSec: number;
   improvementPct: number;
 }

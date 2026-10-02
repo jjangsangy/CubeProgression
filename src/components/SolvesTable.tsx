@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
-import { Search, ChevronLeft, ChevronRight, Hash, Clock, AlertCircle } from 'lucide-react';
-import { Solve } from '../types';
+import { AlertCircle, ChevronLeft, ChevronRight, Clock, Search } from 'lucide-react';
+import type React from 'react';
+import { useMemo, useState } from 'react';
+import type { Solve } from '../types';
 
 interface SolvesTableProps {
   solves: Solve[];
@@ -19,7 +20,7 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
         s.index.toString().includes(term) ||
         s.finalTimeSec.toString().includes(term) ||
         s.dateStr.includes(term) ||
-        (s.scramble && s.scramble.toLowerCase().includes(term))
+        s.scramble?.toLowerCase().includes(term),
     );
   }, [solves, searchTerm]);
 
@@ -27,7 +28,7 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
   const currentSolves = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
     return filteredSolves.slice(start, start + pageSize);
-  }, [filteredSolves, currentPage, pageSize]);
+  }, [filteredSolves, currentPage]);
 
   return (
     <div className="bg-stone-900 border border-stone-800 rounded-2xl p-6 shadow-xl text-stone-100 flex flex-col gap-4">
@@ -86,7 +87,9 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
                   ) : (
                     <span>
                       {solve.finalTimeSec.toFixed(2)}s
-                      {solve.penalty === '+2' && <span className="text-amber-400 text-[10px] ml-1">(+2)</span>}
+                      {solve.penalty === '+2' && (
+                        <span className="text-amber-400 text-[10px] ml-1">(+2)</span>
+                      )}
                     </span>
                   )}
                 </td>
@@ -94,15 +97,23 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
                   {solve.ao5 !== null && solve.ao5 !== undefined ? `${solve.ao5.toFixed(2)}s` : '—'}
                 </td>
                 <td className="py-2.5 px-4 text-orange-400">
-                  {solve.ao12 !== null && solve.ao12 !== undefined ? `${solve.ao12.toFixed(2)}s` : '—'}
+                  {solve.ao12 !== null && solve.ao12 !== undefined
+                    ? `${solve.ao12.toFixed(2)}s`
+                    : '—'}
                 </td>
                 <td className="py-2.5 px-4 text-sky-400">
-                  {solve.ao50 !== null && solve.ao50 !== undefined ? `${solve.ao50.toFixed(2)}s` : '—'}
+                  {solve.ao50 !== null && solve.ao50 !== undefined
+                    ? `${solve.ao50.toFixed(2)}s`
+                    : '—'}
                 </td>
                 <td className="py-2.5 px-4 text-purple-400">
-                  {solve.ao100 !== null && solve.ao100 !== undefined ? `${solve.ao100.toFixed(2)}s` : '—'}
+                  {solve.ao100 !== null && solve.ao100 !== undefined
+                    ? `${solve.ao100.toFixed(2)}s`
+                    : '—'}
                 </td>
-                <td className="py-2.5 px-4 text-stone-400 text-[11px] font-sans">{solve.dateStr}</td>
+                <td className="py-2.5 px-4 text-stone-400 text-[11px] font-sans">
+                  {solve.dateStr}
+                </td>
                 <td className="py-2.5 px-4 text-stone-400 text-[11px] truncate max-w-xs font-mono">
                   {solve.scramble || '—'}
                 </td>
@@ -123,11 +134,13 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
       <div className="flex items-center justify-between text-xs text-stone-400 pt-2">
         <span>
           Showing {Math.min(filteredSolves.length, (currentPage - 1) * pageSize + 1)} to{' '}
-          {Math.min(filteredSolves.length, currentPage * pageSize)} of {filteredSolves.length} solves
+          {Math.min(filteredSolves.length, currentPage * pageSize)} of {filteredSolves.length}{' '}
+          solves
         </span>
 
         <div className="flex items-center gap-2">
           <button
+            type="button"
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             className="p-1.5 rounded-lg bg-stone-800 text-stone-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-stone-700 transition-colors"
@@ -138,6 +151,7 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
             {currentPage} / {totalPages}
           </span>
           <button
+            type="button"
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             className="p-1.5 rounded-lg bg-stone-800 text-stone-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-stone-700 transition-colors"

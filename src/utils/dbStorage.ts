@@ -1,4 +1,4 @@
-import { Session, GroupingPeriod } from '../types';
+import type { GroupingPeriod, Session } from '../types';
 import { formatLocalDate } from './csTimerParser';
 
 const DB_NAME = 'CubeProgressionDB';
@@ -41,7 +41,8 @@ function openDB(): Promise<IDBDatabase | null> {
     };
 
     request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error || new Error('Failed to open IndexedDB database.'));
+    request.onerror = () =>
+      reject(request.error || new Error('Failed to open IndexedDB database.'));
   });
 }
 
@@ -54,7 +55,7 @@ function normalizeSessionsDates(sessions: Session[]): Session[] {
     ...session,
     solves: (session.solves || []).map((solve) => {
       let d = solve.date;
-      if (!(d instanceof Date) || isNaN(d.getTime())) {
+      if (!(d instanceof Date) || Number.isNaN(d.getTime())) {
         d = new Date(solve.timestamp || solve.dateStr || Date.now());
       }
       return {
@@ -161,7 +162,10 @@ export async function getStorageInfo(): Promise<StorageEstimateInfo | null> {
       const estimate = await navigator.storage.estimate();
       const usageMB = (estimate.usage || 0) / (1024 * 1024);
       const quotaMB = estimate.quota ? estimate.quota / (1024 * 1024) : undefined;
-      return { usageMB: Number(usageMB.toFixed(2)), quotaMB: quotaMB ? Number(quotaMB.toFixed(0)) : undefined };
+      return {
+        usageMB: Number(usageMB.toFixed(2)),
+        quotaMB: quotaMB ? Number(quotaMB.toFixed(0)) : undefined,
+      };
     } catch {
       return null;
     }

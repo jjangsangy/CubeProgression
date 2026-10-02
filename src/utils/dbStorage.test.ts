@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { saveDataset, getSavedDataset, clearSavedDataset, getStorageInfo } from './dbStorage';
-import { Session } from '../types';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Session } from '../types';
+import { clearSavedDataset, getSavedDataset, getStorageInfo, saveDataset } from './dbStorage';
 
 describe('dbStorage IndexedDB utility', () => {
   const sampleSessions: Session[] = [

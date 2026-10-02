@@ -1,17 +1,16 @@
+import { Award, ChevronDown, ChevronUp, Flame, History, Sparkles, Trophy, Zap } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import {
-  ResponsiveContainer,
+  CartesianGrid,
   ComposedChart,
+  Legend,
   Line,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ReferenceDot,
 } from 'recharts';
-import { Trophy, Award, Flame, Zap, ChevronDown, ChevronUp, Sparkles, History } from 'lucide-react';
-import { Solve, GroupingPeriod } from '../types';
+import type { GroupingPeriod, PbDataPoint, Solve } from '../types';
 import { calculatePbProgression, getPeriodUnitInfo } from '../utils/statsMath';
 import { ChartCardWrapper } from './ChartCardWrapper';
 
@@ -33,9 +32,11 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
   const [showAo100, setShowAo100] = useState(true);
   const [showRawSolves, setShowRawSolves] = useState(false);
   const [showMilestoneList, setShowMilestoneList] = useState(false);
-  const [milestoneFilter, setMilestoneFilter] = useState<'All' | 'Single' | 'Ao5' | 'Ao12' | 'Ao50' | 'Ao100'>('All');
+  const [milestoneFilter, setMilestoneFilter] = useState<
+    'All' | 'Single' | 'Ao5' | 'Ao12' | 'Ao50' | 'Ao100'
+  >('All');
 
-  const unitInfo = getPeriodUnitInfo(groupingPeriod);
+  const _unitInfo = getPeriodUnitInfo(groupingPeriod);
 
   const pbResult = useMemo(() => {
     return calculatePbProgression(solves);
@@ -79,8 +80,16 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
     return pbMilestones.filter((m) => m.type === milestoneFilter);
   }, [pbMilestones, milestoneFilter]);
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (!active || !payload || !payload.length) return null;
+  const CustomTooltip = ({
+    active,
+    payload,
+    label,
+  }: {
+    active?: boolean;
+    payload?: Array<{ payload: PbDataPoint }>;
+    label?: string | number;
+  }) => {
+    if (!active || !payload?.length) return null;
     const data = payload[0].payload;
 
     const hasNewPb =
@@ -118,7 +127,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
         )}
 
         <div className="space-y-1">
-          {data.single !== null && (
+          {data.single != null && (
             <div className="flex justify-between items-center gap-4">
               <span className="text-stone-400">Solve Time:</span>
               <span className="font-mono font-bold text-stone-100">
@@ -127,67 +136,77 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               </span>
             </div>
           )}
-          {data.pbSingle !== null && (
+          {data.pbSingle != null && (
             <div className="flex justify-between items-center gap-4">
               <span className="text-amber-400 flex items-center gap-1">
                 <Flame className="w-3 h-3" /> PB Single:
               </span>
               <span className="font-mono font-semibold text-amber-300">
                 {data.pbSingle.toFixed(2)}s
-                {data.dropSingle > 0 && (
-                  <span className="text-emerald-400 text-[10px] ml-1">(-{data.dropSingle.toFixed(2)}s)</span>
+                {data.dropSingle != null && data.dropSingle > 0 && (
+                  <span className="text-emerald-400 text-[10px] ml-1">
+                    (-{data.dropSingle.toFixed(2)}s)
+                  </span>
                 )}
               </span>
             </div>
           )}
-          {data.pbAo5 !== null && (
+          {data.pbAo5 != null && (
             <div className="flex justify-between items-center gap-4">
               <span className="text-orange-400 flex items-center gap-1">
                 <Zap className="w-3 h-3" /> PB Ao5:
               </span>
               <span className="font-mono font-semibold text-orange-300">
                 {data.pbAo5.toFixed(2)}s
-                {data.dropAo5 > 0 && (
-                  <span className="text-emerald-400 text-[10px] ml-1">(-{data.dropAo5.toFixed(2)}s)</span>
+                {data.dropAo5 != null && data.dropAo5 > 0 && (
+                  <span className="text-emerald-400 text-[10px] ml-1">
+                    (-{data.dropAo5.toFixed(2)}s)
+                  </span>
                 )}
               </span>
             </div>
           )}
-          {data.pbAo12 !== null && (
+          {data.pbAo12 != null && (
             <div className="flex justify-between items-center gap-4">
               <span className="text-sky-400 flex items-center gap-1">
                 <Award className="w-3 h-3" /> PB Ao12:
               </span>
               <span className="font-mono font-semibold text-sky-300">
                 {data.pbAo12.toFixed(2)}s
-                {data.dropAo12 > 0 && (
-                  <span className="text-emerald-400 text-[10px] ml-1">(-{data.dropAo12.toFixed(2)}s)</span>
+                {data.dropAo12 != null && data.dropAo12 > 0 && (
+                  <span className="text-emerald-400 text-[10px] ml-1">
+                    (-{data.dropAo12.toFixed(2)}s)
+                  </span>
                 )}
               </span>
             </div>
           )}
-          {data.pbAo50 !== null && (
+          {data.pbAo50 != null && (
             <div className="flex justify-between items-center gap-4">
               <span className="text-purple-400 flex items-center gap-1">
                 <Trophy className="w-3 h-3" /> PB Ao50:
               </span>
               <span className="font-mono font-semibold text-purple-300">
                 {data.pbAo50.toFixed(2)}s
-                {data.dropAo50 > 0 && (
-                  <span className="text-emerald-400 text-[10px] ml-1">(-{data.dropAo50.toFixed(2)}s)</span>
+                {data.dropAo50 != null && data.dropAo50 > 0 && (
+                  <span className="text-emerald-400 text-[10px] ml-1">
+                    (-{data.dropAo50.toFixed(2)}s)
+                  </span>
                 )}
               </span>
             </div>
           )}
-          {data.pbAo100 !== null && (
+          {data.pbAo100 != null && (
             <div className="flex justify-between items-center gap-4">
               <span className="text-emerald-400 flex items-center gap-1">
                 <Award className="w-3 h-3" /> PB Ao100:
               </span>
               <span className="font-mono font-semibold text-emerald-300">
                 {data.pbAo100.toFixed(2)}s
-                {data.dropAo100 > 0 && (
-                  <span className="text-emerald-400 text-[10px] ml-1">(-{data.dropAo100.toFixed(2)}s)</span>
+                {data.dropAo100 != null && data.dropAo100 > 0 && (
+                  <span className="text-emerald-400 text-[10px] ml-1">
+                    (-{data.dropAo100.toFixed(2)}s)
+                  </span>
                 )}
               </span>
             </div>
@@ -430,7 +449,11 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                 name="PB Single"
                 stroke="#f59e0b"
                 strokeWidth={2.5}
-                dot={(props: any) => {
+                dot={(props: {
+                  cx?: number;
+                  cy?: number;
+                  payload: { index: number; isNewPbSingle?: boolean };
+                }) => {
                   const { cx, cy, payload } = props;
                   if (payload.isNewPbSingle) {
                     return (
@@ -459,7 +482,11 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                 name="PB Ao5"
                 stroke="#f97316"
                 strokeWidth={2.5}
-                dot={(props: any) => {
+                dot={(props: {
+                  cx?: number;
+                  cy?: number;
+                  payload: { index: number; isNewPbAo5?: boolean };
+                }) => {
                   const { cx, cy, payload } = props;
                   if (payload.isNewPbAo5) {
                     return (
@@ -488,7 +515,11 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                 name="PB Ao12"
                 stroke="#06b6d4"
                 strokeWidth={2.5}
-                dot={(props: any) => {
+                dot={(props: {
+                  cx?: number;
+                  cy?: number;
+                  payload: { index: number; isNewPbAo12?: boolean };
+                }) => {
                   const { cx, cy, payload } = props;
                   if (payload.isNewPbAo12) {
                     return (
@@ -517,7 +548,11 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                 name="PB Ao50"
                 stroke="#8b5cf6"
                 strokeWidth={2.5}
-                dot={(props: any) => {
+                dot={(props: {
+                  cx?: number;
+                  cy?: number;
+                  payload: { index: number; isNewPbAo50?: boolean };
+                }) => {
                   const { cx, cy, payload } = props;
                   if (payload.isNewPbAo50) {
                     return (
@@ -546,7 +581,11 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                 name="PB Ao100"
                 stroke="#10b981"
                 strokeWidth={2.5}
-                dot={(props: any) => {
+                dot={(props: {
+                  cx?: number;
+                  cy?: number;
+                  payload: { index: number; isNewPbAo100?: boolean };
+                }) => {
                   const { cx, cy, payload } = props;
                   if (payload.isNewPbAo100) {
                     return (
@@ -612,18 +651,24 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             {/* Milestones Grid / List */}
             <div className="max-h-60 overflow-y-auto pr-1 space-y-1.5 custom-scrollbar text-xs">
               {filteredMilestones.length === 0 ? (
-                <p className="text-stone-500 italic py-2 text-center">No record milestones for this filter.</p>
+                <p className="text-stone-500 italic py-2 text-center">
+                  No record milestones for this filter.
+                </p>
               ) : (
-                filteredMilestones.map((m, idx) => {
+                filteredMilestones.map((m) => {
                   let badgeColor = 'bg-amber-500/10 text-amber-300 border-amber-500/30';
-                  if (m.type === 'Ao5') badgeColor = 'bg-orange-500/10 text-orange-300 border-orange-500/30';
-                  if (m.type === 'Ao12') badgeColor = 'bg-sky-500/10 text-sky-300 border-sky-500/30';
-                  if (m.type === 'Ao50') badgeColor = 'bg-purple-500/10 text-purple-300 border-purple-500/30';
-                  if (m.type === 'Ao100') badgeColor = 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30';
+                  if (m.type === 'Ao5')
+                    badgeColor = 'bg-orange-500/10 text-orange-300 border-orange-500/30';
+                  if (m.type === 'Ao12')
+                    badgeColor = 'bg-sky-500/10 text-sky-300 border-sky-500/30';
+                  if (m.type === 'Ao50')
+                    badgeColor = 'bg-purple-500/10 text-purple-300 border-purple-500/30';
+                  if (m.type === 'Ao100')
+                    badgeColor = 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30';
 
                   return (
                     <div
-                      key={idx}
+                      key={`${m.type}-${m.index}-${m.timeSec}`}
                       className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-stone-950/60 border border-stone-800/80 hover:border-stone-700 transition-all"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">

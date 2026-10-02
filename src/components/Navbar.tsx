@@ -1,5 +1,5 @@
-import React from 'react';
-import { Timer, Download, RefreshCw, FileText, Sparkles, Database, Trash2 } from 'lucide-react';
+import { Database, Download, FileText, RefreshCw, Sparkles, Timer, Trash2 } from 'lucide-react';
+import type React from 'react';
 
 interface NavbarProps {
   fileName?: string;
@@ -53,7 +53,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Database className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <span>Saved locally</span>
               {storageUsageMB !== undefined && storageUsageMB > 0 && (
-                <span className="text-emerald-500/80 font-mono text-[11px]">({storageUsageMB} MB)</span>
+                <span className="text-emerald-500/80 font-mono text-[11px]">
+                  ({storageUsageMB} MB)
+                </span>
               )}
             </div>
           )}
@@ -66,6 +68,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
 
           <button
+            type="button"
             onClick={onLoadDemo}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-stone-950 shadow-md shadow-amber-500/10 transition-all active:scale-95 cursor-pointer"
           >
@@ -75,6 +78,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           <button
+            type="button"
             onClick={onExportCSV}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-stone-800 hover:bg-stone-700/80 text-stone-200 border border-stone-700/60 transition-all active:scale-95 cursor-pointer"
             title="Export Period Summary Stats as CSV"
@@ -85,6 +89,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {isSaved && onClearStorage ? (
             <button
+              type="button"
               onClick={onClearStorage}
               className="p-1.5 rounded-xl text-stone-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all cursor-pointer"
               title="Reset Data"
@@ -93,6 +98,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           ) : (
             <button
+              type="button"
               onClick={onReset}
               className="p-1.5 rounded-xl text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-all cursor-pointer"
               title="Reset Data"
@@ -105,4 +111,3 @@ export const Navbar: React.FC<NavbarProps> = ({
     </header>
   );
 };
-

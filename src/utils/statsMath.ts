@@ -1,14 +1,14 @@
 import { Temporal } from 'temporal-polyfill';
-import {
-  Solve,
-  PeriodGroup,
-  LinearRegression,
-  KDEPoint,
+import type {
   GlobalStats,
   GroupingPeriod,
+  KDEPoint,
+  LinearRegression,
   PbDataPoint,
   PbMilestone,
   PbProgressionResult,
+  PeriodGroup,
+  Solve,
 } from '../types';
 
 /**
@@ -50,8 +50,8 @@ export function calculateAoN(solves: Solve[], currentIndex: number, n: number): 
 
   // Trim best `trimCount` and worst `trimCount`
   const trimmed = effectiveTimes.slice(trimCount, n - trimCount);
-  
-  if (trimmed.length === 0 || trimmed.some(t => !isFinite(t))) {
+
+  if (trimmed.length === 0 || trimmed.some((t) => !Number.isFinite(t))) {
     return null;
   }
 
@@ -63,7 +63,7 @@ export function calculateAoN(solves: Solve[], currentIndex: number, n: number): 
  * Fits Ordinary Least Squares (OLS) Linear Regression: y = slope * x + intercept
  */
 export function calculateLinearRegression(solves: Solve[]): LinearRegression {
-  const validSolves = solves.filter(s => s.penalty !== 'DNF');
+  const validSolves = solves.filter((s) => s.penalty !== 'DNF');
   const n = validSolves.length;
 
   if (n < 2) {
@@ -121,10 +121,15 @@ export function calculateLinearRegression(solves: Solve[]): LinearRegression {
 /**
  * Calculates statistical metrics (Mean, Median, Q1, Q3, IQR, Whiskers, Outliers, StdDev) for a group of times
  */
-export function computeGroupStats(groupSolves: Solve[], label: string, startDate: Date, endDate: Date): PeriodGroup {
+export function computeGroupStats(
+  groupSolves: Solve[],
+  label: string,
+  startDate: Date,
+  endDate: Date,
+): PeriodGroup {
   const validTimes = groupSolves
-    .filter(s => s.penalty !== 'DNF')
-    .map(s => s.finalTimeSec)
+    .filter((s) => s.penalty !== 'DNF')
+    .map((s) => s.finalTimeSec)
     .sort((a, b) => a - b);
 
   if (validTimes.length === 0) {
@@ -173,11 +178,11 @@ export function computeGroupStats(groupSolves: Solve[], label: string, startDate
   const lowLimit = q1 - 1.5 * iqr;
   const highLimit = q3 + 1.5 * iqr;
 
-  const insideTimes = validTimes.filter(t => t >= lowLimit && t <= highLimit);
+  const insideTimes = validTimes.filter((t) => t >= lowLimit && t <= highLimit);
   const whiskerLow = insideTimes.length > 0 ? insideTimes[0] : q1;
   const whiskerHigh = insideTimes.length > 0 ? insideTimes[insideTimes.length - 1] : q3;
 
-  const outliers = validTimes.filter(t => t < lowLimit || t > highLimit);
+  const outliers = validTimes.filter((t) => t < lowLimit || t > highLimit);
 
   // Standard deviation
   const variance = validTimes.reduce((acc, val) => acc + (val - mean) ** 2, 0) / validTimes.length;
@@ -199,7 +204,7 @@ export function computeGroupStats(groupSolves: Solve[], label: string, startDate
     iqr: Number(iqr.toFixed(2)),
     whiskerLow: Number(whiskerLow.toFixed(2)),
     whiskerHigh: Number(whiskerHigh.toFixed(2)),
-    outliers: outliers.map(o => Number(o.toFixed(2))),
+    outliers: outliers.map((o) => Number(o.toFixed(2))),
   };
 }
 
@@ -233,7 +238,6 @@ export function getPeriodUnitInfo(period: GroupingPeriod | string, customBatchSi
         axisLabel: 'Batch',
         solvesPerUnit: customBatchSize ? `solves/batch (${customBatchSize})` : 'solves/batch',
       };
-    case 'daily':
     default:
       return {
         unitSingular: 'Day',
@@ -251,7 +255,7 @@ export function getPeriodUnitInfo(period: GroupingPeriod | string, customBatchSi
 export function groupSolvesByPeriod(
   solves: Solve[],
   period: GroupingPeriod,
-  customBatchSize: number = 50
+  customBatchSize: number = 50,
 ): PeriodGroup[] {
   if (solves.length === 0) return [];
 
@@ -275,11 +279,13 @@ export function groupSolvesByPeriod(
   const mapKeyToSolves = new Map<string, Solve[]>();
   const mapKeyToDates = new Map<string, { start: Date; end: Date; label: string }>();
 
-  solves.forEach(s => {
+  solves.forEach((s) => {
     let key = '';
     let label = '';
     const d = new Date(s.timestamp);
-    const zdt = Temporal.Instant.fromEpochMilliseconds(s.timestamp).toZonedDateTimeISO(Temporal.Now.timeZoneId());
+    const zdt = Temporal.Instant.fromEpochMilliseconds(s.timestamp).toZonedDateTimeISO(
+      Temporal.Now.timeZoneId(),
+    );
 
     if (period === 'daily') {
       key = zdt.toPlainDate().toString();
@@ -290,7 +296,20 @@ export function groupSolvesByPeriod(
       key = `${weekYear}-W${String(weekNum).padStart(2, '0')}`;
       label = `Week ${weekNum} (${weekYear})`;
     } else if (period === 'monthly') {
-      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const monthNames = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
       key = `${zdt.year}-${String(zdt.month).padStart(2, '0')}`;
       label = `${monthNames[zdt.month - 1]} ${zdt.year}`;
     }
@@ -300,10 +319,15 @@ export function groupSolvesByPeriod(
       mapKeyToDates.set(key, { start: d, end: d, label });
     }
 
-    mapKeyToSolves.get(key)!.push(s);
-    const dateRange = mapKeyToDates.get(key)!;
-    if (d < dateRange.start) dateRange.start = d;
-    if (d > dateRange.end) dateRange.end = d;
+    const solvesList = mapKeyToSolves.get(key);
+    if (solvesList) {
+      solvesList.push(s);
+    }
+    const dateRange = mapKeyToDates.get(key);
+    if (dateRange) {
+      if (d < dateRange.start) dateRange.start = d;
+      if (d > dateRange.end) dateRange.end = d;
+    }
   });
 
   // Convert to array sorted chronologically
@@ -312,8 +336,9 @@ export function groupSolvesByPeriod(
   // Generate friendly period group display labels
   const result: PeriodGroup[] = [];
   sortedKeys.forEach((key, index) => {
-    const groupSolves = mapKeyToSolves.get(key)!;
-    const info = mapKeyToDates.get(key)!;
+    const groupSolves = mapKeyToSolves.get(key);
+    const info = mapKeyToDates.get(key);
+    if (!groupSolves || !info) return;
 
     let displayLabel = info.label;
     if (period === 'daily') {
@@ -337,16 +362,19 @@ export function calculateKDE(
   solves: Solve[],
   baselinePercent = 0.3,
   recentPercent = 0.3,
-  numPoints = 100
+  numPoints = 100,
 ): KDEPoint[] {
-  const validSolves = solves.filter(s => s.penalty !== 'DNF');
+  const validSolves = solves.filter((s) => s.penalty !== 'DNF');
   if (validSolves.length < 5) return [];
 
   const splitBaselineIndex = Math.max(3, Math.floor(validSolves.length * baselinePercent));
-  const splitRecentIndex = Math.min(validSolves.length - 3, Math.floor(validSolves.length * (1 - recentPercent)));
+  const splitRecentIndex = Math.min(
+    validSolves.length - 3,
+    Math.floor(validSolves.length * (1 - recentPercent)),
+  );
 
-  const baselineTimes = validSolves.slice(0, splitBaselineIndex).map(s => s.finalTimeSec);
-  const recentTimes = validSolves.slice(splitRecentIndex).map(s => s.finalTimeSec);
+  const baselineTimes = validSolves.slice(0, splitBaselineIndex).map((s) => s.finalTimeSec);
+  const recentTimes = validSolves.slice(splitRecentIndex).map((s) => s.finalTimeSec);
 
   if (baselineTimes.length === 0 || recentTimes.length === 0) return [];
 
@@ -361,7 +389,7 @@ export function calculateKDE(
     const n = times.length;
     const mean = times.reduce((a, b) => a + b, 0) / n;
     const std = Math.sqrt(times.reduce((a, b) => a + (b - mean) ** 2, 0) / n);
-    return Math.max(0.8, 1.06 * (std || 1) * Math.pow(n, -0.2));
+    return Math.max(0.8, 1.06 * (std || 1) * n ** -0.2);
   };
 
   const bwBaseline = getBandwidth(baselineTimes);
@@ -400,7 +428,7 @@ export function calculateKDE(
  * Calculates global high-level summary statistics
  */
 export function calculateGlobalStats(solves: Solve[]): GlobalStats {
-  const validSolves = solves.filter(s => s.penalty !== 'DNF');
+  const validSolves = solves.filter((s) => s.penalty !== 'DNF');
   const dnfCount = solves.length - validSolves.length;
 
   let bestSingle: Solve | null = null;
@@ -431,24 +459,29 @@ export function calculateGlobalStats(solves: Solve[]): GlobalStats {
   const currentAo5 = calculateAoN(solves, solves.length - 1, 5);
   const currentAo12 = solves.length > 0 ? solves[solves.length - 1].ao12 || null : null;
 
-  const times = validSolves.map(s => s.finalTimeSec);
-  const overallMean = times.length > 0 ? Number((times.reduce((a, b) => a + b, 0) / times.length).toFixed(2)) : 0;
+  const times = validSolves.map((s) => s.finalTimeSec);
+  const overallMean =
+    times.length > 0 ? Number((times.reduce((a, b) => a + b, 0) / times.length).toFixed(2)) : 0;
 
   times.sort((a, b) => a - b);
-  const overallMedian = times.length > 0 ? Number((times[Math.floor(times.length / 2)]).toFixed(2)) : 0;
+  const overallMedian =
+    times.length > 0 ? Number(times[Math.floor(times.length / 2)].toFixed(2)) : 0;
 
   const regression = calculateLinearRegression(solves);
 
   // Improvement comparison (First 15% vs Last 15%)
   const sampleSize = Math.max(5, Math.floor(validSolves.length * 0.15));
-  const initialTimes = validSolves.slice(0, sampleSize).map(s => s.finalTimeSec);
-  const recentTimes = validSolves.slice(validSolves.length - sampleSize).map(s => s.finalTimeSec);
+  const initialTimes = validSolves.slice(0, sampleSize).map((s) => s.finalTimeSec);
+  const recentTimes = validSolves.slice(validSolves.length - sampleSize).map((s) => s.finalTimeSec);
 
-  const initialAvg = initialTimes.length > 0 ? initialTimes.reduce((a, b) => a + b, 0) / initialTimes.length : 0;
-  const recentAvg = recentTimes.length > 0 ? recentTimes.reduce((a, b) => a + b, 0) / recentTimes.length : 0;
+  const initialAvg =
+    initialTimes.length > 0 ? initialTimes.reduce((a, b) => a + b, 0) / initialTimes.length : 0;
+  const recentAvg =
+    recentTimes.length > 0 ? recentTimes.reduce((a, b) => a + b, 0) / recentTimes.length : 0;
 
   const improvementSec = Number((initialAvg - recentAvg).toFixed(2));
-  const improvementPct = initialAvg > 0 ? Number(((improvementSec / initialAvg) * 100).toFixed(1)) : 0;
+  const improvementPct =
+    initialAvg > 0 ? Number(((improvementSec / initialAvg) * 100).toFixed(1)) : 0;
 
   return {
     totalSolves: solves.length,
@@ -471,8 +504,8 @@ export function calculateGlobalStats(solves: Solve[]): GlobalStats {
 }
 
 /**
-  * Calculates chronological PB (Personal Best) step-down progression over time for Singles, Ao5, Ao12, Ao50, and Ao100
-  */
+ * Calculates chronological PB (Personal Best) step-down progression over time for Singles, Ao5, Ao12, Ao50, and Ao100
+ */
 export function calculatePbProgression(solves: Solve[]): PbProgressionResult {
   let currentPbSingle: number | null = null;
   let currentPbAo5: number | null = null;
@@ -713,4 +746,3 @@ export function calculatePbProgression(solves: Solve[]): PbProgressionResult {
     pbMilestones: milestones,
   };
 }
-

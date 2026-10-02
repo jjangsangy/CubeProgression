@@ -1,6 +1,7 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { Maximize2, Minimize2, Download, Loader2 } from 'lucide-react';
-import { toPng, toCanvas } from 'html-to-image';
+import { toCanvas, toPng } from 'html-to-image';
+import { Download, Loader2, Maximize2, Minimize2 } from 'lucide-react';
+import type React from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface ChartCardWrapperProps {
   title: string;
@@ -165,8 +166,12 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
           });
 
           // Preserve exact rendered pixel dimensions for Recharts wrappers
-          const liveRecharts = el.querySelectorAll('.recharts-wrapper, .recharts-responsive-container');
-          const clonedRecharts = clonedNode.querySelectorAll('.recharts-wrapper, .recharts-responsive-container');
+          const liveRecharts = el.querySelectorAll(
+            '.recharts-wrapper, .recharts-responsive-container',
+          );
+          const clonedRecharts = clonedNode.querySelectorAll(
+            '.recharts-wrapper, .recharts-responsive-container',
+          );
           liveRecharts.forEach((liveItem, idx) => {
             const clonedItem = clonedRecharts[idx];
             if (liveItem instanceof HTMLElement && clonedItem instanceof HTMLElement) {
@@ -254,9 +259,7 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
               </h2>
             </div>
             {subtitle && (
-              <p className="text-xs text-stone-400 mt-1 leading-relaxed max-w-3xl">
-                {subtitle}
-              </p>
+              <p className="text-xs text-stone-400 mt-1 leading-relaxed max-w-3xl">{subtitle}</p>
             )}
           </div>
 
@@ -264,6 +267,7 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
           <div className="flex items-center gap-1.5 shrink-0 export-exclude self-start pt-0.5">
             {/* Download Button */}
             <button
+              type="button"
               onClick={handleDownloadImage}
               disabled={isDownloading}
               title="Download Plot as PNG Image"
@@ -279,6 +283,7 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
 
             {/* Maximize / Minimize Button */}
             <button
+              type="button"
               onClick={() => setIsMaximized(!isMaximized)}
               title={isMaximized ? 'Restore View (Esc)' : 'Maximize to Fullscreen'}
               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700/80 text-stone-300 hover:text-stone-100 border border-stone-700/60 text-xs font-medium transition-all active:scale-95 cursor-pointer shadow-sm"
@@ -319,9 +324,7 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
 
         {/* Fullscreen Backdrop Overlay */}
         <div className="fixed inset-0 bg-stone-950/95 backdrop-blur-xl z-[100] p-4 sm:p-8 flex flex-col justify-center items-center overflow-y-auto animate-in fade-in duration-200">
-          <div className="w-full max-w-7xl h-full max-h-[92vh] flex flex-col">
-            {cardContent}
-          </div>
+          <div className="w-full max-w-7xl h-full max-h-[92vh] flex flex-col">{cardContent}</div>
         </div>
       </>
     );

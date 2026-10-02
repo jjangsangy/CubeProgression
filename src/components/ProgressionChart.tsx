@@ -1,29 +1,21 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { Temporal } from 'temporal-polyfill';
+import { Calendar, Filter, Hash, RotateCcw, SlidersHorizontal, Sparkles } from 'lucide-react';
+import type React from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  ResponsiveContainer,
+  CartesianGrid,
   ComposedChart,
+  Legend,
   Line,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ReferenceLine,
 } from 'recharts';
-import {
-  Filter,
-  RotateCcw,
-  Calendar,
-  Hash,
-  SlidersHorizontal,
-  TrendingDown,
-  TrendingUp,
-  Sparkles,
-} from 'lucide-react';
-import { Solve, PeriodGroup, LinearRegression, GroupingPeriod } from '../types';
+import { Temporal } from 'temporal-polyfill';
+import type { GroupingPeriod, LinearRegression, PeriodGroup, Solve } from '../types';
+import { calculateAoN, calculateLinearRegression, getPeriodUnitInfo } from '../utils/statsMath';
 import { ChartCardWrapper } from './ChartCardWrapper';
-import { getPeriodUnitInfo, calculateAoN, calculateLinearRegression } from '../utils/statsMath';
 
 interface ProgressionChartProps {
   solves: Solve[];
@@ -35,12 +27,20 @@ interface ProgressionChartProps {
 
 export type SolveVisibilityMode = 'muted' | 'unmuted' | 'dots' | 'hidden' | 'visible';
 export type RangeMode = 'all' | 'solveIndex' | 'dateRange';
-export type RangePreset = 'all' | 'last50' | 'last100' | 'last200' | 'first100' | 'last7d' | 'last30d' | 'custom';
+export type RangePreset =
+  | 'all'
+  | 'last50'
+  | 'last100'
+  | 'last200'
+  | 'first100'
+  | 'last7d'
+  | 'last30d'
+  | 'custom';
 
 export const ProgressionChart: React.FC<ProgressionChartProps> = ({
   solves,
   periodGroups,
-  regression,
+  regression: _regression,
   groupingPeriod = 'daily',
   title = 'Overall Progression & Moving Averages',
 }) => {
@@ -64,9 +64,9 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
 
   // Viewport width tracking for responsive tick calculations
   const [windowWidth, setWindowWidth] = useState<number>(
-    typeof window !== 'undefined' ? window.innerWidth : 1024
+    typeof window !== 'undefined' ? window.innerWidth : 1024,
   );
-  const [isMobileScreen, setIsMobileScreen] = useState<boolean>(false);
+  const [_isMobileScreen, setIsMobileScreen] = useState<boolean>(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -98,7 +98,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
         if (!endDate) setEndDate(solves[solves.length - 1]?.dateStr || '');
       }
     }
-  }, [solves]);
+  }, [solves, startDate, preset, endDate]);
 
   // Handle Preset Selection
   const applyPreset = (selectedPreset: RangePreset) => {
@@ -130,14 +130,18 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
     } else if (selectedPreset === 'last7d') {
       setRangeMode('dateRange');
       const lastTs = solves[solves.length - 1]?.timestamp || Date.now();
-      const lastZdt = Temporal.Instant.fromEpochMilliseconds(lastTs).toZonedDateTimeISO(Temporal.Now.timeZoneId());
+      const lastZdt = Temporal.Instant.fromEpochMilliseconds(lastTs).toZonedDateTimeISO(
+        Temporal.Now.timeZoneId(),
+      );
       const targetStr = lastZdt.subtract({ days: 7 }).toPlainDate().toString();
       setStartDate(targetStr > earliestDate ? targetStr : earliestDate);
       setEndDate(latestDate);
     } else if (selectedPreset === 'last30d') {
       setRangeMode('dateRange');
       const lastTs = solves[solves.length - 1]?.timestamp || Date.now();
-      const lastZdt = Temporal.Instant.fromEpochMilliseconds(lastTs).toZonedDateTimeISO(Temporal.Now.timeZoneId());
+      const lastZdt = Temporal.Instant.fromEpochMilliseconds(lastTs).toZonedDateTimeISO(
+        Temporal.Now.timeZoneId(),
+      );
       const targetStr = lastZdt.subtract({ days: 30 }).toPlainDate().toString();
       setStartDate(targetStr > earliestDate ? targetStr : earliestDate);
       setEndDate(latestDate);
@@ -196,7 +200,8 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
       const ao12 = solve.ao12 ?? calculateAoN(solves, fullIdx, 12);
       const ao50 = solve.ao50 ?? calculateAoN(solves, fullIdx, 50);
       const ao100 = solve.ao100 ?? calculateAoN(solves, fullIdx, 100);
-      const customAo = showCustomAo && customAoN >= 3 ? calculateAoN(solves, fullIdx, customAoN) : null;
+      const customAo =
+        showCustomAo && customAoN >= 3 ? calculateAoN(solves, fullIdx, customAoN) : null;
       const pInfo = solvePeriodMap.get(solve.index);
 
       return {
@@ -222,7 +227,10 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
     const validTimes = filteredSolves.filter((s) => s.penalty !== 'DNF').map((s) => s.finalTimeSec);
     const count = filteredSolves.length;
     const isFiltered = count < totalCount;
-    const meanSec = validTimes.length > 0 ? (validTimes.reduce((a, b) => a + b, 0) / validTimes.length).toFixed(2) : '-';
+    const meanSec =
+      validTimes.length > 0
+        ? (validTimes.reduce((a, b) => a + b, 0) / validTimes.length).toFixed(2)
+        : '-';
     const bestSec = validTimes.length > 0 ? Math.min(...validTimes).toFixed(2) : '-';
     const pctOfTotal = totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) : '100';
 
@@ -316,8 +324,31 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
   const minY = yValues.length > 0 ? Math.max(0, Math.floor(Math.min(...yValues) - 2)) : 0;
   const maxY = yValues.length > 0 ? Math.ceil(Math.max(...yValues) + 3) : 50;
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (!active || !payload || !payload.length) return null;
+  interface ProgressionTooltipData {
+    periodLabel?: string;
+    dateStr: string;
+    single?: number | null;
+    penalty?: string;
+    ao5?: number | null;
+    ao12?: number | null;
+    ao50?: number | null;
+    ao100?: number | null;
+    customAo?: number | null;
+    trend?: number | null;
+    scramble?: string;
+    comment?: string;
+  }
+
+  const CustomTooltip = ({
+    active,
+    payload,
+    label,
+  }: {
+    active?: boolean;
+    payload?: Array<{ payload: ProgressionTooltipData }>;
+    label?: string | number;
+  }) => {
+    if (!active || !payload?.length) return null;
     const data = payload[0].payload;
 
     return (
@@ -326,7 +357,9 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
           <span>
             Solve #{label}
             {data.periodLabel && (
-              <span className="text-sky-400 font-normal ml-1.5 text-[11px]">({data.periodLabel})</span>
+              <span className="text-sky-400 font-normal ml-1.5 text-[11px]">
+                ({data.periodLabel})
+              </span>
             )}
           </span>
           <span className="text-stone-400 font-normal">{data.dateStr}</span>
@@ -344,13 +377,17 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
           {showAo5 && data.ao5 !== null && data.ao5 !== undefined && (
             <div className="flex justify-between items-center gap-4">
               <span className="text-emerald-400">Ao5:</span>
-              <span className="font-mono font-semibold text-emerald-300">{data.ao5.toFixed(2)}s</span>
+              <span className="font-mono font-semibold text-emerald-300">
+                {data.ao5.toFixed(2)}s
+              </span>
             </div>
           )}
           {showAo12 && data.ao12 !== null && data.ao12 !== undefined && (
             <div className="flex justify-between items-center gap-4">
               <span className="text-orange-400">Ao12:</span>
-              <span className="font-mono font-semibold text-orange-300">{data.ao12.toFixed(2)}s</span>
+              <span className="font-mono font-semibold text-orange-300">
+                {data.ao12.toFixed(2)}s
+              </span>
             </div>
           )}
           {showAo50 && data.ao50 !== null && data.ao50 !== undefined && (
@@ -362,13 +399,17 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
           {showAo100 && data.ao100 !== null && data.ao100 !== undefined && (
             <div className="flex justify-between items-center gap-4">
               <span className="text-purple-400">Ao100:</span>
-              <span className="font-mono font-semibold text-purple-300">{data.ao100.toFixed(2)}s</span>
+              <span className="font-mono font-semibold text-purple-300">
+                {data.ao100.toFixed(2)}s
+              </span>
             </div>
           )}
           {showCustomAo && data.customAo !== null && data.customAo !== undefined && (
             <div className="flex justify-between items-center gap-4">
               <span className="text-yellow-400">Ao{customAoN}:</span>
-              <span className="font-mono font-semibold text-yellow-300">{data.customAo.toFixed(2)}s</span>
+              <span className="font-mono font-semibold text-yellow-300">
+                {data.customAo.toFixed(2)}s
+              </span>
             </div>
           )}
           {showTrend && (
@@ -411,7 +452,6 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
           strokeOpacity: 0.25,
           dot: { r: 1.2, fill: '#94a3b8', fillOpacity: 0.35, stroke: 'none' },
         };
-      case 'muted':
       default:
         return {
           stroke: '#64748b',
@@ -510,7 +550,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                     min="3"
                     max="1000"
                     value={customAoN}
-                    onChange={(e) => setCustomAoN(Math.max(3, parseInt(e.target.value) || 3))}
+                    onChange={(e) => setCustomAoN(Math.max(3, parseInt(e.target.value, 10) || 3))}
                     className="w-10 bg-transparent text-xs font-mono font-bold text-yellow-200 focus:outline-none border-b border-stone-600 focus:border-yellow-400 text-center"
                   />
                 </div>
@@ -657,14 +697,18 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 text-xs font-medium transition-all active:scale-95 cursor-pointer"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Reset Range ({rangeStats.count} / {totalCount})</span>
+                  <span>
+                    Reset Range ({rangeStats.count} / {totalCount})
+                  </span>
                 </button>
               )}
             </div>
 
             {/* Presets Toolbar */}
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-stone-400 text-[11px] font-medium shrink-0">Quick Presets:</span>
+              <span className="text-stone-400 text-[11px] font-medium shrink-0">
+                Quick Presets:
+              </span>
               <div className="flex flex-wrap items-center gap-1.5">
                 {[
                   { key: 'all', label: 'All Solves' },
@@ -697,14 +741,16 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                 <div className="flex flex-col md:flex-row items-center gap-4">
                   {/* Start Solve Input & Slider */}
                   <div className="flex-1 w-full flex items-center gap-2 min-w-0">
-                    <span className="text-stone-400 shrink-0 font-mono text-[11px]">From Solve #:</span>
+                    <span className="text-stone-400 shrink-0 font-mono text-[11px]">
+                      From Solve #:
+                    </span>
                     <input
                       type="number"
                       min={1}
                       max={endSolve}
                       value={startSolve}
                       onChange={(e) => {
-                        const val = parseInt(e.target.value) || 1;
+                        const val = parseInt(e.target.value, 10) || 1;
                         setStartSolve(Math.max(1, Math.min(val, endSolve)));
                         setPreset('custom');
                       }}
@@ -717,7 +763,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                       value={startSolve}
                       style={{ touchAction: 'pan-x' }}
                       onChange={(e) => {
-                        const val = parseInt(e.target.value);
+                        const val = parseInt(e.target.value, 10);
                         if (val <= endSolve) {
                           setStartSolve(val);
                           setPreset('custom');
@@ -729,14 +775,16 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
 
                   {/* End Solve Input & Slider */}
                   <div className="flex-1 w-full flex items-center gap-2 min-w-0">
-                    <span className="text-stone-400 shrink-0 font-mono text-[11px]">To Solve #:</span>
+                    <span className="text-stone-400 shrink-0 font-mono text-[11px]">
+                      To Solve #:
+                    </span>
                     <input
                       type="number"
                       min={startSolve}
                       max={totalCount}
                       value={endSolve}
                       onChange={(e) => {
-                        const val = parseInt(e.target.value) || totalCount;
+                        const val = parseInt(e.target.value, 10) || totalCount;
                         setEndSolve(Math.min(totalCount, Math.max(val, startSolve)));
                         setPreset('custom');
                       }}
@@ -749,7 +797,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                       value={endSolve}
                       style={{ touchAction: 'pan-x' }}
                       onChange={(e) => {
-                        const val = parseInt(e.target.value);
+                        const val = parseInt(e.target.value, 10);
                         if (val >= startSolve) {
                           setEndSolve(val);
                           setPreset('custom');
@@ -766,7 +814,9 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
               <div className="bg-stone-900/80 border border-stone-700/50 rounded-lg p-3">
                 <div className="flex flex-wrap items-center gap-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-stone-400 text-[11px] shrink-0 font-medium">Start Date:</span>
+                    <span className="text-stone-400 text-[11px] shrink-0 font-medium">
+                      Start Date:
+                    </span>
                     <input
                       type="date"
                       value={startDate}
@@ -780,7 +830,9 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-stone-400 text-[11px] shrink-0 font-medium">End Date:</span>
+                    <span className="text-stone-400 text-[11px] shrink-0 font-medium">
+                      End Date:
+                    </span>
                     <input
                       type="date"
                       value={endDate}
@@ -804,7 +856,9 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
             <div className="bg-stone-900/90 border border-stone-700/60 rounded-lg p-2.5 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
               <div className="flex items-center gap-2 text-stone-300">
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span className="font-sans font-medium text-stone-400 text-[11px]">Range Focus:</span>
+                <span className="font-sans font-medium text-stone-400 text-[11px]">
+                  Range Focus:
+                </span>
                 <span className="font-bold text-sky-300">
                   {rangeMode === 'dateRange'
                     ? `${startDate || earliestDate} – ${endDate || latestDate}`
@@ -826,7 +880,9 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                 </div>
                 <div className="flex items-center gap-1 border-l border-stone-700/80 pl-2.5">
                   <span className="text-stone-400">Range Slope:</span>
-                  <span className={`font-bold ${filteredRegression.slope <= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  <span
+                    className={`font-bold ${filteredRegression.slope <= 0 ? 'text-emerald-400' : 'text-rose-400'}`}
+                  >
                     {filteredRegression.slopeFormatted}
                   </span>
                 </div>
@@ -845,7 +901,12 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
         <div className="w-full h-[420px] pt-1">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={chartData} margin={{ top: 65, right: 30, left: 10, bottom: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#334155"
+                opacity={0.4}
+                vertical={false}
+              />
               <XAxis
                 dataKey="index"
                 stroke="#94a3b8"
@@ -876,16 +937,17 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
               />
 
               {/* Vertical Period Boundaries (Responsive Ticks rendered vertically) */}
-              {responsiveBoundaryInfo.boundaries.map((b, idx) => (
+              {responsiveBoundaryInfo.boundaries.map((b) => (
                 <ReferenceLine
-                  key={`period-boundary-${b.periodNumber}-${idx}`}
+                  key={`period-boundary-${b.periodNumber}-${b.index}`}
                   x={b.index}
                   stroke="#64748b"
                   strokeDasharray="3 3"
                   strokeWidth={1.2}
-                  label={(props: any) => {
+                  label={(props: { viewBox?: { x?: number; y?: number } }) => {
                     const { viewBox } = props || {};
-                    if (!viewBox || typeof viewBox.x !== 'number' || typeof viewBox.y !== 'number') return null;
+                    if (!viewBox || typeof viewBox.x !== 'number' || typeof viewBox.y !== 'number')
+                      return null;
                     const { x, y } = viewBox;
                     const tx = x + 4;
                     const ty = y - 8;
@@ -1005,5 +1067,3 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
     </ChartCardWrapper>
   );
 };
-
-

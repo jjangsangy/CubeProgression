@@ -1,8 +1,7 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import type { Session } from '../types';
 import { FileUploader } from './FileUploader';
-import { Session } from '../types';
 
 const mockSessions: Session[] = [
   {
@@ -43,7 +42,7 @@ describe('FileUploader component', () => {
         onFileUpload={vi.fn()}
         onLoadDemo={vi.fn()}
         errorMsg={null}
-      />
+      />,
     );
 
     expect(screen.getByText('Main Session (1 solves)')).toBeInTheDocument();
@@ -65,7 +64,7 @@ describe('FileUploader component', () => {
         onChangeCustomBatchSize={vi.fn()}
         onFileUpload={vi.fn()}
         onLoadDemo={vi.fn()}
-      />
+      />,
     );
 
     const select = screen.getByRole('combobox');
@@ -88,7 +87,7 @@ describe('FileUploader component', () => {
         onChangeCustomBatchSize={onChangeCustomBatchSize}
         onFileUpload={vi.fn()}
         onLoadDemo={vi.fn()}
-      />
+      />,
     );
 
     const weeklyBtn = screen.getByText('Weekly');
@@ -114,7 +113,7 @@ describe('FileUploader component', () => {
         onFileUpload={vi.fn()}
         onLoadDemo={vi.fn()}
         errorMsg="Invalid JSON format"
-      />
+      />,
     );
 
     expect(screen.getByText('Invalid JSON format')).toBeInTheDocument();
@@ -136,7 +135,7 @@ describe('FileUploader component', () => {
         loadingProgress={65}
         loadingStage="Parsing solves and timestamps..."
         uploadingFileName="cstimer_my_solves.txt"
-      />
+      />,
     );
 
     expect(screen.getByText('Parsing solves and timestamps...')).toBeInTheDocument();

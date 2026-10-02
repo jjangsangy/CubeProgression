@@ -1,15 +1,16 @@
-import React, { useMemo, useState } from 'react';
+import type React from 'react';
+import { useMemo, useState } from 'react';
 import {
-  ResponsiveContainer,
-  AreaChart,
   Area,
+  AreaChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
 } from 'recharts';
-import { Solve, GroupingPeriod } from '../types';
+import type { GroupingPeriod, Solve } from '../types';
 import { calculateKDE } from '../utils/statsMath';
 import { ChartCardWrapper } from './ChartCardWrapper';
 
@@ -21,7 +22,7 @@ interface DensityShiftChartProps {
 
 export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
   solves,
-  groupingPeriod,
+  groupingPeriod: _groupingPeriod,
   title = 'Distribution Density Shift',
 }) => {
   const [splitPercent, setSplitPercent] = useState<number>(0.3); // 30% default baseline/recent split
@@ -51,8 +52,16 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     };
   }, [solves, splitPercent]);
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (!active || !payload || !payload.length) return null;
+  const CustomTooltip = ({
+    active,
+    payload,
+    label,
+  }: {
+    active?: boolean;
+    payload?: Array<{ value?: number }>;
+    label?: string | number;
+  }) => {
+    if (!active || !payload?.length) return null;
 
     return (
       <div className="bg-stone-900/95 border border-stone-700 rounded-xl p-3 shadow-2xl text-xs text-stone-200 backdrop-blur-md">
@@ -84,6 +93,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
           <span className="text-stone-400 font-medium">Split Sample:</span>
           {[0.2, 0.3, 0.4].map((pct) => (
             <button
+              type="button"
               key={pct}
               onClick={() => setSplitPercent(pct)}
               className={`px-2 py-0.5 rounded transition-all text-xs font-semibold cursor-pointer ${

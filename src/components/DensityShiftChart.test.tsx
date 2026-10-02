@@ -1,8 +1,7 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import type { Solve } from '../types';
 import { DensityShiftChart } from './DensityShiftChart';
-import { Solve } from '../types';
 
 const mockSolves: Solve[] = Array.from({ length: 20 }, (_, idx) => ({
   id: idx + 1,
@@ -22,11 +21,11 @@ describe('DensityShiftChart component', () => {
       <DensityShiftChart
         solves={mockSolves}
         title="Time Distribution Shift: Baseline vs. Recent Solves"
-      />
+      />,
     );
 
     expect(
-      screen.getByText('Time Distribution Shift: Baseline vs. Recent Solves')
+      screen.getByText('Time Distribution Shift: Baseline vs. Recent Solves'),
     ).toBeInTheDocument();
     expect(screen.getByText('Baseline Mean:')).toBeInTheDocument();
     expect(screen.getByText('Recent Mean:')).toBeInTheDocument();
@@ -37,7 +36,7 @@ describe('DensityShiftChart component', () => {
       <DensityShiftChart
         solves={mockSolves}
         title="Time Distribution Shift: Baseline vs. Recent Solves"
-      />
+      />,
     );
 
     const splitBtn20 = screen.getByText('20%');

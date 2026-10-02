@@ -1,5 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { parseCsTimerFile, parseSolvesList, formatLocalDate, toLocalZonedDateTime } from './csTimerParser';
+import { describe, expect, it } from 'vitest';
+import {
+  formatLocalDate,
+  parseCsTimerFile,
+  parseSolvesList,
+  toLocalZonedDateTime,
+} from './csTimerParser';
 
 describe('csTimerParser utils', () => {
   describe('parseSolvesList', () => {
@@ -91,9 +96,7 @@ describe('csTimerParser utils', () => {
           [[0, 12000], 'R2 U2', '', 1600000000],
           [[0, 11000], 'U2 R2', '', 1600000060],
         ],
-        session2: [
-          [[0, 22000], 'L2 D2', '', 1600000100],
-        ],
+        session2: [[[0, 22000], 'L2 D2', '', 1600000100]],
       });
 
       const sessions = parseCsTimerFile(csTimerJson);
@@ -106,9 +109,7 @@ describe('csTimerParser utils', () => {
 
     it('parses csTimer JSON with surrounding text/comments', () => {
       const csTimerJson = JSON.stringify({
-        session1: [
-          [[0, 10000], 'R2 U2', '', 1600000000],
-        ],
+        session1: [[[0, 10000], 'R2 U2', '', 1600000000]],
       });
       const fileWithNoise = `// Export generated on 2026-08-01\n${csTimerJson}\n// End export`;
 
@@ -137,7 +138,7 @@ describe('csTimerParser utils', () => {
     it('throws error when no valid sessions or solves exist', () => {
       const emptyJson = JSON.stringify({ session1: [] });
       expect(() => parseCsTimerFile(emptyJson)).toThrow(
-        'No valid csTimer sessions or solves found in the uploaded file.'
+        'No valid csTimer sessions or solves found in the uploaded file.',
       );
     });
   });

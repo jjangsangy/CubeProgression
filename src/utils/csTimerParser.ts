@@ -1,5 +1,5 @@
 import { Temporal } from 'temporal-polyfill';
-import { RawSolve, Solve, Session } from '../types';
+import type { Session, Solve } from '../types';
 import { calculateAoN } from './statsMath';
 
 /**
@@ -7,7 +7,7 @@ import { calculateAoN } from './statsMath';
  */
 export function toLocalZonedDateTime(ts: number, timeZoneId?: string): Temporal.ZonedDateTime {
   return Temporal.Instant.fromEpochMilliseconds(ts).toZonedDateTimeISO(
-    timeZoneId || Temporal.Now.timeZoneId()
+    timeZoneId || Temporal.Now.timeZoneId(),
   );
 }
 
@@ -23,18 +23,18 @@ export function formatLocalDate(dateOrTs: Date | number, timeZoneId?: string): s
  * Parses a csTimer export file content (.txt or .json)
  */
 export function parseCsTimerFile(fileContent: string): Session[] {
-  let parsedJson: any;
+  let parsedJson: unknown;
 
   try {
     parsedJson = JSON.parse(fileContent);
-  } catch (err) {
+  } catch (_err) {
     // Attempt cleaning if there's leading/trailing non-JSON text
     const jsonStart = fileContent.indexOf('{');
     const jsonEnd = fileContent.lastIndexOf('}');
     if (jsonStart !== -1 && jsonEnd !== -1) {
       try {
         parsedJson = JSON.parse(fileContent.substring(jsonStart, jsonEnd + 1));
-      } catch (e) {
+      } catch (_e) {
         throw new Error('Failed to parse csTimer file format. Invalid JSON structure.');
       }
     } else {
@@ -45,43 +45,53 @@ export function parseCsTimerFile(fileContent: string): Session[] {
   const sessions: Session[] = [];
 
   // Extract session names from properties if available
-  let sessionNamesMap: Record<string, string> = {};
-  if (parsedJson.properties && parsedJson.properties.sessionData) {
-    try {
-      const sessData = typeof parsedJson.properties.sessionData === 'string' 
-        ? JSON.parse(parsedJson.properties.sessionData)
-        : parsedJson.properties.sessionData;
+  const sessionNamesMap: Record<string, string> = {};
+  if (typeof parsedJson === 'object' && parsedJson !== null) {
+    const jsonDict = parsedJson as Record<string, unknown>;
+    const properties = jsonDict.properties;
+    if (typeof properties === 'object' && properties !== null) {
+      const propDict = properties as Record<string, unknown>;
+      if (propDict.sessionData) {
+        try {
+          const sessData =
+            typeof propDict.sessionData === 'string'
+              ? (JSON.parse(propDict.sessionData) as Record<string, { name?: string }>)
+              : (propDict.sessionData as Record<string, { name?: string }>);
 
-      Object.keys(sessData).forEach((key) => {
-        if (sessData[key] && sessData[key].name) {
-          sessionNamesMap[key] = sessData[key].name;
-        }
-      });
-    } catch (e) {
-      // Ignore errors parsing custom names
-    }
-  }
-
-  // Case 1: Standard csTimer JSON with session1, session2, ...
-  if (typeof parsedJson === 'object' && !Array.isArray(parsedJson)) {
-    Object.keys(parsedJson).forEach((key) => {
-      if (key.startsWith('session')) {
-        const rawSolves = parsedJson[key];
-        if (Array.isArray(rawSolves) && rawSolves.length > 0) {
-          const sessionNum = key.replace('session', '');
-          const customName = sessionNamesMap[sessionNum] || `Session ${sessionNum}`;
-          
-          const solves = parseSolvesList(rawSolves);
-          if (solves.length > 0) {
-            sessions.push({
-              id: key,
-              name: customName,
-              solves,
+          if (typeof sessData === 'object' && sessData !== null) {
+            Object.keys(sessData).forEach((key) => {
+              if (sessData[key]?.name) {
+                sessionNamesMap[key] = sessData[key].name;
+              }
             });
           }
+        } catch (_e) {
+          // Ignore errors parsing custom names
         }
       }
-    });
+    }
+
+    // Case 1: Standard csTimer JSON with session1, session2, ...
+    if (!Array.isArray(parsedJson)) {
+      Object.keys(jsonDict).forEach((key) => {
+        if (key.startsWith('session')) {
+          const rawSolves = jsonDict[key];
+          if (Array.isArray(rawSolves) && rawSolves.length > 0) {
+            const sessionNum = key.replace('session', '');
+            const customName = sessionNamesMap[sessionNum] || `Session ${sessionNum}`;
+
+            const solves = parseSolvesList(rawSolves);
+            if (solves.length > 0) {
+              sessions.push({
+                id: key,
+                name: customName,
+                solves,
+              });
+            }
+          }
+        }
+      });
+    }
   }
 
   // Case 2: Array of raw solves directly
@@ -106,7 +116,7 @@ export function parseCsTimerFile(fileContent: string): Session[] {
 /**
  * Converts array of raw csTimer solves into structured Solve objects with Ao12 & Ao50
  */
-export function parseSolvesList(rawSolves: any[]): Solve[] {
+export function parseSolvesList(rawSolves: unknown[]): Solve[] {
   const solves: Solve[] = [];
   let validSolveIndex = 0;
 
@@ -122,7 +132,7 @@ export function parseSolvesList(rawSolves: any[]): Solve[] {
     const penaltyCode = Number(timeInfo[0]);
     const rawTimeMs = Number(timeInfo[1]);
 
-    if (isNaN(rawTimeMs) || rawTimeMs <= 0) continue;
+    if (Number.isNaN(rawTimeMs) || rawTimeMs <= 0) continue;
 
     validSolveIndex++;
 

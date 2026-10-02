@@ -1,18 +1,19 @@
-import React, { useMemo } from 'react';
+import type React from 'react';
+import { useMemo } from 'react';
 import {
-  ResponsiveContainer,
-  ComposedChart,
   Area,
+  CartesianGrid,
+  ComposedChart,
+  Legend,
   Line,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
 } from 'recharts';
-import { PeriodGroup, GroupingPeriod } from '../types';
-import { ChartCardWrapper } from './ChartCardWrapper';
+import type { GroupingPeriod, PeriodGroup } from '../types';
 import { getPeriodUnitInfo } from '../utils/statsMath';
+import { ChartCardWrapper } from './ChartCardWrapper';
 
 interface MetricsEvolutionChartProps {
   periodGroups: PeriodGroup[];
@@ -58,8 +59,25 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
     return Math.ceil(Math.max(...periodGroups.map((g) => g.stdDev)) + 2);
   }, [periodGroups]);
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (!active || !payload || !payload.length) return null;
+  const CustomTooltip = ({
+    active,
+    payload,
+  }: {
+    active?: boolean;
+    payload?: Array<{
+      payload: {
+        label: string;
+        solveCount: number;
+        mean?: number;
+        median?: number;
+        stdDev?: number;
+        iqr?: number;
+        min?: number;
+        max?: number;
+      };
+    }>;
+  }) => {
+    if (!active || !payload?.length) return null;
     const data = payload[0].payload;
 
     return (

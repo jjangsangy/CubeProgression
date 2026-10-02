@@ -1,7 +1,17 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { Calendar, Layers, FileUp, Sparkles, FileText, Timer, Database, HardDrive, Trash2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Session, GroupingPeriod } from '../types';
+import {
+  Calendar,
+  Database,
+  FileText,
+  FileUp,
+  Layers,
+  Sparkles,
+  Timer,
+  Trash2,
+} from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import type React from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { GroupingPeriod, Session } from '../types';
 import { CubeLoadingSpinner } from './CubeLoadingSpinner';
 
 interface FileUploaderProps {
@@ -50,7 +60,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   const [timerVal, setTimerVal] = useState<number>(0);
 
   useEffect(() => {
-    let interval: any;
+    let interval: ReturnType<typeof setInterval> | undefined;
     if (isLoading) {
       setTimerVal(0);
       const startTime = Date.now();
@@ -58,7 +68,9 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
         setTimerVal((Date.now() - startTime) / 1000);
       }, 35);
     }
-    return () => clearInterval(interval);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [isLoading]);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -90,31 +102,31 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
     <div className="bg-stone-900 border border-stone-800 rounded-2xl p-6 shadow-xl text-stone-100 flex flex-col gap-6">
       {/* File Dropzone & Session Controls Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        {/* Hidden File Input */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept=".txt,.json"
+          disabled={isLoading}
+          className="hidden"
+          aria-label="Upload csTimer file"
+        />
+
         {/* Drag & Drop Box / Loading State (5 columns on large screens) */}
-        <div
+        <section
+          aria-label="File upload dropzone"
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => {
-            if (!isLoading) fileInputRef.current?.click();
-          }}
           className={`lg:col-span-5 border-2 border-dashed rounded-2xl p-5 flex flex-col items-center justify-center text-center transition-all min-h-[220px] relative overflow-hidden ${
             isLoading
               ? 'border-amber-500/60 bg-stone-950/80 cursor-wait'
               : isDragging
-              ? 'border-amber-400 bg-amber-500/10 scale-[0.99] cursor-pointer'
-              : 'border-stone-700/80 hover:border-amber-500/50 hover:bg-stone-800/40 bg-stone-950/40 cursor-pointer'
+                ? 'border-amber-400 bg-amber-500/10 scale-[0.99]'
+                : 'border-stone-700/80 hover:border-amber-500/50 hover:bg-stone-800/40 bg-stone-950/40'
           }`}
         >
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept=".txt,.json"
-            disabled={isLoading}
-            className="hidden"
-          />
-
           <AnimatePresence mode="wait">
             {isLoading ? (
               <motion.div
@@ -174,11 +186,22 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                 </div>
 
                 <h3 className="font-bold text-stone-200 text-sm mb-1">
-                  Upload <span className="text-amber-400">cstimer.txt</span> or <span className="text-amber-400">.json</span>
+                  Upload <span className="text-amber-400">cstimer.txt</span> or{' '}
+                  <span className="text-amber-400">.json</span>
                 </h3>
 
                 <p className="text-xs text-stone-400 max-w-xs mb-3 leading-relaxed">
-                  Drag and drop your csTimer export file here, or click to browse.
+                  Drag and drop your csTimer export file here, or{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isLoading) fileInputRef.current?.click();
+                    }}
+                    className="text-amber-400 hover:text-amber-300 underline underline-offset-2 cursor-pointer font-medium"
+                  >
+                    click to browse
+                  </button>
+                  .
                 </p>
 
                 <div className="flex items-center gap-2">
@@ -201,17 +224,21 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </section>
 
         {/* Configuration Controls (7 columns on large screens) */}
         <div className="lg:col-span-7 flex flex-col justify-between gap-5 bg-stone-950/60 border border-stone-800/80 rounded-2xl p-5">
           {/* Row 1: Session Selector */}
           <div>
-            <label className="text-xs font-semibold text-stone-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <label
+              htmlFor="session-selector"
+              className="text-xs font-semibold text-stone-300 uppercase tracking-wider mb-2 flex items-center gap-1.5"
+            >
               <Layers className="w-3.5 h-3.5 text-amber-400" />
               Select Session ({sessions.length} available)
             </label>
             <select
+              id="session-selector"
               value={selectedSessionId}
               onChange={(e) => onSelectSession(e.target.value)}
               className="w-full bg-stone-900 border border-stone-700 rounded-xl px-3.5 py-2.5 text-xs text-stone-100 font-medium focus:outline-none focus:border-amber-500 transition-colors cursor-pointer"
@@ -227,10 +254,10 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
           {/* Row 2: Grouping Period Toggle */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-semibold text-stone-300 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-stone-300 uppercase tracking-wider flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-amber-400" />
                 Grouping Period for Aggregations
-              </label>
+              </span>
               {(groupingPeriod === 'customBatch' || groupingPeriod === 'batch50') && (
                 <span className="text-[11px] text-amber-400 font-medium">
                   {customBatchSize} solves per group
@@ -250,6 +277,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                   (item.id === 'customBatch' && groupingPeriod === 'batch50');
                 return (
                   <button
+                    type="button"
                     key={item.id}
                     onClick={() => onChangeGrouping(item.id as GroupingPeriod)}
                     className={`px-3 py-2 rounded-xl text-left border transition-all cursor-pointer ${
@@ -269,11 +297,12 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
             {(groupingPeriod === 'customBatch' || groupingPeriod === 'batch50') && (
               <div className="bg-stone-900/90 border border-amber-500/30 rounded-xl p-3 flex flex-wrap items-center gap-3 animate-in fade-in duration-150">
                 <span className="text-xs font-medium text-stone-300">Solves per group:</span>
-                
+
                 {/* Preset pills */}
                 <div className="flex items-center gap-1.5">
                   {[10, 25, 50, 100].map((preset) => (
                     <button
+                      type="button"
                       key={preset}
                       onClick={() => onChangeCustomBatchSize(preset)}
                       className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-all cursor-pointer ${
@@ -297,7 +326,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                     value={customBatchSize}
                     onChange={(e) => {
                       const val = parseInt(e.target.value, 10);
-                      if (!isNaN(val) && val > 0) {
+                      if (!Number.isNaN(val) && val > 0) {
                         onChangeCustomBatchSize(val);
                       }
                     }}
@@ -333,6 +362,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
           {onClearStorage && (
             <button
+              type="button"
               onClick={onClearStorage}
               className="text-stone-400 hover:text-rose-400 hover:underline flex items-center gap-1 font-medium transition-colors cursor-pointer ml-auto"
               title="Clear saved data from browser storage"

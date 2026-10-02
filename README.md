@@ -22,6 +22,7 @@ A modern, high-performance web application built for speedcubers to analyze **cs
 - **Framework**: [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
 - **Build Tool**: [Vite 6](https://vitejs.dev/)
 - **Styling & UI**: [Tailwind CSS v4](https://tailwindcss.com/), [Lucide React](https://lucide.dev/), [Motion](https://motion.dev/)
+- **Linter & Formatter**: [Biome](https://biomejs.dev/)
 - **Charts & Statistics**: [Recharts](https://recharts.org/), [D3.js](https://d3js.org/)
 - **Testing**: [Vitest](https://vitest.dev/), [React Testing Library](https://testing-library.com/)
 
@@ -51,6 +52,28 @@ npm run dev
 ```
 
 Open your browser and navigate to `http://localhost:3000`.
+
+### Linting & Formatting
+
+Check code quality and formatting with [Biome](https://biomejs.dev/):
+
+```bash
+bun run check
+```
+
+Automatically apply formatting and safe lint fixes:
+
+```bash
+bun run check:write
+# or
+bun run format
+```
+
+Run TypeScript type-checking:
+
+```bash
+bun run typecheck
+```
 
 ### Running Tests
 

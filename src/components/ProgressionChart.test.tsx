@@ -1,8 +1,7 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import type { LinearRegression, PeriodGroup, Solve } from '../types';
 import { ProgressionChart } from './ProgressionChart';
-import { Solve, PeriodGroup, LinearRegression } from '../types';
 
 const mockSolves: Solve[] = [
   {
@@ -66,7 +65,7 @@ describe('ProgressionChart component', () => {
         regression={mockRegression}
         groupingPeriod="daily"
         title="Progression Over Solves"
-      />
+      />,
     );
 
     expect(screen.getByText('Progression Over Solves')).toBeInTheDocument();
@@ -87,7 +86,7 @@ describe('ProgressionChart component', () => {
         regression={mockRegression}
         groupingPeriod="daily"
         title="Progression Over Solves"
-      />
+      />,
     );
 
     expect(screen.getByText('Range Mode:')).toBeInTheDocument();
@@ -105,7 +104,7 @@ describe('ProgressionChart component', () => {
         regression={mockRegression}
         groupingPeriod="weekly"
         title="Progression Over Solves"
-      />
+      />,
     );
 
     expect(screen.getByText('Progression Over Solves')).toBeInTheDocument();
@@ -120,7 +119,7 @@ describe('ProgressionChart component', () => {
         regression={mockRegression}
         groupingPeriod="daily"
         title="Progression Over Solves"
-      />
+      />,
     );
 
     expect(screen.getByText('Progression Over Solves')).toBeInTheDocument();

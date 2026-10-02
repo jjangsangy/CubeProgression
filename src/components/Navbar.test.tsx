@@ -1,6 +1,5 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { Navbar } from './Navbar';
 
 describe('Navbar component', () => {
@@ -11,7 +10,7 @@ describe('Navbar component', () => {
         onLoadDemo={vi.fn()}
         onReset={vi.fn()}
         onExportCSV={vi.fn()}
-      />
+      />,
     );
 
     expect(screen.getByText('CubeProgression')).toBeInTheDocument();
@@ -26,7 +25,7 @@ describe('Navbar component', () => {
         onLoadDemo={onLoadDemo}
         onReset={vi.fn()}
         onExportCSV={vi.fn()}
-      />
+      />,
     );
 
     const demoBtn = screen.getByText('Load Sample Data');
@@ -37,12 +36,7 @@ describe('Navbar component', () => {
   it('calls onReset when Reset button is clicked', () => {
     const onReset = vi.fn();
     render(
-      <Navbar
-        fileName="test.txt"
-        onLoadDemo={vi.fn()}
-        onReset={onReset}
-        onExportCSV={vi.fn()}
-      />
+      <Navbar fileName="test.txt" onLoadDemo={vi.fn()} onReset={onReset} onExportCSV={vi.fn()} />,
     );
 
     const resetBtn = screen.getByTitle('Reset Data');
@@ -58,7 +52,7 @@ describe('Navbar component', () => {
         onLoadDemo={vi.fn()}
         onReset={vi.fn()}
         onExportCSV={onExportCSV}
-      />
+      />,
     );
 
     const exportBtn = screen.getByText('Export CSV');

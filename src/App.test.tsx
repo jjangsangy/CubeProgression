@@ -1,6 +1,5 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
 import App from './App';
 
 describe('App component', () => {
@@ -11,7 +10,7 @@ describe('App component', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/)
+        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
       ).toBeInTheDocument();
     });
   });
@@ -21,7 +20,7 @@ describe('App component', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/)
+        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
       ).toBeInTheDocument();
     });
 
@@ -36,7 +35,7 @@ describe('App component', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/)
+        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
       ).toBeInTheDocument();
     });
 
@@ -44,7 +43,7 @@ describe('App component', () => {
     fireEvent.click(resetBtn);
 
     expect(
-      screen.queryByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/)
+      screen.queryByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
     ).not.toBeInTheDocument();
 
     const loadDemoBtns = screen.getAllByText(/Load Sample Data/);
@@ -52,7 +51,7 @@ describe('App component', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/)
+        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
       ).toBeInTheDocument();
     });
   });
