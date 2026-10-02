@@ -11,7 +11,7 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
     });
   });
 
-  test('DensityShiftChart updates KDE sample split (20%, 30%, 40%) and summary banner', async ({
+  test('DensityShiftChart renders centered summary banner, timeline scrubbers, and ribbed resize handles', async ({
     page,
   }) => {
     await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
@@ -22,25 +22,54 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
 
     await expect(densityCard).toBeVisible();
 
-    // Verify statistical summary banner exists
+    // Verify statistical summary banner exists and has centered items
     await expect(densityCard.getByText('Baseline Mean:')).toBeVisible();
     await expect(densityCard.getByText('Recent Mean:')).toBeVisible();
     await expect(densityCard.getByText('Distribution Shift:', { exact: true })).toBeVisible();
 
-    // Default sample split is 30%
-    await expect(densityCard.getByText(/First 30%/i)).toBeVisible();
+    // Verify scrubbers track and visual sparkline
+    const track = densityCard.getByLabel('Solve distribution timeline scrubbers track');
+    await expect(track).toBeVisible();
 
-    // Select 20% sample split
-    const split20Btn = densityCard.getByRole('button', { name: '20%' });
-    await split20Btn.click();
-    await expect(split20Btn).toHaveClass(/bg-amber-500/);
-    await expect(densityCard.getByText(/First 20%/i)).toBeVisible();
+    const scrubber1 = densityCard.getByRole('slider', { name: 'Baseline scrubber position' });
+    const scrubber2 = densityCard.getByRole('slider', { name: 'Recent scrubber position' });
 
-    // Select 40% sample split
-    const split40Btn = densityCard.getByRole('button', { name: '40%' });
-    await split40Btn.click();
-    await expect(split40Btn).toHaveClass(/bg-amber-500/);
-    await expect(densityCard.getByText(/First 40%/i)).toBeVisible();
+    await expect(scrubber1).toBeVisible();
+    await expect(scrubber2).toBeVisible();
+    await expect(scrubber1).toHaveClass(/bg-rose-500\/25/);
+    await expect(scrubber2).toHaveClass(/bg-emerald-500\/25/);
+
+    // Verify ribbed resize handles on both ends of scrubbers
+    await expect(densityCard.getByLabel('Baseline left resize handle')).toBeVisible();
+    await expect(densityCard.getByLabel('Baseline right resize handle')).toBeVisible();
+    await expect(densityCard.getByLabel('Recent left resize handle')).toBeVisible();
+    await expect(densityCard.getByLabel('Recent right resize handle')).toBeVisible();
+
+    // Verify no ugly "Sample 1" or "Sample 2" text labels in the scrubbers
+    await expect(densityCard.getByText('Sample 1:')).not.toBeVisible();
+    await expect(densityCard.getByText('Sample 2:')).not.toBeVisible();
+
+    // Verify scrubber keyboard movement (slide position)
+    await scrubber1.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(scrubber1).toHaveAttribute('aria-valuenow', '2');
+    await expect(densityCard.getByText(/^Baseline Solves \(#2–/)).toBeVisible();
+
+    // Verify scrubber keyboard resize (expand window symmetrically with Alt+ArrowRight)
+    const box1Before = await scrubber1.boundingBox();
+    const box2Before = await scrubber2.boundingBox();
+    if (!box1Before || !box2Before) throw new Error('Missing bounding box');
+
+    await page.keyboard.press('Alt+ArrowRight');
+
+    const box1After = await scrubber1.boundingBox();
+    const box2After = await scrubber2.boundingBox();
+    if (!box1After || !box2After) throw new Error('Missing bounding box');
+
+    // Both scrubbers expanded by the exact same amount
+    expect(box1After.width).toBeGreaterThan(box1Before.width);
+    expect(box2After.width).toBeGreaterThan(box2Before.width);
+    expect(Math.abs(box1After.width - box2After.width)).toBeLessThan(1);
   });
 
   test('MetricsEvolutionChart renders dual-axis labels and legend series', async ({ page }) => {

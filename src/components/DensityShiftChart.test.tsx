@@ -6,6 +6,8 @@ import { DensityShiftChart } from './DensityShiftChart';
 
 const captured = vi.hoisted(() => ({
   tooltipContent: null as React.ReactElement | null,
+  chartData: null as Array<{ x: number; baselineDensity: number; recentDensity: number }> | null,
+  yAxisProps: null as { domain?: [number, number]; width?: number } | null,
 }));
 
 vi.mock('recharts', async (importOriginal) => {
@@ -13,14 +15,26 @@ vi.mock('recharts', async (importOriginal) => {
   return {
     ...original,
     ResponsiveContainer: ({ children }: { children: React.ReactNode }) => children,
-    AreaChart: ({ children }: { children: React.ReactNode }) => (
-      <svg role="img" aria-label="Mock AreaChart">
-        {children}
-      </svg>
-    ),
+    AreaChart: ({
+      children,
+      data,
+    }: {
+      children: React.ReactNode;
+      data?: Array<{ x: number; baselineDensity: number; recentDensity: number }>;
+    }) => {
+      captured.chartData = data ?? null;
+      return (
+        <svg role="img" aria-label="Mock AreaChart">
+          {children}
+        </svg>
+      );
+    },
     CartesianGrid: () => null,
     XAxis: () => null,
-    YAxis: () => null,
+    YAxis: (props: { domain?: [number, number]; width?: number }) => {
+      captured.yAxisProps = props;
+      return null;
+    },
     Legend: () => null,
     Area: () => null,
     Tooltip: (props: { content?: React.ReactElement }) => {
@@ -73,21 +87,144 @@ describe('DensityShiftChart component', () => {
     expect(screen.queryByText(/faster/)).not.toBeInTheDocument();
   });
 
-  it('allows changing sample split percent', () => {
-    render(
-      <DensityShiftChart
-        solves={mockSolves}
-        title="Time Distribution Shift: Baseline vs. Recent Solves"
-      />,
+  it('renders mean shift banner with centered symmetrical 3-column classes', () => {
+    const { container } = render(
+      <DensityShiftChart solves={mockSolves} title="Responsive Banner Test" />,
     );
 
-    const splitBtn20 = screen.getByText('20%');
-    fireEvent.click(splitBtn20);
-    expect(splitBtn20).toHaveClass('bg-amber-500');
+    const banner = container.querySelector('.grid.grid-cols-1.sm\\:grid-cols-3');
+    expect(banner).toBeInTheDocument();
+    expect(banner).toHaveClass('sm:divide-x');
+  });
 
-    const splitBtn40 = screen.getByText('40%');
-    fireEvent.click(splitBtn40);
-    expect(splitBtn40).toHaveClass('bg-amber-500');
+  it('renders scrubbers on track with opacity, ribbed resize handles, and dataset sparkline', () => {
+    render(<DensityShiftChart solves={mockSolves} />);
+
+    const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+    expect(track).toBeInTheDocument();
+
+    const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+    const scrubber2 = screen.getByLabelText('Recent scrubber position');
+
+    expect(scrubber1).toBeInTheDocument();
+    expect(scrubber2).toBeInTheDocument();
+
+    // Verify opacity classes
+    expect(scrubber1).toHaveClass('bg-rose-500/25');
+    expect(scrubber2).toHaveClass('bg-emerald-500/25');
+
+    // Verify ribbed resize handles
+    expect(screen.getByLabelText('Baseline left resize handle')).toBeInTheDocument();
+    expect(screen.getByLabelText('Baseline right resize handle')).toBeInTheDocument();
+    expect(screen.getByLabelText('Recent left resize handle')).toBeInTheDocument();
+    expect(screen.getByLabelText('Recent right resize handle')).toBeInTheDocument();
+
+    // Verify no ugly "Sample 1" or "Sample 2" text labels inside scrubbers
+    expect(screen.queryByText(/Sample 1:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Sample 2:/)).not.toBeInTheDocument();
+
+    // Verify dataset visual representation inside the track
+    const sparklineSvg = track.querySelector('svg');
+    expect(sparklineSvg).toBeInTheDocument();
+  });
+
+  it('maintains symmetry: resizing one scrubber updates the other scrubber by the exact same amount', () => {
+    render(<DensityShiftChart solves={mockSolves} />);
+
+    const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+    const scrubber2 = screen.getByLabelText('Recent scrubber position');
+
+    // Both start at default 30% of 20 = 6 solves -> 30% width
+    expect(scrubber1.style.width).toBe('30%');
+    expect(scrubber2.style.width).toBe('30%');
+
+    // Resize Scrubber 1 (Alt+ArrowRight expands width by 1 solve)
+    fireEvent.keyDown(scrubber1, { key: 'ArrowRight', altKey: true });
+
+    // Symmetrical: both scrubbers expand to 7 solves -> 35% width
+    expect(scrubber1.style.width).toBe('35%');
+    expect(scrubber2.style.width).toBe('35%');
+    expect(screen.getByText('(#1–#7)')).toBeInTheDocument();
+    expect(screen.getByText('(#14–#20)')).toBeInTheDocument();
+
+    // Resize Scrubber 2 (Alt+ArrowLeft shrinks width by 1 solve)
+    fireEvent.keyDown(scrubber2, { key: 'ArrowLeft', altKey: true });
+
+    // Symmetrical: both scrubbers shrink back to 6 solves -> 30% width
+    expect(scrubber1.style.width).toBe('30%');
+    expect(scrubber2.style.width).toBe('30%');
+    expect(screen.getByText('(#1–#6)')).toBeInTheDocument();
+    expect(screen.getByText('(#14–#19)')).toBeInTheDocument();
+  });
+
+  it('allows sliding scrubbers across the distribution using keyboard navigation', () => {
+    render(<DensityShiftChart solves={mockSolves} />);
+
+    const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+    // Initial value is 1 (index 0 + 1)
+    expect(scrubber1).toHaveAttribute('aria-valuenow', '1');
+
+    // Nudge right
+    fireEvent.keyDown(scrubber1, { key: 'ArrowRight' });
+    expect(scrubber1).toHaveAttribute('aria-valuenow', '2');
+    expect(screen.getByText('(#2–#7)')).toBeInTheDocument();
+
+    // Nudge left
+    fireEvent.keyDown(scrubber1, { key: 'ArrowLeft' });
+    expect(scrubber1).toHaveAttribute('aria-valuenow', '1');
+    expect(screen.getByText('(#1–#6)')).toBeInTheDocument();
+  });
+
+  it('keeps X-axis domain completely stable and fluid when scrubbers slide to eliminate jitter', () => {
+    render(<DensityShiftChart solves={mockSolves} />);
+
+    const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+    expect(captured.chartData).not.toBeNull();
+    const initialXPoints = captured.chartData?.map((p) => p.x);
+
+    // Slide scrubber position across multiple solves
+    fireEvent.keyDown(scrubber1, { key: 'ArrowRight' });
+    fireEvent.keyDown(scrubber1, { key: 'ArrowRight' });
+    fireEvent.keyDown(scrubber1, { key: 'ArrowRight' });
+
+    const newXPoints = captured.chartData?.map((p) => p.x);
+
+    // Every single x-evaluation point on the X axis is identical — zero jitter
+    expect(newXPoints).toEqual(initialXPoints);
+  });
+
+  it('normalizes Y-axis domain proportionally when scrubber size changes so peaks are neither too small nor too large', () => {
+    render(<DensityShiftChart solves={mockSolves} />);
+
+    expect(captured.yAxisProps).not.toBeNull();
+    const initialDomain = captured.yAxisProps?.domain;
+    expect(initialDomain).toBeDefined();
+    expect(initialDomain?.[0]).toBe(0);
+    const initialCeiling = initialDomain?.[1] ?? 0;
+
+    // Peak density is roughly 70-80% of the ceiling
+    const maxDensity = Math.max(
+      ...(captured.chartData?.map((p) => Math.max(p.baselineDensity, p.recentDensity)) ?? [0]),
+    );
+    expect(maxDensity / initialCeiling).toBeGreaterThanOrEqual(0.65);
+    expect(maxDensity / initialCeiling).toBeLessThanOrEqual(0.85);
+
+    // Expand scrubber window (Alt+ArrowRight 4 times)
+    const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+    fireEvent.keyDown(scrubber1, { key: 'ArrowRight', altKey: true });
+    fireEvent.keyDown(scrubber1, { key: 'ArrowRight', altKey: true });
+    fireEvent.keyDown(scrubber1, { key: 'ArrowRight', altKey: true });
+    fireEvent.keyDown(scrubber1, { key: 'ArrowRight', altKey: true });
+
+    // The Y ceiling normalizes dynamically to the new peak density
+    const newDomain = captured.yAxisProps?.domain;
+    expect(newDomain).toBeDefined();
+    const newCeiling = newDomain?.[1] ?? 0;
+    const newMaxDensity = Math.max(
+      ...(captured.chartData?.map((p) => Math.max(p.baselineDensity, p.recentDensity)) ?? [0]),
+    );
+    expect(newMaxDensity / newCeiling).toBeGreaterThanOrEqual(0.65);
+    expect(newMaxDensity / newCeiling).toBeLessThanOrEqual(0.85);
   });
 
   it('labels the shift as "no change" when baseline and recent means are identical', () => {
@@ -136,20 +273,5 @@ describe('DensityShiftChart component', () => {
     expect(activeTooltip.getByText('Recent Density:')).toBeInTheDocument();
     expect(activeTooltip.getByText('0.0543')).toBeInTheDocument();
     activeTooltip.unmount();
-  });
-
-  it('renders mean shift banner with responsive single-column mobile and 3-column tablet/desktop classes', () => {
-    const { container } = render(
-      <DensityShiftChart solves={mockSolves} title="Responsive Banner Test" />,
-    );
-
-    const banner = container.querySelector('.grid.grid-cols-1.sm\\:grid-cols-3');
-    expect(banner).toBeInTheDocument();
-  });
-
-  it('renders compact split sample buttons for mobile headers', () => {
-    render(<DensityShiftChart solves={mockSolves} />);
-    const btn20 = screen.getByRole('button', { name: '20%' });
-    expect(btn20).toHaveClass('text-xs');
   });
 });

@@ -368,30 +368,83 @@ export function groupSolvesByPeriod(
 /**
  * Calculates Kernel Density Estimation (KDE) curve points comparing Baseline vs Recent solves
  */
-export function calculateKDE(
-  solves: Solve[],
-  baselinePercent = 0.3,
-  recentPercent = 0.3,
+/**
+ * Calculates a clean, normalized Y-axis ceiling for probability density plots.
+ * Ensures peaks consistently occupy ~70-80% of chart height regardless of sample size or variance,
+ * preventing peaks from being too small (flat) or too large (clipping).
+ */
+export function getNormalizedYCeiling(maxDensity: number): number {
+  if (!Number.isFinite(maxDensity) || maxDensity <= 0) return 0.2;
+
+  // Target peak height at ~75-80% of chart height (1.25x headroom)
+  const target = maxDensity * 1.25;
+
+  // Determine a clean tick step magnitude
+  const magnitude = 10 ** Math.floor(Math.log10(target));
+  const normalized = target / magnitude;
+
+  let step: number;
+  if (normalized <= 1.5) {
+    step = 0.2 * magnitude;
+  } else if (normalized <= 3) {
+    step = 0.5 * magnitude;
+  } else if (normalized <= 7) {
+    step = 1.0 * magnitude;
+  } else {
+    step = 2.0 * magnitude;
+  }
+
+  const ceiling = Math.ceil(target / step) * step;
+  return Number(ceiling.toFixed(4));
+}
+
+/**
+ * Calculates a normalized Y-axis ceiling with hysteresis damping to eliminate
+ * scale oscillation/stuttering while moving scrubbers.
+ */
+export function getNormalizedYCeilingWithHysteresis(
+  maxDensity: number,
+  currentCeiling: number,
+): number {
+  if (!Number.isFinite(maxDensity) || maxDensity <= 0) return 0.2;
+  const target = getNormalizedYCeiling(maxDensity);
+
+  if (!Number.isFinite(currentCeiling) || currentCeiling <= 0) return target;
+
+  // If peak exceeds 90% of current ceiling, expand immediately to prevent clipping
+  if (maxDensity > currentCeiling * 0.9) {
+    return Math.max(currentCeiling, target);
+  }
+
+  // If peak is still comfortably between 50% and 88% of current ceiling, keep current ceiling
+  // to prevent jittery oscillation
+  const ratio = maxDensity / currentCeiling;
+  if (ratio >= 0.5 && ratio <= 0.88) {
+    return currentCeiling;
+  }
+
+  return target;
+}
+
+/**
+ * Calculates KDE probability density estimates for two arbitrary solve sample sets
+ */
+export function calculateKDEFromSamples(
+  sample1: Solve[],
+  sample2: Solve[],
   numPoints = 100,
+  domain?: { minTime: number; maxTime: number },
 ): KDEPoint[] {
-  const validSolves = solves.filter((s) => s.penalty !== 'DNF');
-  if (validSolves.length < 5) return [];
-
-  const splitBaselineIndex = Math.max(3, Math.floor(validSolves.length * baselinePercent));
-  const splitRecentIndex = Math.min(
-    validSolves.length - 3,
-    Math.floor(validSolves.length * (1 - recentPercent)),
-  );
-
-  const baselineTimes = validSolves.slice(0, splitBaselineIndex).map((s) => s.finalTimeSec);
-  const recentTimes = validSolves.slice(splitRecentIndex).map((s) => s.finalTimeSec);
+  const baselineTimes = sample1.filter((s) => s.penalty !== 'DNF').map((s) => s.finalTimeSec);
+  const recentTimes = sample2.filter((s) => s.penalty !== 'DNF').map((s) => s.finalTimeSec);
 
   if (baselineTimes.length === 0 || recentTimes.length === 0) return [];
 
-  // Determine global min and max X values with bandwidth margin
+  // Determine min and max X values: use stable domain if provided, otherwise compute from samples
   const allTimes = [...baselineTimes, ...recentTimes];
-  const minTime = Math.max(0, Math.min(...allTimes) - 3);
-  const maxTime = Math.max(...allTimes) + 5;
+  const minTime =
+    domain?.minTime !== undefined ? domain.minTime : Math.max(0, Math.min(...allTimes) - 3);
+  const maxTime = domain?.maxTime !== undefined ? domain.maxTime : Math.max(...allTimes) + 5;
 
   // Silverman's Rule of Thumb for Gaussian kernel bandwidth calculation
   const getBandwidth = (times: number[]) => {
@@ -432,6 +485,32 @@ export function calculateKDE(
   }
 
   return points;
+}
+
+/**
+ * Calculates Kernel Density Estimation (KDE) over solve times to compare distribution
+ * between early session (baseline) and late session (fatigue/peak).
+ */
+export function calculateKDE(
+  solves: Solve[],
+  baselinePercent = 0.3,
+  recentPercent = 0.3,
+  numPoints = 100,
+): KDEPoint[] {
+  const validSolves = solves.filter((s) => s.penalty !== 'DNF');
+  if (validSolves.length < 5) return [];
+
+  const splitBaselineIndex = Math.max(3, Math.floor(validSolves.length * baselinePercent));
+  const splitRecentIndex = Math.min(
+    validSolves.length - 3,
+    Math.floor(validSolves.length * (1 - recentPercent)),
+  );
+
+  return calculateKDEFromSamples(
+    validSolves.slice(0, splitBaselineIndex),
+    validSolves.slice(splitRecentIndex),
+    numPoints,
+  );
 }
 
 /**

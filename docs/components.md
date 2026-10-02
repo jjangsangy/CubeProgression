@@ -136,13 +136,16 @@ A **hand-authored SVG** box-and-whisker plot (zero Recharts overhead). Props: `p
 
 ## `DensityShiftChart` (`DensityShiftChart.tsx`)
 
-Recharts `AreaChart` of KDE curves. Props: `solves`, `groupingPeriod?`, `title?`.
+Full-width Recharts `AreaChart` of KDE curves with an interactive solve timeline track and dual scrubbers. Props: `solves`, `groupingPeriod?`, `title?`.
 
 - Disables non-composited SVG animations (`isAnimationActive={false}`) on baseline and recent areas.
-- Uses `calculateKDE(solves, splitPercent, splitPercent, 120)` where `splitPercent` is one of
-  `0.2` / `0.3` / `0.4` (baseline vs recent sample split).
-- Plots `baselineDensity` (red) and `recentDensity` (green) areas.
-- Computes a summary banner (baseline mean, recent mean, "faster by X" shift).
+- Uses `calculateKDEFromSamples(sample1Solves, sample2Solves, 120, globalDomain)` to compute probability density curves between any two sampled subsets over an anchored session-wide domain to prevent X-axis jitter.
+- Normalizes Y-axis ceiling dynamically (`getNormalizedYCeiling`) so peaks comfortably fill ~75-80% of chart height regardless of sample size or clustering, preventing peaks from being too small (flat) or too large (clipping).
+- Plots `baselineDensity` (red/rose) and `recentDensity` (green/emerald) areas.
+- Features dual draggable scrubbers with semi-transparent opacity (`bg-rose-500/25` and `bg-emerald-500/25`) placed on an interactive dataset timeline track below the chart.
+- Each scrubber features ribbed resize handles on both ends (`cursor-ew-resize`) allowing users to drag the ends left or right to dynamically increase or decrease the sample window width. Dragging the center body slides the window along the timeline.
+- The scrubber track features an SVG sparkline and mean reference line representing solve times across the entire session distribution.
+- Computes a centered, evenly distributed summary banner (baseline mean, recent mean, solve index ranges, and "faster/slower by X" shift).
 
 ## `MetricsEvolutionChart` (`MetricsEvolutionChart.tsx`)
 

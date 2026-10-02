@@ -63,22 +63,19 @@ export function DashboardView({
           <DailyDistributionBoxPlot periodGroups={periodGroups} groupingPeriod={groupingPeriod} />
         </DeferredChart>
 
-        {/* Grid for Plot 4 & Plot 5 */}
-        <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
-          {/* Plot 4: Distribution Density Shift */}
-          <DeferredChart minHeight={550} fallbackTitle="Density Shift">
-            <DensityShiftChart
-              solves={session.solves}
-              groupingPeriod={groupingPeriod}
-              title="Time Distribution Shift: Baseline vs. Recent Solves"
-            />
-          </DeferredChart>
+        {/* Plot 4: Distribution Density Shift (Full Width) */}
+        <DeferredChart minHeight={580} fallbackTitle="Density Shift">
+          <DensityShiftChart
+            solves={session.solves}
+            groupingPeriod={groupingPeriod}
+            title="Time Distribution Shift: Baseline vs. Recent Solves"
+          />
+        </DeferredChart>
 
-          {/* Plot 5: Metrics Summary / Evolution */}
-          <DeferredChart minHeight={525} fallbackTitle="Metrics Evolution">
-            <MetricsEvolutionChart periodGroups={periodGroups} groupingPeriod={groupingPeriod} />
-          </DeferredChart>
-        </div>
+        {/* Plot 5: Metrics Summary / Evolution */}
+        <DeferredChart minHeight={525} fallbackTitle="Metrics Evolution">
+          <MetricsEvolutionChart periodGroups={periodGroups} groupingPeriod={groupingPeriod} />
+        </DeferredChart>
 
         {/* Detailed Solve Log Table */}
         <DeferredChart minHeight={780} fallbackTitle="Solves Table">

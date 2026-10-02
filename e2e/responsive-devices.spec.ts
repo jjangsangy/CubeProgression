@@ -428,7 +428,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       expect(Math.abs(box0.y - box4.y)).toBeLessThan(10);
     });
 
-    test('renders DensityShiftChart and MetricsEvolutionChart side-by-side in 2-column grid', async ({
+    test('renders DensityShiftChart and MetricsEvolutionChart as full-width stacked charts', async ({
       page,
     }) => {
       await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
@@ -443,9 +443,9 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       const boxMetrics = await metricsHeading.boundingBox();
       if (!boxDensity || !boxMetrics) throw new Error('Missing heading box');
 
-      // Side-by-side: approximately same vertical position and horizontal offset
-      expect(Math.abs(boxDensity.y - boxMetrics.y)).toBeLessThan(25);
-      expect(boxMetrics.x).toBeGreaterThan(boxDensity.x + 200);
+      // Stacked full-width charts: metrics chart sits below density shift chart
+      expect(boxMetrics.y).toBeGreaterThan(boxDensity.y + 100);
+      expect(Math.abs(boxDensity.x - boxMetrics.x)).toBeLessThan(25);
     });
 
     test('activates Custom Ao moving average on tablet landscape', async ({ page }) => {

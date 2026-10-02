@@ -4,9 +4,12 @@ import {
   calculateAoN,
   calculateGlobalStats,
   calculateKDE,
+  calculateKDEFromSamples,
   calculateLinearRegression,
   calculatePbProgression,
   computeGroupStats,
+  getNormalizedYCeiling,
+  getNormalizedYCeilingWithHysteresis,
   getPeriodUnitInfo,
   groupSolvesByPeriod,
 } from './statsMath';
@@ -304,6 +307,75 @@ describe('statsMath utils', () => {
       expect(groups.length).toBe(2);
       expect(groups[0].label).toContain('Day 1');
       expect(groups[1].label).toContain('Day 2');
+    });
+  });
+
+  describe('getNormalizedYCeiling', () => {
+    it('returns default fallback ceiling when maxDensity is zero or non-finite', () => {
+      expect(getNormalizedYCeiling(0)).toBe(0.2);
+      expect(getNormalizedYCeiling(-1)).toBe(0.2);
+      expect(getNormalizedYCeiling(Number.NaN)).toBe(0.2);
+    });
+
+    it('normalizes ceiling proportionally across small and large peak densities', () => {
+      // Small peak density (e.g. wide sample spread, maxDensity = 0.04)
+      const smallCeiling = getNormalizedYCeiling(0.04);
+      expect(smallCeiling).toBe(0.05);
+      // Peak occupies ~80% of chart height
+      expect(0.04 / smallCeiling).toBeCloseTo(0.8, 1);
+
+      // Medium peak density (maxDensity = 0.22)
+      const medCeiling = getNormalizedYCeiling(0.22);
+      expect(medCeiling).toBe(0.3);
+      expect(0.22 / medCeiling).toBeGreaterThanOrEqual(0.7);
+      expect(0.22 / medCeiling).toBeLessThanOrEqual(0.85);
+
+      // High peak density (e.g. narrow sample cluster, maxDensity = 0.75)
+      const highCeiling = getNormalizedYCeiling(0.75);
+      expect(highCeiling).toBe(1.0);
+      expect(0.75 / highCeiling).toBe(0.75);
+    });
+
+    it('dampens ceiling oscillation via hysteresis when peak stays comfortably within bounds', () => {
+      // Current ceiling is 0.30
+      // Small fluctuation around 0.22-0.24 should NOT change the ceiling
+      expect(getNormalizedYCeilingWithHysteresis(0.24, 0.3)).toBe(0.3);
+      expect(getNormalizedYCeilingWithHysteresis(0.18, 0.3)).toBe(0.3);
+
+      // Significant drop below 50% threshold triggers re-normalization
+      expect(getNormalizedYCeilingWithHysteresis(0.08, 0.3)).toBe(0.1);
+
+      // Sharp surge above 90% threshold immediately expands ceiling to prevent clipping
+      expect(getNormalizedYCeilingWithHysteresis(0.29, 0.3)).toBeGreaterThanOrEqual(0.3);
+      expect(getNormalizedYCeilingWithHysteresis(0.45, 0.3)).toBe(0.6);
+    });
+  });
+
+  describe('calculateKDEFromSamples', () => {
+    it('returns empty array if either sample is empty or contains only DNFs', () => {
+      expect(calculateKDEFromSamples([], mockSolves)).toEqual([]);
+      expect(calculateKDEFromSamples(mockSolves, [])).toEqual([]);
+      const dnfSolves: Solve[] = [{ ...mockSolves[0], penalty: 'DNF' }];
+      expect(calculateKDEFromSamples(dnfSolves, mockSolves)).toEqual([]);
+    });
+
+    it('calculates KDE curves comparing two arbitrary subsets of solves', () => {
+      const sample1 = mockSolves.slice(0, 3);
+      const sample2 = mockSolves.slice(2, 5);
+      const points = calculateKDEFromSamples(sample1, sample2, 25);
+      expect(points.length).toBe(25);
+      expect(points[0]).toHaveProperty('baselineDensity');
+      expect(points[0]).toHaveProperty('recentDensity');
+      expect(points.every((p) => p.x >= 0)).toBe(true);
+    });
+
+    it('respects fixed domain boundaries when provided to ensure stable evaluation points', () => {
+      const sample1 = mockSolves.slice(0, 2);
+      const sample2 = mockSolves.slice(3, 5);
+      const points = calculateKDEFromSamples(sample1, sample2, 11, { minTime: 5, maxTime: 15 });
+      expect(points.length).toBe(11);
+      expect(points[0].x).toBe(5);
+      expect(points[points.length - 1].x).toBe(15);
     });
   });
 

@@ -63,9 +63,24 @@ Two grouping strategies:
 
 Each bucket is passed to `computeGroupStats`. Empty input returns `[]`.
 
+## `getNormalizedYCeiling(maxDensity: number): number`
+
+Calculates a clean, normalized Y-axis ceiling for density charts based on the peak density value across both sample curves.
+- Targets peak height at ~75-80% of chart height (1.25x headroom).
+- Normalizes tick step sizes to decimal magnitude intervals (`0.01`, `0.02`, `0.05`, `0.1`, `0.2`, etc.) to keep tick labels clean and stationary.
+- Ensures peaks remain well-proportioned regardless of sample size or clustering.
+
+## `calculateKDEFromSamples(sample1: Solve[], sample2: Solve[], numPoints = 100, domain?: { minTime: number; maxTime: number }): KDEPoint[]`
+
+Kernel Density Estimation comparing any two arbitrary solve samples `sample1` and `sample2`.
+
+- Ignores DNFs; returns `[]` if either sample has no valid times.
+- Evaluates Gaussian KDE densities across both samples over `numPoints` evenly spaced time points across `domain` (or auto-computed min/max if omitted).
+- Bandwidth uses **Silverman's rule of thumb** (`1.06 * std * n^-0.2`), floored at `0.8`.
+
 ## `calculateKDE(solves, baselinePercent = 0.3, recentPercent = 0.3, numPoints = 100): KDEPoint[]`
 
-Kernel Density Estimation comparing an early "baseline" slice against a recent slice.
+Kernel Density Estimation comparing an early "baseline" slice against a recent slice. Delegates to `calculateKDEFromSamples`.
 
 - Ignores DNFs; needs `>= 5` valid solves or returns `[]`.
 - Baseline = first `max(3, floor(len * baselinePercent))` solves; recent = last
@@ -75,7 +90,7 @@ Kernel Density Estimation comparing an early "baseline" slice against a recent s
   combined time range (padded by −3s / +5s).
 - Densities and x are rounded (x to 2, densities to 4 decimals).
 
-The `DensityShiftChart` exposes 20% / 30% / 40% split presets that map to `baselinePercent`.
+The `DensityShiftChart` uses `calculateKDEFromSamples` with dual interactive timeline scrubbers and direct-manipulation ribbed resize handles.
 
 ## `calculateGlobalStats(solves): GlobalStats`
 
