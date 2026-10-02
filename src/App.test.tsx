@@ -167,7 +167,7 @@ describe('App component', () => {
     expect(csv).toContain('"Day 1 (');
   });
 
-  it('handles file upload and error handling', async () => {
+  it('handles file upload error handling for invalid files', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     render(<App />);
 
@@ -192,7 +192,12 @@ describe('App component', () => {
       { timeout: 4000 },
     );
     expect(consoleErrorSpy).toHaveBeenCalled();
+  });
 
+  it('handles valid csTimer file upload', async () => {
+    render(<App />);
+
+    const fileInput = screen.getByLabelText('Upload csTimer file');
     await waitFor(
       () => {
         expect(fileInput).not.toBeDisabled();
@@ -240,7 +245,9 @@ describe('App component', () => {
     const clearStorageBtn = screen.getByTitle('Clear saved data from browser storage');
     fireEvent.click(clearStorageBtn);
 
-    expect(screen.queryByText(/F2L Yellow Cross Progression/)).not.toBeInTheDocument();
-    expect(screen.getByLabelText('File upload dropzone')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText(/F2L Yellow Cross Progression/)).not.toBeInTheDocument();
+      expect(screen.getByLabelText('File upload dropzone')).toBeInTheDocument();
+    });
   });
 });

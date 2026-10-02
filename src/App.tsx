@@ -15,6 +15,9 @@ import { clearSavedDataset, getSavedDataset, getStorageInfo, saveDataset } from 
 import { generateSampleData } from './utils/sampleData';
 import { calculateGlobalStats, groupSolvesByPeriod } from './utils/statsMath';
 
+const stepDelay = (ms: number) =>
+  new Promise((res) => setTimeout(res, import.meta.env.MODE === 'test' ? 0 : ms));
+
 export default function App() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState<string>('');
@@ -66,7 +69,7 @@ export default function App() {
 
           setLoadingProgress(100);
           setLoadingStage('Loaded saved data successfully!');
-          await new Promise((res) => setTimeout(res, 120));
+          await stepDelay(120);
           setIsLoading(false);
           return;
         }
@@ -83,12 +86,12 @@ export default function App() {
       setSavedNotice(null);
 
       try {
-        await new Promise((res) => setTimeout(res, 120));
+        await stepDelay(120);
         setLoadingProgress(50);
         setLoadingStage('Generating 350 solve logs & session history...');
         const demoSessions = generateSampleData();
 
-        await new Promise((res) => setTimeout(res, 80));
+        await stepDelay(80);
         setLoadingProgress(80);
         setLoadingStage('Computing rolling averages & variance...');
 
@@ -114,7 +117,7 @@ export default function App() {
         setLoadingProgress(100);
         setLoadingStage('Complete!');
 
-        await new Promise((res) => setTimeout(res, 120));
+        await stepDelay(120);
         setIsLoading(false);
       } catch (err) {
         console.error(err);
@@ -135,12 +138,12 @@ export default function App() {
     setSavedNotice(null);
 
     try {
-      await new Promise((res) => setTimeout(res, 120));
+      await stepDelay(120);
       setLoadingProgress(50);
       setLoadingStage('Generating 350 solve logs & session history...');
       const demoSessions = generateSampleData();
 
-      await new Promise((res) => setTimeout(res, 80));
+      await stepDelay(80);
       setLoadingProgress(80);
       setLoadingStage('Computing rolling averages & variance...');
 
@@ -167,7 +170,7 @@ export default function App() {
       setLoadingProgress(100);
       setLoadingStage('Complete!');
 
-      await new Promise((res) => setTimeout(res, 120));
+      await stepDelay(120);
       setIsLoading(false);
     } catch (err) {
       console.error(err);
@@ -189,20 +192,20 @@ export default function App() {
       try {
         setLoadingProgress(35);
         setLoadingStage('Decoding session export JSON/Text...');
-        await new Promise((res) => setTimeout(res, 150));
+        await stepDelay(150);
 
         const content = e.target?.result as string;
         if (!content) throw new Error('File is empty.');
 
         setLoadingProgress(60);
         setLoadingStage('Parsing solves, timestamps & scrambles...');
-        await new Promise((res) => setTimeout(res, 180));
+        await stepDelay(180);
 
         const parsedSessions = parseCsTimerFile(content);
 
         setLoadingProgress(80);
         setLoadingStage('Persisting dataset to IndexedDB browser storage...');
-        await new Promise((res) => setTimeout(res, 150));
+        await stepDelay(150);
 
         const initialSessionId = parsedSessions[0].id;
         setSessions(parsedSessions);
@@ -230,7 +233,7 @@ export default function App() {
         setLoadingProgress(100);
         setLoadingStage('Done!');
 
-        await new Promise((res) => setTimeout(res, 120));
+        await stepDelay(120);
         setIsLoading(false);
       } catch (err: unknown) {
         console.error(err);
