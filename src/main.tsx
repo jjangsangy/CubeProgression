@@ -20,6 +20,7 @@ export function mountApp(
 export async function bootstrapApp(
   container: HTMLElement | null = document.getElementById('root'),
 ): Promise<Root | null> {
+  if (!container) return null;
   await ensureTemporal();
   return mountApp(container);
 }

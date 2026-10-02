@@ -41,7 +41,7 @@ describe('DeferredChart component', () => {
     // @ts-expect-error test mock
     window.IntersectionObserver = MockIntersectionObserver;
 
-    const { rerender } = render(
+    render(
       <DeferredChart minHeight={500} fallbackTitle="PB Progression">
         <div data-testid="chart-content">Chart Content</div>
       </DeferredChart>,
@@ -54,15 +54,42 @@ describe('DeferredChart component', () => {
 
     // Trigger intersection
     act(() => {
+      observerCallback([{ isIntersecting: false }]);
+    });
+    expect(screen.queryByTestId('chart-content')).not.toBeInTheDocument();
+
+    act(() => {
       observerCallback([{ isIntersecting: true }]);
     });
-    rerender(
-      <DeferredChart minHeight={500} fallbackTitle="PB Progression">
-        <div data-testid="chart-content">Chart Content</div>
+
+    expect(screen.getByTestId('chart-content')).toBeInTheDocument();
+    expect(disconnectMock).toHaveBeenCalled();
+  });
+
+  it('renders without fallbackTitle and cleans up observer on unmount', () => {
+    const disconnectMock = vi.fn();
+    const observeMock = vi.fn();
+
+    class MockIntersectionObserver {
+      observe = observeMock;
+      disconnect = disconnectMock;
+      unobserve = vi.fn();
+    }
+
+    // @ts-expect-error test mock
+    window.IntersectionObserver = MockIntersectionObserver;
+
+    const { unmount } = render(
+      <DeferredChart minHeight="450px" className="custom-chart-wrapper">
+        <div>Content</div>
       </DeferredChart>,
     );
 
-    expect(screen.getByTestId('chart-content')).toBeInTheDocument();
+    expect(screen.getByTestId('deferred-chart')).toBeInTheDocument();
+    expect(screen.getByTestId('deferred-chart')).toHaveClass('custom-chart-wrapper');
+    expect(observeMock).toHaveBeenCalled();
+
+    unmount();
     expect(disconnectMock).toHaveBeenCalled();
   });
 

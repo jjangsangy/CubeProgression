@@ -490,8 +490,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               tickFormatter={(v: number) => {
                 if (v === 0) return '0';
                 if (yCeiling < 0.02) return v.toFixed(3);
-                if (yCeiling < 1) return v.toFixed(2);
-                return v.toFixed(1);
+                return v.toFixed(2);
               }}
               label={{
                 value: 'Density',

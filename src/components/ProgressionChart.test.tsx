@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { LinearRegression, PeriodGroup, Solve } from '../types';
@@ -508,6 +508,68 @@ describe('ProgressionChart component', () => {
       expect(await screen.findByTestId('progression-chart-canvas')).toBeInTheDocument();
     } finally {
       window.innerWidth = originalInnerWidth;
+    }
+  });
+
+  it('schedules canvas mounting via requestIdleCallback and cancels on unmount', () => {
+    const cancelMock = vi.fn();
+    const requestMock = vi.fn(() => 42);
+
+    const win = window as unknown as {
+      requestIdleCallback?: typeof requestMock;
+      cancelIdleCallback?: typeof cancelMock;
+    };
+    win.requestIdleCallback = requestMock;
+    win.cancelIdleCallback = cancelMock;
+
+    try {
+      const { unmount } = render(
+        <ProgressionChart
+          solves={mockSolves}
+          periodGroups={mockPeriodGroups}
+          regression={mockRegression}
+        />,
+      );
+
+      expect(requestMock).toHaveBeenCalledWith(expect.any(Function), { timeout: 1200 });
+      expect(screen.getByTestId('progression-canvas-skeleton')).toBeInTheDocument();
+
+      unmount();
+      expect(cancelMock).toHaveBeenCalledWith(42);
+    } finally {
+      delete win.requestIdleCallback;
+      delete win.cancelIdleCallback;
+    }
+  });
+
+  it('updates responsive dimensions on window resize event and cleans up listener on unmount', () => {
+    const originalInnerWidth = window.innerWidth;
+    const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
+    const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
+
+    try {
+      window.innerWidth = 1024;
+      const { unmount } = render(
+        <ProgressionChart
+          solves={mockSolves}
+          periodGroups={mockPeriodGroups}
+          regression={mockRegression}
+        />,
+      );
+
+      expect(addEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
+
+      act(() => {
+        window.innerWidth = 500;
+        fireEvent(window, new Event('resize'));
+      });
+
+      unmount();
+      expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
+    } finally {
+      window.innerWidth = originalInnerWidth;
+      addEventListenerSpy.mockRestore();
+      removeEventListenerSpy.mockRestore();
     }
   });
 });

@@ -15,7 +15,13 @@ describe('ChartCardWrapper component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(toPng).mockResolvedValue(sampleDataUrl);
+    vi.mocked(toPng).mockImplementation(async (node, options) => {
+      const opts = options as { onClone?: (clonedNode: HTMLElement) => void } | undefined;
+      if (opts?.onClone && node instanceof HTMLElement) {
+        opts.onClone(node.cloneNode(true) as HTMLElement);
+      }
+      return sampleDataUrl;
+    });
     vi.mocked(toCanvas).mockResolvedValue({
       toDataURL: () => sampleDataUrl,
     } as unknown as HTMLCanvasElement);
@@ -431,5 +437,76 @@ describe('ChartCardWrapper component', () => {
     const backdrop = document.querySelector('.fixed.inset-0.z-\\[100\\]');
     expect(backdrop).toHaveClass('p-4');
     expect(backdrop).toHaveClass('sm:p-8');
+  });
+
+  it('applies explicit width and height to recharts wrappers and svgs during cloning', async () => {
+    let capturedClonedNode: HTMLElement | null = null;
+    vi.mocked(toPng).mockImplementation(async (node, options) => {
+      const opts = options as { onClone?: (clonedNode: HTMLElement) => void } | undefined;
+      if (opts?.onClone && node instanceof HTMLElement) {
+        capturedClonedNode = node.cloneNode(true) as HTMLElement;
+        opts.onClone(capturedClonedNode);
+      }
+      return sampleDataUrl;
+    });
+
+    const { container } = render(
+      <ChartCardWrapper title="Clone Dimensions Test">
+        <div className="recharts-wrapper">
+          <svg />
+        </div>
+      </ChartCardWrapper>,
+    );
+
+    const rechartsWrapper = container.querySelector('.recharts-wrapper');
+    expect(rechartsWrapper).not.toBeNull();
+    vi.spyOn(rechartsWrapper as Element, 'getBoundingClientRect').mockReturnValue({
+      width: 500,
+      height: 300,
+      top: 0,
+      left: 0,
+      right: 500,
+      bottom: 300,
+      x: 0,
+      y: 0,
+      toJSON: () => {},
+    });
+
+    const svgEl = container.querySelector('.recharts-wrapper svg');
+    expect(svgEl).not.toBeNull();
+    vi.spyOn(svgEl as Element, 'getBoundingClientRect').mockReturnValue({
+      width: 500,
+      height: 300,
+      top: 0,
+      left: 0,
+      right: 500,
+      bottom: 300,
+      x: 0,
+      y: 0,
+      toJSON: () => {},
+    });
+
+    const pngBtn = screen.getByTitle('Download Plot as PNG Image');
+    fireEvent.click(pngBtn);
+
+    await waitFor(() => {
+      expect(toPng).toHaveBeenCalled();
+    });
+
+    expect(capturedClonedNode).not.toBeNull();
+    const clonedWrapper = (capturedClonedNode as unknown as HTMLElement).querySelector(
+      '.recharts-wrapper',
+    ) as HTMLElement;
+    expect(clonedWrapper.style.width).toBe('500px');
+    expect(clonedWrapper.style.height).toBe('300px');
+    expect(clonedWrapper.style.minWidth).toBe('500px');
+    expect(clonedWrapper.style.minHeight).toBe('300px');
+
+    const clonedSvg = clonedWrapper.querySelector('svg') as SVGElement;
+    expect(clonedSvg).not.toBeNull();
+    expect(clonedSvg.getAttribute('width')).toBe('500');
+    expect(clonedSvg.getAttribute('height')).toBe('300');
+    expect(clonedSvg.style.width).toBe('500px');
+    expect(clonedSvg.style.height).toBe('300px');
   });
 });

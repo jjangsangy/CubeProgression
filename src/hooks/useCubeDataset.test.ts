@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as csTimerParser from '../utils/csTimerParser';
 import * as csvExport from '../utils/csvExport';
 import * as dbStorage from '../utils/dbStorage';
@@ -7,6 +7,10 @@ import { useCubeDataset } from './useCubeDataset';
 
 describe('useCubeDataset', () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
     vi.restoreAllMocks();
   });
 
@@ -391,6 +395,69 @@ describe('useCubeDataset', () => {
 
     await waitFor(() => {
       expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error));
+    });
+  });
+
+  describe('when getStorageInfo rejects (storage estimation failure)', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('hydrates demo data with undefined storageUsageMB when getStorageInfo rejects on mount', async () => {
+      vi.spyOn(dbStorage, 'getStorageInfo').mockRejectedValue(new Error('QuotaExceeded'));
+      const { result } = renderHook(() => useCubeDataset());
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.sessions.length).toBeGreaterThan(0);
+      expect(result.current.storageUsageMB).toBeUndefined();
+      expect(result.current.isSaved).toBe(true);
+    });
+
+    it('reloads sample dataset safely when getStorageInfo rejects', async () => {
+      vi.spyOn(dbStorage, 'getStorageInfo').mockRejectedValue(new Error('QuotaExceeded'));
+      const { result } = renderHook(() => useCubeDataset());
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      await act(async () => {
+        await result.current.loadSampleData();
+      });
+
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.sessions.length).toBeGreaterThan(0);
+      expect(result.current.fileName).toBe('cstimer_demo_350solves.txt');
+      expect(result.current.storageUsageMB).toBeUndefined();
+    });
+
+    it('completes file upload and persists data when getStorageInfo rejects', async () => {
+      vi.spyOn(dbStorage, 'getStorageInfo').mockRejectedValue(new Error('QuotaExceeded'));
+      const { result } = renderHook(() => useCubeDataset());
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      const validExport = JSON.stringify({
+        session1: [[[0, 10000], "R U R'", '', 1600000000]],
+      });
+      const file = new File([validExport], 'quota_fail.txt', { type: 'text/plain' });
+
+      act(() => {
+        result.current.handleFileUpload(file);
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.fileName).toBe('quota_fail.txt');
+      expect(result.current.storageUsageMB).toBeUndefined();
+      expect(result.current.isSaved).toBe(true);
     });
   });
 });

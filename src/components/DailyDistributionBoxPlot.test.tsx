@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PeriodGroup } from '../types';
 import { DailyDistributionBoxPlot } from './DailyDistributionBoxPlot';
 
@@ -67,6 +67,11 @@ const mockPeriodGroups: PeriodGroup[] = [
 
 describe('DailyDistributionBoxPlot component', () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
@@ -257,5 +262,22 @@ describe('DailyDistributionBoxPlot component', () => {
     const classes = svg?.getAttribute('class') || '';
     expect(classes).toContain('h-[380px]');
     expect(classes).toContain('sm:h-[400px]');
+  });
+
+  it('falls back to containerRef.current.clientWidth when ResizeObserver is undefined', () => {
+    vi.stubGlobal('ResizeObserver', undefined);
+    const clientWidthSpy = vi
+      .spyOn(HTMLElement.prototype, 'clientWidth', 'get')
+      .mockReturnValue(750);
+
+    try {
+      const { container } = render(
+        <DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="daily" />,
+      );
+      const svg = container.querySelector('svg[preserveAspectRatio="none"]');
+      expect(svg?.getAttribute('viewBox')).toBe('0 0 750 400');
+    } finally {
+      clientWidthSpy.mockRestore();
+    }
   });
 });
