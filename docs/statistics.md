@@ -1,0 +1,121 @@
+# Statistics Engine
+
+Everything here lives in [`src/utils/statsMath.ts`](../src/utils/statsMath.ts). It is
+**pure, synchronous, and framework-free** — no React, no DOM, no I/O. Inputs are normalized
+`Solve[]` arrays; outputs are plain objects typed in `src/types.ts`. This is the most
+heavily tested part of the codebase; keep `statsMath.test.ts` in sync with any change.
+
+## `calculateAoN(solves, currentIndex, n): number | null`
+
+Computes the official WCA **Average of N** for the window *ending* at `currentIndex`.
+
+- Returns `null` when `currentIndex < n - 1` (not enough solves yet).
+- DNF handling follows WCA rules: allowed DNFs = `floor(n * 0.05) || 1`. If exceeded,
+  the whole average is `null` (DNF average).
+- DNFs are treated as sentinel `Infinity` values, i.e. the worst times.
+- Trims `max(1, floor(n * 0.05))` results from each end, then averages the rest.
+- If any surviving value is non-finite, returns `null`.
+- Result is rounded to 2 decimals.
+
+Used for `ao5`/`ao12`/`ao50`/`ao100` during parsing, and called again on the fly for
+`bestAo5` and `currentAo5` in `calculateGlobalStats` (because `Solve` only stores ao50/ao100).
+
+## `calculateLinearRegression(solves): LinearRegression`
+
+Ordinary Least Squares fit of `finalTimeSec` against 1-based `index`, ignoring DNFs.
+
+- Requires `n >= 2`, otherwise returns a zeroed regression.
+- Returns `slope`, `intercept`, `r2` (clamped to `>= 0`), and `slopeFormatted` such as
+  `-0.0095s/solve`.
+- A negative slope means solve times are decreasing (getting faster).
+
+## `computeGroupStats(groupSolves, label, startDate, endDate): PeriodGroup`
+
+Aggregates one bucket of solves:
+
+- Filters DNFs, sorts valid `finalTimeSec` ascending.
+- Empty bucket → all-zero `PeriodGroup` with empty `timesSec`/`outliers`.
+- `mean`, `min`, `max` directly; `median`/`q1`/`q3` via linear-interpolated quantiles
+  (`getQuantile` uses `pos = (len - 1) * q`).
+- `iqr = q3 - q1`.
+- Whiskers use the Tukey 1.5×IQR rule: `lowLimit = q1 - 1.5*iqr`,
+  `highLimit = q3 + 1.5*iqr`. Whiskers are the min/max times *inside* those limits;
+  anything outside becomes an `outliers` entry.
+- `stdDev` is the **population** standard deviation (`/ n`, not `/ (n-1)`).
+- All numeric fields are rounded to 2 decimals.
+
+## `getPeriodUnitInfo(period, customBatchSize?): { unitSingular, unitPlural, adjective, axisLabel, solvesPerUnit }`
+
+Central source of display strings for a grouping mode. `weekly`/`monthly`/`batch`/`daily`;
+`customBatch` and `batch50` both map to "Batch". `default` is daily. Charts call this so
+titles and axis labels stay consistent. `solvesPerUnit` embeds the custom batch size.
+
+## `groupSolvesByPeriod(solves, period, customBatchSize = 50): PeriodGroup[]`
+
+Two grouping strategies:
+
+- **Batch modes** (`batch50`, `customBatch`): fixed-size slices of `Math.max(1, customBatchSize)`
+  (50 for `batch50`), labelled `Batch i (start-end)`. Dates come from the first/last solve
+  in the slice.
+- **Time modes** (`daily`, `weekly`, `monthly`): bucket by local calendar key derived from
+  `Temporal` (`toPlainDate`, `weekOfYear`/`yearOfWeek`, `year`+`month`). Keys are sorted
+  chronologically, then labelled `Day n (YYYY-MM-DD)`, `Week n (...)`, `Month n (...)`.
+
+Each bucket is passed to `computeGroupStats`. Empty input returns `[]`.
+
+## `calculateKDE(solves, baselinePercent = 0.3, recentPercent = 0.3, numPoints = 100): KDEPoint[]`
+
+Kernel Density Estimation comparing an early "baseline" slice against a recent slice.
+
+- Ignores DNFs; needs `>= 5` valid solves or returns `[]`.
+- Baseline = first `max(3, floor(len * baselinePercent))` solves; recent = last
+  `min(len - 3, floor(len * (1 - recentPercent)))` solves.
+- Bandwidth uses **Silverman's rule of thumb** (`1.06 * std * n^-0.2`), floored at `0.8`.
+- Gaussian kernel; densities evaluated on `numPoints` evenly spaced x-values spanning the
+  combined time range (padded by −3s / +5s).
+- Densities and x are rounded (x to 2, densities to 4 decimals).
+
+The `DensityShiftChart` exposes 20% / 30% / 40% split presets that map to `baselinePercent`.
+
+## `calculateGlobalStats(solves): GlobalStats`
+
+The dashboard summary object:
+
+- `totalSolves` (all solves) and `dnfCount`.
+- `bestSingle` / `worstSingle` — the `Solve` objects with min/max `finalTimeSec`.
+- `bestAo5` recomputed via `calculateAoN`; `bestAo12`/`bestAo50` scanned from stored fields.
+- `currentAo5` = `calculateAoN` on the last index; `currentAo12` = last solve's stored `ao12`.
+- `overallMean` over valid times; `overallMedian` is the upper-middle element
+  (`times[floor(len/2)]`, not interpolated).
+- `regression` from `calculateLinearRegression`.
+- Improvement: baseline = first `max(5, floor(len * 0.15))` valid solves, recent = last
+  same-size slice. `improvementSec = initialAvg - recentAvg` (positive = got faster), and
+  `improvementPct = improvementSec / initialAvg * 100`.
+
+## `calculatePbProgression(solves): PbProgressionResult`
+
+Walks the solves in order, maintaining running PBs for Single/Ao5/Ao12/Ao50/Ao100 and
+emitting:
+
+- **`dataPoints`** — one entry per solve with the running PBs, `isNewPb*` flags, optional
+  `drop*` deltas (the improvement over the previous PB), timestamp, scramble, and penalty.
+- **`pbMilestones`** — a flat ledger of PB drops, each with `type`, `index`, `dateStr`,
+  `timeSec`, `dropSec`, and scramble.
+- **`summary`** — final PBs, total counts of single/ao5/ao12/ao50/ao100 improvements, and
+  `singlePbImprovement` (first PB minus best PB).
+
+DNF solves are skipped for the single PB but still advance the rolling-average windows via
+the precomputed `ao*` fields. This is the engine behind `PbProgressionChart`.
+
+## Rounding & precision conventions
+
+- Times in `PeriodGroup`/`GlobalStats` are rounded to 2 decimals for display stability.
+- `ao*` values are rounded to 2 decimals at computation time.
+- KDE densities keep 4 decimals.
+- Percentages are 1 decimal; slopes are 4 decimals with an explicit sign.
+
+## Testing
+
+`src/utils/statsMath.test.ts` covers the functions above with hand-built and demo-derived
+fixtures. Because the math drives every chart, validating behavior here is the fastest way
+to gain confidence before touching UI.
