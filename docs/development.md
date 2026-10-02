@@ -53,6 +53,10 @@ Test files are colocated with source: `src/**/*.test.ts(x)`. Prefer asserting on
 text (RTL) and mocking only external/browser APIs (see `ChartCardWrapper.test.tsx` mocking
 `html-to-image`).
 
+- **CI**: Automated test runner on GitHub Actions (`.github/workflows/test.yml`) runs tests
+  on pushes and pull requests targeting `main` across all supported platforms:
+  `ubuntu-latest`, `macos-latest`, and `windows-latest`.
+
 ## Lint & format — Biome `biome.json`
 
 - Includes everything except `dist`, `coverage`, `.tmp`; respects `.gitignore`.
