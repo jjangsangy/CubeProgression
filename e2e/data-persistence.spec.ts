@@ -25,7 +25,7 @@ test.describe('Data Ingestion & IndexedDB Persistence', () => {
     await expect(sessionSelector.locator('option')).toHaveCount(2);
 
     // Initial demo file pill is displayed in Navbar
-    await expect(page.getByText('cstimer_demo_350solves.txt')).toBeVisible();
+    await expect(page.getByRole('banner').getByText('cstimer_demo_350solves.txt')).toBeVisible();
 
     // Main Progression Chart displays default session title
     await expect(

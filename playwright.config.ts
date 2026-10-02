@@ -5,14 +5,18 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
-  /* Run tests in files in parallel */
+  /* Run tests in files in parallel across workers */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  /* Opt out of parallel tests on CI. Overridable via PLAYWRIGHT_WORKERS or --workers CLI flag. */
+  workers: process.env.CI
+    ? 1
+    : process.env.PLAYWRIGHT_WORKERS
+      ? Number(process.env.PLAYWRIGHT_WORKERS)
+      : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [['html', { open: 'never' }], ['list']],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -34,13 +38,28 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          args: [
+            '--disable-gpu',
+            '--disable-dev-shm-usage',
+            '--disable-extensions',
+            '--disable-background-networking',
+            '--disable-default-apps',
+            '--disable-sync',
+            '--mute-audio',
+            '--js-flags=--max-old-space-size=512',
+          ],
+        },
+      },
     },
   ],
 
-  /* Run your local dev server before starting the tests */
+  /* Run a lightweight preview build by default to minimize memory overhead compared to dev server.
+   * Reuses existing server if already running on port 3000. Set E2E_DEV=true to force dev server. */
   webServer: {
-    command: 'bun run dev',
+    command: process.env.E2E_DEV ? 'bun run dev' : 'bun run build && bun run preview',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
