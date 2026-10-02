@@ -34,9 +34,9 @@ export const CubeLoadingSpinner: React.FC<CubeLoadingSpinnerProps> = ({ size = '
   return (
     <div className="relative flex items-center justify-center">
       {/* Outer spinning ambient glow ring */}
-      <div className="absolute inset-0 rounded-2xl bg-amber-500/20 blur-xl animate-pulse" />
+      <div className="absolute inset-0 animate-pulse rounded-2xl bg-amber-500/20 blur-xl" />
       <div
-        className="absolute -inset-2 rounded-2xl border-2 border-amber-500/30 animate-spin border-t-amber-400 border-r-amber-500/10"
+        className="absolute -inset-2 animate-spin rounded-2xl border-2 border-amber-500/30 border-t-amber-400 border-r-amber-500/10"
         style={{ animationDuration: '1.8s' }}
       />
 

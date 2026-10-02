@@ -352,30 +352,30 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
     const data = payload[0].payload;
 
     return (
-      <div className="bg-stone-900/95 border border-stone-700/80 rounded-xl p-3 shadow-2xl text-xs text-stone-200 backdrop-blur-md max-w-xs">
-        <div className="font-semibold text-stone-100 border-b border-stone-800 pb-1.5 mb-2 flex justify-between items-center gap-2">
+      <div className="max-w-xs rounded-xl border border-stone-700/80 bg-stone-900/95 p-3 text-xs text-stone-200 shadow-2xl backdrop-blur-md">
+        <div className="mb-2 flex items-center justify-between gap-2 border-b border-stone-800 pb-1.5 font-semibold text-stone-100">
           <span>
             Solve #{label}
             {data.periodLabel && (
-              <span className="text-sky-400 font-normal ml-1.5 text-[11px]">
+              <span className="ml-1.5 text-[11px] font-normal text-sky-400">
                 ({data.periodLabel})
               </span>
             )}
           </span>
-          <span className="text-stone-400 font-normal">{data.dateStr}</span>
+          <span className="font-normal text-stone-400">{data.dateStr}</span>
         </div>
         <div className="space-y-1">
           {data.single !== null && solveVisibility !== 'hidden' && (
-            <div className="flex justify-between items-center gap-4">
+            <div className="flex items-center justify-between gap-4">
               <span className="text-stone-400">Single Time:</span>
               <span className="font-mono font-bold text-stone-100">
                 {data.penalty === 'DNF' ? 'DNF' : `${data.single?.toFixed(2)}s`}
-                {data.penalty === '+2' && <span className="text-amber-400 ml-1">(+2)</span>}
+                {data.penalty === '+2' && <span className="ml-1 text-amber-400">(+2)</span>}
               </span>
             </div>
           )}
           {showAo5 && data.ao5 !== null && data.ao5 !== undefined && (
-            <div className="flex justify-between items-center gap-4">
+            <div className="flex items-center justify-between gap-4">
               <span className="text-emerald-400">Ao5:</span>
               <span className="font-mono font-semibold text-emerald-300">
                 {data.ao5.toFixed(2)}s
@@ -383,7 +383,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
             </div>
           )}
           {showAo12 && data.ao12 !== null && data.ao12 !== undefined && (
-            <div className="flex justify-between items-center gap-4">
+            <div className="flex items-center justify-between gap-4">
               <span className="text-orange-400">Ao12:</span>
               <span className="font-mono font-semibold text-orange-300">
                 {data.ao12.toFixed(2)}s
@@ -391,13 +391,13 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
             </div>
           )}
           {showAo50 && data.ao50 !== null && data.ao50 !== undefined && (
-            <div className="flex justify-between items-center gap-4">
+            <div className="flex items-center justify-between gap-4">
               <span className="text-sky-400">Ao50:</span>
               <span className="font-mono font-semibold text-sky-300">{data.ao50.toFixed(2)}s</span>
             </div>
           )}
           {showAo100 && data.ao100 !== null && data.ao100 !== undefined && (
-            <div className="flex justify-between items-center gap-4">
+            <div className="flex items-center justify-between gap-4">
               <span className="text-purple-400">Ao100:</span>
               <span className="font-mono font-semibold text-purple-300">
                 {data.ao100.toFixed(2)}s
@@ -405,7 +405,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
             </div>
           )}
           {showCustomAo && data.customAo !== null && data.customAo !== undefined && (
-            <div className="flex justify-between items-center gap-4">
+            <div className="flex items-center justify-between gap-4">
               <span className="text-yellow-400">Ao{customAoN}:</span>
               <span className="font-mono font-semibold text-yellow-300">
                 {data.customAo.toFixed(2)}s
@@ -413,14 +413,14 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
             </div>
           )}
           {showTrend && (
-            <div className="flex justify-between items-center gap-4 border-t border-stone-800/80 pt-1 mt-1">
+            <div className="mt-1 flex items-center justify-between gap-4 border-t border-stone-800/80 pt-1">
               <span className="text-rose-400/90">Range Trend:</span>
               <span className="font-mono text-rose-300">{data.trend?.toFixed(2)}s</span>
             </div>
           )}
         </div>
         {data.scramble && (
-          <div className="mt-2.5 pt-2 border-t border-stone-800 text-[10px] text-stone-400 font-mono truncate">
+          <div className="mt-2.5 truncate border-t border-stone-800 pt-2 font-mono text-[10px] text-stone-400">
             Scramble: {data.scramble}
           </div>
         )}
@@ -466,13 +466,13 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
     <ChartCardWrapper
       title={title}
       subtitle="Individual solve plot with interactive range selector, toggleable moving averages (Ao5, Ao12, Ao50, Ao100, Custom N), and OLS regression."
-      headerBadge={<span className="w-2.5 h-2.5 rounded-full bg-sky-400 inline-block"></span>}
+      headerBadge={<span className="inline-block h-2.5 w-2.5 rounded-full bg-sky-400"></span>}
       filenamePrefix="progression_moving_averages"
       headerControls={
         <div className="flex flex-wrap items-center gap-2">
           {/* Controls to toggle average metrics */}
-          <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-stone-800/80 border border-stone-700/60 text-xs flex-wrap">
-            <span className="text-stone-400 text-[11px] px-1 font-medium">Averages:</span>
+          <div className="inline-flex flex-wrap items-center gap-1 rounded-lg border border-stone-700/60 bg-stone-800/80 p-1 text-xs">
+            <span className="px-1 text-[11px] font-medium text-stone-400">Averages:</span>
             <button
               type="button"
               onClick={() => setShowAo5(!showAo5)}
@@ -530,7 +530,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
             </button>
 
             {/* Custom AoN toggle and input */}
-            <div className="inline-flex items-center gap-1 border-l border-stone-700/80 pl-1.5 ml-0.5">
+            <div className="ml-0.5 inline-flex items-center gap-1 border-l border-stone-700/80 pl-1.5">
               <button
                 type="button"
                 onClick={() => setShowCustomAo(!showCustomAo)}
@@ -543,15 +543,15 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                 Custom Ao
               </button>
               {showCustomAo && (
-                <div className="flex items-center gap-1 bg-stone-900 px-1.5 py-0.5 rounded border border-yellow-500/30">
-                  <span className="text-[10px] text-stone-400 font-mono">Ao</span>
+                <div className="flex items-center gap-1 rounded border border-yellow-500/30 bg-stone-900 px-1.5 py-0.5">
+                  <span className="font-mono text-[10px] text-stone-400">Ao</span>
                   <input
                     type="number"
                     min="3"
                     max="1000"
                     value={customAoN}
                     onChange={(e) => setCustomAoN(Math.max(3, parseInt(e.target.value, 10) || 3))}
-                    className="w-10 bg-transparent text-xs font-mono font-bold text-yellow-200 focus:outline-none border-b border-stone-600 focus:border-yellow-400 text-center"
+                    className="w-10 border-b border-stone-600 bg-transparent text-center font-mono text-xs font-bold text-yellow-200 focus:border-yellow-400 focus:outline-none"
                   />
                 </div>
               )}
@@ -559,8 +559,8 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
           </div>
 
           {/* Controls to toggle single solve visibility */}
-          <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-stone-800/80 border border-stone-700/60 text-xs">
-            <span className="text-stone-400 text-[11px] px-1.5 font-medium">Solves:</span>
+          <div className="inline-flex items-center gap-1 rounded-lg border border-stone-700/60 bg-stone-800/80 p-1 text-xs">
+            <span className="px-1.5 text-[11px] font-medium text-stone-400">Solves:</span>
             <button
               type="button"
               onClick={() => setSolveVisibility('muted')}
@@ -621,10 +621,10 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                 : 'bg-stone-800/80 text-stone-300 hover:text-stone-100 border-stone-700/60'
             }`}
           >
-            <SlidersHorizontal className="w-3.5 h-3.5 text-sky-400" />
+            <SlidersHorizontal className="h-3.5 w-3.5 text-sky-400" />
             <span>Range Selector</span>
             {rangeStats.isFiltered && (
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+              <span className="h-2 w-2 animate-pulse rounded-full bg-amber-400"></span>
             )}
           </button>
         </div>
@@ -633,15 +633,15 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
       <div className="flex flex-col gap-4">
         {/* RANGE SELECTOR PANEL */}
         {isRangePanelOpen && (
-          <div className="bg-stone-800/50 border border-stone-700/60 rounded-xl p-3.5 sm:p-4 text-xs space-y-3.5 shadow-inner">
+          <div className="space-y-3.5 rounded-xl border border-stone-700/60 bg-stone-800/50 p-3.5 text-xs shadow-inner sm:p-4">
             {/* Top Bar: Mode Switcher & Filter Info */}
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-700/50 pb-3">
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-1.5 text-stone-200 font-semibold">
-                  <Filter className="w-4 h-4 text-sky-400" />
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1.5 font-semibold text-stone-200">
+                  <Filter className="h-4 w-4 text-sky-400" />
                   <span>Range Mode:</span>
                 </div>
-                <div className="inline-flex items-center gap-1 p-0.5 rounded-lg bg-stone-900/80 border border-stone-700/60">
+                <div className="inline-flex items-center gap-1 rounded-lg border border-stone-700/60 bg-stone-900/80 p-0.5">
                   <button
                     type="button"
                     onClick={() => {
@@ -668,7 +668,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                         : 'text-stone-400 hover:text-stone-200'
                     }`}
                   >
-                    <Hash className="w-3 h-3" />
+                    <Hash className="h-3 w-3" />
                     <span>Solve # Interval</span>
                   </button>
                   <button
@@ -683,7 +683,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                         : 'text-stone-400 hover:text-stone-200'
                     }`}
                   >
-                    <Calendar className="w-3 h-3" />
+                    <Calendar className="h-3 w-3" />
                     <span>Date Range</span>
                   </button>
                 </div>
@@ -694,9 +694,9 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                 <button
                   type="button"
                   onClick={() => applyPreset('all')}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 text-xs font-medium transition-all active:scale-95 cursor-pointer"
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/15 px-2.5 py-1 text-xs font-medium text-amber-300 transition-all hover:bg-amber-500/25 active:scale-95"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
+                  <RotateCcw className="h-3.5 w-3.5" />
                   <span>
                     Reset Range ({rangeStats.count} / {totalCount})
                   </span>
@@ -706,7 +706,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
 
             {/* Presets Toolbar */}
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-stone-400 text-[11px] font-medium shrink-0">
+              <span className="shrink-0 text-[11px] font-medium text-stone-400">
                 Quick Presets:
               </span>
               <div className="flex flex-wrap items-center gap-1.5">
@@ -737,11 +737,11 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
 
             {/* Detailed Controls Based on Selected Mode */}
             {rangeMode === 'solveIndex' && (
-              <div className="bg-stone-900/80 border border-stone-700/50 rounded-lg p-3 space-y-3">
-                <div className="flex flex-col md:flex-row items-center gap-4">
+              <div className="space-y-3 rounded-lg border border-stone-700/50 bg-stone-900/80 p-3">
+                <div className="flex flex-col items-center gap-4 md:flex-row">
                   {/* Start Solve Input & Slider */}
-                  <div className="flex-1 w-full flex items-center gap-2 min-w-0">
-                    <span className="text-stone-400 shrink-0 font-mono text-[11px]">
+                  <div className="flex w-full min-w-0 flex-1 items-center gap-2">
+                    <span className="shrink-0 font-mono text-[11px] text-stone-400">
                       From Solve #:
                     </span>
                     <input
@@ -754,7 +754,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                         setStartSolve(Math.max(1, Math.min(val, endSolve)));
                         setPreset('custom');
                       }}
-                      className="w-16 bg-stone-950 border border-stone-700 rounded px-2 py-0.5 font-mono text-center text-stone-100 text-xs focus:outline-none focus:border-sky-500"
+                      className="w-16 rounded border border-stone-700 bg-stone-950 px-2 py-0.5 text-center font-mono text-xs text-stone-100 focus:border-sky-500 focus:outline-none"
                     />
                     <input
                       type="range"
@@ -769,13 +769,13 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                           setPreset('custom');
                         }
                       }}
-                      className="accent-sky-400 flex-1 h-2 sm:h-1.5 bg-stone-800 rounded-lg cursor-pointer"
+                      className="h-2 flex-1 cursor-pointer rounded-lg bg-stone-800 accent-sky-400 sm:h-1.5"
                     />
                   </div>
 
                   {/* End Solve Input & Slider */}
-                  <div className="flex-1 w-full flex items-center gap-2 min-w-0">
-                    <span className="text-stone-400 shrink-0 font-mono text-[11px]">
+                  <div className="flex w-full min-w-0 flex-1 items-center gap-2">
+                    <span className="shrink-0 font-mono text-[11px] text-stone-400">
                       To Solve #:
                     </span>
                     <input
@@ -788,7 +788,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                         setEndSolve(Math.min(totalCount, Math.max(val, startSolve)));
                         setPreset('custom');
                       }}
-                      className="w-16 bg-stone-950 border border-stone-700 rounded px-2 py-0.5 font-mono text-center text-stone-100 text-xs focus:outline-none focus:border-sky-500"
+                      className="w-16 rounded border border-stone-700 bg-stone-950 px-2 py-0.5 text-center font-mono text-xs text-stone-100 focus:border-sky-500 focus:outline-none"
                     />
                     <input
                       type="range"
@@ -803,7 +803,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                           setPreset('custom');
                         }
                       }}
-                      className="accent-sky-400 flex-1 h-2 sm:h-1.5 bg-stone-800 rounded-lg cursor-pointer"
+                      className="h-2 flex-1 cursor-pointer rounded-lg bg-stone-800 accent-sky-400 sm:h-1.5"
                     />
                   </div>
                 </div>
@@ -811,10 +811,10 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
             )}
 
             {rangeMode === 'dateRange' && (
-              <div className="bg-stone-900/80 border border-stone-700/50 rounded-lg p-3">
+              <div className="rounded-lg border border-stone-700/50 bg-stone-900/80 p-3">
                 <div className="flex flex-wrap items-center gap-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-stone-400 text-[11px] shrink-0 font-medium">
+                    <span className="shrink-0 text-[11px] font-medium text-stone-400">
                       Start Date:
                     </span>
                     <input
@@ -826,11 +826,11 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                         setStartDate(e.target.value);
                         setPreset('custom');
                       }}
-                      className="bg-stone-950 border border-stone-700 rounded px-2 py-1 text-stone-100 font-mono text-xs focus:outline-none focus:border-sky-500"
+                      className="rounded border border-stone-700 bg-stone-950 px-2 py-1 font-mono text-xs text-stone-100 focus:border-sky-500 focus:outline-none"
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-stone-400 text-[11px] shrink-0 font-medium">
+                    <span className="shrink-0 text-[11px] font-medium text-stone-400">
                       End Date:
                     </span>
                     <input
@@ -842,7 +842,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                         setEndDate(e.target.value);
                         setPreset('custom');
                       }}
-                      className="bg-stone-950 border border-stone-700 rounded px-2 py-1 text-stone-100 font-mono text-xs focus:outline-none focus:border-sky-500"
+                      className="rounded border border-stone-700 bg-stone-950 px-2 py-1 font-mono text-xs text-stone-100 focus:border-sky-500 focus:outline-none"
                     />
                   </div>
                   <span className="text-[11px] text-stone-400 italic">
@@ -853,10 +853,10 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
             )}
 
             {/* Focused Range Stats Banner */}
-            <div className="bg-stone-900/90 border border-stone-700/60 rounded-lg p-2.5 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-stone-700/60 bg-stone-900/90 p-2.5 font-mono text-xs">
               <div className="flex items-center gap-2 text-stone-300">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span className="font-sans font-medium text-stone-400 text-[11px]">
+                <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                <span className="font-sans text-[11px] font-medium text-stone-400">
                   Range Focus:
                 </span>
                 <span className="font-bold text-sky-300">
@@ -864,7 +864,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                     ? `${startDate || earliestDate} – ${endDate || latestDate}`
                     : `Solves #${startSolve} – #${endSolve}`}
                 </span>
-                <span className="text-stone-500 text-[11px]">
+                <span className="text-[11px] text-stone-500">
                   ({rangeStats.count} solves &bull; {rangeStats.pctOfTotal}% of total)
                 </span>
               </div>
@@ -888,7 +888,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="text-stone-400">Range R²:</span>
-                  <span className="text-sky-300 font-semibold">
+                  <span className="font-semibold text-sky-300">
                     {(filteredRegression.r2 * 100).toFixed(1)}%
                   </span>
                 </div>
@@ -898,7 +898,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
         )}
 
         {/* CHART DISPLAY */}
-        <div className="w-full h-[420px] pt-1">
+        <div className="h-[420px] w-full pt-1">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={chartData} margin={{ top: 65, right: 30, left: 10, bottom: 10 }}>
               <CartesianGrid

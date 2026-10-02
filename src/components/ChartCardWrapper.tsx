@@ -247,36 +247,36 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
       }`}
     >
       {/* Header Container */}
-      <div className="flex flex-col gap-3 border-b border-stone-800/80 pb-4 w-full min-w-0">
+      <div className="flex w-full min-w-0 flex-col gap-3 border-b border-stone-800/80 pb-4">
         {/* Top Header Row: Title & Action Export Buttons */}
-        <div className="flex items-start justify-between gap-4 w-full">
+        <div className="flex w-full items-start justify-between gap-4">
           {/* Title & Badge */}
-          <div className="flex-1 min-w-0 pr-2">
-            <div className="flex items-center gap-2 flex-wrap">
+          <div className="min-w-0 flex-1 pr-2">
+            <div className="flex flex-wrap items-center gap-2">
               {headerBadge}
-              <h2 className="text-base sm:text-lg font-bold text-stone-100 tracking-tight leading-snug">
+              <h2 className="text-base leading-snug font-bold tracking-tight text-stone-100 sm:text-lg">
                 {title}
               </h2>
             </div>
             {subtitle && (
-              <p className="text-xs text-stone-400 mt-1 leading-relaxed max-w-3xl">{subtitle}</p>
+              <p className="mt-1 max-w-3xl text-xs leading-relaxed text-stone-400">{subtitle}</p>
             )}
           </div>
 
           {/* Export / Fullscreen Action Buttons */}
-          <div className="flex items-center gap-1.5 shrink-0 export-exclude self-start pt-0.5">
+          <div className="export-exclude flex shrink-0 items-center gap-1.5 self-start pt-0.5">
             {/* Download Button */}
             <button
               type="button"
               onClick={handleDownloadImage}
               disabled={isDownloading}
               title="Download Plot as PNG Image"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700/80 text-stone-300 hover:text-stone-100 border border-stone-700/60 text-xs font-medium transition-all active:scale-95 disabled:opacity-50 cursor-pointer shadow-sm"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800 px-2.5 py-1.5 text-xs font-medium text-stone-300 shadow-sm transition-all hover:bg-stone-700/80 hover:text-stone-100 active:scale-95 disabled:opacity-50"
             >
               {isDownloading ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-400" />
               ) : (
-                <Download className="w-3.5 h-3.5 text-stone-400" />
+                <Download className="h-3.5 w-3.5 text-stone-400" />
               )}
               <span className="hidden sm:inline">PNG</span>
             </button>
@@ -286,16 +286,16 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
               type="button"
               onClick={() => setIsMaximized(!isMaximized)}
               title={isMaximized ? 'Restore View (Esc)' : 'Maximize to Fullscreen'}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700/80 text-stone-300 hover:text-stone-100 border border-stone-700/60 text-xs font-medium transition-all active:scale-95 cursor-pointer shadow-sm"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800 px-2.5 py-1.5 text-xs font-medium text-stone-300 shadow-sm transition-all hover:bg-stone-700/80 hover:text-stone-100 active:scale-95"
             >
               {isMaximized ? (
                 <>
-                  <Minimize2 className="w-3.5 h-3.5 text-amber-400" />
+                  <Minimize2 className="h-3.5 w-3.5 text-amber-400" />
                   <span className="hidden sm:inline">Exit Fullscreen</span>
                 </>
               ) : (
                 <>
-                  <Maximize2 className="w-3.5 h-3.5 text-stone-400" />
+                  <Maximize2 className="h-3.5 w-3.5 text-stone-400" />
                   <span className="hidden sm:inline">Maximize</span>
                 </>
               )}
@@ -305,7 +305,7 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
 
         {/* Secondary Toolbar Row (Controls) */}
         {headerControls && (
-          <div className="flex flex-wrap items-center gap-2.5 pt-1.5 border-t border-stone-800/50 w-full min-w-0">
+          <div className="flex w-full min-w-0 flex-wrap items-center gap-2.5 border-t border-stone-800/50 pt-1.5">
             {headerControls}
           </div>
         )}
@@ -323,8 +323,8 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
         <div className="hidden" />
 
         {/* Fullscreen Backdrop Overlay */}
-        <div className="fixed inset-0 bg-stone-950/95 backdrop-blur-xl z-[100] p-4 sm:p-8 flex flex-col justify-center items-center overflow-y-auto animate-in fade-in duration-200">
-          <div className="w-full max-w-7xl h-full max-h-[92vh] flex flex-col">{cardContent}</div>
+        <div className="fade-in fixed inset-0 z-[100] flex animate-in flex-col items-center justify-center overflow-y-auto bg-stone-950/95 p-4 backdrop-blur-xl duration-200 sm:p-8">
+          <div className="flex h-full max-h-[92vh] w-full max-w-7xl flex-col">{cardContent}</div>
         </div>
       </>
     );

@@ -145,12 +145,12 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
     <ChartCardWrapper
       title={displayTitle}
       subtitle="Box plots (Q1, Median, Q3, Whiskers) overlaid with individual jittered solves and connected Median Trend."
-      headerBadge={<span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span>}
+      headerBadge={<span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-400"></span>}
       filenamePrefix={`${unitInfo.adjective.toLowerCase()}_solve_distribution_boxplot`}
       headerControls={
         <div className="flex items-center gap-2 text-xs text-stone-300">
-          <span className="w-3 h-0.5 bg-rose-500 inline-block border-t border-dashed border-rose-500"></span>
-          <span className="w-2 h-2 rounded-full bg-rose-500 inline-block"></span>
+          <span className="inline-block h-0.5 w-3 border-t border-dashed border-rose-500 bg-rose-500"></span>
+          <span className="inline-block h-2 w-2 rounded-full bg-rose-500"></span>
           <span className="font-medium text-stone-300">Median Trend</span>
         </div>
       }
@@ -161,7 +161,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
           role="img"
           aria-label={title}
           viewBox={`0 0 ${width} ${height}`}
-          className="w-full h-[380px] sm:h-[400px] font-sans selection:bg-none block"
+          className="block h-[380px] w-full font-sans selection:bg-none sm:h-[400px]"
           preserveAspectRatio="none"
         >
           <title>{`Box Plot Chart - ${title}`}</title>
@@ -299,7 +299,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                           })
                         }
                         onPointerLeave={() => setHoveredPoint(null)}
-                        className="cursor-pointer hover:r-4 transition-all"
+                        className="hover:r-4 cursor-pointer transition-all"
                       >
                         <title>{`Solve: ${solve.finalTimeSec.toFixed(2)}s`}</title>
                       </circle>
@@ -414,7 +414,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
               left: `${(hoveredPoint.x / width) * 100}%`,
               top: `${(hoveredPoint.y / height) * 100 - 45}px`,
             }}
-            className="absolute transform -translate-x-1/2 pointer-events-none bg-stone-900 border border-stone-700 rounded px-2.5 py-1 text-[11px] font-mono text-stone-100 shadow-xl z-20"
+            className="pointer-events-none absolute z-20 -translate-x-1/2 transform rounded border border-stone-700 bg-stone-900 px-2.5 py-1 font-mono text-[11px] text-stone-100 shadow-xl"
           >
             <div className="font-semibold text-amber-400">
               {periodGroups[hoveredPoint.periodIdx]?.label ||

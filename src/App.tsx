@@ -341,7 +341,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col font-sans antialiased selection:bg-amber-500/30 selection:text-amber-200">
+    <div className="flex min-h-screen flex-col bg-stone-950 font-sans text-stone-100 antialiased selection:bg-amber-500/30 selection:text-amber-200">
       {/* Top Navigation Bar */}
       <Navbar
         fileName={fileName}
@@ -354,7 +354,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6">
         {/* Upload & Session Configuration Panel */}
         <FileUploader
           sessions={sessions}
@@ -405,7 +405,7 @@ export default function App() {
             <DailyDistributionBoxPlot periodGroups={periodGroups} groupingPeriod={groupingPeriod} />
 
             {/* Grid for Plot 3 & Plot 4 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
               {/* Plot 3: Distribution Density Shift */}
               <DensityShiftChart
                 solves={activeSession.solves}

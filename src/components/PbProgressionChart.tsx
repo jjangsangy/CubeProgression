@@ -100,17 +100,17 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
       data.isNewPbAo100;
 
     return (
-      <div className="bg-stone-900/95 border border-stone-700/80 rounded-xl p-3 shadow-2xl text-xs text-stone-200 backdrop-blur-md max-w-xs">
-        <div className="font-semibold text-stone-100 border-b border-stone-800 pb-1.5 mb-2 flex justify-between items-center">
+      <div className="max-w-xs rounded-xl border border-stone-700/80 bg-stone-900/95 p-3 text-xs text-stone-200 shadow-2xl backdrop-blur-md">
+        <div className="mb-2 flex items-center justify-between border-b border-stone-800 pb-1.5 font-semibold text-stone-100">
           <span className="flex items-center gap-1.5">
-            <Trophy className="w-3.5 h-3.5 text-amber-400" /> Solve #{label}
+            <Trophy className="h-3.5 w-3.5 text-amber-400" /> Solve #{label}
           </span>
-          <span className="text-stone-400 font-normal">{data.dateStr}</span>
+          <span className="font-normal text-stone-400">{data.dateStr}</span>
         </div>
 
         {hasNewPb && (
-          <div className="mb-2 p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 font-medium text-[11px] flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <div className="mb-2 flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-1.5 text-[11px] font-medium text-amber-300">
+            <Sparkles className="h-3.5 w-3.5 shrink-0 text-amber-400" />
             <span>
               New Record Set!{' '}
               {[
@@ -128,23 +128,23 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
 
         <div className="space-y-1">
           {data.single != null && (
-            <div className="flex justify-between items-center gap-4">
+            <div className="flex items-center justify-between gap-4">
               <span className="text-stone-400">Solve Time:</span>
               <span className="font-mono font-bold text-stone-100">
                 {data.single.toFixed(2)}s
-                {data.penalty === '+2' && <span className="text-amber-400 ml-1">(+2)</span>}
+                {data.penalty === '+2' && <span className="ml-1 text-amber-400">(+2)</span>}
               </span>
             </div>
           )}
           {data.pbSingle != null && (
-            <div className="flex justify-between items-center gap-4">
-              <span className="text-amber-400 flex items-center gap-1">
-                <Flame className="w-3 h-3" /> PB Single:
+            <div className="flex items-center justify-between gap-4">
+              <span className="flex items-center gap-1 text-amber-400">
+                <Flame className="h-3 w-3" /> PB Single:
               </span>
               <span className="font-mono font-semibold text-amber-300">
                 {data.pbSingle.toFixed(2)}s
                 {data.dropSingle != null && data.dropSingle > 0 && (
-                  <span className="text-emerald-400 text-[10px] ml-1">
+                  <span className="ml-1 text-[10px] text-emerald-400">
                     (-{data.dropSingle.toFixed(2)}s)
                   </span>
                 )}
@@ -152,14 +152,14 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             </div>
           )}
           {data.pbAo5 != null && (
-            <div className="flex justify-between items-center gap-4">
-              <span className="text-orange-400 flex items-center gap-1">
-                <Zap className="w-3 h-3" /> PB Ao5:
+            <div className="flex items-center justify-between gap-4">
+              <span className="flex items-center gap-1 text-orange-400">
+                <Zap className="h-3 w-3" /> PB Ao5:
               </span>
               <span className="font-mono font-semibold text-orange-300">
                 {data.pbAo5.toFixed(2)}s
                 {data.dropAo5 != null && data.dropAo5 > 0 && (
-                  <span className="text-emerald-400 text-[10px] ml-1">
+                  <span className="ml-1 text-[10px] text-emerald-400">
                     (-{data.dropAo5.toFixed(2)}s)
                   </span>
                 )}
@@ -167,14 +167,14 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             </div>
           )}
           {data.pbAo12 != null && (
-            <div className="flex justify-between items-center gap-4">
-              <span className="text-sky-400 flex items-center gap-1">
-                <Award className="w-3 h-3" /> PB Ao12:
+            <div className="flex items-center justify-between gap-4">
+              <span className="flex items-center gap-1 text-sky-400">
+                <Award className="h-3 w-3" /> PB Ao12:
               </span>
               <span className="font-mono font-semibold text-sky-300">
                 {data.pbAo12.toFixed(2)}s
                 {data.dropAo12 != null && data.dropAo12 > 0 && (
-                  <span className="text-emerald-400 text-[10px] ml-1">
+                  <span className="ml-1 text-[10px] text-emerald-400">
                     (-{data.dropAo12.toFixed(2)}s)
                   </span>
                 )}
@@ -182,14 +182,14 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             </div>
           )}
           {data.pbAo50 != null && (
-            <div className="flex justify-between items-center gap-4">
-              <span className="text-purple-400 flex items-center gap-1">
-                <Trophy className="w-3 h-3" /> PB Ao50:
+            <div className="flex items-center justify-between gap-4">
+              <span className="flex items-center gap-1 text-purple-400">
+                <Trophy className="h-3 w-3" /> PB Ao50:
               </span>
               <span className="font-mono font-semibold text-purple-300">
                 {data.pbAo50.toFixed(2)}s
                 {data.dropAo50 != null && data.dropAo50 > 0 && (
-                  <span className="text-emerald-400 text-[10px] ml-1">
+                  <span className="ml-1 text-[10px] text-emerald-400">
                     (-{data.dropAo50.toFixed(2)}s)
                   </span>
                 )}
@@ -197,14 +197,14 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             </div>
           )}
           {data.pbAo100 != null && (
-            <div className="flex justify-between items-center gap-4">
-              <span className="text-emerald-400 flex items-center gap-1">
-                <Award className="w-3 h-3" /> PB Ao100:
+            <div className="flex items-center justify-between gap-4">
+              <span className="flex items-center gap-1 text-emerald-400">
+                <Award className="h-3 w-3" /> PB Ao100:
               </span>
               <span className="font-mono font-semibold text-emerald-300">
                 {data.pbAo100.toFixed(2)}s
                 {data.dropAo100 != null && data.dropAo100 > 0 && (
-                  <span className="text-emerald-400 text-[10px] ml-1">
+                  <span className="ml-1 text-[10px] text-emerald-400">
                     (-{data.dropAo100.toFixed(2)}s)
                   </span>
                 )}
@@ -214,7 +214,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
         </div>
 
         {data.scramble && (
-          <div className="mt-2 pt-2 border-t border-stone-800 text-[10px] text-stone-400 font-mono truncate">
+          <div className="mt-2 truncate border-t border-stone-800 pt-2 font-mono text-[10px] text-stone-400">
             Scramble: {data.scramble}
           </div>
         )}
@@ -227,8 +227,8 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
       title={title}
       subtitle="Step-down personal record progression curves tracking step functions of historical best single times and WCA averages."
       headerBadge={
-        <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold">
-          <Trophy className="w-3.5 h-3.5 text-amber-400" />
+        <div className="flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-300">
+          <Trophy className="h-3.5 w-3.5 text-amber-400" />
           <span>PB Records</span>
         </div>
       }
@@ -236,8 +236,8 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
       headerControls={
         <div className="flex flex-wrap items-center gap-2">
           {/* Controls to toggle line visibility */}
-          <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-stone-800/80 border border-stone-700/60 text-xs">
-            <span className="text-stone-400 text-[11px] px-1 font-medium">Metrics:</span>
+          <div className="inline-flex items-center gap-1 rounded-xl border border-stone-700/60 bg-stone-800/80 p-1 text-xs">
+            <span className="px-1 text-[11px] font-medium text-stone-400">Metrics:</span>
             <button
               type="button"
               onClick={() => setShowSingle(!showSingle)}
@@ -309,85 +309,85 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
       }
     >
       {/* Top Stat Badges Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-2">
-        <div className="bg-stone-950/60 border border-amber-500/20 rounded-xl p-3 flex flex-col gap-1">
-          <div className="flex items-center justify-between text-xs text-amber-400 font-medium">
+      <div className="mb-2 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="flex flex-col gap-1 rounded-xl border border-amber-500/20 bg-stone-950/60 p-3">
+          <div className="flex items-center justify-between text-xs font-medium text-amber-400">
             <span className="flex items-center gap-1">
-              <Flame className="w-3.5 h-3.5" /> PB Single
+              <Flame className="h-3.5 w-3.5" /> PB Single
             </span>
-            <span className="text-[10px] bg-amber-500/10 text-amber-300 px-1.5 py-0.5 rounded-full border border-amber-500/20">
+            <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-300">
               {summary.totalSinglePbs} set
             </span>
           </div>
-          <div className="text-xl font-bold font-mono text-amber-200">
+          <div className="font-mono text-xl font-bold text-amber-200">
             {summary.currentPbSingle ? `${summary.currentPbSingle.toFixed(2)}s` : '—'}
           </div>
           {summary.singlePbImprovement > 0 && (
-            <div className="text-[11px] text-emerald-400 font-medium">
+            <div className="text-[11px] font-medium text-emerald-400">
               -{summary.singlePbImprovement.toFixed(2)}s overall drop
             </div>
           )}
         </div>
 
-        <div className="bg-stone-950/60 border border-orange-500/20 rounded-xl p-3 flex flex-col gap-1">
-          <div className="flex items-center justify-between text-xs text-orange-400 font-medium">
+        <div className="flex flex-col gap-1 rounded-xl border border-orange-500/20 bg-stone-950/60 p-3">
+          <div className="flex items-center justify-between text-xs font-medium text-orange-400">
             <span className="flex items-center gap-1">
-              <Zap className="w-3.5 h-3.5" /> PB Ao5
+              <Zap className="h-3.5 w-3.5" /> PB Ao5
             </span>
-            <span className="text-[10px] bg-orange-500/10 text-orange-300 px-1.5 py-0.5 rounded-full border border-orange-500/20">
+            <span className="rounded-full border border-orange-500/20 bg-orange-500/10 px-1.5 py-0.5 text-[10px] text-orange-300">
               {summary.totalAo5Pbs} set
             </span>
           </div>
-          <div className="text-xl font-bold font-mono text-orange-200">
+          <div className="font-mono text-xl font-bold text-orange-200">
             {summary.currentPbAo5 ? `${summary.currentPbAo5.toFixed(2)}s` : '—'}
           </div>
         </div>
 
-        <div className="bg-stone-950/60 border border-sky-500/20 rounded-xl p-3 flex flex-col gap-1">
-          <div className="flex items-center justify-between text-xs text-sky-400 font-medium">
+        <div className="flex flex-col gap-1 rounded-xl border border-sky-500/20 bg-stone-950/60 p-3">
+          <div className="flex items-center justify-between text-xs font-medium text-sky-400">
             <span className="flex items-center gap-1">
-              <Award className="w-3.5 h-3.5" /> PB Ao12
+              <Award className="h-3.5 w-3.5" /> PB Ao12
             </span>
-            <span className="text-[10px] bg-sky-500/10 text-sky-300 px-1.5 py-0.5 rounded-full border border-sky-500/20">
+            <span className="rounded-full border border-sky-500/20 bg-sky-500/10 px-1.5 py-0.5 text-[10px] text-sky-300">
               {summary.totalAo12Pbs} set
             </span>
           </div>
-          <div className="text-xl font-bold font-mono text-sky-200">
+          <div className="font-mono text-xl font-bold text-sky-200">
             {summary.currentPbAo12 ? `${summary.currentPbAo12.toFixed(2)}s` : '—'}
           </div>
         </div>
 
-        <div className="bg-stone-950/60 border border-purple-500/20 rounded-xl p-3 flex flex-col gap-1">
-          <div className="flex items-center justify-between text-xs text-purple-400 font-medium">
+        <div className="flex flex-col gap-1 rounded-xl border border-purple-500/20 bg-stone-950/60 p-3">
+          <div className="flex items-center justify-between text-xs font-medium text-purple-400">
             <span className="flex items-center gap-1">
-              <Trophy className="w-3.5 h-3.5" /> PB Ao50
+              <Trophy className="h-3.5 w-3.5" /> PB Ao50
             </span>
-            <span className="text-[10px] bg-purple-500/10 text-purple-300 px-1.5 py-0.5 rounded-full border border-purple-500/20">
+            <span className="rounded-full border border-purple-500/20 bg-purple-500/10 px-1.5 py-0.5 text-[10px] text-purple-300">
               {summary.totalAo50Pbs} set
             </span>
           </div>
-          <div className="text-xl font-bold font-mono text-purple-200">
+          <div className="font-mono text-xl font-bold text-purple-200">
             {summary.currentPbAo50 ? `${summary.currentPbAo50.toFixed(2)}s` : '—'}
           </div>
         </div>
 
-        <div className="bg-stone-950/60 border border-emerald-500/20 rounded-xl p-3 flex flex-col gap-1">
-          <div className="flex items-center justify-between text-xs text-emerald-400 font-medium">
+        <div className="flex flex-col gap-1 rounded-xl border border-emerald-500/20 bg-stone-950/60 p-3">
+          <div className="flex items-center justify-between text-xs font-medium text-emerald-400">
             <span className="flex items-center gap-1">
-              <Award className="w-3.5 h-3.5" /> PB Ao100
+              <Award className="h-3.5 w-3.5" /> PB Ao100
             </span>
-            <span className="text-[10px] bg-emerald-500/10 text-emerald-300 px-1.5 py-0.5 rounded-full border border-emerald-500/20">
+            <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-300">
               {summary.totalAo100Pbs} set
             </span>
           </div>
-          <div className="text-xl font-bold font-mono text-emerald-200">
+          <div className="font-mono text-xl font-bold text-emerald-200">
             {summary.currentPbAo100 ? `${summary.currentPbAo100.toFixed(2)}s` : '—'}
           </div>
         </div>
       </div>
 
       {/* Main Plot */}
-      <div className="w-full h-[400px] pt-2">
+      <div className="h-[400px] w-full pt-2">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={dataPoints} margin={{ top: 25, right: 30, left: 10, bottom: 25 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
@@ -610,28 +610,28 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
       </div>
 
       {/* Expandable PB Record Milestones Drawer */}
-      <div className="border-t border-stone-800 pt-3 mt-1">
+      <div className="mt-1 border-t border-stone-800 pt-3">
         <button
           type="button"
           onClick={() => setShowMilestoneList(!showMilestoneList)}
-          className="flex items-center justify-between w-full text-xs font-semibold text-stone-300 hover:text-stone-100 py-1 transition-colors cursor-pointer"
+          className="flex w-full cursor-pointer items-center justify-between py-1 text-xs font-semibold text-stone-300 transition-colors hover:text-stone-100"
         >
           <span className="flex items-center gap-2">
-            <History className="w-4 h-4 text-amber-400" />
+            <History className="h-4 w-4 text-amber-400" />
             <span>Record Milestones History ({pbMilestones.length} Record Breaks)</span>
           </span>
           {showMilestoneList ? (
-            <ChevronUp className="w-4 h-4 text-stone-400" />
+            <ChevronUp className="h-4 w-4 text-stone-400" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-stone-400" />
+            <ChevronDown className="h-4 w-4 text-stone-400" />
           )}
         </button>
 
         {showMilestoneList && (
-          <div className="mt-3 flex flex-col gap-3 animate-in fade-in duration-200">
+          <div className="fade-in mt-3 flex animate-in flex-col gap-3 duration-200">
             {/* Filter Pills */}
             <div className="flex flex-wrap items-center gap-1.5 text-xs">
-              <span className="text-stone-400 text-[11px] mr-1">Filter Record Type:</span>
+              <span className="mr-1 text-[11px] text-stone-400">Filter Record Type:</span>
               {(['All', 'Single', 'Ao5', 'Ao12', 'Ao50', 'Ao100'] as const).map((cat) => (
                 <button
                   key={cat}
@@ -649,9 +649,9 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             </div>
 
             {/* Milestones Grid / List */}
-            <div className="max-h-60 overflow-y-auto pr-1 space-y-1.5 custom-scrollbar text-xs">
+            <div className="custom-scrollbar max-h-60 space-y-1.5 overflow-y-auto pr-1 text-xs">
               {filteredMilestones.length === 0 ? (
-                <p className="text-stone-500 italic py-2 text-center">
+                <p className="py-2 text-center text-stone-500 italic">
                   No record milestones for this filter.
                 </p>
               ) : (
@@ -669,25 +669,25 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                   return (
                     <div
                       key={`${m.type}-${m.index}-${m.timeSec}`}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-stone-950/60 border border-stone-800/80 hover:border-stone-700 transition-all"
+                      className="flex flex-col justify-between gap-2 rounded-xl border border-stone-800/80 bg-stone-950/60 p-2.5 transition-all hover:border-stone-700 sm:flex-row sm:items-center"
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex min-w-0 items-center gap-2.5">
                         <span
                           className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border ${badgeColor}`}
                         >
                           PB {m.type}
                         </span>
-                        <span className="font-mono font-bold text-stone-100 text-sm">
+                        <span className="font-mono text-sm font-bold text-stone-100">
                           {m.timeSec.toFixed(2)}s
                         </span>
                         {m.dropSec > 0 && (
-                          <span className="text-emerald-400 text-xs font-medium font-mono">
+                          <span className="font-mono text-xs font-medium text-emerald-400">
                             (-{m.dropSec.toFixed(2)}s)
                           </span>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3 text-stone-400 text-[11px] shrink-0 font-mono">
+                      <div className="flex shrink-0 items-center gap-3 font-mono text-[11px] text-stone-400">
                         <span>Solve #{m.index}</span>
                         <span>&bull;</span>
                         <span>{m.dateStr}</span>

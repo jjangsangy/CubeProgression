@@ -64,8 +64,8 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     if (!active || !payload?.length) return null;
 
     return (
-      <div className="bg-stone-900/95 border border-stone-700 rounded-xl p-3 shadow-2xl text-xs text-stone-200 backdrop-blur-md">
-        <div className="font-mono font-bold text-stone-100 border-b border-stone-800 pb-1 mb-2">
+      <div className="rounded-xl border border-stone-700 bg-stone-900/95 p-3 text-xs text-stone-200 shadow-2xl backdrop-blur-md">
+        <div className="mb-2 border-b border-stone-800 pb-1 font-mono font-bold text-stone-100">
           Solve Time: {label}s
         </div>
         <div className="space-y-1 font-mono">
@@ -86,11 +86,11 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     <ChartCardWrapper
       title={title}
       subtitle="Kernel Density Estimation (KDE) comparison showing probability density shift from early to recent solves."
-      headerBadge={<span className="w-2.5 h-2.5 rounded-full bg-rose-400 inline-block"></span>}
+      headerBadge={<span className="inline-block h-2.5 w-2.5 rounded-full bg-rose-400"></span>}
       filenamePrefix="density_shift_distribution"
       headerControls={
-        <div className="flex items-center gap-3 bg-stone-800/60 border border-stone-700/50 rounded-xl px-3 py-1.5 text-xs">
-          <span className="text-stone-400 font-medium">Split Sample:</span>
+        <div className="flex items-center gap-3 rounded-xl border border-stone-700/50 bg-stone-800/60 px-3 py-1.5 text-xs">
+          <span className="font-medium text-stone-400">Split Sample:</span>
           {[0.2, 0.3, 0.4].map((pct) => (
             <button
               type="button"
@@ -110,14 +110,14 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     >
       {/* Mean shift banner */}
       {statsSummary && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-stone-950/60 border border-stone-800/70 rounded-xl p-3 text-xs">
+        <div className="grid grid-cols-1 gap-3 rounded-xl border border-stone-800/70 bg-stone-950/60 p-3 text-xs sm:grid-cols-3">
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-rose-500/80 border border-rose-400"></span>
+            <span className="h-3 w-3 rounded-full border border-rose-400 bg-rose-500/80"></span>
             <span className="text-stone-400">Baseline Mean:</span>
             <span className="font-mono font-bold text-rose-300">{statsSummary.baselineMean}s</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-emerald-500/80 border border-emerald-400"></span>
+            <span className="h-3 w-3 rounded-full border border-emerald-400 bg-emerald-500/80"></span>
             <span className="text-stone-400">Recent Mean:</span>
             <span className="font-mono font-bold text-emerald-300">{statsSummary.recentMean}s</span>
           </div>
@@ -129,7 +129,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
       )}
 
       {/* Main Area Chart */}
-      <div className="w-full h-[360px] pt-2">
+      <div className="h-[360px] w-full pt-2">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={kdeData} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
             <defs>

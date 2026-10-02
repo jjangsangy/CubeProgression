@@ -21,23 +21,23 @@ export const Navbar: React.FC<NavbarProps> = ({
   onClearStorage,
 }) => {
   return (
-    <header className="border-b border-stone-800 bg-stone-950 relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+    <header className="relative border-b border-stone-800 bg-stone-950">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
         {/* Brand Logo & Title */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-rose-500 flex items-center justify-center text-stone-950 font-black shadow-lg shadow-amber-500/10">
-            <Timer className="w-6 h-6 stroke-[2.5]" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-rose-500 font-black text-stone-950 shadow-lg shadow-amber-500/10">
+            <Timer className="h-6 w-6 stroke-[2.5]" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-bold text-base sm:text-lg tracking-tight text-stone-100 leading-tight">
+              <h1 className="text-base leading-tight font-bold tracking-tight text-stone-100 sm:text-lg">
                 CubeProgression
               </h1>
-              <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-amber-400 uppercase">
                 csTimer Analytics
               </span>
             </div>
-            <p className="text-xs text-stone-400 hidden sm:block">
+            <p className="hidden text-xs text-stone-400 sm:block">
               Speedcubing solve time progression & statistical shift analyzer
             </p>
           </div>
@@ -47,13 +47,13 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center gap-2 sm:gap-3">
           {isSaved && (
             <div
-              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-medium"
+              className="hidden items-center gap-1.5 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-400 lg:flex"
               title="Data is persisted across reloads in browser IndexedDB storage"
             >
-              <Database className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <Database className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
               <span>Saved locally</span>
               {storageUsageMB !== undefined && storageUsageMB > 0 && (
-                <span className="text-emerald-500/80 font-mono text-[11px]">
+                <span className="font-mono text-[11px] text-emerald-500/80">
                   ({storageUsageMB} MB)
                 </span>
               )}
@@ -61,18 +61,18 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
 
           {fileName && (
-            <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-lg bg-stone-800/80 border border-stone-700/60 text-stone-300 text-xs font-mono">
-              <FileText className="w-3.5 h-3.5 text-amber-400" />
-              <span className="truncate max-w-[140px]">{fileName}</span>
+            <div className="hidden items-center gap-1.5 rounded-lg border border-stone-700/60 bg-stone-800/80 px-3 py-1 font-mono text-xs text-stone-300 md:flex">
+              <FileText className="h-3.5 w-3.5 text-amber-400" />
+              <span className="max-w-[140px] truncate">{fileName}</span>
             </div>
           )}
 
           <button
             type="button"
             onClick={onLoadDemo}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-stone-950 shadow-md shadow-amber-500/10 transition-all active:scale-95 cursor-pointer"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-1.5 text-xs font-semibold text-stone-950 shadow-md shadow-amber-500/10 transition-all hover:from-amber-400 hover:to-orange-400 active:scale-95"
           >
-            <Sparkles className="w-3.5 h-3.5 fill-current" />
+            <Sparkles className="h-3.5 w-3.5 fill-current" />
             <span className="hidden sm:inline">Load Sample Data</span>
             <span className="sm:hidden">Demo</span>
           </button>
@@ -80,10 +80,10 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             type="button"
             onClick={onExportCSV}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-stone-800 hover:bg-stone-700/80 text-stone-200 border border-stone-700/60 transition-all active:scale-95 cursor-pointer"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800 px-3 py-1.5 text-xs font-medium text-stone-200 transition-all hover:bg-stone-700/80 active:scale-95"
             title="Export Period Summary Stats as CSV"
           >
-            <Download className="w-3.5 h-3.5 text-stone-400" />
+            <Download className="h-3.5 w-3.5 text-stone-400" />
             <span className="hidden sm:inline">Export CSV</span>
           </button>
 
@@ -91,19 +91,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={onClearStorage}
-              className="p-1.5 rounded-xl text-stone-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all cursor-pointer"
+              className="cursor-pointer rounded-xl p-1.5 text-stone-400 transition-all hover:bg-rose-500/10 hover:text-rose-400"
               title="Reset Data"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="h-4 w-4" />
             </button>
           ) : (
             <button
               type="button"
               onClick={onReset}
-              className="p-1.5 rounded-xl text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-all cursor-pointer"
+              className="cursor-pointer rounded-xl p-1.5 text-stone-400 transition-all hover:bg-stone-800 hover:text-stone-200"
               title="Reset Data"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="h-4 w-4" />
             </button>
           )}
         </div>

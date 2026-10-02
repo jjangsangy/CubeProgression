@@ -81,10 +81,10 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
     const data = payload[0].payload;
 
     return (
-      <div className="bg-stone-900/95 border border-stone-700/80 rounded-xl p-3 shadow-2xl text-xs text-stone-200 backdrop-blur-md">
-        <div className="font-semibold text-stone-100 border-b border-stone-800 pb-1 mb-2 flex justify-between gap-4">
+      <div className="rounded-xl border border-stone-700/80 bg-stone-900/95 p-3 text-xs text-stone-200 shadow-2xl backdrop-blur-md">
+        <div className="mb-2 flex justify-between gap-4 border-b border-stone-800 pb-1 font-semibold text-stone-100">
           <span>{data.label}</span>
-          <span className="text-stone-400 font-normal">n={data.solveCount} solves</span>
+          <span className="font-normal text-stone-400">n={data.solveCount} solves</span>
         </div>
         <div className="space-y-1.5 font-mono">
           <div className="flex items-center justify-between gap-4 text-sky-400">
@@ -99,7 +99,7 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
             <span>Std Dev (Consistency):</span>
             <span className="font-bold">{data.stdDev?.toFixed(2)}s</span>
           </div>
-          <div className="flex items-center justify-between gap-4 text-stone-400 border-t border-stone-800 pt-1 mt-1">
+          <div className="mt-1 flex items-center justify-between gap-4 border-t border-stone-800 pt-1 text-stone-400">
             <span>Min - Max Range:</span>
             <span>
               {data.min?.toFixed(2)}s - {data.max?.toFixed(2)}s
@@ -114,11 +114,11 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
     <ChartCardWrapper
       title={displayTitle}
       subtitle="Progression of central tendencies (Mean, Median), full Min-Max range band, and Standard Deviation on right axis."
-      headerBadge={<span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>}
+      headerBadge={<span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-400"></span>}
       filenamePrefix={`${unitInfo.adjective.toLowerCase()}_metrics_evolution`}
     >
       {/* Main Chart Canvas */}
-      <div className="w-full h-[400px] pt-2">
+      <div className="h-[400px] w-full pt-2">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ top: 20, right: 40, left: 10, bottom: 25 }}>
             <defs>

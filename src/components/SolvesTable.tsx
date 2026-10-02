@@ -31,22 +31,22 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
   }, [filteredSolves, currentPage]);
 
   return (
-    <div className="bg-stone-900 border border-stone-800 rounded-2xl p-6 shadow-xl text-stone-100 flex flex-col gap-4">
+    <div className="flex flex-col gap-4 rounded-2xl border border-stone-800 bg-stone-900 p-6 text-stone-100 shadow-xl">
       {/* Table Header Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-800/80 pb-4">
+      <div className="flex flex-col justify-between gap-3 border-b border-stone-800/80 pb-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-lg font-bold text-stone-100 tracking-tight flex items-center gap-2">
-            <Clock className="w-4 h-4 text-amber-400" />
+          <h2 className="flex items-center gap-2 text-lg font-bold tracking-tight text-stone-100">
+            <Clock className="h-4 w-4 text-amber-400" />
             Session Solve Log ({solves.length} Total)
           </h2>
-          <p className="text-xs text-stone-400 mt-0.5">
+          <p className="mt-0.5 text-xs text-stone-400">
             Detailed breakdown of individual solve times, scrambles, and rolling averages.
           </p>
         </div>
 
         {/* Search Bar */}
         <div className="relative w-full sm:w-64">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" />
+          <Search className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-stone-500" />
           <input
             type="text"
             value={searchTerm}
@@ -55,7 +55,7 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
               setCurrentPage(1);
             }}
             placeholder="Search solves or scrambles..."
-            className="w-full bg-stone-950/70 border border-stone-700/80 rounded-xl pl-9 pr-3 py-1.5 text-xs text-stone-200 placeholder-stone-500 focus:outline-none focus:border-amber-500"
+            className="w-full rounded-xl border border-stone-700/80 bg-stone-950/70 py-1.5 pr-3 pl-9 text-xs text-stone-200 placeholder-stone-500 focus:border-amber-500 focus:outline-none"
           />
         </div>
       </div>
@@ -63,58 +63,58 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
       {/* Table Canvas */}
       <div className="overflow-x-auto rounded-xl border border-stone-800/80">
         <table className="w-full text-left text-xs text-stone-300">
-          <thead className="bg-stone-950/80 text-stone-400 uppercase font-mono tracking-wider text-[10px] border-b border-stone-800">
+          <thead className="border-b border-stone-800 bg-stone-950/80 font-mono text-[10px] tracking-wider text-stone-400 uppercase">
             <tr>
-              <th className="py-3 px-4 w-16">#</th>
-              <th className="py-3 px-4 w-28">Time</th>
-              <th className="py-3 px-4 w-20">Ao5</th>
-              <th className="py-3 px-4 w-20">Ao12</th>
-              <th className="py-3 px-4 w-20">Ao50</th>
-              <th className="py-3 px-4 w-20">Ao100</th>
-              <th className="py-3 px-4 w-28">Date</th>
-              <th className="py-3 px-4">Scramble</th>
+              <th className="w-16 px-4 py-3">#</th>
+              <th className="w-28 px-4 py-3">Time</th>
+              <th className="w-20 px-4 py-3">Ao5</th>
+              <th className="w-20 px-4 py-3">Ao12</th>
+              <th className="w-20 px-4 py-3">Ao50</th>
+              <th className="w-20 px-4 py-3">Ao100</th>
+              <th className="w-28 px-4 py-3">Date</th>
+              <th className="px-4 py-3">Scramble</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-stone-800/60 font-mono">
             {currentSolves.map((solve) => (
-              <tr key={solve.id} className="hover:bg-stone-800/40 transition-colors">
-                <td className="py-2.5 px-4 text-stone-500 font-semibold">{solve.index}</td>
-                <td className="py-2.5 px-4 font-bold text-stone-100">
+              <tr key={solve.id} className="transition-colors hover:bg-stone-800/40">
+                <td className="px-4 py-2.5 font-semibold text-stone-500">{solve.index}</td>
+                <td className="px-4 py-2.5 font-bold text-stone-100">
                   {solve.penalty === 'DNF' ? (
-                    <span className="text-rose-400 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" /> DNF
+                    <span className="flex items-center gap-1 text-rose-400">
+                      <AlertCircle className="h-3 w-3" /> DNF
                     </span>
                   ) : (
                     <span>
                       {solve.finalTimeSec.toFixed(2)}s
                       {solve.penalty === '+2' && (
-                        <span className="text-amber-400 text-[10px] ml-1">(+2)</span>
+                        <span className="ml-1 text-[10px] text-amber-400">(+2)</span>
                       )}
                     </span>
                   )}
                 </td>
-                <td className="py-2.5 px-4 text-emerald-400">
+                <td className="px-4 py-2.5 text-emerald-400">
                   {solve.ao5 !== null && solve.ao5 !== undefined ? `${solve.ao5.toFixed(2)}s` : '—'}
                 </td>
-                <td className="py-2.5 px-4 text-orange-400">
+                <td className="px-4 py-2.5 text-orange-400">
                   {solve.ao12 !== null && solve.ao12 !== undefined
                     ? `${solve.ao12.toFixed(2)}s`
                     : '—'}
                 </td>
-                <td className="py-2.5 px-4 text-sky-400">
+                <td className="px-4 py-2.5 text-sky-400">
                   {solve.ao50 !== null && solve.ao50 !== undefined
                     ? `${solve.ao50.toFixed(2)}s`
                     : '—'}
                 </td>
-                <td className="py-2.5 px-4 text-purple-400">
+                <td className="px-4 py-2.5 text-purple-400">
                   {solve.ao100 !== null && solve.ao100 !== undefined
                     ? `${solve.ao100.toFixed(2)}s`
                     : '—'}
                 </td>
-                <td className="py-2.5 px-4 text-stone-400 text-[11px] font-sans">
+                <td className="px-4 py-2.5 font-sans text-[11px] text-stone-400">
                   {solve.dateStr}
                 </td>
-                <td className="py-2.5 px-4 text-stone-400 text-[11px] truncate max-w-xs font-mono">
+                <td className="max-w-xs truncate px-4 py-2.5 font-mono text-[11px] text-stone-400">
                   {solve.scramble || '—'}
                 </td>
               </tr>
@@ -131,7 +131,7 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
       </div>
 
       {/* Pagination Footer */}
-      <div className="flex items-center justify-between text-xs text-stone-400 pt-2">
+      <div className="flex items-center justify-between pt-2 text-xs text-stone-400">
         <span>
           Showing {Math.min(filteredSolves.length, (currentPage - 1) * pageSize + 1)} to{' '}
           {Math.min(filteredSolves.length, currentPage * pageSize)} of {filteredSolves.length}{' '}
@@ -143,9 +143,9 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
             type="button"
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            className="p-1.5 rounded-lg bg-stone-800 text-stone-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-stone-700 transition-colors"
+            className="rounded-lg bg-stone-800 p-1.5 text-stone-300 transition-colors hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="h-4 w-4" />
           </button>
           <span className="font-mono text-stone-200">
             {currentPage} / {totalPages}
@@ -154,9 +154,9 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
             type="button"
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            className="p-1.5 rounded-lg bg-stone-800 text-stone-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-stone-700 transition-colors"
+            className="rounded-lg bg-stone-800 p-1.5 text-stone-300 transition-colors hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       </div>

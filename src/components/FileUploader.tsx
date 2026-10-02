@@ -99,9 +99,9 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   };
 
   return (
-    <div className="bg-stone-900 border border-stone-800 rounded-2xl p-6 shadow-xl text-stone-100 flex flex-col gap-6">
+    <div className="flex flex-col gap-6 rounded-2xl border border-stone-800 bg-stone-900 p-6 text-stone-100 shadow-xl">
       {/* File Dropzone & Session Controls Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+      <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-12">
         {/* Hidden File Input */}
         <input
           type="file"
@@ -135,31 +135,31 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                className="w-full flex flex-col items-center justify-center gap-3.5 py-1"
+                className="flex w-full flex-col items-center justify-center gap-3.5 py-1"
               >
                 {/* 3x3 Animated Speedcubing Cube Spinner */}
                 <CubeLoadingSpinner size="md" />
 
                 {/* Uploaded File Indicator Pill */}
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-stone-900 border border-amber-500/30 text-stone-200 text-xs font-mono max-w-[90%] truncate">
-                  <FileText className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <div className="flex max-w-[90%] items-center gap-2 truncate rounded-full border border-amber-500/30 bg-stone-900 px-3 py-1 font-mono text-xs text-stone-200">
+                  <FileText className="h-3.5 w-3.5 shrink-0 text-amber-400" />
                   <span className="truncate">{uploadingFileName}</span>
                 </div>
 
                 {/* Progress Bar */}
-                <div className="w-full max-w-xs flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between text-[11px] font-mono text-stone-300">
-                    <span className="text-amber-400 font-semibold flex items-center gap-1">
-                      <Timer className="w-3 h-3 animate-spin text-amber-400" />
+                <div className="flex w-full max-w-xs flex-col gap-1.5">
+                  <div className="flex items-center justify-between font-mono text-[11px] text-stone-300">
+                    <span className="flex items-center gap-1 font-semibold text-amber-400">
+                      <Timer className="h-3 w-3 animate-spin text-amber-400" />
                       {timerVal.toFixed(2)}s
                     </span>
                     <span className="font-bold text-amber-300">{loadingProgress}%</span>
                   </div>
 
                   {/* Bar Track */}
-                  <div className="h-2 w-full bg-stone-800 rounded-full overflow-hidden p-0.5 border border-stone-700/50">
+                  <div className="h-2 w-full overflow-hidden rounded-full border border-stone-700/50 bg-stone-800 p-0.5">
                     <motion.div
-                      className="h-full bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300 rounded-full shadow-[0_0_12px_rgba(245,158,11,0.5)]"
+                      className="h-full rounded-full bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.5)]"
                       initial={{ width: '5%' }}
                       animate={{ width: `${Math.max(5, loadingProgress)}%` }}
                       transition={{ duration: 0.25, ease: 'easeOut' }}
@@ -168,7 +168,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                 </div>
 
                 {/* Loading Stage Description */}
-                <div className="text-xs font-medium text-amber-200/90 flex items-center gap-1.5 animate-pulse">
+                <div className="flex animate-pulse items-center gap-1.5 text-xs font-medium text-amber-200/90">
                   <span>{loadingStage}</span>
                 </div>
               </motion.div>
@@ -181,23 +181,23 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                 transition={{ duration: 0.2 }}
                 className="flex flex-col items-center justify-center"
               >
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center mb-3">
-                  <FileUp className="w-6 h-6 stroke-[2]" />
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-400">
+                  <FileUp className="h-6 w-6 stroke-[2]" />
                 </div>
 
-                <h3 className="font-bold text-stone-200 text-sm mb-1">
+                <h3 className="mb-1 text-sm font-bold text-stone-200">
                   Upload <span className="text-amber-400">cstimer.txt</span> or{' '}
                   <span className="text-amber-400">.json</span>
                 </h3>
 
-                <p className="text-xs text-stone-400 max-w-xs mb-3 leading-relaxed">
+                <p className="mb-3 max-w-xs text-xs leading-relaxed text-stone-400">
                   Drag and drop your csTimer export file here, or{' '}
                   <button
                     type="button"
                     onClick={() => {
                       if (!isLoading) fileInputRef.current?.click();
                     }}
-                    className="text-amber-400 hover:text-amber-300 underline underline-offset-2 cursor-pointer font-medium"
+                    className="cursor-pointer font-medium text-amber-400 underline underline-offset-2 hover:text-amber-300"
                   >
                     click to browse
                   </button>
@@ -205,7 +205,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                 </p>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-mono px-2.5 py-1 rounded-md bg-stone-800 border border-stone-700 text-stone-300">
+                  <span className="rounded-md border border-stone-700 bg-stone-800 px-2.5 py-1 font-mono text-[11px] text-stone-300">
                     .txt / .json
                   </span>
                   <span className="text-xs text-stone-500">or</span>
@@ -215,9 +215,9 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                       e.stopPropagation();
                       onLoadDemo();
                     }}
-                    className="text-xs font-semibold text-amber-400 hover:text-amber-300 underline underline-offset-2 flex items-center gap-1 cursor-pointer"
+                    className="flex cursor-pointer items-center gap-1 text-xs font-semibold text-amber-400 underline underline-offset-2 hover:text-amber-300"
                   >
-                    <Sparkles className="w-3 h-3" />
+                    <Sparkles className="h-3 w-3" />
                     Load Sample Data
                   </button>
                 </div>
@@ -227,21 +227,21 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
         </section>
 
         {/* Configuration Controls (7 columns on large screens) */}
-        <div className="lg:col-span-7 flex flex-col justify-between gap-5 bg-stone-950/60 border border-stone-800/80 rounded-2xl p-5">
+        <div className="flex flex-col justify-between gap-5 rounded-2xl border border-stone-800/80 bg-stone-950/60 p-5 lg:col-span-7">
           {/* Row 1: Session Selector */}
           <div>
             <label
               htmlFor="session-selector"
-              className="text-xs font-semibold text-stone-300 uppercase tracking-wider mb-2 flex items-center gap-1.5"
+              className="mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wider text-stone-300 uppercase"
             >
-              <Layers className="w-3.5 h-3.5 text-amber-400" />
+              <Layers className="h-3.5 w-3.5 text-amber-400" />
               Select Session ({sessions.length} available)
             </label>
             <select
               id="session-selector"
               value={selectedSessionId}
               onChange={(e) => onSelectSession(e.target.value)}
-              className="w-full bg-stone-900 border border-stone-700 rounded-xl px-3.5 py-2.5 text-xs text-stone-100 font-medium focus:outline-none focus:border-amber-500 transition-colors cursor-pointer"
+              className="w-full cursor-pointer rounded-xl border border-stone-700 bg-stone-900 px-3.5 py-2.5 text-xs font-medium text-stone-100 transition-colors focus:border-amber-500 focus:outline-none"
             >
               {sessions.map((sess) => (
                 <option key={sess.id} value={sess.id}>
@@ -253,19 +253,19 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
           {/* Row 2: Grouping Period Toggle */}
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-stone-300 uppercase tracking-wider flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-amber-400" />
+            <div className="mb-2 flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-xs font-semibold tracking-wider text-stone-300 uppercase">
+                <Calendar className="h-3.5 w-3.5 text-amber-400" />
                 Grouping Period for Aggregations
               </span>
               {(groupingPeriod === 'customBatch' || groupingPeriod === 'batch50') && (
-                <span className="text-[11px] text-amber-400 font-medium">
+                <span className="text-[11px] font-medium text-amber-400">
                   {customBatchSize} solves per group
                 </span>
               )}
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+            <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {[
                 { id: 'daily', label: 'Daily', desc: 'Per Day' },
                 { id: 'weekly', label: 'Weekly', desc: 'Per Week' },
@@ -286,8 +286,8 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                         : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200 hover:border-stone-700'
                     }`}
                   >
-                    <div className="text-xs font-bold leading-tight">{item.label}</div>
-                    <div className="text-[10px] text-stone-500 mt-0.5">{item.desc}</div>
+                    <div className="text-xs leading-tight font-bold">{item.label}</div>
+                    <div className="mt-0.5 text-[10px] text-stone-500">{item.desc}</div>
                   </button>
                 );
               })}
@@ -295,7 +295,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
             {/* Custom Batch Size Controls (shown when grouping by solve count) */}
             {(groupingPeriod === 'customBatch' || groupingPeriod === 'batch50') && (
-              <div className="bg-stone-900/90 border border-amber-500/30 rounded-xl p-3 flex flex-wrap items-center gap-3 animate-in fade-in duration-150">
+              <div className="fade-in flex animate-in flex-wrap items-center gap-3 rounded-xl border border-amber-500/30 bg-stone-900/90 p-3 duration-150">
                 <span className="text-xs font-medium text-stone-300">Solves per group:</span>
 
                 {/* Preset pills */}
@@ -317,7 +317,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                 </div>
 
                 {/* Custom Number Input */}
-                <div className="flex items-center gap-1.5 ml-auto">
+                <div className="ml-auto flex items-center gap-1.5">
                   <span className="text-xs text-stone-400">Custom:</span>
                   <input
                     type="number"
@@ -330,7 +330,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                         onChangeCustomBatchSize(val);
                       }
                     }}
-                    className="w-16 bg-stone-950 border border-stone-700 rounded-lg px-2 py-1 text-xs font-mono text-stone-100 text-center focus:outline-none focus:border-amber-400"
+                    className="w-16 rounded-lg border border-stone-700 bg-stone-950 px-2 py-1 text-center font-mono text-xs text-stone-100 focus:border-amber-400 focus:outline-none"
                   />
                   <span className="text-xs text-stone-400">solves</span>
                 </div>
@@ -342,19 +342,19 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
       {/* Storage Status & Persistence Info */}
       {isSaved && (
-        <div className="bg-stone-950/80 border border-stone-800 rounded-xl px-4 py-2.5 text-xs flex flex-wrap items-center justify-between gap-3 text-stone-300">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-stone-800 bg-stone-950/80 px-4 py-2.5 text-xs text-stone-300">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-            <Database className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-emerald-400" />
+            <Database className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
             <span className="font-semibold text-stone-200">
               Persistent Storage Active (IndexedDB)
             </span>
-            <span className="text-stone-500 hidden sm:inline">&bull;</span>
-            <span className="text-stone-400 text-[11px] hidden sm:inline">
+            <span className="hidden text-stone-500 sm:inline">&bull;</span>
+            <span className="hidden text-[11px] text-stone-400 sm:inline">
               Your dataset stays saved across browser reloads
             </span>
             {storageUsageMB !== undefined && storageUsageMB > 0 && (
-              <span className="px-2 py-0.5 rounded bg-stone-800 text-stone-300 font-mono text-[10px] ml-1">
+              <span className="ml-1 rounded bg-stone-800 px-2 py-0.5 font-mono text-[10px] text-stone-300">
                 {storageUsageMB} MB
               </span>
             )}
@@ -364,10 +364,10 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
             <button
               type="button"
               onClick={onClearStorage}
-              className="text-stone-400 hover:text-rose-400 hover:underline flex items-center gap-1 font-medium transition-colors cursor-pointer ml-auto"
+              className="ml-auto flex cursor-pointer items-center gap-1 font-medium text-stone-400 transition-colors hover:text-rose-400 hover:underline"
               title="Clear saved data from browser storage"
             >
-              <Trash2 className="w-3 h-3" />
+              <Trash2 className="h-3 w-3" />
               <span>Clear Saved Storage</span>
             </button>
           )}
@@ -376,9 +376,9 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
       {/* Notice string if provided */}
       {savedNotice && !errorMsg && (
-        <div className="bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 rounded-xl px-3.5 py-2 text-xs flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-800/60 bg-emerald-950/40 px-3.5 py-2 text-xs text-emerald-300">
           <div className="flex items-center gap-2">
-            <Database className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <Database className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
             <span>{savedNotice}</span>
           </div>
         </div>
@@ -386,8 +386,8 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
       {/* Error Message if any */}
       {errorMsg && (
-        <div className="bg-rose-950/60 border border-rose-800/80 text-rose-300 rounded-xl p-3 text-xs flex items-center gap-2">
-          <span className="font-bold uppercase tracking-wider">Error:</span>
+        <div className="flex items-center gap-2 rounded-xl border border-rose-800/80 bg-rose-950/60 p-3 text-xs text-rose-300">
+          <span className="font-bold tracking-wider uppercase">Error:</span>
           <span>{errorMsg}</span>
         </div>
       )}
