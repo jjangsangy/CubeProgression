@@ -1,4 +1,5 @@
 import type React from 'react';
+import { useMemo } from 'react';
 import {
   Area,
   CartesianGrid,
@@ -28,29 +29,39 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
   const unitInfo = getPeriodUnitInfo(groupingPeriod);
   const displayTitle = title || `${unitInfo.adjective} Metrics Evolution: Speed & Consistency`;
 
-  const chartData = periodGroups.map((g, idx) => ({
-    index: idx + 1,
-    label: g.label,
-    mean: g.mean,
-    median: g.median,
-    min: g.min,
-    max: g.max,
-    range: [g.min, g.max], // For range band
-    stdDev: g.stdDev,
-    solveCount: g.solves.length,
-  }));
+  const chartData = useMemo(
+    () =>
+      periodGroups.map((g, idx) => ({
+        index: idx + 1,
+        label: g.label,
+        mean: g.mean,
+        median: g.median,
+        min: g.min,
+        max: g.max,
+        range: [g.min, g.max], // For range band
+        stdDev: g.stdDev,
+        solveCount: g.solves.length,
+      })),
+    [periodGroups],
+  );
 
   // Determine Y ranges
-  const minTime =
-    periodGroups.length === 0
-      ? 10
-      : Math.max(0, Math.floor(Math.min(...periodGroups.map((g) => g.min)) - 2));
+  const { minTime, maxTime, maxStdDev } = useMemo(() => {
+    const min =
+      periodGroups.length === 0
+        ? 10
+        : Math.max(0, Math.floor(Math.min(...periodGroups.map((g) => g.min)) - 2));
 
-  const maxTime =
-    periodGroups.length === 0 ? 45 : Math.ceil(Math.max(...periodGroups.map((g) => g.max)) + 3);
+    const max =
+      periodGroups.length === 0 ? 45 : Math.ceil(Math.max(...periodGroups.map((g) => g.max)) + 3);
 
-  const maxStdDev =
-    periodGroups.length === 0 ? 10 : Math.ceil(Math.max(...periodGroups.map((g) => g.stdDev)) + 2);
+    const maxSd =
+      periodGroups.length === 0
+        ? 10
+        : Math.ceil(Math.max(...periodGroups.map((g) => g.stdDev)) + 2);
+
+    return { minTime: min, maxTime: max, maxStdDev: maxSd };
+  }, [periodGroups]);
 
   const CustomTooltip = ({
     active,
@@ -112,7 +123,11 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
     >
       {/* Main Chart Canvas */}
       <div className="h-[400px] w-full pt-2">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          initialDimension={{ width: 800, height: 400 }}
+        >
           <ComposedChart data={chartData} margin={{ top: 20, right: 40, left: 10, bottom: 25 }}>
             <defs>
               <linearGradient id="colorRange" x1="0" y1="0" x2="0" y2="1">
@@ -124,6 +139,7 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
 
             <XAxis
               dataKey="index"
+              interval={Math.max(1, Math.floor(chartData.length / 8))}
               stroke="#94a3b8"
               fontSize={11}
               tickLine={false}
@@ -183,6 +199,7 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
 
             {/* Shaded Area for Min-Max Range */}
             <Area
+              isAnimationActive={false}
               yAxisId="left"
               type="monotone"
               dataKey="range"
@@ -193,6 +210,7 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
 
             {/* Mean Time (Blue line with circular dots) */}
             <Line
+              isAnimationActive={false}
               yAxisId="left"
               type="monotone"
               dataKey="mean"
@@ -205,6 +223,7 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
 
             {/* Median Time (Orange line with square markers) */}
             <Line
+              isAnimationActive={false}
               yAxisId="left"
               type="monotone"
               dataKey="median"
@@ -217,6 +236,7 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
 
             {/* Standard Deviation (Green dotted line on right axis) */}
             <Line
+              isAnimationActive={false}
               yAxisId="right"
               type="monotone"
               dataKey="stdDev"

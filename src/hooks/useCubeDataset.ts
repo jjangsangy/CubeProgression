@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { type UseCubeDatasetCoreReturn, useCubeDatasetCore } from './useCubeDatasetCore';
 import { useStorageNotice } from './useStorageNotice';
 
@@ -12,10 +13,10 @@ export function useCubeDataset(): UseCubeDatasetReturn {
   const core = useCubeDatasetCore();
   const storage = useStorageNotice();
 
-  const handleClearStorage = () => {
+  const handleClearStorage = useCallback(() => {
     core.handleClearStorage();
     storage.resetStorageState();
-  };
+  }, [core.handleClearStorage, storage.resetStorageState]);
 
   return {
     ...core,

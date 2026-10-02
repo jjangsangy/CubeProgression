@@ -1,8 +1,10 @@
-import { DashboardView } from './components/DashboardView';
+import { lazy, Suspense } from 'react';
 import { FileUploader } from './components/FileUploader';
 import { Footer } from './components/Footer';
 import { Navbar } from './components/Navbar';
 import { useCubeDatasetCore } from './hooks/useCubeDatasetCore';
+
+const DashboardView = lazy(() => import('./components/DashboardView'));
 
 export default function App() {
   const {
@@ -61,12 +63,33 @@ export default function App() {
         />
 
         {/* Dashboard: Metric Cards, 4 Progression Plots & Solves Table */}
-        <DashboardView
-          session={activeSession}
-          stats={globalStats}
-          periodGroups={periodGroups}
-          groupingPeriod={groupingPeriod}
-        />
+        {!isLoading && activeSession && globalStats && (
+          <Suspense
+            fallback={
+              <div
+                className="flex flex-col gap-8 animate-pulse"
+                data-testid="dashboard-loading-skeleton"
+              >
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+                  {['m1', 'm2', 'm3', 'm4', 'm5', 'm6'].map((id) => (
+                    <div
+                      key={id}
+                      className="h-28 rounded-2xl border border-stone-800 bg-stone-900/60 p-4"
+                    />
+                  ))}
+                </div>
+                <div className="h-[760px] w-full rounded-2xl border border-stone-800 bg-stone-900/60 p-6" />
+              </div>
+            }
+          >
+            <DashboardView
+              session={activeSession}
+              stats={globalStats}
+              periodGroups={periodGroups}
+              groupingPeriod={groupingPeriod}
+            />
+          </Suspense>
+        )}
       </main>
 
       {/* Footer */}

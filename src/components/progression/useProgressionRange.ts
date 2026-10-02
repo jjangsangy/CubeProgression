@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Temporal } from 'temporal-polyfill';
 import type { Solve } from '../../types';
 import { calculateRangeStats, filterSolvesByRange } from './progressionMath';
 import type { RangeMode, RangePreset } from './types';

@@ -1,19 +1,10 @@
-import {
-  Calendar,
-  Database,
-  FileText,
-  FileUp,
-  Layers,
-  Sparkles,
-  Timer,
-  Trash2,
-} from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import { Calendar, Database, FileText, FileUp, Layers, Sparkles, Trash2 } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useStorageNotice } from '../hooks/useStorageNotice';
 import type { GroupingPeriod, Session } from '../types';
 import { CubeLoadingSpinner } from './CubeLoadingSpinner';
+import { LoadingElapsedTimer } from './LoadingElapsedTimer';
 
 interface FileUploaderProps {
   sessions: Session[];
@@ -62,21 +53,6 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   const savedNotice = propSavedNotice !== undefined ? propSavedNotice : storageNotice.savedNotice;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [timerVal, setTimerVal] = useState<number>(0);
-
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | undefined;
-    if (isLoading) {
-      setTimerVal(0);
-      const startTime = Date.now();
-      interval = setInterval(() => {
-        setTimerVal((Date.now() - startTime) / 1000);
-      }, 35);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isLoading]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -132,103 +108,92 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                 : 'border-stone-700/80 hover:border-amber-500/50 hover:bg-stone-800/40 bg-stone-950/40'
           }`}
         >
-          <AnimatePresence mode="wait">
-            {isLoading ? (
-              <motion.div
-                key="loading-container"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-                className="flex w-full flex-col items-center justify-center gap-3.5 py-1"
-              >
-                {/* 3x3 Animated Speedcubing Cube Spinner */}
-                <CubeLoadingSpinner size="md" />
+          {isLoading ? (
+            <div
+              key="loading-container"
+              className="animate-fade-in-scale flex w-full flex-col items-center justify-center gap-3.5 py-1"
+            >
+              {/* 3x3 Animated Speedcubing Cube Spinner */}
+              <CubeLoadingSpinner size="md" />
 
-                {/* Uploaded File Indicator Pill */}
-                <div className="flex max-w-[90%] items-center gap-2 truncate rounded-full border border-amber-500/30 bg-stone-900 px-3 py-1 font-mono text-xs text-stone-200">
-                  <FileText className="h-3.5 w-3.5 shrink-0 text-amber-400" />
-                  <span className="truncate">{uploadingFileName}</span>
+              {/* Uploaded File Indicator Pill */}
+              <div className="flex max-w-[90%] items-center gap-2 truncate rounded-full border border-amber-500/30 bg-stone-900 px-3 py-1 font-mono text-xs text-stone-200">
+                <FileText className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+                <span className="truncate">{uploadingFileName}</span>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="flex w-full max-w-xs flex-col gap-1.5">
+                <div className="flex items-center justify-between font-mono text-[11px] text-stone-300">
+                  <LoadingElapsedTimer />
+                  <span className="font-bold text-amber-300">{loadingProgress}%</span>
                 </div>
 
-                {/* Progress Bar */}
-                <div className="flex w-full max-w-xs flex-col gap-1.5">
-                  <div className="flex items-center justify-between font-mono text-[11px] text-stone-300">
-                    <span className="flex items-center gap-1 font-semibold text-amber-400">
-                      <Timer className="h-3 w-3 animate-spin text-amber-400" />
-                      {timerVal.toFixed(2)}s
-                    </span>
-                    <span className="font-bold text-amber-300">{loadingProgress}%</span>
-                  </div>
-
-                  {/* Bar Track */}
-                  <div className="h-2 w-full overflow-hidden rounded-full border border-stone-700/50 bg-stone-800 p-0.5">
-                    <motion.div
-                      className="h-full rounded-full bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.5)]"
-                      initial={{ width: '5%' }}
-                      animate={{ width: `${Math.max(5, loadingProgress)}%` }}
-                      transition={{ duration: 0.25, ease: 'easeOut' }}
-                    />
-                  </div>
+                {/* Bar Track */}
+                <div className="h-2 w-full overflow-hidden rounded-full border border-stone-700/50 bg-stone-800 p-0.5">
+                  <div
+                    role="progressbar"
+                    aria-valuenow={loadingProgress}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    className="h-full rounded-full bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.5)] transition-[width] duration-300 ease-out"
+                    style={{ width: `${Math.max(5, loadingProgress)}%` }}
+                  />
                 </div>
+              </div>
 
-                {/* Loading Stage Description */}
-                <div className="flex animate-pulse items-center gap-1.5 text-xs font-medium text-amber-200/90">
-                  <span>{loadingStage}</span>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="upload-prompt"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-                className="flex flex-col items-center justify-center"
-              >
-                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-400">
-                  <FileUp className="h-6 w-6 stroke-[2]" />
-                </div>
+              {/* Loading Stage Description */}
+              <div className="flex animate-pulse items-center gap-1.5 text-xs font-medium text-amber-200/90">
+                <span>{loadingStage}</span>
+              </div>
+            </div>
+          ) : (
+            <div
+              key="upload-prompt"
+              className="animate-fade-in-scale flex flex-col items-center justify-center"
+            >
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-400">
+                <FileUp className="h-6 w-6 stroke-[2]" />
+              </div>
 
-                <h3 className="mb-1 text-sm font-bold text-stone-200">
-                  Upload <span className="text-amber-400">cstimer.txt</span> or{' '}
-                  <span className="text-amber-400">.json</span>
-                </h3>
+              <h3 className="mb-1 text-sm font-bold text-stone-200">
+                Upload <span className="text-amber-400">cstimer.txt</span> or{' '}
+                <span className="text-amber-400">.json</span>
+              </h3>
 
-                <p className="mb-3 max-w-xs text-xs leading-relaxed text-stone-400">
-                  Drag and drop your csTimer export file here, or{' '}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!isLoading) fileInputRef.current?.click();
-                    }}
-                    className="cursor-pointer font-medium text-amber-400 underline underline-offset-2 hover:text-amber-300"
-                  >
-                    click to browse
-                  </button>
-                  .
-                </p>
+              <p className="mb-3 max-w-xs text-xs leading-relaxed text-stone-400">
+                Drag and drop your csTimer export file here, or{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!isLoading) fileInputRef.current?.click();
+                  }}
+                  className="cursor-pointer font-medium text-amber-400 underline underline-offset-2 hover:text-amber-300"
+                >
+                  click to browse
+                </button>
+                .
+              </p>
 
-                <div className="flex items-center gap-2">
-                  <span className="rounded-md border border-stone-700 bg-stone-800 px-2.5 py-1 font-mono text-[11px] text-stone-300">
-                    .txt / .json
-                  </span>
-                  <span className="text-xs text-stone-500">or</span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onLoadDemo();
-                    }}
-                    className="flex cursor-pointer items-center gap-1 text-xs font-semibold text-amber-400 underline underline-offset-2 hover:text-amber-300"
-                  >
-                    <Sparkles className="h-3 w-3" />
-                    Load Sample Data
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              <div className="flex items-center gap-2">
+                <span className="rounded-md border border-stone-700 bg-stone-800 px-2.5 py-1 font-mono text-[11px] text-stone-300">
+                  .txt / .json
+                </span>
+                <span className="text-xs text-stone-500">or</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onLoadDemo();
+                  }}
+                  className="flex cursor-pointer items-center gap-1 text-xs font-semibold text-amber-400 underline underline-offset-2 hover:text-amber-300"
+                >
+                  <Sparkles className="h-3 w-3" />
+                  Load Sample Data
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Configuration Controls (7 columns on large screens) */}

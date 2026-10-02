@@ -1,11 +1,20 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 test.describe('Metrics Overview & Solves Table', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     // Await initial demo dataset load
-    await expect(page.getByText('Session Solve Log (350 Total)')).toBeVisible({ timeout: 15000 });
+    await expect(
+      page.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
+    ).toBeVisible({ timeout: 15000 });
   });
+
+  const scrollToSolvesTable = async (page: Page) => {
+    await page.getByTestId('deferred-chart-solves-table').scrollIntoViewIfNeeded();
+    await expect(page.getByText(/Session Solve Log \(\d+ Total\)/)).toBeVisible({
+      timeout: 10000,
+    });
+  };
 
   test('displays all 5 global metric overview cards with formatted stats', async ({ page }) => {
     const overviewGrid = page.locator('.grid.grid-cols-1.gap-4');
@@ -47,6 +56,8 @@ test.describe('Metrics Overview & Solves Table', () => {
   test('renders solve log table with 15 rows, correct columns, and pagination', async ({
     page,
   }) => {
+    await scrollToSolvesTable(page);
+
     const table = page.locator('table');
     await expect(table).toBeVisible();
 
@@ -78,6 +89,8 @@ test.describe('Metrics Overview & Solves Table', () => {
   });
 
   test('navigates pagination next and previous pages', async ({ page }) => {
+    await scrollToSolvesTable(page);
+
     const prevBtn = page.getByRole('button', { name: 'Previous page' });
     const nextBtn = page.getByRole('button', { name: 'Next page' });
 
@@ -103,6 +116,8 @@ test.describe('Metrics Overview & Solves Table', () => {
   });
 
   test('filters solves by search query and resets pagination to page 1', async ({ page }) => {
+    await scrollToSolvesTable(page);
+
     const nextBtn = page.getByRole('button', { name: 'Next page' });
 
     // Navigate to page 2 first
@@ -126,6 +141,8 @@ test.describe('Metrics Overview & Solves Table', () => {
   test('shows empty state message when search query does not match any solves', async ({
     page,
   }) => {
+    await scrollToSolvesTable(page);
+
     const searchInput = page.getByPlaceholder('Search solves or scrambles...');
     await searchInput.fill('nonexistent-query-string-999');
 
@@ -140,6 +157,8 @@ test.describe('Metrics Overview & Solves Table', () => {
   });
 
   test('renders DNF and (+2) penalty badges accurately', async ({ page }) => {
+    await scrollToSolvesTable(page);
+
     const searchInput = page.getByPlaceholder('Search solves or scrambles...');
 
     // Search for DNF solves in demo data
@@ -167,6 +186,7 @@ test.describe('Metrics Overview & Solves Table', () => {
     await expect(sessionSolvesCard).toContainText('150 solves');
 
     // Table header and pagination reflect 150 solves (10 pages)
+    await scrollToSolvesTable(page);
     await expect(page.getByText('Session Solve Log (150 Total)')).toBeVisible();
     await expect(page.getByText('Showing 1 to 15 of 150 solves')).toBeVisible();
     await expect(page.getByText('1 / 10')).toBeVisible();

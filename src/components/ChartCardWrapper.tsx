@@ -1,7 +1,7 @@
-import { toCanvas, toPng } from 'html-to-image';
 import { Download, Loader2, Maximize2, Minimize2 } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ChartCardWrapperProps {
   title: string;
@@ -99,6 +99,8 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
     try {
       setIsDownloading(true);
       const el = cardRef.current;
+
+      const { toCanvas, toPng } = await import('html-to-image');
 
       // Small pause to allow layout & rendering to settle
       await new Promise((resolve) => setTimeout(resolve, 150));
@@ -323,15 +325,19 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
   );
 
   if (isMaximized) {
+    const minHeight = cardRef.current?.offsetHeight || 400;
     return (
       <>
-        {/* Placeholder element to maintain document flow */}
-        <div className="hidden" />
+        {/* Placeholder element to preserve layout and prevent grid collapse */}
+        <div style={{ minHeight }} aria-hidden="true" />
 
-        {/* Fullscreen Backdrop Overlay */}
-        <div className="fade-in fixed inset-0 z-[100] flex animate-in flex-col items-center justify-center overflow-y-auto bg-stone-950/95 p-4 backdrop-blur-xl duration-200 sm:p-8 safe-area-modal">
-          <div className="flex h-full max-h-[92vh] w-full max-w-7xl flex-col">{cardContent}</div>
-        </div>
+        {/* Fullscreen Backdrop Overlay via Portal */}
+        {createPortal(
+          <div className="fade-in fixed inset-0 z-[100] flex animate-in flex-col items-center justify-center overflow-y-auto bg-stone-950/95 p-4 backdrop-blur-xl duration-200 sm:p-8 safe-area-modal">
+            <div className="flex h-full max-h-[92vh] w-full max-w-7xl flex-col">{cardContent}</div>
+          </div>,
+          document.body,
+        )}
       </>
     );
   }

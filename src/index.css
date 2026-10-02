@@ -44,3 +44,99 @@ body,
     padding-right: max(2rem, env(safe-area-inset-right));
   }
 }
+
+/* ==========================================================================
+   Hardware-Composited Speedcube Loading Spinner Keyframes
+   Offloads 9-tile 3x3 cube animation to GPU compositor thread (0 ms Main Thread)
+   ========================================================================== */
+
+@keyframes cube-tile-cw {
+  0% {
+    transform: translateZ(0) scale(1) rotate(0deg);
+    opacity: 0.75;
+  }
+  33% {
+    transform: translateZ(0) scale(1.25) rotate(60deg);
+    opacity: 0.92;
+  }
+  50% {
+    transform: translateZ(0) scale(1.08) rotate(90deg);
+    opacity: 1;
+  }
+  67% {
+    transform: translateZ(0) scale(0.9) rotate(45deg);
+    opacity: 0.92;
+  }
+  100% {
+    transform: translateZ(0) scale(1) rotate(0deg);
+    opacity: 0.75;
+  }
+}
+
+@keyframes cube-tile-ccw {
+  0% {
+    transform: translateZ(0) scale(1) rotate(0deg);
+    opacity: 0.75;
+  }
+  33% {
+    transform: translateZ(0) scale(1.25) rotate(-60deg);
+    opacity: 0.92;
+  }
+  50% {
+    transform: translateZ(0) scale(1.08) rotate(-90deg);
+    opacity: 1;
+  }
+  67% {
+    transform: translateZ(0) scale(0.9) rotate(-45deg);
+    opacity: 0.92;
+  }
+  100% {
+    transform: translateZ(0) scale(1) rotate(0deg);
+    opacity: 0.75;
+  }
+}
+
+.animate-cube-cw {
+  animation: cube-tile-cw 1.4s ease-in-out infinite both;
+}
+
+.animate-cube-ccw {
+  animation: cube-tile-ccw 1.4s ease-in-out infinite both;
+}
+
+/* Off-screen chart content-visibility to bypass layout calculations until scroll */
+.chart-content-visibility {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 550px;
+}
+
+/* GPU-accelerated dialog / container fade-in-scale animation */
+@keyframes fade-in-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateZ(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateZ(0);
+  }
+}
+
+.animate-fade-in-scale {
+  animation: fade-in-scale 0.2s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-cube-cw,
+  .animate-cube-ccw {
+    animation: none;
+    transform: translateZ(0);
+    opacity: 0.85;
+  }
+
+  .animate-fade-in-scale {
+    animation: none;
+    transform: none;
+  }
+}

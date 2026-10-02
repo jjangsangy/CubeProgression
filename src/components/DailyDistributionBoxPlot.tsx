@@ -24,13 +24,12 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const updateWidth = () => {
-      if (containerRef.current && containerRef.current.clientWidth > 0) {
+    if (typeof ResizeObserver === 'undefined') {
+      if (containerRef.current.clientWidth > 0) {
         setContainerWidth(containerRef.current.clientWidth);
       }
-    };
-
-    updateWidth();
+      return;
+    }
 
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
@@ -276,10 +275,8 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                           })
                         }
                         onPointerLeave={() => setHoveredPoint(null)}
-                        className="hover:r-4 cursor-pointer transition-all"
-                      >
-                        <title>{`Solve: ${solve.finalTimeSec.toFixed(2)}s`}</title>
-                      </circle>
+                        className="cursor-pointer hover:stroke-amber-400 hover:fill-amber-300"
+                      />
                     );
                   })}
 

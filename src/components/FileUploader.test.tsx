@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Session } from '../types';
 import { FileUploader } from './FileUploader';
@@ -420,5 +420,128 @@ describe('FileUploader component', () => {
     expect(
       screen.getByText('Restored 350 solves across 1 sessions from IndexedDB'),
     ).toBeInTheDocument();
+  });
+
+  it('applies animate-fade-in-scale class to upload prompt and loading container', () => {
+    const { rerender } = render(
+      <FileUploader
+        sessions={mockSessions}
+        selectedSessionId="s1"
+        onSelectSession={vi.fn()}
+        groupingPeriod="daily"
+        onChangeGrouping={vi.fn()}
+        customBatchSize={50}
+        onChangeCustomBatchSize={vi.fn()}
+        onFileUpload={vi.fn()}
+        onLoadDemo={vi.fn()}
+        isLoading={false}
+      />,
+    );
+
+    const promptContainer = screen
+      .getByRole('heading', { name: /Upload/i })
+      .closest('.animate-fade-in-scale');
+    expect(promptContainer).toBeInTheDocument();
+    expect(promptContainer).toHaveClass('animate-fade-in-scale');
+
+    rerender(
+      <FileUploader
+        sessions={mockSessions}
+        selectedSessionId="s1"
+        onSelectSession={vi.fn()}
+        groupingPeriod="daily"
+        onChangeGrouping={vi.fn()}
+        customBatchSize={50}
+        onChangeCustomBatchSize={vi.fn()}
+        onFileUpload={vi.fn()}
+        onLoadDemo={vi.fn()}
+        isLoading={true}
+        loadingProgress={30}
+      />,
+    );
+
+    const progressbar = screen.getByRole('progressbar');
+    const loadingContainer = progressbar.closest('.animate-fade-in-scale');
+    expect(loadingContainer).toBeInTheDocument();
+    expect(loadingContainer).toHaveClass('animate-fade-in-scale');
+  });
+
+  it('renders standard progress bar with accurate width style and clamp limits', () => {
+    const { rerender } = render(
+      <FileUploader
+        sessions={mockSessions}
+        selectedSessionId="s1"
+        onSelectSession={vi.fn()}
+        groupingPeriod="daily"
+        onChangeGrouping={vi.fn()}
+        customBatchSize={50}
+        onChangeCustomBatchSize={vi.fn()}
+        onFileUpload={vi.fn()}
+        onLoadDemo={vi.fn()}
+        isLoading={true}
+        loadingProgress={0} // should clamp to min 5%
+      />,
+    );
+
+    let progressbar = screen.getByRole('progressbar');
+    expect(progressbar).toHaveStyle({ width: '5%' });
+    expect(progressbar).toHaveAttribute('aria-valuenow', '0');
+    expect(progressbar).toHaveClass('transition-[width]', 'duration-300', 'ease-out');
+
+    rerender(
+      <FileUploader
+        sessions={mockSessions}
+        selectedSessionId="s1"
+        onSelectSession={vi.fn()}
+        groupingPeriod="daily"
+        onChangeGrouping={vi.fn()}
+        customBatchSize={50}
+        onChangeCustomBatchSize={vi.fn()}
+        onFileUpload={vi.fn()}
+        onLoadDemo={vi.fn()}
+        isLoading={true}
+        loadingProgress={72}
+      />,
+    );
+
+    progressbar = screen.getByRole('progressbar');
+    expect(progressbar).toHaveStyle({ width: '72%' });
+    expect(progressbar).toHaveAttribute('aria-valuenow', '72');
+  });
+
+  it('renders LoadingElapsedTimer during loading and updates timer correctly', () => {
+    vi.useFakeTimers();
+    try {
+      render(
+        <FileUploader
+          sessions={mockSessions}
+          selectedSessionId="s1"
+          onSelectSession={vi.fn()}
+          groupingPeriod="daily"
+          onChangeGrouping={vi.fn()}
+          customBatchSize={50}
+          onChangeCustomBatchSize={vi.fn()}
+          onFileUpload={vi.fn()}
+          onLoadDemo={vi.fn()}
+          isLoading={true}
+          loadingProgress={50}
+          loadingStage="Calculating averages..."
+        />,
+      );
+
+      expect(screen.getByText('0.00s')).toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(250);
+      });
+      expect(screen.getByText('0.25s')).toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(750);
+      });
+      expect(screen.getByText('1.00s')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

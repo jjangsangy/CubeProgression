@@ -53,9 +53,15 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
   showTrend,
   slopeFormatted,
 }) => {
+  const xInterval = Math.max(1, Math.floor(chartData.length / (isMobileScreen ? 6 : 12)));
+
   return (
-    <div className="h-[420px] w-full pt-1">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="h-[420px] w-full pt-1" data-testid="progression-chart-canvas">
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+        initialDimension={{ width: 800, height: 420 }}
+      >
         <ComposedChart
           data={chartData}
           margin={{
@@ -68,6 +74,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
           <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
           <XAxis
             dataKey="index"
+            interval={xInterval}
             stroke="#94a3b8"
             fontSize={11}
             tickLine={false}
@@ -143,6 +150,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
           {/* 1. Single Solve Time */}
           {solveVisibility !== 'hidden' && (
             <Line
+              isAnimationActive={false}
               type="linear"
               dataKey="single"
               name="Single Solve Time"
@@ -158,6 +166,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
           {/* 2. 5-Solve Moving Average (Ao5) */}
           {showAo5 && (
             <Line
+              isAnimationActive={false}
               type="monotone"
               dataKey="ao5"
               name="5-Solve Moving Average (Ao5)"
@@ -171,6 +180,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
           {/* 3. 12-Solve Moving Average (Ao12) */}
           {showAo12 && (
             <Line
+              isAnimationActive={false}
               type="monotone"
               dataKey="ao12"
               name="12-Solve Moving Average (Ao12)"
@@ -184,6 +194,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
           {/* 4. 50-Solve Moving Average (Ao50) */}
           {showAo50 && (
             <Line
+              isAnimationActive={false}
               type="monotone"
               dataKey="ao50"
               name="50-Solve Moving Average (Ao50)"
@@ -197,6 +208,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
           {/* 5. 100-Solve Moving Average (Ao100) */}
           {showAo100 && (
             <Line
+              isAnimationActive={false}
               type="monotone"
               dataKey="ao100"
               name="100-Solve Moving Average (Ao100)"
@@ -210,6 +222,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
           {/* 6. Custom Ao N Moving Average */}
           {showCustomAo && customAoN >= 3 && (
             <Line
+              isAnimationActive={false}
               type="monotone"
               dataKey="customAo"
               name={`${customAoN}-Solve Moving Average (Ao${customAoN})`}
@@ -223,6 +236,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
           {/* 7. Overall/Range Trend Line */}
           {showTrend && (
             <Line
+              isAnimationActive={false}
               type="linear"
               dataKey="trend"
               name={`Range Trend (${slopeFormatted})`}

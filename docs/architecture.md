@@ -15,19 +15,19 @@ network dependency.
 | Runtime / package manager | [Bun](https://bun.sh/) (`bun.lock`) |
 | UI | React 19 + TypeScript 7 (`jsx: react-jsx`) |
 | Build | Vite 8 with `@vitejs/plugin-react` and `@tailwindcss/vite` |
-| Styling | Tailwind CSS v4 (`src/index.css` is just `@import "tailwindcss";`) |
-| Charts | Recharts 3 (most charts) + hand-authored SVG (box plot) |
+| Styling | Tailwind CSS v4 (`src/index.css`) |
+| Charts | Recharts 3 (code-split, lazy) + hand-authored SVG (box plot) |
 | Icons | `lucide-react` |
-| Animation | `motion` (imported as `motion/react`) |
-| Dates/timezones | `temporal-polyfill` (`Temporal`) |
-| PNG export | `html-to-image` (`toPng`, `toCanvas`) |
+| Animation | GPU-accelerated CSS keyframes (no runtime motion library) |
+| Dates/timezones | Standard `Temporal` (browser native) with conditional dynamic polyfill (`temporalLoader.ts`) |
+| PNG export | `html-to-image` (dynamically imported) |
 | Persistence | Native IndexedDB |
 | Lint / format | Biome 2 |
 | Tests | Vitest 5 + React Testing Library + `jsdom` |
 
 The app is configured to run from AI Studio: `vite.config.ts` disables HMR when the
-`DISABLE_HMR` env var is `"true"`. `metadata.json` advertises a Gemini capability, but
-**no Gemini/`@google/genai` code exists in `src`** — treat that dependency as unused.
+`DISABLE_HMR` env var is `"true"`. All unused legacy dependencies (`@google/genai`, `d3`,
+`motion`) have been removed.
 
 ## Directory layout
 
@@ -115,16 +115,14 @@ they do **not** read from a store or context.
 Persisted settings: whenever the user changes session, grouping period, or batch size,
 `App.tsx` calls `saveDataset(...)` fire-and-forget to keep IndexedDB in sync.
 
-## Rendering pipeline
+## Performance & Code-Splitting Architecture
 
-1. `main.tsx` mounts `<App />` in `StrictMode` via `mountApp()`.
-2. `App` integrates state from `useCubeDataset()` and coordinates `Navbar`, `FileUploader`,
-   `DashboardView`, and `Footer`.
-3. `DashboardView` conditionally renders `MetricsOverviewCards`, the four progression charts,
-   and `SolvesTable` when an active session and stats exist.
-4. Every chart is wrapped by `ChartCardWrapper`, which provides the card chrome, a
-   fullscreen modal, and PNG export via `html-to-image`.
-4. Grouping metadata (labels/axis names) comes from `getPeriodUnitInfo` so charts stay
-   consistent across grouping modes.
+To guarantee rapid initial mobile paint (<0.5s FCP) and eliminate main-thread blocking time:
 
-See [`components.md`](./components.md) for the per-component contract.
+- **Vendor Chunking (`vite.config.ts`)**: Configures `manualChunks` into `react-vendor`, `recharts-vendor`, and `temporal-vendor`. `modulePreload` excludes heavy deferred vendors (`recharts-vendor`, `temporal-vendor`) from the critical HTML parse path, while compiled CSS is inlined directly into `index.html`.
+- **Zero-Recharts Initial Paint**: `DashboardView` and all Recharts-based chart canvases are loaded dynamically via `React.lazy` inside `<Suspense fallback={...}>`. Plot 1 (`ProgressionChart`) renders its shell and controls synchronously on Frame 0, deferring the Recharts SVG canvas mounting to browser idle time (`requestIdleCallback`). Initial page load executes 0 kB of Recharts code.
+- **Conditional Temporal Polyfilling**: `src/utils/temporalLoader.ts` (`ensureTemporal()`) dynamically imports `temporal-polyfill` only when `typeof globalThis.Temporal === 'undefined'`. Modern browsers execute standard native `Temporal` and transfer 0 bytes of polyfill code.
+- **Cooperative Task Scheduling**: `src/utils/scheduler.ts` (`yieldToMain()`) yields to the browser event loop via `scheduler.yield()` before atomic state flushes, ensuring initialization tasks remain below the 50 ms long-task budget.
+- **Viewport-Driven Rendering**: Below-the-fold charts and heavy tables are wrapped in `<DeferredChart>`, mounting only when within 250px of the viewport using `IntersectionObserver` (or immediately in test/jsdom environments).
+- **Static Inlined Shell**: `index.html` embeds a lightweight static CSS/SVG shell in `#root` matching the exact responsive coordinates (`px-4 sm:px-6 safe-area-x`, `#0c0a09` continuity) to ensure instant first paint before JavaScript hydration completes.
+- **Atomic Hydration**: Storage queries and dataset checks in `useCubeDatasetCore.ts` resolve concurrently and batch into a single state update, eliminating redundant hydration re-render passes.

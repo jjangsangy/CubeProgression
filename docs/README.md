@@ -23,8 +23,9 @@ entrypoint, then drill into the pages below.
 The app has **no backend and no network calls**. On load it either restores the last dataset
 from IndexedDB or generates a deterministic 350-solve demo dataset. The user's active session
 is parsed from a csTimer export, enriched with rolling WCA averages (`ao5`/`ao12`/`ao50`/`ao100`),
-grouped by day/week/month/batch, and rendered through Recharts and hand-written SVG charts.
-All statistics are computed synchronously in-memory from the parsed `Solve[]` array.
+grouped by day/week/month/batch, and rendered through code-split Recharts and hand-written SVG charts.
+All statistics are computed synchronously in-memory from the parsed `Solve[]` array, with heavy visualizations
+deferred until viewport entry.
 
 ## Ground rules for agents
 

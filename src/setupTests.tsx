@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { configure } from '@testing-library/react';
 import type React from 'react';
+import { Temporal } from 'temporal-polyfill';
 import { afterEach, vi } from 'vitest';
 import { storageNoticeStore } from './hooks/useStorageNotice';
 
@@ -10,6 +11,17 @@ afterEach(() => {
 
 // Configure async util timeout for testing-library (jsdom + v8 coverage can be slow in CI)
 configure({ asyncUtilTimeout: 10000 });
+
+// Guarantee Temporal is available in test runners (Node.js CI, JSDOM)
+if (typeof globalThis.Temporal === 'undefined') {
+  (globalThis as unknown as { Temporal: typeof Temporal }).Temporal = Temporal;
+}
+if (
+  typeof window !== 'undefined' &&
+  typeof (window as unknown as { Temporal?: unknown }).Temporal === 'undefined'
+) {
+  (window as unknown as { Temporal?: unknown }).Temporal = Temporal;
+}
 
 // Polyfill ResizeObserver for Recharts and responsive components
 global.ResizeObserver = class ResizeObserver {

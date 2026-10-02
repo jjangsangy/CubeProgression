@@ -1,5 +1,5 @@
 import { Award, ChevronDown, ChevronUp, Flame, History, Sparkles, Trophy, Zap } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   CartesianGrid,
   ComposedChart,
@@ -38,29 +38,35 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
 
   const _unitInfo = getPeriodUnitInfo(groupingPeriod);
 
-  const pbResult = calculatePbProgression(solves);
+  const pbResult = useMemo(() => calculatePbProgression(solves), [solves]);
   const { dataPoints, summary, pbMilestones } = pbResult;
 
   // Compute Y-axis bounds
-  const validPbs: number[] = [];
-  if (dataPoints.length > 0) {
-    dataPoints.forEach((dp) => {
-      if (showSingle && dp.pbSingle) validPbs.push(dp.pbSingle);
-      if (showAo5 && dp.pbAo5) validPbs.push(dp.pbAo5);
-      if (showAo12 && dp.pbAo12) validPbs.push(dp.pbAo12);
-      if (showAo50 && dp.pbAo50) validPbs.push(dp.pbAo50);
-      if (showAo100 && dp.pbAo100) validPbs.push(dp.pbAo100);
-      if (showRawSolves && dp.single) validPbs.push(dp.single);
-    });
-  }
+  const { minY, maxY } = useMemo(() => {
+    const validPbs: number[] = [];
+    if (dataPoints.length > 0) {
+      dataPoints.forEach((dp) => {
+        if (showSingle && dp.pbSingle) validPbs.push(dp.pbSingle);
+        if (showAo5 && dp.pbAo5) validPbs.push(dp.pbAo5);
+        if (showAo12 && dp.pbAo12) validPbs.push(dp.pbAo12);
+        if (showAo50 && dp.pbAo50) validPbs.push(dp.pbAo50);
+        if (showAo100 && dp.pbAo100) validPbs.push(dp.pbAo100);
+        if (showRawSolves && dp.single) validPbs.push(dp.single);
+      });
+    }
 
-  const minY = validPbs.length === 0 ? 0 : Math.max(0, Math.floor(Math.min(...validPbs) - 1));
-  const maxY = validPbs.length === 0 ? 30 : Math.ceil(Math.max(...validPbs) + 2);
+    const min = validPbs.length === 0 ? 0 : Math.max(0, Math.floor(Math.min(...validPbs) - 1));
+    const max = validPbs.length === 0 ? 30 : Math.ceil(Math.max(...validPbs) + 2);
+    return { minY: min, maxY: max };
+  }, [dataPoints, showSingle, showAo5, showAo12, showAo50, showAo100, showRawSolves]);
 
-  const filteredMilestones =
-    milestoneFilter === 'All'
-      ? pbMilestones
-      : pbMilestones.filter((m) => m.type === milestoneFilter);
+  const filteredMilestones = useMemo(
+    () =>
+      milestoneFilter === 'All'
+        ? pbMilestones
+        : pbMilestones.filter((m) => m.type === milestoneFilter),
+    [pbMilestones, milestoneFilter],
+  );
 
   const CustomTooltip = ({
     active,
@@ -370,11 +376,16 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
 
       {/* Main Plot */}
       <div className="h-[400px] w-full pt-2">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          initialDimension={{ width: 800, height: 400 }}
+        >
           <ComposedChart data={dataPoints} margin={{ top: 25, right: 30, left: 10, bottom: 25 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
             <XAxis
               dataKey="index"
+              interval={Math.max(1, Math.floor(dataPoints.length / 10))}
               stroke="#94a3b8"
               fontSize={11}
               tickLine={false}
@@ -412,6 +423,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             {/* Optional Raw Solves Overlay */}
             {showRawSolves && (
               <Line
+                isAnimationActive={false}
                 type="linear"
                 dataKey="single"
                 name="Individual Solve Time"
@@ -426,6 +438,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             {/* PB Single Step Line */}
             {showSingle && (
               <Line
+                isAnimationActive={false}
                 type="stepAfter"
                 dataKey="pbSingle"
                 name="PB Single"
@@ -459,6 +472,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             {/* PB Ao5 Step Line */}
             {showAo5 && (
               <Line
+                isAnimationActive={false}
                 type="stepAfter"
                 dataKey="pbAo5"
                 name="PB Ao5"
@@ -492,6 +506,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             {/* PB Ao12 Step Line */}
             {showAo12 && (
               <Line
+                isAnimationActive={false}
                 type="stepAfter"
                 dataKey="pbAo12"
                 name="PB Ao12"
@@ -525,6 +540,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             {/* PB Ao50 Step Line */}
             {showAo50 && (
               <Line
+                isAnimationActive={false}
                 type="stepAfter"
                 dataKey="pbAo50"
                 name="PB Ao50"
@@ -558,6 +574,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             {/* PB Ao100 Step Line */}
             {showAo100 && (
               <Line
+                isAnimationActive={false}
                 type="stepAfter"
                 dataKey="pbAo100"
                 name="PB Ao100"

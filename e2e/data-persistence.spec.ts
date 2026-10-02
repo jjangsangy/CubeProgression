@@ -9,7 +9,9 @@ test.describe('Data Ingestion & IndexedDB Persistence', () => {
     await page.reload();
 
     // Wait until demo dataset completes initialization
-    await expect(page.getByText('Session Solve Log (350 Total)')).toBeVisible({ timeout: 15000 });
+    await expect(
+      page.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
+    ).toBeVisible({ timeout: 15000 });
     await expect(page.locator('input[aria-label="Upload csTimer file"]')).toBeEnabled({
       timeout: 15000,
     });
@@ -42,6 +44,14 @@ test.describe('Data Ingestion & IndexedDB Persistence', () => {
     // Chart header updates immediately to reflect session 2's 150 solves
     await expect(page.getByText(/3x3 General Solves: Progression Over 150 Solves/)).toBeVisible();
 
+    // Scroll to SolvesTable deferred container to mount it
+    await page
+      .locator(
+        '[data-testid="deferred-chart-solves-table"], [data-testid="deferred-chart-skeleton"]',
+      )
+      .last()
+      .scrollIntoViewIfNeeded();
+
     // Session solve log table header updates
     await expect(page.getByText('Session Solve Log (150 Total)')).toBeVisible();
   });
@@ -51,6 +61,12 @@ test.describe('Data Ingestion & IndexedDB Persistence', () => {
     const weeklyBtn = page.getByRole('button', { name: /^Weekly/i });
     await weeklyBtn.click();
     await expect(weeklyBtn).toHaveClass(/bg-amber-500\/15/);
+    await page
+      .locator(
+        '[data-testid="deferred-chart-solve-time-distribution"], [data-testid="deferred-chart-skeleton"]',
+      )
+      .first()
+      .scrollIntoViewIfNeeded();
     await expect(page.getByText('Weekly Solve Time Distribution & Variance')).toBeVisible();
 
     // Switch to By Solve Count (custom batch)

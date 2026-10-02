@@ -150,6 +150,13 @@ test.describe('Progression & Personal Best Progression Charts', () => {
   });
 
   test.describe('PbProgressionChart', () => {
+    test.beforeEach(async ({ page }) => {
+      await page.getByTestId('deferred-chart-pb-progression').scrollIntoViewIfNeeded();
+      await expect(page.getByRole('heading', { name: /PB Progression Over Time/i })).toBeVisible({
+        timeout: 10000,
+      });
+    });
+
     test('renders top PB summary stat cards with valid records', async ({ page }) => {
       const card = page.locator('div.rounded-2xl').filter({
         has: page.getByRole('heading', { name: /PB Progression Over Time/i }),

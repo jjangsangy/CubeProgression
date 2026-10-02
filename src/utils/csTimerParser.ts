@@ -1,4 +1,3 @@
-import { Temporal } from 'temporal-polyfill';
 import type { Session, Solve } from '../types';
 import { calculateAoN } from './statsMath';
 

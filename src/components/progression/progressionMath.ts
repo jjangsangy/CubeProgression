@@ -63,8 +63,17 @@ export function buildProgressionChartData(
   showCustomAo: boolean,
   customAoN: number,
 ): ProgressionDataPoint[] {
+  // Precompute O(1) index lookup map: solve.id -> fullSolves array index
+  const fullIdxMap = new Map<number, number>();
+  for (let i = 0; i < fullSolves.length; i++) {
+    const id = fullSolves[i].id;
+    if (!fullIdxMap.has(id)) {
+      fullIdxMap.set(id, i);
+    }
+  }
+
   return filteredSolves.map((solve) => {
-    const fullIdx = fullSolves.findIndex((s) => s.id === solve.id);
+    const fullIdx = fullIdxMap.get(solve.id) ?? -1;
     const predY = filteredRegression.slope * solve.index + filteredRegression.intercept;
 
     const ao5 = solve.ao5 ?? calculateAoN(fullSolves, fullIdx, 5);

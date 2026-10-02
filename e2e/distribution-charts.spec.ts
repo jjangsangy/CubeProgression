@@ -4,7 +4,9 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     // Await demo dataset initialization
-    await expect(page.getByText('Daily Solve Time Distribution & Variance')).toBeVisible({
+    await expect(
+      page.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
+    ).toBeVisible({
       timeout: 15000,
     });
   });
@@ -12,6 +14,8 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
   test('DensityShiftChart updates KDE sample split (20%, 30%, 40%) and summary banner', async ({
     page,
   }) => {
+    await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
+
     const densityCard = page.locator('div.rounded-2xl').filter({
       has: page.getByRole('heading', { name: /Time Distribution Shift/i }),
     });
@@ -40,6 +44,8 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
   });
 
   test('MetricsEvolutionChart renders dual-axis labels and legend series', async ({ page }) => {
+    await page.getByTestId('deferred-chart-metrics-evolution').scrollIntoViewIfNeeded();
+
     const metricsCard = page.locator('div.rounded-2xl').filter({
       has: page.getByRole('heading', { name: /Metrics Evolution/i }),
     });
@@ -69,23 +75,31 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
     page,
   }) => {
     // Initial titles in Daily mode
+    await page.getByTestId('deferred-chart-solve-time-distribution').scrollIntoViewIfNeeded();
     await expect(page.getByText('Daily Solve Time Distribution & Variance')).toBeVisible();
+    await page.getByTestId('deferred-chart-metrics-evolution').scrollIntoViewIfNeeded();
     await expect(page.getByText('Daily Metrics Evolution: Speed & Consistency')).toBeVisible();
 
     // Switch to Weekly mode
     await page.getByRole('button', { name: /^Weekly/i }).click();
+    await page.getByTestId('deferred-chart-solve-time-distribution').scrollIntoViewIfNeeded();
     await expect(page.getByText('Weekly Solve Time Distribution & Variance')).toBeVisible();
+    await page.getByTestId('deferred-chart-metrics-evolution').scrollIntoViewIfNeeded();
     await expect(page.getByText('Weekly Metrics Evolution: Speed & Consistency')).toBeVisible();
 
     // Switch to By Solve Count (Batch) mode
     await page.getByRole('button', { name: /^By Solve Count/i }).click();
+    await page.getByTestId('deferred-chart-solve-time-distribution').scrollIntoViewIfNeeded();
     await expect(page.getByText('Batch Solve Time Distribution & Variance')).toBeVisible();
+    await page.getByTestId('deferred-chart-metrics-evolution').scrollIntoViewIfNeeded();
     await expect(page.getByText('Batch Metrics Evolution: Speed & Consistency')).toBeVisible();
   });
 
   test('DailyDistributionBoxPlot displays solve tooltip on scatter point hover', async ({
     page,
   }) => {
+    await page.getByTestId('deferred-chart-solve-time-distribution').scrollIntoViewIfNeeded();
+
     const boxPlotCard = page.locator('div.rounded-2xl').filter({
       has: page.getByRole('heading', { name: /Solve Time Distribution & Variance/i }),
     });
@@ -104,6 +118,8 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
   test('ChartCardWrapper maximizes chart to fullscreen modal and restores on Escape key', async ({
     page,
   }) => {
+    await page.getByTestId('deferred-chart-solve-time-distribution').scrollIntoViewIfNeeded();
+
     const card = page.locator('div.rounded-2xl').filter({
       has: page.getByRole('heading', { name: /Daily Solve Time Distribution/i }),
     });
@@ -125,6 +141,8 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
   });
 
   test('ChartCardWrapper restores fullscreen view via Exit Fullscreen button', async ({ page }) => {
+    await page.getByTestId('deferred-chart-solve-time-distribution').scrollIntoViewIfNeeded();
+
     const card = page.locator('div.rounded-2xl').filter({
       has: page.getByRole('heading', { name: /Daily Solve Time Distribution/i }),
     });
@@ -148,6 +166,8 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
   test('ChartCardWrapper initiates PNG export download with expected filename prefix', async ({
     page,
   }) => {
+    await page.getByTestId('deferred-chart-solve-time-distribution').scrollIntoViewIfNeeded();
+
     const card = page.locator('div.rounded-2xl').filter({
       has: page.getByRole('heading', { name: /Daily Solve Time Distribution/i }),
     });

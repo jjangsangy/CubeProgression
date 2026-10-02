@@ -57,6 +57,10 @@ Test files are colocated with source: `src/**/*.test.ts(x)`. Prefer asserting on
 text (RTL) and mocking only external/browser APIs (see `ChartCardWrapper.test.tsx` mocking
 `html-to-image`).
 
+- **E2E tests (`bun run test:e2e`)**: **Mandatory for all UI, layout, and deferral changes.**
+  Because Vitest runs in `jsdom` where `IntersectionObserver` is absent and elements have 0×0
+  dimensions, only the full Playwright suite validates real browser viewport deferral,
+  mobile responsive breakpoints, and below-the-fold chart interaction.
 - **CI**: Automated test runner on GitHub Actions (`.github/workflows/test.yml`) runs tests
   on pushes and pull requests targeting `main` across all supported platforms:
   `ubuntu-latest`, `macos-latest`, and `windows-latest`. Automated deployment to GitHub Pages
@@ -121,10 +125,9 @@ Match these rules when hand-writing code; run `bun run check:write` before finis
 
 ## Gotchas & notes
 
-- **Unused dependencies**: `d3` and `@types/d3` are declared but not imported anywhere in
-  `src` (the box plot is hand-written SVG). `@google/genai` is declared and advertised in
-  `metadata.json`, but there is **no Gemini code in the app**. Don't assume they're wired up;
-  if you add usage, that's a deliberate new feature.
+- **Pruned dependencies**: legacy unused packages (`@google/genai`, `d3`, `@types/d3`, `motion`) have been completely pruned from `package.json`. Animations are handled with standard Tailwind / CSS `@keyframes`.
+- **Chunking & Build Optimizations**: `vite.config.ts` partitions production builds into `react-vendor`, `recharts-vendor`, and `temporal-vendor` chunks, targeted to `es2022` with `lightningcss`. Compiled CSS is inlined directly into `index.html` by `inlineCriticalCss()` to eliminate render-blocking network requests. Heavy deferred scripts (`recharts-vendor`, `temporal-vendor`) are filtered from initial `<link rel="modulepreload">` tags to protect critical path metrics.
+- **Conditional Polyfills**: `temporal-polyfill` is loaded conditionally via `src/utils/temporalLoader.ts` (`ensureTemporal()`) only on older browsers that lack standard `Temporal`. Modern engines run native `Temporal` with zero polyfill transfer overhead.
 - **IndexedDB in tests**: `openDB()` returns `null` under jsdom, so persistence is disabled
   and `App.test.tsx` always exercises the demo fallback.
 - **Determinism**: `generateSampleData()` is seeded, so demo output is stable —
