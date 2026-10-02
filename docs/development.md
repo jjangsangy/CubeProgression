@@ -121,10 +121,8 @@ Match these rules when hand-writing code; run `bun run check:write` before finis
 
 ## Gotchas & notes
 
-- **Unused dependencies**: `d3` and `@types/d3` are declared but not imported anywhere in
-  `src` (the box plot is hand-written SVG). `@google/genai` is declared and advertised in
-  `metadata.json`, but there is **no Gemini code in the app**. Don't assume they're wired up;
-  if you add usage, that's a deliberate new feature.
+- **Pruned dependencies**: legacy unused packages (`@google/genai`, `d3`, `@types/d3`, `motion`) have been completely pruned from `package.json`. Animations are handled with standard Tailwind / CSS `@keyframes`.
+- **Chunking & Build Optimizations**: `vite.config.ts` partitions production builds into `react-vendor`, `recharts-vendor`, and `temporal-vendor` chunks, targeted to `es2022` with `lightningcss`. Heavy vendor scripts are filtered from initial `<link rel="modulepreload">` tags to protect critical path metrics.
 - **IndexedDB in tests**: `openDB()` returns `null` under jsdom, so persistence is disabled
   and `App.test.tsx` always exercises the demo fallback.
 - **Determinism**: `generateSampleData()` is seeded, so demo output is stable —

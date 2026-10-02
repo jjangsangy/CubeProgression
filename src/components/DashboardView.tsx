@@ -1,4 +1,4 @@
-import { lazy } from 'react';
+import { lazy, Suspense } from 'react';
 import type { GlobalStats, GroupingPeriod, PeriodGroup, Session } from '../types';
 import { DailyDistributionBoxPlot } from './DailyDistributionBoxPlot';
 import { DeferredChart } from './DeferredChart';
@@ -42,8 +42,12 @@ export function DashboardView({
 
       {/* The 4 Progression Plots & Solves Table */}
       <div className="flex flex-col gap-8">
-        {/* Plot 1: Overall Progression & Moving Averages */}
-        <DeferredChart minHeight={480} fallbackTitle="Overall Progression">
+        {/* Plot 1: Overall Progression & Moving Averages (Initial Paint Mount) */}
+        <Suspense
+          fallback={
+            <div className="min-h-[480px] w-full rounded-2xl border border-stone-800/80 bg-stone-900/60 p-6 animate-pulse" />
+          }
+        >
           <ProgressionChart
             solves={session.solves}
             periodGroups={periodGroups}
@@ -51,7 +55,7 @@ export function DashboardView({
             groupingPeriod={groupingPeriod}
             title={`${session.name}: Progression Over ${session.solves.length} Solves`}
           />
-        </DeferredChart>
+        </Suspense>
 
         {/* Plot 2: Personal Best Progression Over Time */}
         <DeferredChart minHeight={540} fallbackTitle="PB Progression">

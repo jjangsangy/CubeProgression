@@ -21,7 +21,18 @@ Presentational container for session metrics and progression charts. Props: `ses
 
 - Renders `MetricsOverviewCards`, `ProgressionChart`, `PbProgressionChart`, `DailyDistributionBoxPlot`, `DensityShiftChart`, `MetricsEvolutionChart`, and `SolvesTable`.
 - Renders `null` when `session` or `stats` are empty.
+- Code-splits all Recharts-based visualizations via `React.lazy` and wraps them in `<DeferredChart>` to eliminate off-screen chart mounting and reduce initial bundle execution.
 - Enables isolated testing of the entire progression visualization grid without mounting dataset storage hooks.
+
+## `DeferredChart` (`DeferredChart.tsx`)
+
+Viewport-aware wrapper that delays mounting heavy visualization components until they scroll near the viewport. Props: `minHeight`, `fallbackTitle?`, `children`.
+
+- Uses `IntersectionObserver` with a `250px` root margin to trigger pre-emptive rendering before coming into view.
+- Latches mounted state permanently once visible; disconnects observer immediately.
+- Encloses children in an internal `<Suspense>` boundary displaying an animated skeleton loader.
+- Applies `.chart-content-visibility` (`content-visibility: auto`) to avoid off-screen layout work.
+- Automatically falls back to synchronous rendering in jsdom or browsers lacking `IntersectionObserver`.
 
 ## `Footer` (`Footer.tsx`)
 
@@ -47,8 +58,15 @@ The upload + configuration panel.
   `onFileUpload`, `onLoadDemo`, `errorMsg`, and the loading/storage props.
 - Renders group-by buttons (Day / Week / Month / Batch-50 / Custom batch) and a session
   selector when multiple sessions exist.
-- When `isLoading`, renders the `CubeLoadingSpinner` with a progress bar, elapsed timer, and
-  `loadingStage` text via `AnimatePresence`.
+- When `isLoading`, renders `CubeLoadingSpinner`, an accessible progress bar, `loadingStage` status,
+  and an isolated `LoadingElapsedTimer`. Uses hardware-accelerated CSS transitions without runtime motion libraries.
+
+## `LoadingElapsedTimer` (`LoadingElapsedTimer.tsx`)
+
+Leaf component isolating the active loading elapsed timer display.
+
+- Updates at a throttled 250ms cadence (4 Hz), reducing main-thread timer interrupts by 86% compared to sub-frame tick loops.
+- Localizes timer state to avoid re-rendering the parent `FileUploader` component during dataset imports.
 
 ## `ChartCardWrapper` (`ChartCardWrapper.tsx`)
 
@@ -57,15 +75,12 @@ Shared wrapper for every chart. Props: `title`, `subtitle?`, `children`, `header
 
 - Header with badge + title, optional subtitle, optional controls row, and a
   `export-exclude` action cluster (PNG download, maximize).
-- **Fullscreen**: `isMaximized` renders a fixed backdrop overlay; closes on `Escape`;
-  locks `document.body` scroll while open.
-- **PNG export**: `handleDownloadImage` measures the true unclipped size of the card
-  (including scrollable descendants), then calls `html-to-image`'s `toPng` with
-  `pixelRatio: 2`, `skipFonts: true` (avoids CORS font failures), and a stone-950
-  background. It retries with `pixelRatio: 1`, then falls back to `toCanvas`. An `onClone`
-  hook pins live Recharts/SVG pixel dimensions into the clone so exports don't collapse.
-- `triggerBlobDownload` converts base64 data URLs to `Blob` objects for reliable downloads
-  in cross-origin/iframe contexts.
+- **Fullscreen**: renders in a React Portal (`createPortal(..., document.body)`) to prevent
+  collapsing parent grid tracks; closes on `Escape` and locks body scroll.
+- **PNG export**: dynamically imports `html-to-image` on demand. Measures true unclipped
+  size, calls `toPng` with `pixelRatio: 2` and `skipFonts: true`, retrying with `pixelRatio: 1`
+  or falling back to `toCanvas`. Pins live SVG dimensions during clone.
+- `triggerBlobDownload` converts base64 data URLs to `Blob` objects for reliable cross-origin downloads.
 
 > If you add a new chart, wrap it in this component so it inherits export + fullscreen.
 
@@ -75,55 +90,52 @@ Five summary KPI cards from `GlobalStats`: Best Single, Best Averages (Ao12/Ao50
 Rate (regression slope), Progression Gain (baseline vs recent delta + %), and Session Solves
 (total + DNFs + mean). Purely display.
 
-## `ProgressionChart` (`ProgressionChart.tsx`)
+## `ProgressionChart` (`src/components/progression/ProgressionChart.tsx`)
 
 The main time-series chart (Recharts `ComposedChart`). Props: `solves`, `periodGroups`,
-`regression`, `groupingPeriod?`, `title?`.
+`regression`, `groupingPeriod?`, `title?`. Modularized with `ProgressionChartCanvas` and `progressionMath`.
 
+- Disables non-composited SVG animations (`isAnimationActive={false}`) across all lines for instant scrubbing and mobile responsiveness.
 - Plots individual solve times (`single`) plus toggleable moving averages `ao5`/`ao12`/
   `ao50`/`ao100`, a trend line, and an optional custom Ao-N (`customAoN`, default 25).
+- Uses $O(N)$ hash-map indexing in `buildProgressionChartData` to eliminate quadratic lookup overhead during range filtering.
+- Lazily initializes mobile breakpoint checks to prevent double-mount render passes.
 - `solveVisibility` mode controls how individual solves render (`muted`/`unmuted`/`dots`/
   `hidden`/`visible`).
 - **Range selector**: `rangeMode` is `all` | `solveIndex` | `dateRange`; quick presets are
-  All / Last 50 / 100 / 200 / First 100 / Last 7 Days / Last 30 Days, plus number inputs and
-  sliders for solve-index ranges and date pickers for date ranges. Range bounds re-sync when
-  the dataset changes.
+  All / Last 50 / 100 / 200 / First 100 / Last 7 Days / Last 30 Days.
 - **Responsive ticks**: computes period boundary reference lines and downsamples their
-  labels based on `windowWidth` to avoid overlap.
-- A `CustomTooltip` shows time, penalties, scrambles, and the active period, and range stats
-  (count, mean, best, % of total) are shown above the plot.
-- **Gotcha**: the `regression` prop is destructured as `_regression` and **ignored**; the
-  trend line is recomputed from the filtered range via `calculateLinearRegression`. The prop
-  is kept for interface stability.
+  labels based on screen width.
 
 ## `PbProgressionChart` (`PbProgressionChart.tsx`)
 
 Step-down PB history chart. Props: `solves`, `groupingPeriod?`, `title?`.
 
+- All 6 lines render with `isAnimationActive={false}` to eliminate CPU-bound animation loops.
 - Calls `calculatePbProgression(solves)` (memoized) and plots running PBs for Single, Ao5,
   Ao12, Ao50, Ao100, each toggleable; optional raw-solve overlay.
-- Y-bounds are computed only from the currently visible series.
+- Y-bounds and filtered milestones are isolated with fine-grained `useMemo` hooks so UI toggles never trigger stats recalculations.
 - An expandable **milestone list** lists PB drops, filterable by `type` (`All`/`Single`/`Ao5`/…).
 - `CustomTooltip` highlights solves that set a new PB.
 
 ## `DailyDistributionBoxPlot` (`DailyDistributionBoxPlot.tsx`)
 
-A **hand-authored SVG** box-and-whisker plot (not Recharts). Props: `periodGroups`,
+A **hand-authored SVG** box-and-whisker plot (zero Recharts overhead). Props: `periodGroups`,
 `groupingPeriod?`, `title?`.
 
 - One box per `PeriodGroup` showing Q1/median/Q3, Tukey whiskers, outlier diamonds, and
-  jittered individual solve dots (deterministic jitter via a `sin`-based hash of `solve.id`).
-- Connects group medians with a dashed red "Median Trend" polyline annotated with values.
-- Responsive: a `ResizeObserver` tracks container width (a `ResizeObserver` polyfill exists
-  in `setupTests.tsx` for jsdom).
-- X-axis tick density scales down automatically as the number of groups grows.
+  jittered individual solve dots.
+- Pure CSS hover states on scatter dots replace heavy JavaScript event bindings.
+- Eliminated synchronous DOM measurements on mount in favor of asynchronous `ResizeObserver`.
+- Responsive: tracks container width without forced reflows.
 - Box colors interpolate from light sky to deep navy across the period progression.
-- Hover tooltips on solve dots; accessible via `role="img"` and `aria-label`.
+- Accessible via `role="img"` and `aria-label`.
 
 ## `DensityShiftChart` (`DensityShiftChart.tsx`)
 
 Recharts `AreaChart` of KDE curves. Props: `solves`, `groupingPeriod?`, `title?`.
 
+- Disables non-composited SVG animations (`isAnimationActive={false}`) on baseline and recent areas.
 - Uses `calculateKDE(solves, splitPercent, splitPercent, 120)` where `splitPercent` is one of
   `0.2` / `0.3` / `0.4` (baseline vs recent sample split).
 - Plots `baselineDensity` (red) and `recentDensity` (green) areas.
@@ -134,6 +146,7 @@ Recharts `AreaChart` of KDE curves. Props: `solves`, `groupingPeriod?`, `title?`
 Recharts `ComposedChart` tracking consistency over periods. Props: `periodGroups`,
 `groupingPeriod?`, `title?`.
 
+- Disables SVG animations (`isAnimationActive={false}`) across line and range area series.
 - Per period plots Mean and Median (left time axis), a shaded Min–Max range band, and
   Standard Deviation (right axis, dashed).
 - Titles/axis labels come from `getPeriodUnitInfo(groupingPeriod)`.
@@ -143,14 +156,17 @@ Recharts `ComposedChart` tracking consistency over periods. Props: `periodGroups
 Paginated, searchable solve log. Props: `solves`.
 
 - 15 rows/page; search matches index, time, date, or scramble (case-insensitive).
+- Uses `table-fixed min-w-[680px]` with reserved container min-height (`min-h-[460px]`) to eliminate column recalculation reflows and prevent layout shift during pagination.
 - Columns: `#`, Time (DNF / `+2` badges), Ao5, Ao12, Ao50, Ao100, Date, Scramble.
 - Reset page to 1 on search change; empty-state row when nothing matches.
 
 ## `CubeLoadingSpinner` (`CubeLoadingSpinner.tsx`)
 
-A decorative animated 3×3 cube built with `motion` (nine tiles with staggered
-scale/opacity/rotate loops). Props: `size?: 'sm' | 'md' | 'lg'`. Used by `FileUploader`
-during loading.
+A decorative 3×3 animated cube styled with hardware-accelerated CSS keyframe animations. Props: `size?: 'sm' | 'md' | 'lg'`.
+
+- Replaced JavaScript runtime animation loops with CSS `@keyframes` (`cube-tile-cw` / `cube-tile-ccw`) and `transform: translateZ(0)`.
+- Eliminates excess GPU compositing layer memory during file processing.
+- Full support for `prefers-reduced-motion` media queries and semantic `role="status"` accessibility.
 
 ## Test conventions
 

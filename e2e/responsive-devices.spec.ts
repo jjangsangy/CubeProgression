@@ -58,9 +58,9 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
           const dropzone = document.querySelector('section[aria-label="File upload dropzone"]');
           if (dropzone) {
             const dropRect = dropzone.getBoundingClientRect();
-            const loadingContainer = dropzone.querySelector(
-              '.cursor-wait div.flex.w-full.flex-col',
-            );
+            const loadingContainer = dropzone.classList.contains('cursor-wait')
+              ? dropzone.querySelector('div.flex.w-full.flex-col')
+              : dropzone.querySelector('.cursor-wait div.flex.w-full.flex-col');
             if (loadingContainer) {
               const loadRect = loadingContainer.getBoundingClientRect();
               // @ts-expect-error
@@ -77,6 +77,13 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
           requestAnimationFrame(check);
         };
         requestAnimationFrame(check);
+        setInterval(check, 8);
+        const observer = new MutationObserver(check);
+        observer.observe(document.documentElement, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+        });
       });
 
       await page.reload();
@@ -181,6 +188,11 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     test('handles SolvesTable horizontal scroll and mobile pagination touch navigation', async ({
       page,
     }) => {
+      await page.getByTestId('deferred-chart-solves-table').scrollIntoViewIfNeeded();
+      await expect(page.getByRole('heading', { name: /Session Solve Log/i })).toBeVisible({
+        timeout: 10000,
+      });
+
       const solvesSection = page.locator('div.rounded-2xl').filter({
         has: page.getByRole('heading', { name: /Session Solve Log/i }),
       });
@@ -358,6 +370,11 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     });
 
     test('interacts with PB milestone history drawer on tablet', async ({ page }) => {
+      await page.getByTestId('deferred-chart-pb-progression').scrollIntoViewIfNeeded();
+      await expect(page.getByRole('heading', { name: /PB Progression Over Time/i })).toBeVisible({
+        timeout: 10000,
+      });
+
       const pbCard = page.locator('div.rounded-2xl').filter({
         has: page.getByRole('heading', { name: /PB Progression Over Time/i }),
       });
@@ -414,6 +431,8 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     test('renders DensityShiftChart and MetricsEvolutionChart side-by-side in 2-column grid', async ({
       page,
     }) => {
+      await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
+
       const densityHeading = page.getByRole('heading', { name: /Time Distribution Shift/i });
       const metricsHeading = page.getByRole('heading', { name: /Metrics Evolution/i });
 

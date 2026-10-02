@@ -73,6 +73,11 @@ export const DeferredChart: React.FC<DeferredChartProps> = ({
     <div
       ref={containerRef}
       style={{ minHeight: styleMinHeight }}
+      data-testid={
+        fallbackTitle
+          ? `deferred-chart-${fallbackTitle.toLowerCase().replace(/\s+/g, '-')}`
+          : 'deferred-chart'
+      }
       className={`w-full transition-opacity duration-300 chart-content-visibility ${className}`}
     >
       {isVisible ? <Suspense fallback={skeleton}>{children}</Suspense> : skeleton}
