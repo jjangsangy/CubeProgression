@@ -51,8 +51,9 @@ bun run typecheck      # tsc --noEmit
 bun run check          # Biome lint + format + import order (--write to fix)
 bun run test           # Vitest (jsdom)
 bun run test:coverage  # Vitest + v8 coverage
-bun run test:e2e       # Playwright E2E tests (must be run)
+bun run test:e2e       # Playwright E2E tests (must be run; preview on :3200)
 bun run build          # production bundle → dist/
+bun run preview        # preview production bundle → http://localhost:3100
 ```
 
 ## Non-negotiable conventions

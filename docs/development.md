@@ -18,7 +18,7 @@ bun run dev        # Vite dev server on http://localhost:3000 (host 0.0.0.0)
 | --- | --- | --- |
 | `dev` | `vite --port=3000 --host=0.0.0.0` | Dev server, HMR (disabled when `DISABLE_HMR=true`) |
 | `build` | `vite build` | Production bundle to `dist/` |
-| `preview` | `vite preview --port=3000` | Serve the built bundle on port 3000 |
+| `preview` | `vite preview --port=3100` | Serve the built bundle on port 3100 |
 | `clean` | `rm -rf dist` | Remove build output |
 | `typecheck` | `tsc --noEmit` | TypeScript check (no emit) |
 | `lint` | `biome lint` | Lint only |
@@ -29,8 +29,8 @@ bun run dev        # Vite dev server on http://localhost:3000 (host 0.0.0.0)
 | `check:write` | `biome check --write` | Apply all safe Biome fixes |
 | `test` | `vitest run` | Run the test suite once |
 | `test:coverage` | `vitest run --coverage` | Tests + v8 coverage |
-| `test:e2e` | `playwright test` | Run Playwright E2E tests (lean preview bundle, normal parallelism) |
-| `test:e2e:dev` | `E2E_DEV=true playwright test` | Run E2E tests against Vite dev server |
+| `test:e2e` | `playwright test` | Run Playwright E2E tests (lean preview bundle on port 3200) |
+| `test:e2e:dev` | `E2E_DEV=true playwright test` | Run E2E tests against Vite dev server on port 3200 |
 | `test:e2e:ui` | `playwright test --ui` | Playwright interactive UI runner |
 | `test:e2e:report` | `playwright show-report` | Open latest HTML test report |
 

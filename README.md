@@ -125,7 +125,7 @@ Build the production distribution bundle with [Vite 8](https://vite.dev/):
 bun run build
 ```
 
-Preview the production build locally:
+Preview the production build locally at `http://localhost:3100`:
 
 ```bash
 bun run preview
