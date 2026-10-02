@@ -274,4 +274,287 @@ describe('DensityShiftChart component', () => {
     expect(activeTooltip.getByText('0.0543')).toBeInTheDocument();
     activeTooltip.unmount();
   });
+
+  describe('Pointer dragging and track interaction', () => {
+    it('handles pointer dragging on Scrubber 1 body to shift baseline sample window', () => {
+      render(<DensityShiftChart solves={mockSolves} />);
+
+      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
+        left: 100,
+        top: 50,
+        right: 600,
+        bottom: 130,
+        width: 500,
+        height: 80,
+        x: 100,
+        y: 50,
+        toJSON: () => {},
+      });
+
+      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+      expect(scrubber1).toHaveAttribute('aria-valuenow', '1');
+      expect(screen.getByText('(#1–#6)')).toBeInTheDocument();
+
+      // Drag right by 100px (100 / 500 * 20 = 4 solves)
+      fireEvent.pointerDown(scrubber1, { clientX: 200, pointerId: 1 });
+      fireEvent.pointerMove(scrubber1, { clientX: 300, pointerId: 1 });
+      fireEvent.pointerUp(scrubber1, { clientX: 300, pointerId: 1 });
+
+      expect(scrubber1).toHaveAttribute('aria-valuenow', '5');
+      expect(screen.getByText('(#5–#10)')).toBeInTheDocument();
+
+      // Drag left past boundary 0 (delta = -200px -> -8 solves)
+      fireEvent.pointerDown(scrubber1, { clientX: 300, pointerId: 1 });
+      fireEvent.pointerMove(scrubber1, { clientX: 100, pointerId: 1 });
+      fireEvent.pointerUp(scrubber1, { clientX: 100, pointerId: 1 });
+
+      expect(scrubber1).toHaveAttribute('aria-valuenow', '1');
+      expect(screen.getByText('(#1–#6)')).toBeInTheDocument();
+
+      // Drag right past maximum boundary (maxStart = 20 - 6 = 14)
+      fireEvent.pointerDown(scrubber1, { clientX: 100, pointerId: 1 });
+      fireEvent.pointerMove(scrubber1, { clientX: 600, pointerId: 1 });
+      fireEvent.pointerUp(scrubber1, { clientX: 600, pointerId: 1 });
+
+      expect(scrubber1).toHaveAttribute('aria-valuenow', '15');
+      expect(screen.getAllByText('(#15–#20)')).toHaveLength(2);
+    });
+
+    it('handles pointer dragging on Scrubber 2 body to shift recent sample window', () => {
+      render(<DensityShiftChart solves={mockSolves} />);
+
+      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
+        left: 100,
+        top: 50,
+        right: 600,
+        bottom: 130,
+        width: 500,
+        height: 80,
+        x: 100,
+        y: 50,
+        toJSON: () => {},
+      });
+
+      const scrubber2 = screen.getByLabelText('Recent scrubber position');
+      // Starts at 20 - 6 = 14 (1-based: 15)
+      expect(scrubber2).toHaveAttribute('aria-valuenow', '15');
+      expect(screen.getByText('(#15–#20)')).toBeInTheDocument();
+
+      // Drag left by 100px (-4 solves)
+      fireEvent.pointerDown(scrubber2, { clientX: 450, pointerId: 2 });
+      fireEvent.pointerMove(scrubber2, { clientX: 350, pointerId: 2 });
+      fireEvent.pointerUp(scrubber2, { clientX: 350, pointerId: 2 });
+
+      expect(scrubber2).toHaveAttribute('aria-valuenow', '11');
+      expect(screen.getByText('(#11–#16)')).toBeInTheDocument();
+    });
+
+    it('handles pointer dragging on right resize handle to expand and shrink sample size symmetrically', () => {
+      render(<DensityShiftChart solves={mockSolves} />);
+
+      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
+        left: 100,
+        top: 50,
+        right: 600,
+        bottom: 130,
+        width: 500,
+        height: 80,
+        x: 100,
+        y: 50,
+        toJSON: () => {},
+      });
+
+      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+      const scrubber2 = screen.getByLabelText('Recent scrubber position');
+      const rightHandle1 = screen.getByLabelText('Baseline right resize handle');
+
+      // Expand window: drag right handle to the right by 50px (+2 solves)
+      fireEvent.pointerDown(rightHandle1, { clientX: 250, pointerId: 3 });
+      fireEvent.pointerMove(rightHandle1, { clientX: 300, pointerId: 3 });
+      fireEvent.pointerUp(rightHandle1, { clientX: 300, pointerId: 3 });
+
+      // Symmetrical expansion: 6 + 2 = 8 solves (40% width)
+      expect(scrubber1.style.width).toBe('40%');
+      expect(scrubber2.style.width).toBe('40%');
+      expect(screen.getByText('(#1–#8)')).toBeInTheDocument();
+      expect(screen.getByText('(#13–#20)')).toBeInTheDocument();
+
+      // Shrink window: drag right handle to the left by 200px (-8 solves, clamped to min 3 solves)
+      fireEvent.pointerDown(rightHandle1, { clientX: 300, pointerId: 3 });
+      fireEvent.pointerMove(rightHandle1, { clientX: 100, pointerId: 3 });
+      fireEvent.pointerUp(rightHandle1, { clientX: 100, pointerId: 3 });
+
+      // Clamped to minimum 3 solves: 3 / 20 = 15% width
+      expect(scrubber1.style.width).toBe('15%');
+      expect(scrubber2.style.width).toBe('15%');
+      expect(screen.getByText('(#1–#3)')).toBeInTheDocument();
+      expect(screen.getByText('(#13–#15)')).toBeInTheDocument();
+    });
+
+    it('handles pointer dragging on left resize handle of scrubber 1 and scrubber 2', () => {
+      render(<DensityShiftChart solves={mockSolves} />);
+
+      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
+        left: 100,
+        top: 50,
+        right: 600,
+        bottom: 130,
+        width: 500,
+        height: 80,
+        x: 100,
+        y: 50,
+        toJSON: () => {},
+      });
+
+      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+      const scrubber2 = screen.getByLabelText('Recent scrubber position');
+
+      // Slide scrubber1 to start index 3 (solve #4)
+      fireEvent.keyDown(scrubber1, { key: 'ArrowRight' });
+      fireEvent.keyDown(scrubber1, { key: 'ArrowRight' });
+      fireEvent.keyDown(scrubber1, { key: 'ArrowRight' });
+      expect(scrubber1).toHaveAttribute('aria-valuenow', '4');
+
+      // Drag left handle of scrubber 1 to the left (expanding from start 3 to start 1)
+      const leftHandle1 = screen.getByLabelText('Baseline left resize handle');
+      fireEvent.pointerDown(leftHandle1, { clientX: 200, pointerId: 4 });
+      fireEvent.pointerMove(leftHandle1, { clientX: 150, pointerId: 4 });
+      fireEvent.pointerUp(leftHandle1, { clientX: 150, pointerId: 4 });
+
+      // Fixed end was 3 + 6 = 9. Moving start from 3 to 1 -> new count is 8 solves
+      expect(scrubber1.style.width).toBe('40%');
+      expect(scrubber2.style.width).toBe('40%');
+
+      // Now test left handle of scrubber 2
+      const leftHandle2 = screen.getByLabelText('Recent left resize handle');
+      fireEvent.pointerDown(leftHandle2, { clientX: 400, pointerId: 5 });
+      fireEvent.pointerMove(leftHandle2, { clientX: 350, pointerId: 5 });
+      fireEvent.pointerUp(leftHandle2, { clientX: 350, pointerId: 5 });
+
+      expect(Number.parseFloat(scrubber2.style.width)).toBeGreaterThanOrEqual(40);
+    });
+
+    it('handles pointer cancel gracefully without getting stuck in active drag state', () => {
+      render(<DensityShiftChart solves={mockSolves} />);
+
+      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+      fireEvent.pointerDown(scrubber1, { clientX: 150, pointerId: 6 });
+      fireEvent.pointerCancel(scrubber1, { pointerId: 6 });
+
+      // Subsequent pointer move without active drag does not change state
+      fireEvent.pointerMove(scrubber1, { clientX: 350, pointerId: 6 });
+      expect(scrubber1).toHaveAttribute('aria-valuenow', '1');
+    });
+
+    it('repositions closest scrubber when clicking along the timeline track', () => {
+      render(<DensityShiftChart solves={mockSolves} />);
+
+      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
+        left: 0,
+        top: 0,
+        right: 1000,
+        bottom: 80,
+        width: 1000,
+        height: 80,
+        x: 0,
+        y: 0,
+        toJSON: () => {},
+      });
+
+      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+      const scrubber2 = screen.getByLabelText('Recent scrubber position');
+
+      // Click at x = 200 (20% of 1000 = solve 4, closer to scrubber 1 which is around solve 3)
+      fireEvent.click(track, { clientX: 200 });
+      // Center of scrubber 1 moves towards solve 4 (targetStart = 4 - 3 = 1 -> solve #2)
+      expect(scrubber1).toHaveAttribute('aria-valuenow', '2');
+
+      // Click at x = 800 (80% of 1000 = solve 16, closer to scrubber 2 which is at solve 15)
+      fireEvent.click(track, { clientX: 800 });
+      // Center of scrubber 2 moves towards solve 16 (targetStart = 16 - 3 = 13 -> solve #14)
+      expect(scrubber2).toHaveAttribute('aria-valuenow', '14');
+    });
+  });
+
+  describe('Plot generation and edge case resilience', () => {
+    it('handles empty dataset gracefully without crashing or invalid domains', () => {
+      render(<DensityShiftChart solves={[]} title="Empty Solves Test" />);
+
+      expect(screen.getByText('Empty Solves Test')).toBeInTheDocument();
+      expect(
+        screen.queryByLabelText(/Solve distribution timeline scrubbers track/i),
+      ).toBeInTheDocument();
+      // No crash, default Y ceiling is set
+      expect(captured.yAxisProps?.domain).toEqual([0, 0.25]);
+    });
+
+    it('handles small datasets with fewer than 3 solves safely', () => {
+      render(<DensityShiftChart solves={mockSolves.slice(0, 2)} />);
+
+      // Sparkline is rendered for >= 2 solves
+      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      expect(track.querySelector('svg')).toBeInTheDocument();
+      expect(captured.chartData).toBeDefined();
+    });
+
+    it('filters extreme outliers when computing global domain to prevent chart squashing', () => {
+      const solvesWithOutlier: Solve[] = [
+        ...mockSolves,
+        {
+          id: 999,
+          index: 21,
+          timeMs: 450000,
+          rawTimeSec: 450.0,
+          finalTimeSec: 450.0,
+          penalty: 'OK',
+          timestamp: 1600000000000,
+          date: new Date(1600000000000),
+          dateStr: '2020-09-13',
+        },
+      ];
+
+      render(<DensityShiftChart solves={solvesWithOutlier} />);
+
+      // Global domain max should be reasonably bounded by IQR rather than 450s * 1.15
+      const domainPoints = captured.chartData?.map((p) => p.x) ?? [];
+      const maxPlotX = Math.max(...domainPoints);
+      expect(maxPlotX).toBeLessThan(50);
+    });
+
+    it('handles solves with identical times without divide-by-zero errors', () => {
+      const flatSolves: Solve[] = Array.from({ length: 15 }, (_, idx) => ({
+        ...mockSolves[0],
+        id: idx + 1,
+        index: idx + 1,
+        finalTimeSec: 12.0,
+        timeMs: 12000,
+      }));
+
+      render(<DensityShiftChart solves={flatSolves} />);
+
+      expect(captured.chartData).toBeDefined();
+      expect(captured.chartData?.length).toBeGreaterThan(0);
+      for (const point of captured.chartData ?? []) {
+        expect(Number.isNaN(point.baselineDensity)).toBe(false);
+        expect(Number.isNaN(point.recentDensity)).toBe(false);
+      }
+    });
+
+    it('includes responsive timeline instruction label class for mobile visibility', () => {
+      render(<DensityShiftChart solves={mockSolves} />);
+
+      const instruction = screen.getByText(
+        /Drag scrubbers to move · Drag ribbed ends to resize sample window/,
+      );
+      expect(instruction).toBeInTheDocument();
+      // On mobile portrait, instruction is hidden via Tailwind 'hidden sm:inline'
+      expect(instruction).toHaveClass('hidden');
+      expect(instruction).toHaveClass('sm:inline');
+    });
+  });
 });

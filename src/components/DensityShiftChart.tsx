@@ -177,10 +177,15 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     e.preventDefault();
     e.stopPropagation();
     dragMovedRef.current = false;
+    latestDeltaSolvesRef.current = 0;
     const trackRect = trackRef.current?.getBoundingClientRect();
     const trackWidth = trackRect?.width || 1;
 
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      // Safe fallback
+    }
     setActiveDrag({
       type: 'move',
       scrubber,
@@ -202,10 +207,15 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     e.preventDefault();
     e.stopPropagation();
     dragMovedRef.current = false;
+    latestDeltaSolvesRef.current = 0;
     const trackRect = trackRef.current?.getBoundingClientRect();
     const trackWidth = trackRect?.width || 1;
 
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      // Safe fallback
+    }
     setActiveDrag({
       type: edge === 'start' ? 'resize-start' : 'resize-end',
       scrubber,
@@ -594,6 +604,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
             onPointerDown={(e) => handleBodyPointerDown(e, 1)}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
             onKeyDown={(e) => {
               const step = e.shiftKey ? Math.max(1, Math.round(totalSolves * 0.05)) : 1;
               if (e.altKey && e.key === 'ArrowRight') {
@@ -627,6 +638,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               onPointerDown={(e) => handleResizePointerDown(e, 1, 'start')}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
               aria-label="Baseline left resize handle"
               title="Drag to resize sample window"
             >
@@ -642,6 +654,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               onPointerDown={(e) => handleResizePointerDown(e, 1, 'end')}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
               aria-label="Baseline right resize handle"
               title="Drag to resize sample window"
             >
@@ -666,6 +679,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
             onPointerDown={(e) => handleBodyPointerDown(e, 2)}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
             onKeyDown={(e) => {
               const step = e.shiftKey ? Math.max(1, Math.round(totalSolves * 0.05)) : 1;
               if (e.altKey && e.key === 'ArrowRight') {
@@ -699,6 +713,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               onPointerDown={(e) => handleResizePointerDown(e, 2, 'start')}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
               aria-label="Recent left resize handle"
               title="Drag to resize sample window"
             >
@@ -714,6 +729,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               onPointerDown={(e) => handleResizePointerDown(e, 2, 'end')}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
               aria-label="Recent right resize handle"
               title="Drag to resize sample window"
             >

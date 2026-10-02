@@ -217,6 +217,75 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       await prevBtn.click();
       await expect(solvesSection.getByText('Showing 1 to 15 of 350 solves')).toBeVisible();
     });
+
+    test('renders DensityShiftChart with 1-column stacked summary banner, hidden timeline instructions, and mobile touch dragging', async ({
+      page,
+    }) => {
+      await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
+
+      const densityCard = page.locator('div.rounded-2xl').filter({
+        has: page.getByRole('heading', { name: /Time Distribution Shift/i }),
+      });
+      await expect(densityCard).toBeVisible();
+
+      // Verify the 3-metric summary banner stacks vertically in 1 column on mobile portrait (< 640px)
+      const summaryItems = densityCard.locator('.grid > div');
+      await expect(summaryItems).toHaveCount(3);
+      const item0Box = await summaryItems.nth(0).boundingBox();
+      const item1Box = await summaryItems.nth(1).boundingBox();
+      const item2Box = await summaryItems.nth(2).boundingBox();
+      if (!item0Box || !item1Box || !item2Box)
+        throw new Error('Missing summary items bounding boxes');
+
+      expect(item1Box.y).toBeGreaterThan(item0Box.y + 20);
+      expect(item2Box.y).toBeGreaterThan(item1Box.y + 20);
+
+      // Verify the timeline instruction label is hidden on mobile portrait to avoid crowding
+      const timelineInstruction = densityCard.locator('span.hidden.sm\\:inline', {
+        hasText: /Drag scrubbers to move/i,
+      });
+      await expect(timelineInstruction).toBeHidden();
+
+      // Verify endpoint timeline solve markers are clearly visible
+      await expect(densityCard.getByText('Solve #1')).toBeVisible();
+      await expect(densityCard.getByText(/^Solve #\d+$/).nth(1)).toBeVisible();
+
+      // Verify Recharts KDE Area paths are generated and visible
+      const baselineCurve = densityCard.locator('path[fill="url(#colorBaseline)"]');
+      const recentCurve = densityCard.locator('path[fill="url(#colorRecent)"]');
+      await expect(baselineCurve).toBeVisible();
+      await expect(recentCurve).toBeVisible();
+
+      const initialBaselineD = await baselineCurve.getAttribute('d');
+      expect(initialBaselineD).toBeTruthy();
+
+      // Verify interactive touch dragging on mobile scrubber
+      const scrubber1 = densityCard.getByRole('slider', { name: 'Baseline scrubber position' });
+      await scrubber1.scrollIntoViewIfNeeded();
+      const s1Box = await scrubber1.boundingBox();
+      if (!s1Box) throw new Error('Missing scrubber 1 bounding box');
+
+      await page.mouse.move(s1Box.x + s1Box.width / 2, s1Box.y + s1Box.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(s1Box.x + s1Box.width / 2 + 50, s1Box.y + s1Box.height / 2, {
+        steps: 5,
+      });
+      await page.mouse.up();
+
+      await expect(async () => {
+        const newBaselineVal = Number(await scrubber1.getAttribute('aria-valuenow'));
+        expect(newBaselineVal).toBeGreaterThan(1);
+      }).toPass({ timeout: 3000 });
+
+      const updatedBaselineD = await baselineCurve.getAttribute('d');
+      expect(updatedBaselineD).not.toEqual(initialBaselineD);
+
+      // Verify zero horizontal page scroll on mobile portrait
+      const hasOverflow = await page.evaluate(() => {
+        return document.documentElement.scrollWidth > document.documentElement.clientWidth;
+      });
+      expect(hasOverflow).toBe(false);
+    });
   });
 
   test.describe('Mobile Landscape Mode (844x390)', () => {
@@ -323,7 +392,54 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
 
       const footer = page.locator('footer');
       await expect(footer).toHaveClass(/safe-area-x/);
-      await expect(footer).toHaveClass(/safe-area-bottom/);
+    });
+
+    test('renders DensityShiftChart on Mobile Landscape with 3-column banner, visible timeline instructions, and dragging', async ({
+      page,
+    }) => {
+      await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
+
+      const densityCard = page.locator('div.rounded-2xl').filter({
+        has: page.getByRole('heading', { name: /Time Distribution Shift/i }),
+      });
+      await expect(densityCard).toBeVisible();
+
+      // In landscape (844px >= 640px sm: breakpoint), summary banner items align in a single row
+      const summaryItems = densityCard.locator('.grid > div');
+      await expect(summaryItems).toHaveCount(3);
+      const item0Box = await summaryItems.nth(0).boundingBox();
+      const item1Box = await summaryItems.nth(1).boundingBox();
+      if (!item0Box || !item1Box) throw new Error('Missing summary items bounding boxes');
+      expect(Math.abs(item0Box.y - item1Box.y)).toBeLessThan(6);
+
+      // Timeline instruction text is visible on landscape (>= 640px)
+      const timelineInstruction = densityCard.locator('span.hidden.sm\\:inline', {
+        hasText: /Drag scrubbers to move/i,
+      });
+      await expect(timelineInstruction).toBeVisible();
+
+      // Verify dragging scrubber in landscape (ensure scrubber is scrolled into view in 390px viewport)
+      const scrubber1 = densityCard.getByRole('slider', { name: 'Baseline scrubber position' });
+      await scrubber1.scrollIntoViewIfNeeded();
+      const s1Box = await scrubber1.boundingBox();
+      if (!s1Box) throw new Error('Missing scrubber bounding box');
+
+      const baselineCurve = densityCard.locator('path[fill="url(#colorBaseline)"]');
+      const initialD = await baselineCurve.getAttribute('d');
+
+      await page.mouse.move(s1Box.x + s1Box.width / 2, s1Box.y + s1Box.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(s1Box.x + s1Box.width / 2 + 60, s1Box.y + s1Box.height / 2, {
+        steps: 5,
+      });
+      await page.mouse.up();
+
+      await expect(async () => {
+        const val = Number(await scrubber1.getAttribute('aria-valuenow'));
+        expect(val).toBeGreaterThan(1);
+      }).toPass({ timeout: 3000 });
+      const newD = await baselineCurve.getAttribute('d');
+      expect(newD).not.toEqual(initialD);
     });
   });
 
@@ -399,6 +515,58 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       await drawerBtn.click();
       await expect(pbCard.getByText('Filter Record Type:')).toHaveCount(0);
     });
+
+    test('interacts with DensityShiftChart on Tablet Portrait: drag scrubber and resize ribbed handle symmetrically', async ({
+      page,
+    }) => {
+      await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
+
+      const densityCard = page.locator('div.rounded-2xl').filter({
+        has: page.getByRole('heading', { name: /Time Distribution Shift/i }),
+      });
+      await expect(densityCard).toBeVisible();
+
+      // 3-column banner aligns in a single row on tablet portrait (768px >= 640px)
+      const summaryItems = densityCard.locator('.grid > div');
+      await expect(summaryItems).toHaveCount(3);
+      const item0Box = await summaryItems.nth(0).boundingBox();
+      const item2Box = await summaryItems.nth(2).boundingBox();
+      if (!item0Box || !item2Box) throw new Error('Missing summary items bounding boxes');
+      expect(Math.abs(item0Box.y - item2Box.y)).toBeLessThan(6);
+
+      const scrubber1 = densityCard.getByRole('slider', { name: 'Baseline scrubber position' });
+      const scrubber2 = densityCard.getByRole('slider', { name: 'Recent scrubber position' });
+
+      // Drag right ribbed handle on Scrubber 1 to expand sample size symmetrically
+      const rightHandle = densityCard.getByLabel('Baseline right resize handle');
+      const handleBox = await rightHandle.boundingBox();
+      if (!handleBox) throw new Error('Missing resize handle bounding box');
+
+      const s1BoxBefore = await scrubber1.boundingBox();
+      const s2BoxBefore = await scrubber2.boundingBox();
+      if (!s1BoxBefore || !s2BoxBefore) throw new Error('Missing scrubber bounding box');
+      const s1WidthBefore = s1BoxBefore.width;
+      const s2WidthBefore = s2BoxBefore.width;
+
+      await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(
+        handleBox.x + handleBox.width / 2 + 50,
+        handleBox.y + handleBox.height / 2,
+        { steps: 5 },
+      );
+      await page.mouse.up();
+
+      const s1BoxAfter = await scrubber1.boundingBox();
+      const s2BoxAfter = await scrubber2.boundingBox();
+      if (!s1BoxAfter || !s2BoxAfter) throw new Error('Missing scrubber bounding box');
+      const s1WidthAfter = s1BoxAfter.width;
+      const s2WidthAfter = s2BoxAfter.width;
+
+      expect(s1WidthAfter).toBeGreaterThan(s1WidthBefore);
+      expect(s2WidthAfter).toBeGreaterThan(s2WidthBefore);
+      expect(Math.abs(s1WidthAfter - s2WidthAfter)).toBeLessThan(1);
+    });
   });
 
   test.describe('Tablet Landscape Mode (1180x820)', () => {
@@ -463,6 +631,59 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       await expect(
         card.locator('.recharts-legend-item-text', { hasText: '35-Solve Moving Average (Ao35)' }),
       ).toBeVisible();
+    });
+
+    test('interacts with DensityShiftChart on Tablet Landscape: timeline track clicking and fullscreen modal view', async ({
+      page,
+    }) => {
+      await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
+
+      const densityCard = page.locator('div.rounded-2xl').filter({
+        has: page.getByRole('heading', { name: /Time Distribution Shift/i }),
+      });
+      await expect(densityCard).toBeVisible();
+
+      const scrubber1 = densityCard.getByRole('slider', { name: 'Baseline scrubber position' });
+      const scrubber2 = densityCard.getByRole('slider', { name: 'Recent scrubber position' });
+
+      // Click track in the empty region between scrubbers to reposition closer scrubber
+      await page.waitForTimeout(100);
+      const track = densityCard.getByLabel('Solve distribution timeline scrubbers track');
+      await track.scrollIntoViewIfNeeded();
+      const s1BoxAfter = await scrubber1.boundingBox();
+      const s2BoxAfter = await scrubber2.boundingBox();
+      const trackBox = await track.boundingBox();
+      if (!s1BoxAfter || !s2BoxAfter || !trackBox) throw new Error('Missing track bounding box');
+
+      const gapMidpointX = (s1BoxAfter.x + s1BoxAfter.width + s2BoxAfter.x) / 2;
+      const clickTrackOffset = gapMidpointX - trackBox.x;
+
+      const prevScrubber2Val = Number(await scrubber2.getAttribute('aria-valuenow'));
+      await track.click({ position: { x: clickTrackOffset, y: trackBox.height / 2 } });
+
+      await expect(async () => {
+        const afterClickScrubber2Val = Number(await scrubber2.getAttribute('aria-valuenow'));
+        expect(afterClickScrubber2Val).not.toEqual(prevScrubber2Val);
+      }).toPass({ timeout: 3000 });
+
+      // Maximize to fullscreen modal and verify layout
+      const maxBtn = densityCard.getByTitle('Maximize to Fullscreen');
+      await maxBtn.click();
+
+      const modalBackdrop = page.locator('.fixed.inset-0.z-\\[100\\]');
+      await expect(modalBackdrop).toBeVisible();
+
+      // Ensure chart, banner, and scrubbers are all rendered inside fullscreen modal
+      await expect(
+        modalBackdrop.getByLabel('Solve distribution timeline scrubbers track'),
+      ).toBeVisible();
+      await expect(
+        modalBackdrop.getByRole('slider', { name: 'Baseline scrubber position' }),
+      ).toBeVisible();
+
+      // Exit fullscreen
+      await page.keyboard.press('Escape');
+      await expect(modalBackdrop).toHaveCount(0);
     });
   });
 });

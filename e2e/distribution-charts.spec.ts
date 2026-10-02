@@ -62,14 +62,138 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
 
     await page.keyboard.press('Alt+ArrowRight');
 
-    const box1After = await scrubber1.boundingBox();
-    const box2After = await scrubber2.boundingBox();
-    if (!box1After || !box2After) throw new Error('Missing bounding box');
+    // Both scrubbers expand symmetrically (allowing for 150ms CSS transition to settle)
+    await expect(async () => {
+      const box1After = await scrubber1.boundingBox();
+      const box2After = await scrubber2.boundingBox();
+      if (!box1After || !box2After) throw new Error('Missing bounding box');
+      expect(box1After.width).toBeGreaterThan(box1Before.width);
+      expect(box2After.width).toBeGreaterThan(box2Before.width);
+      expect(Math.abs(box1After.width - box2After.width)).toBeLessThan(1);
+    }).toPass({ timeout: 2000 });
+  });
 
-    // Both scrubbers expanded by the exact same amount
-    expect(box1After.width).toBeGreaterThan(box1Before.width);
-    expect(box2After.width).toBeGreaterThan(box2Before.width);
-    expect(Math.abs(box1After.width - box2After.width)).toBeLessThan(1);
+  test('DensityShiftChart supports direct pointer dragging of scrubbers, ribbed resize handles, track clicking, and dynamic KDE plot updates', async ({
+    page,
+  }) => {
+    await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
+
+    const densityCard = page.locator('div.rounded-2xl').filter({
+      has: page.getByRole('heading', { name: /Time Distribution Shift/i }),
+    });
+
+    await expect(densityCard).toBeVisible();
+
+    const scrubber1 = densityCard.getByRole('slider', { name: 'Baseline scrubber position' });
+    const scrubber2 = densityCard.getByRole('slider', { name: 'Recent scrubber position' });
+
+    // Verify initial KDE curve paths are rendered
+    const baselineArea = densityCard.locator('path[fill="url(#colorBaseline)"]');
+    const recentArea = densityCard.locator('path[fill="url(#colorRecent)"]');
+    await expect(baselineArea).toBeVisible();
+    await expect(recentArea).toBeVisible();
+
+    const initialBaselineD = await baselineArea.getAttribute('d');
+    expect(initialBaselineD).toBeTruthy();
+
+    // Direct pointer drag on Scrubber 1 body
+    const s1Box = await scrubber1.boundingBox();
+    if (!s1Box) throw new Error('Missing Scrubber 1 bounding box');
+
+    await page.mouse.move(s1Box.x + s1Box.width / 2, s1Box.y + s1Box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(s1Box.x + s1Box.width / 2 + 70, s1Box.y + s1Box.height / 2, { steps: 5 });
+    await page.mouse.up();
+
+    // Verify scrubber 1 position moved
+    const newAriaVal = await scrubber1.getAttribute('aria-valuenow');
+    expect(Number(newAriaVal)).toBeGreaterThan(1);
+
+    // Verify Recharts Area path recalculated dynamically from new solve subset
+    const updatedBaselineD = await baselineArea.getAttribute('d');
+    expect(updatedBaselineD).not.toEqual(initialBaselineD);
+
+    // Direct pointer drag on right resize handle to expand sample window symmetrically
+    const rightHandle = densityCard.getByLabel('Baseline right resize handle');
+    const handleBox = await rightHandle.boundingBox();
+    if (!handleBox) throw new Error('Missing right handle box');
+
+    const s1BoxBefore = await scrubber1.boundingBox();
+    const s2BoxBefore = await scrubber2.boundingBox();
+    if (!s1BoxBefore || !s2BoxBefore) throw new Error('Missing scrubber bounding box');
+    const s1WidthBefore = s1BoxBefore.width;
+    const s2WidthBefore = s2BoxBefore.width;
+
+    await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(
+      handleBox.x + handleBox.width / 2 + 50,
+      handleBox.y + handleBox.height / 2,
+      { steps: 5 },
+    );
+    await page.mouse.up();
+
+    const s1BoxAfter = await scrubber1.boundingBox();
+    const s2BoxAfter = await scrubber2.boundingBox();
+    if (!s1BoxAfter || !s2BoxAfter) throw new Error('Missing scrubber bounding box');
+    const s1WidthAfter = s1BoxAfter.width;
+    const s2WidthAfter = s2BoxAfter.width;
+
+    // Both scrubbers expanded symmetrically
+    expect(s1WidthAfter).toBeGreaterThan(s1WidthBefore);
+    expect(s2WidthAfter).toBeGreaterThan(s2WidthBefore);
+    expect(Math.abs(s1WidthAfter - s2WidthAfter)).toBeLessThan(1);
+
+    // Timeline track click to reposition scrubber
+    // Target the empty track area midpoint between scrubber 1 and scrubber 2
+    await page.waitForTimeout(100);
+    const track = densityCard.getByLabel('Solve distribution timeline scrubbers track');
+    await track.scrollIntoViewIfNeeded();
+    const s1BoxAfterDrag = await scrubber1.boundingBox();
+    const s2BoxAfterDrag = await scrubber2.boundingBox();
+    const trackBox = await track.boundingBox();
+    if (!s1BoxAfterDrag || !s2BoxAfterDrag || !trackBox) throw new Error('Missing bounding boxes');
+
+    const gapMidpointX = (s1BoxAfterDrag.x + s1BoxAfterDrag.width + s2BoxAfterDrag.x) / 2;
+    const clickTrackOffset = gapMidpointX - trackBox.x;
+
+    const prevScrubber1Val = Number(await scrubber1.getAttribute('aria-valuenow'));
+    await track.click({ position: { x: clickTrackOffset, y: trackBox.height / 2 } });
+
+    await expect(async () => {
+      const afterClickScrubber1Val = Number(await scrubber1.getAttribute('aria-valuenow'));
+      expect(afterClickScrubber1Val).not.toEqual(prevScrubber1Val);
+    }).toPass({ timeout: 3000 });
+  });
+
+  test('DensityShiftChart supports fullscreen modal view with interactive scrubbers and clean restoration', async ({
+    page,
+  }) => {
+    await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
+
+    const densityCard = page.locator('div.rounded-2xl').filter({
+      has: page.getByRole('heading', { name: /Time Distribution Shift/i }),
+    });
+
+    const maxBtn = densityCard.getByTitle('Maximize to Fullscreen');
+    await maxBtn.click();
+
+    // Verify modal overlay opens
+    const modalBackdrop = page.locator('.fixed.inset-0.z-\\[100\\]');
+    await expect(modalBackdrop).toBeVisible();
+
+    // Verify chart and scrubbers are visible in fullscreen
+    const fullscreenTrack = modalBackdrop.getByLabel('Solve distribution timeline scrubbers track');
+    await expect(fullscreenTrack).toBeVisible();
+
+    const fullscreenScrubber1 = modalBackdrop.getByRole('slider', {
+      name: 'Baseline scrubber position',
+    });
+    await expect(fullscreenScrubber1).toBeVisible();
+
+    // Exit fullscreen via Escape
+    await page.keyboard.press('Escape');
+    await expect(modalBackdrop).toHaveCount(0);
   });
 
   test('MetricsEvolutionChart renders dual-axis labels and legend series', async ({ page }) => {
