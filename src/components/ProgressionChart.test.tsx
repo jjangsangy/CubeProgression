@@ -489,4 +489,21 @@ describe('ProgressionChart component', () => {
     expect(dateInputs[0]).toHaveAttribute('min', mockSolves[0].dateStr);
     expect(dateInputs[1]).toHaveAttribute('max', mockSolves[mockSolves.length - 1].dateStr);
   });
+
+  it('initializes mobile screen state synchronously from window.innerWidth', () => {
+    const originalInnerWidth = window.innerWidth;
+    try {
+      window.innerWidth = 375;
+      render(
+        <ProgressionChart
+          solves={mockSolves}
+          periodGroups={mockPeriodGroups}
+          regression={mockRegression}
+        />,
+      );
+      expect(screen.getByTestId('progression-chart-canvas')).toBeInTheDocument();
+    } finally {
+      window.innerWidth = originalInnerWidth;
+    }
+  });
 });

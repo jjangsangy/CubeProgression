@@ -9,7 +9,19 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body class="min-h-full bg-stone-950 text-stone-100" style="background-color: #0c0a09;">
-    <div id="root"></div>
+    <div id="root">
+      <div style="min-height: 100vh; display: flex; flex-direction: column; background-color: #0c0a09; color: #f5f5f4;">
+        <header style="height: 64px; border-bottom: 1px solid #292524; display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem; background-color: rgba(12, 10, 9, 0.8);">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div style="width: 2rem; height: 2rem; border-radius: 0.75rem; background-color: rgba(245, 158, 11, 0.2); border: 1px solid rgba(245, 158, 11, 0.4);"></div>
+            <div style="font-weight: 700; font-size: 1.125rem; color: #f5f5f4; letter-spacing: -0.02em;">CubeProgression</div>
+          </div>
+        </header>
+        <main style="max-width: 80rem; margin: 0 auto; width: 100%; flex: 1; padding: 2rem 1.5rem; display: flex; flex-direction: column; gap: 2rem;">
+          <div style="border-radius: 1rem; border: 1px solid #292524; background-color: #1c1917; padding: 1.5rem; height: 280px;"></div>
+        </main>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -71,15 +71,11 @@ export function useCubeDatasetCore(): UseCubeDatasetCoreReturn {
       storageNoticeStore.resetStorageState();
 
       try {
-        const [saved, info] = await Promise.all([
-          getSavedDataset(),
-          getStorageInfo().catch(() => null),
-        ]);
+        const saved = await getSavedDataset();
 
         if (isCancelled) return;
 
         if (saved?.sessions && saved.sessions.length > 0) {
-          if (info) storageNoticeStore.setStorageUsageMB(info.usageMB);
           storageNoticeStore.setIsSaved(true);
 
           const totalSolvesCount = saved.sessions.reduce((acc, s) => acc + s.solves.length, 0);
@@ -87,7 +83,7 @@ export function useCubeDatasetCore(): UseCubeDatasetCoreReturn {
             `Restored ${totalSolvesCount.toLocaleString()} solves across ${saved.sessions.length} sessions from IndexedDB (${saved.fileName})`,
           );
 
-          // Atomic synchronous state flush
+          // Atomic synchronous state flush unblocks rendering immediately
           setSessions(saved.sessions);
           setSelectedSessionId(saved.selectedSessionId || saved.sessions[0].id);
           setFileName(saved.fileName || 'cstimer_saved.txt');
@@ -96,6 +92,13 @@ export function useCubeDatasetCore(): UseCubeDatasetCoreReturn {
           setLoadingProgress(100);
           setLoadingStage('Loaded saved data successfully!');
           setIsLoading(false);
+
+          // Background storage estimate
+          getStorageInfo()
+            .then((info) => {
+              if (info && !isCancelled) storageNoticeStore.setStorageUsageMB(info.usageMB);
+            })
+            .catch(() => null);
           return;
         }
       } catch (err) {
@@ -117,21 +120,22 @@ export function useCubeDatasetCore(): UseCubeDatasetCoreReturn {
         const demoFileName = 'cstimer_demo_350solves.txt';
         const initialSessId = demoSessions[0].id;
 
-        const [, info] = await Promise.all([
-          saveDataset({
-            fileName: demoFileName,
-            sessions: demoSessions,
-            selectedSessionId: initialSessId,
-            groupingPeriod: 'daily',
-            customBatchSize: 50,
-          }),
-          getStorageInfo().catch(() => null),
-        ]);
+        await saveDataset({
+          fileName: demoFileName,
+          sessions: demoSessions,
+          selectedSessionId: initialSessId,
+          groupingPeriod: 'daily',
+          customBatchSize: 50,
+        });
 
         if (isCancelled) return;
 
         storageNoticeStore.setIsSaved(true);
-        if (info) storageNoticeStore.setStorageUsageMB(info.usageMB);
+        getStorageInfo()
+          .then((info) => {
+            if (info && !isCancelled) storageNoticeStore.setStorageUsageMB(info.usageMB);
+          })
+          .catch(() => null);
 
         // Atomic synchronous state flush
         setSessions(demoSessions);
@@ -168,19 +172,20 @@ export function useCubeDatasetCore(): UseCubeDatasetCoreReturn {
       const demoFileName = 'cstimer_demo_350solves.txt';
       const initialSessId = demoSessions[0].id;
 
-      const [, info] = await Promise.all([
-        saveDataset({
-          fileName: demoFileName,
-          sessions: demoSessions,
-          selectedSessionId: initialSessId,
-          groupingPeriod,
-          customBatchSize,
-        }),
-        getStorageInfo().catch(() => null),
-      ]);
+      await saveDataset({
+        fileName: demoFileName,
+        sessions: demoSessions,
+        selectedSessionId: initialSessId,
+        groupingPeriod,
+        customBatchSize,
+      });
 
       storageNoticeStore.setIsSaved(true);
-      if (info) storageNoticeStore.setStorageUsageMB(info.usageMB);
+      getStorageInfo()
+        .then((info) => {
+          if (info) storageNoticeStore.setStorageUsageMB(info.usageMB);
+        })
+        .catch(() => null);
 
       // Atomic synchronous state flush
       setSessions(demoSessions);

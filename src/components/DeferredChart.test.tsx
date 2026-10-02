@@ -1,4 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
+import { lazy } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DeferredChart } from './DeferredChart';
 
@@ -63,5 +64,29 @@ describe('DeferredChart component', () => {
 
     expect(screen.getByTestId('chart-content')).toBeInTheDocument();
     expect(disconnectMock).toHaveBeenCalled();
+  });
+
+  it('supports lazy-loaded components with internal Suspense boundary', async () => {
+    // @ts-expect-error test environment override
+    delete window.IntersectionObserver;
+
+    const LazyContent = lazy(
+      () =>
+        new Promise<{ default: React.FC }>((resolve) => {
+          setTimeout(() => {
+            resolve({
+              default: () => <div data-testid="lazy-chart-content">Async Chart Loaded</div>,
+            });
+          }, 10);
+        }),
+    );
+
+    render(
+      <DeferredChart minHeight={300} fallbackTitle="Lazy Chart">
+        <LazyContent />
+      </DeferredChart>,
+    );
+
+    expect(await screen.findByTestId('lazy-chart-content')).toBeInTheDocument();
   });
 });

@@ -102,7 +102,7 @@ describe('DashboardView', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders all 4 progression charts, metric cards, and solves table when data is provided', () => {
+  it('renders all 4 progression charts, metric cards, and solves table when data is provided', async () => {
     render(
       <DashboardView
         session={mockSession}
@@ -116,11 +116,11 @@ describe('DashboardView', () => {
     expect(screen.getByText('Best Single')).toBeInTheDocument();
     expect(screen.getByText('Session Solves')).toBeInTheDocument();
 
-    // Chart titles
-    expect(screen.getByText('3x3 Practice: Progression Over 2 Solves')).toBeInTheDocument();
-    expect(screen.getByText('3x3 Practice: PB Progression Over Time')).toBeInTheDocument();
+    // Chart titles (lazy-loaded inside DeferredChart)
+    expect(await screen.findByText('3x3 Practice: Progression Over 2 Solves')).toBeInTheDocument();
+    expect(await screen.findByText('3x3 Practice: PB Progression Over Time')).toBeInTheDocument();
     expect(
-      screen.getByText('Time Distribution Shift: Baseline vs. Recent Solves'),
+      await screen.findByText('Time Distribution Shift: Baseline vs. Recent Solves'),
     ).toBeInTheDocument();
 
     // Solves Table

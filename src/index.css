@@ -98,14 +98,16 @@ body,
 
 .animate-cube-cw {
   animation: cube-tile-cw 1.4s ease-in-out infinite both;
-  will-change: transform, opacity;
-  transform: translateZ(0);
 }
 
 .animate-cube-ccw {
   animation: cube-tile-ccw 1.4s ease-in-out infinite both;
-  will-change: transform, opacity;
-  transform: translateZ(0);
+}
+
+/* Off-screen chart content-visibility to bypass layout calculations until scroll */
+.chart-content-visibility {
+  content-visibility: auto;
+  contain-intrinsic-size: 500px;
 }
 
 /* GPU-accelerated dialog / container fade-in-scale animation */

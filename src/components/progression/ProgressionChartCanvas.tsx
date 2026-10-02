@@ -54,7 +54,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
   slopeFormatted,
 }) => {
   return (
-    <div className="h-[420px] w-full pt-1">
+    <div className="h-[420px] w-full pt-1" data-testid="progression-chart-canvas">
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart
           data={chartData}

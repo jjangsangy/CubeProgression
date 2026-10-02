@@ -35,10 +35,12 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
   const [isRangePanelOpen, setIsRangePanelOpen] = useState<boolean>(true);
 
   // Viewport width tracking for responsive tick calculations
-  const [windowWidth, setWindowWidth] = useState<number>(
+  const [windowWidth, setWindowWidth] = useState<number>(() =>
     typeof window !== 'undefined' ? window.innerWidth : 1024,
   );
-  const [isMobileScreen, setIsMobileScreen] = useState<boolean>(false);
+  const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
+  );
 
   useEffect(() => {
     const handleResize = () => {

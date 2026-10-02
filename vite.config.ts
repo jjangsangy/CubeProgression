@@ -22,7 +22,17 @@ export default defineConfig(() => {
       },
     },
     build: {
+      target: 'es2022',
+      cssMinify: 'lightningcss',
       chunkSizeWarningLimit: 600,
+      modulePreload: {
+        polyfill: false,
+        resolveDependencies(_filename, deps) {
+          return deps.filter(
+            (dep) => !dep.includes('temporal-vendor') && !dep.includes('recharts-vendor'),
+          );
+        },
+      },
       rollupOptions: {
         output: {
           manualChunks(id) {
@@ -30,7 +40,11 @@ export default defineConfig(() => {
               if (
                 id.includes('recharts') ||
                 id.includes('@reduxjs/toolkit') ||
-                id.includes('react-redux')
+                id.includes('react-redux') ||
+                id.includes('victory-vendor') ||
+                id.includes('reselect') ||
+                id.includes('immer') ||
+                id.includes('decimal.js-light')
               ) {
                 return 'recharts-vendor';
               }

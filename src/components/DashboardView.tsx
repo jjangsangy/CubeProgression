@@ -1,12 +1,22 @@
+import { lazy } from 'react';
 import type { GlobalStats, GroupingPeriod, PeriodGroup, Session } from '../types';
 import { DailyDistributionBoxPlot } from './DailyDistributionBoxPlot';
 import { DeferredChart } from './DeferredChart';
-import { DensityShiftChart } from './DensityShiftChart';
-import { MetricsEvolutionChart } from './MetricsEvolutionChart';
 import { MetricsOverviewCards } from './MetricsOverviewCards';
-import { PbProgressionChart } from './PbProgressionChart';
-import { ProgressionChart } from './ProgressionChart';
 import { SolvesTable } from './SolvesTable';
+
+const ProgressionChart = lazy(() =>
+  import('./ProgressionChart').then((m) => ({ default: m.ProgressionChart })),
+);
+const PbProgressionChart = lazy(() =>
+  import('./PbProgressionChart').then((m) => ({ default: m.PbProgressionChart })),
+);
+const DensityShiftChart = lazy(() =>
+  import('./DensityShiftChart').then((m) => ({ default: m.DensityShiftChart })),
+);
+const MetricsEvolutionChart = lazy(() =>
+  import('./MetricsEvolutionChart').then((m) => ({ default: m.MetricsEvolutionChart })),
+);
 
 export interface DashboardViewProps {
   session: Session | null;
@@ -33,13 +43,15 @@ export function DashboardView({
       {/* The 4 Progression Plots & Solves Table */}
       <div className="flex flex-col gap-8">
         {/* Plot 1: Overall Progression & Moving Averages */}
-        <ProgressionChart
-          solves={session.solves}
-          periodGroups={periodGroups}
-          regression={stats.regression}
-          groupingPeriod={groupingPeriod}
-          title={`${session.name}: Progression Over ${session.solves.length} Solves`}
-        />
+        <DeferredChart minHeight={480} fallbackTitle="Overall Progression">
+          <ProgressionChart
+            solves={session.solves}
+            periodGroups={periodGroups}
+            regression={stats.regression}
+            groupingPeriod={groupingPeriod}
+            title={`${session.name}: Progression Over ${session.solves.length} Solves`}
+          />
+        </DeferredChart>
 
         {/* Plot 2: Personal Best Progression Over Time */}
         <DeferredChart minHeight={540} fallbackTitle="PB Progression">
