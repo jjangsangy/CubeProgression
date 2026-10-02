@@ -100,6 +100,130 @@ describe('FileUploader component', () => {
     expect(onChangeCustomBatchSize).toHaveBeenCalledWith(25);
   });
 
+  it('handles changing custom batch size input with valid and invalid values', () => {
+    const onChangeCustomBatchSize = vi.fn();
+
+    render(
+      <FileUploader
+        sessions={mockSessions}
+        selectedSessionId="s1"
+        onSelectSession={vi.fn()}
+        groupingPeriod="customBatch"
+        onChangeGrouping={vi.fn()}
+        customBatchSize={50}
+        onChangeCustomBatchSize={onChangeCustomBatchSize}
+        onFileUpload={vi.fn()}
+        onLoadDemo={vi.fn()}
+      />,
+    );
+
+    const input = screen.getByRole('spinbutton');
+    expect(input).toHaveValue(50);
+
+    // Valid change
+    fireEvent.change(input, { target: { value: '75' } });
+    expect(onChangeCustomBatchSize).toHaveBeenCalledWith(75);
+
+    // Invalid / zero value
+    onChangeCustomBatchSize.mockClear();
+    fireEvent.change(input, { target: { value: '0' } });
+    expect(onChangeCustomBatchSize).not.toHaveBeenCalled();
+
+    // Invalid / NaN value
+    fireEvent.change(input, { target: { value: '' } });
+    expect(onChangeCustomBatchSize).not.toHaveBeenCalled();
+  });
+
+  it('handles drag and drop events on file dropzone', () => {
+    const onFileUpload = vi.fn();
+
+    render(
+      <FileUploader
+        sessions={mockSessions}
+        selectedSessionId="s1"
+        onSelectSession={vi.fn()}
+        groupingPeriod="daily"
+        onChangeGrouping={vi.fn()}
+        customBatchSize={50}
+        onChangeCustomBatchSize={vi.fn()}
+        onFileUpload={onFileUpload}
+        onLoadDemo={vi.fn()}
+      />,
+    );
+
+    const dropzone = screen.getByLabelText('File upload dropzone');
+
+    // Drag over
+    fireEvent.dragOver(dropzone);
+
+    // Drag leave
+    fireEvent.dragLeave(dropzone);
+
+    // Drop empty
+    fireEvent.drop(dropzone, {
+      dataTransfer: { files: [] },
+    });
+    expect(onFileUpload).not.toHaveBeenCalled();
+
+    // Drop with a file
+    const file = new File(['{"session1": []}'], 'cstimer.txt', { type: 'text/plain' });
+    fireEvent.drop(dropzone, {
+      dataTransfer: { files: [file] },
+    });
+    expect(onFileUpload).toHaveBeenCalledWith(file);
+  });
+
+  it('handles file input change and click to browse button', () => {
+    const onFileUpload = vi.fn();
+
+    render(
+      <FileUploader
+        sessions={mockSessions}
+        selectedSessionId="s1"
+        onSelectSession={vi.fn()}
+        groupingPeriod="daily"
+        onChangeGrouping={vi.fn()}
+        customBatchSize={50}
+        onChangeCustomBatchSize={vi.fn()}
+        onFileUpload={onFileUpload}
+        onLoadDemo={vi.fn()}
+      />,
+    );
+
+    const file = new File(['{"session1": []}'], 'cstimer.txt', { type: 'text/plain' });
+    const fileInput = screen.getByLabelText('Upload csTimer file');
+
+    const clickSpy = vi.spyOn(fileInput, 'click');
+    const browseBtn = screen.getByText('click to browse');
+    fireEvent.click(browseBtn);
+    expect(clickSpy).toHaveBeenCalled();
+
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    expect(onFileUpload).toHaveBeenCalledWith(file);
+  });
+
+  it('calls onLoadDemo when "Load Sample Data" is clicked', () => {
+    const onLoadDemo = vi.fn();
+
+    render(
+      <FileUploader
+        sessions={mockSessions}
+        selectedSessionId="s1"
+        onSelectSession={vi.fn()}
+        groupingPeriod="daily"
+        onChangeGrouping={vi.fn()}
+        customBatchSize={50}
+        onChangeCustomBatchSize={vi.fn()}
+        onFileUpload={vi.fn()}
+        onLoadDemo={onLoadDemo}
+      />,
+    );
+
+    const loadDemoBtn = screen.getByText('Load Sample Data');
+    fireEvent.click(loadDemoBtn);
+    expect(onLoadDemo).toHaveBeenCalled();
+  });
+
   it('displays error message when provided', () => {
     render(
       <FileUploader
@@ -141,5 +265,52 @@ describe('FileUploader component', () => {
     expect(screen.getByText('Parsing solves and timestamps...')).toBeInTheDocument();
     expect(screen.getByText('cstimer_my_solves.txt')).toBeInTheDocument();
     expect(screen.getByText('65%')).toBeInTheDocument();
+  });
+
+  it('renders storage status bar when isSaved is true and handles reset dataset', () => {
+    const onClearStorage = vi.fn();
+
+    const { rerender } = render(
+      <FileUploader
+        sessions={mockSessions}
+        selectedSessionId="s1"
+        onSelectSession={vi.fn()}
+        groupingPeriod="daily"
+        onChangeGrouping={vi.fn()}
+        customBatchSize={50}
+        onChangeCustomBatchSize={vi.fn()}
+        onFileUpload={vi.fn()}
+        onLoadDemo={vi.fn()}
+        isSaved={true}
+        storageUsageMB={0.42}
+        onClearStorage={onClearStorage}
+      />,
+    );
+
+    expect(screen.getByText('Persistent Storage Active (IndexedDB)')).toBeInTheDocument();
+    expect(screen.getByText(/0.42\s*MB/i)).toBeInTheDocument();
+
+    const clearBtn = screen.getByRole('button', { name: /Clear Saved Storage/i });
+    fireEvent.click(clearBtn);
+    expect(onClearStorage).toHaveBeenCalled();
+
+    // Rerender without storageUsageMB
+    rerender(
+      <FileUploader
+        sessions={mockSessions}
+        selectedSessionId="s1"
+        onSelectSession={vi.fn()}
+        groupingPeriod="daily"
+        onChangeGrouping={vi.fn()}
+        customBatchSize={50}
+        onChangeCustomBatchSize={vi.fn()}
+        onFileUpload={vi.fn()}
+        onLoadDemo={vi.fn()}
+        isSaved={true}
+        storageUsageMB={undefined}
+        onClearStorage={onClearStorage}
+      />,
+    );
+    expect(screen.queryByText(/0.42\s*MB/i)).not.toBeInTheDocument();
   });
 });

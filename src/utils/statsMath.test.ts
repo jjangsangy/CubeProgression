@@ -7,6 +7,7 @@ import {
   calculateLinearRegression,
   calculatePbProgression,
   computeGroupStats,
+  getPeriodUnitInfo,
   groupSolvesByPeriod,
 } from './statsMath';
 
@@ -103,6 +104,10 @@ describe('statsMath utils', () => {
       ];
       // 2 DNFs in Ao5 -> exceeds max 1 DNF
       expect(calculateAoN(solvesWith2DNF, 4, 5)).toBeNull();
+    });
+    it('returns null if window size results in empty trimmed times (e.g. n = 2)', () => {
+      // For n = 2, trimCount = 1, so trimmed = effectiveTimes.slice(1, 1) -> length 0
+      expect(calculateAoN(mockSolves.slice(0, 2), 1, 2)).toBeNull();
     });
   });
 
@@ -279,6 +284,50 @@ describe('statsMath utils', () => {
       expect(result.dataPoints[98].pbAo100).toBeNull();
       expect(result.dataPoints[99].pbAo100).not.toBeNull();
       expect(result.summary.totalAo100Pbs).toBeGreaterThan(0);
+    });
+  });
+
+  describe('getPeriodUnitInfo', () => {
+    it('returns correct period unit labels for all grouping types', () => {
+      expect(getPeriodUnitInfo('daily')).toEqual({
+        unitSingular: 'Day',
+        unitPlural: 'Days',
+        adjective: 'Daily',
+        axisLabel: 'Day',
+        solvesPerUnit: 'solves/day',
+      });
+
+      expect(getPeriodUnitInfo('weekly')).toEqual({
+        unitSingular: 'Week',
+        unitPlural: 'Weeks',
+        adjective: 'Weekly',
+        axisLabel: 'Week',
+        solvesPerUnit: 'solves/week',
+      });
+
+      expect(getPeriodUnitInfo('monthly')).toEqual({
+        unitSingular: 'Month',
+        unitPlural: 'Months',
+        adjective: 'Monthly',
+        axisLabel: 'Month',
+        solvesPerUnit: 'solves/month',
+      });
+
+      expect(getPeriodUnitInfo('batch50')).toEqual({
+        unitSingular: 'Batch',
+        unitPlural: 'Batches',
+        adjective: 'Batch',
+        axisLabel: 'Batch',
+        solvesPerUnit: 'solves/batch',
+      });
+
+      expect(getPeriodUnitInfo('customBatch', 25)).toEqual({
+        unitSingular: 'Batch',
+        unitPlural: 'Batches',
+        adjective: 'Batch',
+        axisLabel: 'Batch',
+        solvesPerUnit: 'solves/batch (25)',
+      });
     });
   });
 });

@@ -123,7 +123,13 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
           </div>
           <div className="flex items-center gap-2 sm:justify-end">
             <span className="text-stone-400">Distribution Shift:</span>
-            <span className="font-mono font-bold text-amber-400">-{statsSummary.diff}s faster</span>
+            <span className="font-mono font-bold text-amber-400">
+              {Number(statsSummary.diff) > 0
+                ? `-${statsSummary.diff}s faster`
+                : Number(statsSummary.diff) < 0
+                  ? `+${Math.abs(Number(statsSummary.diff)).toFixed(2)}s slower`
+                  : 'no change'}
+            </span>
           </div>
         </div>
       )}

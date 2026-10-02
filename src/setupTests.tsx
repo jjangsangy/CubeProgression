@@ -55,6 +55,9 @@ if (typeof window !== 'undefined') {
       dispatchEvent: vi.fn(),
     })),
   });
+
+  // Mock HTMLAnchorElement.prototype.click to prevent jsdom navigation error
+  HTMLAnchorElement.prototype.click = vi.fn();
 }
 
 // Mock Recharts ResponsiveContainer to avoid 0-width/0-height rendering issues in JSDOM

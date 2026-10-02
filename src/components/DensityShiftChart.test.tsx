@@ -29,6 +29,21 @@ describe('DensityShiftChart component', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Baseline Mean:')).toBeInTheDocument();
     expect(screen.getByText('Recent Mean:')).toBeInTheDocument();
+    // Baseline (first 30%) is slower than recent (last 30%) -> distribution shifted faster
+    expect(screen.getByText('-1.40s faster')).toBeInTheDocument();
+  });
+
+  it('labels the shift as slower when recent solves are slower than the baseline', () => {
+    const slowingSolves: Solve[] = mockSolves.map((solve, idx) => ({
+      ...solve,
+      finalTimeSec: 10 + idx * 0.1,
+    }));
+
+    render(<DensityShiftChart solves={slowingSolves} title="Slower Distribution Shift" />);
+
+    // Baseline (first 30%) mean 10.25s vs recent (last 30%) mean 11.65s -> +1.40s slower
+    expect(screen.getByText('+1.40s slower')).toBeInTheDocument();
+    expect(screen.queryByText(/faster/)).not.toBeInTheDocument();
   });
 
   it('allows changing sample split percent', () => {

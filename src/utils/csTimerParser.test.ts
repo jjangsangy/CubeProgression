@@ -58,6 +58,17 @@ describe('csTimerParser utils', () => {
       expect(solves[1].timestamp).toBe(1600000000000);
     });
 
+    it('handles timestamps provided at item[1] index in both seconds and ms', () => {
+      const rawSolves = [
+        [[0, 10000], 1600000000],
+        [[0, 12000], 1600000000000],
+      ];
+
+      const solves = parseSolvesList(rawSolves);
+      expect(solves[0].timestamp).toBe(1600000000000);
+      expect(solves[1].timestamp).toBe(1600000000000);
+    });
+
     it('computes dateStr matching local calendar date instead of UTC', () => {
       // Create a local date at 11:30 PM (often the next day in UTC for western timezones)
       const testDate = new Date(2026, 9, 1, 23, 30, 0); // Oct 1, 2026 local
@@ -133,6 +144,25 @@ describe('csTimerParser utils', () => {
 
     it('throws error when JSON is invalid', () => {
       expect(() => parseCsTimerFile('Not JSON at all')).toThrow('Invalid csTimer file format.');
+    });
+
+    it('throws specific error when text has braces but is invalid JSON structure', () => {
+      expect(() => parseCsTimerFile('prefix { invalid json structure: true, } suffix')).toThrow(
+        'Failed to parse csTimer file format. Invalid JSON structure.',
+      );
+    });
+
+    it('handles malformed sessionData gracefully', () => {
+      const csTimerJson = JSON.stringify({
+        properties: {
+          sessionData: 'invalid json string here',
+        },
+        session1: [[[0, 10000], 'R2 U2', '', 1600000000]],
+      });
+
+      const sessions = parseCsTimerFile(csTimerJson);
+      expect(sessions.length).toBe(1);
+      expect(sessions[0].name).toBe('Session 1');
     });
 
     it('throws error when no valid sessions or solves exist', () => {

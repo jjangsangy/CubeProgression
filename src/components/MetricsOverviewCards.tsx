@@ -92,7 +92,11 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
         <div className="mt-2">
           <div className="flex items-baseline gap-1.5 font-mono text-xl font-black text-stone-100">
             <span>
-              {stats.improvementSec > 0 ? `-${stats.improvementSec}s` : `${stats.improvementSec}s`}
+              {stats.improvementSec > 0
+                ? `-${stats.improvementSec}s`
+                : stats.improvementSec < 0
+                  ? `+${Math.abs(stats.improvementSec)}s`
+                  : '0s'}
             </span>
             <span className="text-xs font-semibold text-emerald-400">
               ({stats.improvementPct > 0 ? `+${stats.improvementPct}%` : `${stats.improvementPct}%`}
