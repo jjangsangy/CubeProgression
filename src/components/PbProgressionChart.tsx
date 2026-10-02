@@ -376,11 +376,16 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
 
       {/* Main Plot */}
       <div className="h-[400px] w-full pt-2">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          initialDimension={{ width: 800, height: 400 }}
+        >
           <ComposedChart data={dataPoints} margin={{ top: 25, right: 30, left: 10, bottom: 25 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
             <XAxis
               dataKey="index"
+              interval={Math.max(1, Math.floor(dataPoints.length / 10))}
               stroke="#94a3b8"
               fontSize={11}
               tickLine={false}

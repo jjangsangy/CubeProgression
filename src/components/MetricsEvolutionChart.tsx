@@ -123,7 +123,11 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
     >
       {/* Main Chart Canvas */}
       <div className="h-[400px] w-full pt-2">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          initialDimension={{ width: 800, height: 400 }}
+        >
           <ComposedChart data={chartData} margin={{ top: 20, right: 40, left: 10, bottom: 25 }}>
             <defs>
               <linearGradient id="colorRange" x1="0" y1="0" x2="0" y2="1">
@@ -135,6 +139,7 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
 
             <XAxis
               dataKey="index"
+              interval={Math.max(1, Math.floor(chartData.length / 8))}
               stroke="#94a3b8"
               fontSize={11}
               tickLine={false}

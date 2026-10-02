@@ -1,13 +1,11 @@
-import { lazy, Suspense } from 'react';
+import { lazy } from 'react';
 import type { GlobalStats, GroupingPeriod, PeriodGroup, Session } from '../types';
 import { DailyDistributionBoxPlot } from './DailyDistributionBoxPlot';
 import { DeferredChart } from './DeferredChart';
 import { MetricsOverviewCards } from './MetricsOverviewCards';
+import { ProgressionChart } from './ProgressionChart';
 import { SolvesTable } from './SolvesTable';
 
-const ProgressionChart = lazy(() =>
-  import('./ProgressionChart').then((m) => ({ default: m.ProgressionChart })),
-);
 const PbProgressionChart = lazy(() =>
   import('./PbProgressionChart').then((m) => ({ default: m.PbProgressionChart })),
 );
@@ -42,23 +40,17 @@ export function DashboardView({
 
       {/* The 4 Progression Plots & Solves Table */}
       <div className="flex flex-col gap-8">
-        {/* Plot 1: Overall Progression & Moving Averages (Initial Paint Mount) */}
-        <Suspense
-          fallback={
-            <div className="min-h-[480px] w-full rounded-2xl border border-stone-800/80 bg-stone-900/60 p-6 animate-pulse" />
-          }
-        >
-          <ProgressionChart
-            solves={session.solves}
-            periodGroups={periodGroups}
-            regression={stats.regression}
-            groupingPeriod={groupingPeriod}
-            title={`${session.name}: Progression Over ${session.solves.length} Solves`}
-          />
-        </Suspense>
+        {/* Plot 1: Overall Progression & Moving Averages (Instant Shell + Idle Recharts Mount) */}
+        <ProgressionChart
+          solves={session.solves}
+          periodGroups={periodGroups}
+          regression={stats.regression}
+          groupingPeriod={groupingPeriod}
+          title={`${session.name}: Progression Over ${session.solves.length} Solves`}
+        />
 
         {/* Plot 2: Personal Best Progression Over Time */}
-        <DeferredChart minHeight={540} fallbackTitle="PB Progression">
+        <DeferredChart minHeight={640} fallbackTitle="PB Progression">
           <PbProgressionChart
             solves={session.solves}
             groupingPeriod={groupingPeriod}
@@ -67,14 +59,14 @@ export function DashboardView({
         </DeferredChart>
 
         {/* Plot 3: Solve Time Distribution & Variance */}
-        <DeferredChart minHeight={500} fallbackTitle="Solve Time Distribution">
+        <DeferredChart minHeight={550} fallbackTitle="Solve Time Distribution">
           <DailyDistributionBoxPlot periodGroups={periodGroups} groupingPeriod={groupingPeriod} />
         </DeferredChart>
 
         {/* Grid for Plot 4 & Plot 5 */}
         <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
           {/* Plot 4: Distribution Density Shift */}
-          <DeferredChart minHeight={460} fallbackTitle="Density Shift">
+          <DeferredChart minHeight={550} fallbackTitle="Density Shift">
             <DensityShiftChart
               solves={session.solves}
               groupingPeriod={groupingPeriod}
@@ -83,13 +75,13 @@ export function DashboardView({
           </DeferredChart>
 
           {/* Plot 5: Metrics Summary / Evolution */}
-          <DeferredChart minHeight={460} fallbackTitle="Metrics Evolution">
+          <DeferredChart minHeight={525} fallbackTitle="Metrics Evolution">
             <MetricsEvolutionChart periodGroups={periodGroups} groupingPeriod={groupingPeriod} />
           </DeferredChart>
         </div>
 
         {/* Detailed Solve Log Table */}
-        <DeferredChart minHeight={600} fallbackTitle="Solves Table">
+        <DeferredChart minHeight={780} fallbackTitle="Solves Table">
           <SolvesTable solves={session.solves} />
         </DeferredChart>
       </div>

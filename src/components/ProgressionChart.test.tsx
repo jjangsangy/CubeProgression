@@ -254,7 +254,7 @@ describe('ProgressionChart component', () => {
     expect(screen.getByText('Overall Progression & Moving Averages')).toBeInTheDocument();
   });
 
-  it('renders CustomTooltip correctly across normal, +2, DNF, and inactive states', () => {
+  it('renders CustomTooltip correctly across normal, +2, DNF, and inactive states', async () => {
     render(
       <ProgressionChart
         solves={mockSolves}
@@ -262,6 +262,8 @@ describe('ProgressionChart component', () => {
         regression={mockRegression}
       />,
     );
+
+    await screen.findByTestId('progression-chart-canvas');
 
     const content = captured.tooltipContent as React.ReactElement<{
       active?: boolean;
@@ -415,7 +417,7 @@ describe('ProgressionChart component', () => {
     expect(screen.queryByRole('button', { name: /Reset Range/i })).toBeNull();
   });
 
-  it('renders period boundary reference line label callback', () => {
+  it('renders period boundary reference line label callback', async () => {
     render(
       <ProgressionChart
         solves={mockSolves}
@@ -423,6 +425,8 @@ describe('ProgressionChart component', () => {
         regression={mockRegression}
       />,
     );
+
+    await screen.findByTestId('progression-chart-canvas');
 
     expect(captured.referenceLineLabels.length).toBeGreaterThan(0);
     const labelFn = captured.referenceLineLabels[0];
@@ -490,7 +494,7 @@ describe('ProgressionChart component', () => {
     expect(dateInputs[1]).toHaveAttribute('max', mockSolves[mockSolves.length - 1].dateStr);
   });
 
-  it('initializes mobile screen state synchronously from window.innerWidth', () => {
+  it('initializes mobile screen state synchronously from window.innerWidth', async () => {
     const originalInnerWidth = window.innerWidth;
     try {
       window.innerWidth = 375;
@@ -501,7 +505,7 @@ describe('ProgressionChart component', () => {
           regression={mockRegression}
         />,
       );
-      expect(screen.getByTestId('progression-chart-canvas')).toBeInTheDocument();
+      expect(await screen.findByTestId('progression-chart-canvas')).toBeInTheDocument();
     } finally {
       window.innerWidth = originalInnerWidth;
     }

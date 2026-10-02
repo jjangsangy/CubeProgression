@@ -107,7 +107,7 @@ body,
 /* Off-screen chart content-visibility to bypass layout calculations until scroll */
 .chart-content-visibility {
   content-visibility: auto;
-  contain-intrinsic-size: 500px;
+  contain-intrinsic-size: auto 550px;
 }
 
 /* GPU-accelerated dialog / container fade-in-scale animation */

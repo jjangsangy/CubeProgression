@@ -19,7 +19,7 @@ network dependency.
 | Charts | Recharts 3 (code-split, lazy) + hand-authored SVG (box plot) |
 | Icons | `lucide-react` |
 | Animation | GPU-accelerated CSS keyframes (no runtime motion library) |
-| Dates/timezones | `temporal-polyfill` (`Temporal`) |
+| Dates/timezones | Standard `Temporal` (browser native) |
 | PNG export | `html-to-image` (dynamically imported) |
 | Persistence | Native IndexedDB |
 | Lint / format | Biome 2 |
@@ -119,7 +119,7 @@ Persisted settings: whenever the user changes session, grouping period, or batch
 
 To guarantee rapid initial mobile paint (<0.5s FCP) and eliminate main-thread blocking time:
 
-- **Vendor Chunking (`vite.config.ts`)**: Configures `manualChunks` into `react-vendor`, `recharts-vendor`, and `temporal-vendor`. `modulePreload` excludes heavy deferred vendors (`recharts-vendor`, `temporal-vendor`) from the critical HTML parse path.
+- **Vendor Chunking (`vite.config.ts`)**: Configures `manualChunks` into `react-vendor` and `recharts-vendor`. Standard `Temporal` is native, eliminating polyfill chunks. `modulePreload` excludes heavy deferred vendors (`recharts-vendor`) from the critical HTML parse path, while compiled CSS is inlined directly into `index.html`.
 - **Zero-Recharts Initial Paint**: `DashboardView` and all Recharts-based chart components are loaded dynamically via `React.lazy` inside `<Suspense fallback={...}>`. Initial page load executes 0 kB of Recharts code.
 - **Viewport-Driven Rendering**: Below-the-fold charts and heavy tables are wrapped in `<DeferredChart>`, mounting only when within 250px of the viewport using `IntersectionObserver` (or immediately in test/jsdom environments).
 - **Static Inlined Shell**: `index.html` embeds a lightweight static CSS/SVG shell in `#root` to ensure instant first paint before JavaScript hydration completes.

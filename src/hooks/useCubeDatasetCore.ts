@@ -9,7 +9,9 @@ import {
   saveDataset,
 } from '../utils/dbStorage';
 import { generateSampleData } from '../utils/sampleData';
+import { yieldToMain } from '../utils/scheduler';
 import { calculateGlobalStats, groupSolvesByPeriod } from '../utils/statsMath';
+import { ensureTemporal } from '../utils/temporalLoader';
 import { storageNoticeStore } from './useStorageNotice';
 
 export interface UseCubeDatasetCoreReturn {
@@ -63,6 +65,7 @@ export function useCubeDatasetCore(): UseCubeDatasetCoreReturn {
     let isCancelled = false;
 
     const initializeDataset = async () => {
+      await ensureTemporal();
       setIsLoading(true);
       setUploadingFileName('browser_storage');
       setLoadingProgress(20);
@@ -83,7 +86,10 @@ export function useCubeDatasetCore(): UseCubeDatasetCoreReturn {
             `Restored ${totalSolvesCount.toLocaleString()} solves across ${saved.sessions.length} sessions from IndexedDB (${saved.fileName})`,
           );
 
-          // Atomic synchronous state flush unblocks rendering immediately
+          // Yield to main thread so browser can process paint/input before state commit
+          await yieldToMain();
+
+          // Atomic state flush unblocks rendering
           setSessions(saved.sessions);
           setSelectedSessionId(saved.selectedSessionId || saved.sessions[0].id);
           setFileName(saved.fileName || 'cstimer_saved.txt');
@@ -137,7 +143,10 @@ export function useCubeDatasetCore(): UseCubeDatasetCoreReturn {
           })
           .catch(() => null);
 
-        // Atomic synchronous state flush
+        // Yield to main thread before committing state and executing derived math
+        await yieldToMain();
+
+        // Atomic state flush
         setSessions(demoSessions);
         setSelectedSessionId(initialSessId);
         setFileName(demoFileName);
@@ -160,6 +169,7 @@ export function useCubeDatasetCore(): UseCubeDatasetCoreReturn {
   }, []);
 
   const loadSampleData = useCallback(async () => {
+    await ensureTemporal();
     setIsLoading(true);
     setUploadingFileName('cstimer_demo_350solves.txt');
     setLoadingProgress(15);
@@ -213,6 +223,7 @@ export function useCubeDatasetCore(): UseCubeDatasetCoreReturn {
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
+          await ensureTemporal();
           const content = e.target?.result as string;
           if (!content) throw new Error('File is empty.');
 

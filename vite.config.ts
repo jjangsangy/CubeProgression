@@ -3,7 +3,42 @@
 import path from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
+
+/**
+ * Inlines the compiled CSS bundle directly into index.html <style> tags.
+ * Eliminates render-blocking CSS network round-trips.
+ */
+function inlineCriticalCss(): Plugin {
+  return {
+    name: 'vite-plugin-inline-critical-css',
+    apply: 'build',
+    enforce: 'post',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html, ctx) {
+        if (!ctx.bundle) return html;
+        let transformedHtml = html;
+        for (const [fileName, asset] of Object.entries(ctx.bundle)) {
+          if (fileName.endsWith('.css') && 'source' in asset) {
+            const cssContent =
+              typeof asset.source === 'string'
+                ? asset.source
+                : new TextDecoder().decode(asset.source);
+            const escaped = fileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const linkRegex = new RegExp(
+              `<link[^>]*rel=["']stylesheet["'][^>]*href=["'][^"']*?${escaped}["'][^>]*>|<link[^>]*href=["'][^"']*?${escaped}["'][^>]*rel=["']stylesheet["'][^>]*>`,
+              'gi',
+            );
+            transformedHtml = transformedHtml.replace(linkRegex, `<style>${cssContent}</style>`);
+            delete ctx.bundle[fileName];
+          }
+        }
+        return transformedHtml;
+      },
+    },
+  };
+}
 
 export default defineConfig(() => {
   return {
@@ -15,6 +50,7 @@ export default defineConfig(() => {
         },
       }),
       tailwindcss(),
+      inlineCriticalCss(),
     ],
     resolve: {
       alias: {

@@ -64,7 +64,24 @@ export default function App() {
 
         {/* Dashboard: Metric Cards, 4 Progression Plots & Solves Table */}
         {!isLoading && activeSession && globalStats && (
-          <Suspense fallback={null}>
+          <Suspense
+            fallback={
+              <div
+                className="flex flex-col gap-8 animate-pulse"
+                data-testid="dashboard-loading-skeleton"
+              >
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+                  {['m1', 'm2', 'm3', 'm4', 'm5', 'm6'].map((id) => (
+                    <div
+                      key={id}
+                      className="h-28 rounded-2xl border border-stone-800 bg-stone-900/60 p-4"
+                    />
+                  ))}
+                </div>
+                <div className="h-[760px] w-full rounded-2xl border border-stone-800 bg-stone-900/60 p-6" />
+              </div>
+            }
+          >
             <DashboardView
               session={activeSession}
               stats={globalStats}

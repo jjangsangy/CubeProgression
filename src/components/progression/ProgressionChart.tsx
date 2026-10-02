@@ -1,8 +1,7 @@
 import type React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { calculateLinearRegression, getPeriodUnitInfo } from '../../utils/statsMath';
 import { ChartCardWrapper } from '../ChartCardWrapper';
-import { ProgressionChartCanvas } from './ProgressionChartCanvas';
 import { ProgressionMetricToggles } from './ProgressionMetricToggles';
 import { ProgressionRangeControls } from './ProgressionRangeControls';
 import {
@@ -15,6 +14,10 @@ import {
 } from './progressionMath';
 import type { ProgressionChartProps, SolveVisibilityMode } from './types';
 import { useProgressionRange } from './useProgressionRange';
+
+const ProgressionChartCanvas = lazy(() =>
+  import('./ProgressionChartCanvas').then((m) => ({ default: m.ProgressionChartCanvas })),
+);
 
 export const ProgressionChart: React.FC<ProgressionChartProps> = ({
   solves,
@@ -33,6 +36,25 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
   const [customAoN, setCustomAoN] = useState<number>(25);
 
   const [isRangePanelOpen, setIsRangePanelOpen] = useState<boolean>(true);
+
+  // Defer expensive Recharts SVG canvas mounting to browser idle time (keeps initial paint blocking time <30ms)
+  const [canRenderCanvas, setCanRenderCanvas] = useState(() => {
+    return typeof window === 'undefined' || !('requestIdleCallback' in window);
+  });
+
+  useEffect(() => {
+    if (canRenderCanvas) return;
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const handle = window.requestIdleCallback(() => setCanRenderCanvas(true), {
+        timeout: 1200,
+      });
+      return () => window.cancelIdleCallback(handle);
+    }
+
+    const timer = setTimeout(() => setCanRenderCanvas(true), 250);
+    return () => clearTimeout(timer);
+  }, [canRenderCanvas]);
 
   // Viewport width tracking for responsive tick calculations
   const [windowWidth, setWindowWidth] = useState<number>(() =>
@@ -130,6 +152,23 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
 
   const singleLineStyle = getSingleLineStyle(solveVisibility);
 
+  const canvasSkeleton = (
+    <div
+      className="flex h-[420px] w-full flex-col justify-between rounded-xl border border-stone-800/60 bg-stone-900/40 p-6 animate-pulse"
+      data-testid="progression-canvas-skeleton"
+    >
+      <div className="flex items-center justify-between opacity-50">
+        <div className="h-4 w-32 rounded bg-stone-800" />
+        <div className="h-4 w-24 rounded bg-stone-800" />
+      </div>
+      <div className="my-auto flex flex-col items-center justify-center gap-2">
+        <div className="h-2 w-2 rounded-full bg-sky-400 animate-ping" />
+        <span className="text-xs text-stone-500 font-medium">Preparing progression plot...</span>
+      </div>
+      <div className="h-3 w-48 rounded bg-stone-800/40 opacity-40" />
+    </div>
+  );
+
   return (
     <ChartCardWrapper
       title={title}
@@ -202,23 +241,29 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
         />
 
         {/* CHART DISPLAY */}
-        <ProgressionChartCanvas
-          chartData={chartData}
-          minY={minY}
-          maxY={maxY}
-          isMobileScreen={isMobileScreen}
-          responsiveBoundaryInfo={responsiveBoundaryInfo}
-          singleLineStyle={singleLineStyle}
-          solveVisibility={solveVisibility}
-          showAo5={showAo5}
-          showAo12={showAo12}
-          showAo50={showAo50}
-          showAo100={showAo100}
-          showCustomAo={showCustomAo}
-          customAoN={customAoN}
-          showTrend={showTrend}
-          slopeFormatted={filteredRegression.slopeFormatted}
-        />
+        {canRenderCanvas ? (
+          <Suspense fallback={canvasSkeleton}>
+            <ProgressionChartCanvas
+              chartData={chartData}
+              minY={minY}
+              maxY={maxY}
+              isMobileScreen={isMobileScreen}
+              responsiveBoundaryInfo={responsiveBoundaryInfo}
+              singleLineStyle={singleLineStyle}
+              solveVisibility={solveVisibility}
+              showAo5={showAo5}
+              showAo12={showAo12}
+              showAo50={showAo50}
+              showAo100={showAo100}
+              showCustomAo={showCustomAo}
+              customAoN={customAoN}
+              showTrend={showTrend}
+              slopeFormatted={filteredRegression.slopeFormatted}
+            />
+          </Suspense>
+        ) : (
+          canvasSkeleton
+        )}
       </div>
     </ChartCardWrapper>
   );

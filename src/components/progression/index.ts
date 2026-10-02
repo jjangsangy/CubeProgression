@@ -1,5 +1,4 @@
 export { ProgressionChart } from './ProgressionChart';
-export { ProgressionChartCanvas } from './ProgressionChartCanvas';
 export { ProgressionCustomTooltip } from './ProgressionCustomTooltip';
 export { ProgressionMetricToggles } from './ProgressionMetricToggles';
 export { ProgressionRangeControls } from './ProgressionRangeControls';

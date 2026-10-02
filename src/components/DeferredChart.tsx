@@ -52,7 +52,7 @@ export const DeferredChart: React.FC<DeferredChartProps> = ({
   const skeleton = (
     <div
       style={{ minHeight: styleMinHeight }}
-      className="flex w-full flex-col justify-between rounded-2xl border border-stone-800/80 bg-stone-900/60 p-6 animate-pulse"
+      className="flex w-full flex-col justify-between rounded-2xl border border-stone-800/80 bg-stone-900/60 p-4 sm:p-6 animate-pulse"
       data-testid="deferred-chart-skeleton"
     >
       <div className="flex items-center justify-between">
@@ -72,7 +72,7 @@ export const DeferredChart: React.FC<DeferredChartProps> = ({
   return (
     <div
       ref={containerRef}
-      style={{ minHeight: styleMinHeight }}
+      style={{ minHeight: styleMinHeight, containIntrinsicSize: `auto ${styleMinHeight}` }}
       data-testid={
         fallbackTitle
           ? `deferred-chart-${fallbackTitle.toLowerCase().replace(/\s+/g, '-')}`

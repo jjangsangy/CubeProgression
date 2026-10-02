@@ -53,9 +53,15 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
   showTrend,
   slopeFormatted,
 }) => {
+  const xInterval = Math.max(1, Math.floor(chartData.length / (isMobileScreen ? 6 : 12)));
+
   return (
     <div className="h-[420px] w-full pt-1" data-testid="progression-chart-canvas">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+        initialDimension={{ width: 800, height: 420 }}
+      >
         <ComposedChart
           data={chartData}
           margin={{
@@ -68,6 +74,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
           <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
           <XAxis
             dataKey="index"
+            interval={xInterval}
             stroke="#94a3b8"
             fontSize={11}
             tickLine={false}

@@ -10,15 +10,38 @@
   </head>
   <body class="min-h-full bg-stone-950 text-stone-100" style="background-color: #0c0a09;">
     <div id="root">
-      <div style="min-height: 100vh; display: flex; flex-direction: column; background-color: #0c0a09; color: #f5f5f4;">
-        <header style="height: 64px; border-bottom: 1px solid #292524; display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem; background-color: rgba(12, 10, 9, 0.8);">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <div style="width: 2rem; height: 2rem; border-radius: 0.75rem; background-color: rgba(245, 158, 11, 0.2); border: 1px solid rgba(245, 158, 11, 0.4);"></div>
-            <div style="font-weight: 700; font-size: 1.125rem; color: #f5f5f4; letter-spacing: -0.02em;">CubeProgression</div>
+      <div class="flex min-h-screen flex-col bg-stone-950 font-sans text-stone-100 antialiased" style="min-height: 100vh; background-color: #0c0a09; color: #f5f5f4;">
+        <!-- Top Navigation Bar Skeleton (Matches Navbar.tsx 1:1) -->
+        <header class="relative border-b border-stone-800 bg-stone-950" style="border-bottom: 1px solid #292524; background-color: #0c0a09;">
+          <div class="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 safe-area-x" style="height: 64px; max-width: 80rem; margin: 0 auto; display: flex; align-items: center; justify-content: space-between;">
+            <div class="flex min-w-0 items-center gap-3" style="display: flex; align-items: center; gap: 0.75rem;">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-rose-500 shadow-lg shadow-amber-500/10" style="width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: linear-gradient(to top right, #f59e0b, #f97316, #f43f5e);"></div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-2" style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span class="truncate text-base leading-tight font-bold tracking-tight text-stone-100 sm:text-lg" style="font-weight: 700; font-size: 1rem; color: #f5f5f4; letter-spacing: -0.02em;">
+                    CubeProgression
+                  </span>
+                  <span class="hidden rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-amber-400 uppercase sm:inline-block">
+                    csTimer Analytics
+                  </span>
+                </div>
+                <p class="hidden text-xs text-stone-400 sm:block">
+                  Speedcubing solve time progression &amp; statistical shift analyzer
+                </p>
+              </div>
+            </div>
           </div>
         </header>
-        <main style="max-width: 80rem; margin: 0 auto; width: 100%; flex: 1; padding: 2rem 1.5rem; display: flex; flex-direction: column; gap: 2rem;">
-          <div style="border-radius: 1rem; border: 1px solid #292524; background-color: #1c1917; padding: 1.5rem; height: 280px;"></div>
+
+        <!-- Main Container Skeleton (Matches App.tsx and FileUploader.tsx 1:1) -->
+        <main class="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6 safe-area-x" style="max-width: 80rem; margin: 0 auto; width: 100%; flex: 1; padding: 2rem 1rem; display: flex; flex-direction: column; gap: 2rem;">
+          <div class="flex flex-col gap-6 rounded-2xl border border-stone-800 bg-stone-900 p-4 sm:p-6 text-stone-100 shadow-xl" style="border-radius: 1rem; border: 1px solid #292524; background-color: #1c1917; padding: 1rem;">
+            <div class="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-12" style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+              <div class="lg:col-span-5 border-2 border-dashed border-amber-500/60 bg-stone-950/80 rounded-2xl p-5 flex flex-col items-center justify-center min-h-[250px]" style="border: 2px dashed rgba(245, 158, 11, 0.6); border-radius: 1rem; min-height: 250px; background-color: rgba(12, 10, 9, 0.8); display: flex; align-items: center; justify-content: center;">
+                <div style="width: 2.5rem; height: 2.5rem; border-radius: 0.5rem; background-color: rgba(245, 158, 11, 0.2); border: 1px solid rgba(245, 158, 11, 0.4);"></div>
+              </div>
+            </div>
+          </div>
         </main>
       </div>
     </div>

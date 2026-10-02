@@ -137,7 +137,11 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
 
       {/* Main Area Chart */}
       <div className="h-[360px] w-full pt-2">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          initialDimension={{ width: 800, height: 360 }}
+        >
           <AreaChart data={kdeData} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
             <defs>
               <linearGradient id="colorBaseline" x1="0" y1="0" x2="0" y2="1">
@@ -152,6 +156,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
             <XAxis
               dataKey="x"
+              interval={Math.max(1, Math.floor(kdeData.length / 8))}
               stroke="#94a3b8"
               fontSize={11}
               tickLine={false}

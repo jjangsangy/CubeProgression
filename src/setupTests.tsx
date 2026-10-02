@@ -11,6 +11,15 @@ afterEach(() => {
 // Configure async util timeout for testing-library (jsdom + v8 coverage can be slow in CI)
 configure({ asyncUtilTimeout: 10000 });
 
+// Forward native runtime Temporal to JSDOM window if absent
+if (
+  typeof window !== 'undefined' &&
+  typeof (window as unknown as { Temporal?: unknown }).Temporal === 'undefined' &&
+  typeof Temporal !== 'undefined'
+) {
+  (window as unknown as { Temporal?: unknown }).Temporal = Temporal;
+}
+
 // Polyfill ResizeObserver for Recharts and responsive components
 global.ResizeObserver = class ResizeObserver {
   observe() {}

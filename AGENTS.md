@@ -78,7 +78,7 @@ bun run build          # production bundle → dist/
 - IndexedDB is non-functional in `jsdom`, so tests always fall back to the **deterministic
   seeded demo dataset** (`generateSampleData()`), whose session title
   `F2L Yellow Cross Progression (Demo)` is asserted in `App.test.tsx`.
-- Dates are computed in the **runtime local timezone** via `temporal-polyfill`; avoid
+- Dates are computed in the **runtime local timezone** via standard `Temporal`; avoid
   timezone-sensitive test assertions.
 - `ResponsiveContainer` is mocked to a fixed 800×400 box in `src/setupTests.tsx`.
 
