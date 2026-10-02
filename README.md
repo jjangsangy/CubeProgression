@@ -1,5 +1,17 @@
 # 🧩 Speedcubing Progression Analyzer
 
+[![Test Runner](https://github.com/jjangsangy/CubeProgression/actions/workflows/test.yml/badge.svg)](https://github.com/jjangsangy/CubeProgression/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/jjangsangy/CubeProgression/branch/main/graph/badge.svg)](https://codecov.io/gh/jjangsangy/CubeProgression)
+[![React](https://img.shields.io/badge/React-19-20232A?logo=react&logoColor=61DAFB)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-7.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Bun](https://img.shields.io/badge/Bun-v1.1+-000000?logo=bun&logoColor=white)](https://bun.sh/)
+[![Vitest](https://img.shields.io/badge/Tested_with-Vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Biome](https://img.shields.io/badge/Code_Style-Biome-60A5FA?logo=biome&logoColor=white)](https://biomejs.dev/)
+[![csTimer](https://img.shields.io/badge/csTimer-Compatible-FF6B6B)](https://cstimer.net/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A modern, high-performance web application built for speedcubers to analyze **csTimer** session logs. Gain deep insights into your solve time progression, rolling averages, session variance, probability density shifts, and personal record timelines.
 
 ---
@@ -100,6 +112,8 @@ To run tests with code coverage reporting (via `@vitest/coverage-v8`):
 ```bash
 bun run test:coverage
 ```
+
+Continuous integration runs on GitHub Actions across Linux, macOS, and Windows with coverage reports automatically uploaded to [Codecov](https://codecov.io/gh/jjangsangy/CubeProgression).
 
 ### Production Build
 
