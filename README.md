@@ -1,6 +1,7 @@
 # 🧩 Speedcubing Progression Analyzer
 
 [![Test Runner](https://github.com/jjangsangy/CubeProgression/actions/workflows/test.yml/badge.svg)](https://github.com/jjangsangy/CubeProgression/actions/workflows/test.yml)
+[![Deploy to GitHub Pages](https://github.com/jjangsangy/CubeProgression/actions/workflows/deploy.yml/badge.svg)](https://github.com/jjangsangy/CubeProgression/actions/workflows/deploy.yml)
 [![codecov](https://codecov.io/gh/jjangsangy/CubeProgression/branch/main/graph/badge.svg)](https://codecov.io/gh/jjangsangy/CubeProgression)
 [![React](https://img.shields.io/badge/React-19-20232A?logo=react&logoColor=61DAFB)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-7.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
