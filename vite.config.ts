@@ -31,7 +31,9 @@ function inlineCriticalCss(): Plugin {
               'gi',
             );
             transformedHtml = transformedHtml.replace(linkRegex, `<style>${cssContent}</style>`);
-            delete ctx.bundle[fileName];
+            // Retain the CSS asset in the bundle output rather than deleting it.
+            // If any dynamic chunk or browser module preload references the CSS asset URL,
+            // the file remains available (avoiding 404s and preload link error events).
           }
         }
         return transformedHtml;
@@ -59,6 +61,7 @@ export default defineConfig(() => {
     },
     build: {
       target: 'es2022',
+      cssCodeSplit: false,
       cssMinify: 'lightningcss',
       chunkSizeWarningLimit: 600,
       modulePreload: {
