@@ -1,6 +1,7 @@
 /// <reference types="vitest" />
 
 import path from 'node:path';
+import { codecovVitePlugin } from '@codecov/vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
@@ -53,6 +54,12 @@ export default defineConfig(() => {
       }),
       tailwindcss(),
       inlineCriticalCss(),
+      codecovVitePlugin({
+        enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined || process.env.CI === 'true',
+        bundleName: 'CubeProgression',
+        uploadToken: process.env.CODECOV_TOKEN,
+        gitService: 'github',
+      }),
     ],
     resolve: {
       alias: {
@@ -113,6 +120,10 @@ export default defineConfig(() => {
       include: ['src/**/*.test.{ts,tsx}'],
       setupFiles: ['./src/setupTests.tsx'],
       testTimeout: 15000,
+      reporters: process.env.CI ? ['default', 'junit'] : ['default'],
+      outputFile: {
+        junit: 'junit.xml',
+      },
       coverage: {
         provider: 'v8',
         reporter: ['text', 'json', 'html', 'lcov'],
