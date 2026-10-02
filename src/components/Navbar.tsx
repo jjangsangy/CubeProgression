@@ -1,5 +1,6 @@
 import { Database, Download, FileText, RefreshCw, Sparkles, Timer, Trash2 } from 'lucide-react';
 import type React from 'react';
+import { useStorageStatus } from '../hooks/useStorageNotice';
 
 interface NavbarProps {
   fileName?: string;
@@ -16,10 +17,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLoadDemo,
   onReset,
   onExportCSV,
-  isSaved,
-  storageUsageMB,
+  isSaved: propIsSaved,
+  storageUsageMB: propStorageUsageMB,
   onClearStorage,
 }) => {
+  const storageStatus = useStorageStatus();
+  const isSaved = propIsSaved ?? storageStatus.isSaved;
+  const storageUsageMB = propStorageUsageMB ?? storageStatus.storageUsageMB;
   return (
     <header className="relative border-b border-stone-800 bg-stone-950">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 safe-area-x">

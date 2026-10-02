@@ -11,6 +11,7 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { useStorageNotice } from '../hooks/useStorageNotice';
 import type { GroupingPeriod, Session } from '../types';
 import { CubeLoadingSpinner } from './CubeLoadingSpinner';
 
@@ -50,11 +51,15 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   loadingProgress = 0,
   loadingStage = 'Processing csTimer file...',
   uploadingFileName = 'cstimer_export.txt',
-  isSaved = false,
-  storageUsageMB,
-  savedNotice,
+  isSaved: propIsSaved,
+  storageUsageMB: propStorageUsageMB,
+  savedNotice: propSavedNotice,
   onClearStorage,
 }) => {
+  const storageNotice = useStorageNotice();
+  const isSaved = propIsSaved ?? storageNotice.isSaved;
+  const storageUsageMB = propStorageUsageMB ?? storageNotice.storageUsageMB;
+  const savedNotice = propSavedNotice !== undefined ? propSavedNotice : storageNotice.savedNotice;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [timerVal, setTimerVal] = useState<number>(0);

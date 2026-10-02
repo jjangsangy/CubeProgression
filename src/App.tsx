@@ -2,7 +2,7 @@ import { DashboardView } from './components/DashboardView';
 import { FileUploader } from './components/FileUploader';
 import { Footer } from './components/Footer';
 import { Navbar } from './components/Navbar';
-import { useCubeDataset } from './hooks/useCubeDataset';
+import { useCubeDatasetCore } from './hooks/useCubeDatasetCore';
 
 export default function App() {
   const {
@@ -12,9 +12,6 @@ export default function App() {
     customBatchSize,
     fileName,
     errorMsg,
-    isSaved,
-    storageUsageMB,
-    savedNotice,
     isLoading,
     loadingProgress,
     loadingStage,
@@ -29,7 +26,7 @@ export default function App() {
     handleChangeGrouping,
     handleChangeCustomBatchSize,
     handleExportCSV,
-  } = useCubeDataset();
+  } = useCubeDatasetCore();
 
   return (
     <div className="flex min-h-screen flex-col bg-stone-950 font-sans text-stone-100 antialiased selection:bg-amber-500/30 selection:text-amber-200">
@@ -39,8 +36,6 @@ export default function App() {
         onLoadDemo={loadSampleData}
         onReset={handleClearStorage}
         onExportCSV={handleExportCSV}
-        isSaved={isSaved}
-        storageUsageMB={storageUsageMB}
         onClearStorage={handleClearStorage}
       />
 
@@ -62,9 +57,6 @@ export default function App() {
           loadingProgress={loadingProgress}
           loadingStage={loadingStage}
           uploadingFileName={uploadingFileName}
-          isSaved={isSaved}
-          storageUsageMB={storageUsageMB}
-          savedNotice={savedNotice}
           onClearStorage={handleClearStorage}
         />
 

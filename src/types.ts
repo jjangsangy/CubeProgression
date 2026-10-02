@@ -120,6 +120,17 @@ export interface PbProgressionResult {
   pbMilestones: PbMilestone[];
 }
 
+export interface StorageNoticeState {
+  isSaved: boolean;
+  storageUsageMB: number | undefined;
+  savedNotice: string | null;
+}
+
+export interface StorageStatusState {
+  isSaved: boolean;
+  storageUsageMB: number | undefined;
+}
+
 export interface GlobalStats {
   totalSolves: number;
   dnfCount: number;

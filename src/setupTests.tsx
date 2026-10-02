@@ -1,7 +1,12 @@
 import '@testing-library/jest-dom/vitest';
 import { configure } from '@testing-library/react';
 import type React from 'react';
-import { vi } from 'vitest';
+import { afterEach, vi } from 'vitest';
+import { storageNoticeStore } from './hooks/useStorageNotice';
+
+afterEach(() => {
+  storageNoticeStore.reset();
+});
 
 // Configure async util timeout for testing-library (jsdom + v8 coverage can be slow in CI)
 configure({ asyncUtilTimeout: 10000 });
