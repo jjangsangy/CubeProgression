@@ -57,6 +57,10 @@ Test files are colocated with source: `src/**/*.test.ts(x)`. Prefer asserting on
 text (RTL) and mocking only external/browser APIs (see `ChartCardWrapper.test.tsx` mocking
 `html-to-image`).
 
+- **E2E tests (`bun run test:e2e`)**: **Mandatory for all UI, layout, and deferral changes.**
+  Because Vitest runs in `jsdom` where `IntersectionObserver` is absent and elements have 0×0
+  dimensions, only the full Playwright suite validates real browser viewport deferral,
+  mobile responsive breakpoints, and below-the-fold chart interaction.
 - **CI**: Automated test runner on GitHub Actions (`.github/workflows/test.yml`) runs tests
   on pushes and pull requests targeting `main` across all supported platforms:
   `ubuntu-latest`, `macos-latest`, and `windows-latest`. Automated deployment to GitHub Pages

@@ -15,7 +15,8 @@
 > 2. Record empirical before-and-after measurements (bundle sizes, chunk breakdown, test counts, coverage, timing).
 > 3. Document any toolchain-specific discoveries, constraints, or architectural adjustments (e.g. Vite/Rollup config nuances).
 > 4. Ensure the next phase's inputs and prerequisites are clearly marked for subsequent agents.
-> 5. Never leave this document stale. Keeping it up to date is a non-negotiable definition-of-done requirement.
+> 5. **Run the full E2E test suite (`bun run test:e2e`):** Vitest executes in `jsdom` where browser geometry and `IntersectionObserver` are not present. All 52 Playwright E2E tests across desktop and mobile viewports must pass before any performance or refactoring work is considered complete.
+> 6. Never leave this document stale. Keeping it up to date is a non-negotiable definition-of-done requirement.
 
 ---
 

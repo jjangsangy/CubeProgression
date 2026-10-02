@@ -51,6 +51,7 @@ bun run typecheck      # tsc --noEmit
 bun run check          # Biome lint + format + import order (--write to fix)
 bun run test           # Vitest (jsdom)
 bun run test:coverage  # Vitest + v8 coverage
+bun run test:e2e       # Playwright E2E tests (must be run)
 bun run build          # production bundle → dist/
 ```
 
@@ -62,6 +63,10 @@ bun run build          # production bundle → dist/
 - **Keep `statsMath.ts` pure** — no React, no DOM, no I/O. Memoize in components with `useMemo`.
 - **Write tests** for logic changes, colocated as `*.test.ts(x)`. The statistics engine is
   the most-tested surface; don't change math without updating `statsMath.test.ts`.
+- **Run E2E tests (`bun run test:e2e`)** — all UI, layout, deferral, and persistence changes
+  **must** pass the full Playwright E2E test suite. Vitest runs in `jsdom` where
+  `IntersectionObserver` and real viewport geometry are absent, so E2E tests are mandatory to
+  validate real browser rendering, responsive viewports, and deferred components.
 - **Wrap charts in `ChartCardWrapper`** so they get PNG export + fullscreen for free.
 - **Guard browser APIs** (`window`, `indexedDB`, `navigator`) — tests run in `jsdom`.
 - **No backend / no secrets.** This is a static SPA.
