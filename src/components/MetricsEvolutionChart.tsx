@@ -1,5 +1,4 @@
 import type React from 'react';
-import { useMemo } from 'react';
 import {
   Area,
   CartesianGrid,
@@ -29,35 +28,29 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
   const unitInfo = getPeriodUnitInfo(groupingPeriod);
   const displayTitle = title || `${unitInfo.adjective} Metrics Evolution: Speed & Consistency`;
 
-  const chartData = useMemo(() => {
-    return periodGroups.map((g, idx) => ({
-      index: idx + 1,
-      label: g.label,
-      mean: g.mean,
-      median: g.median,
-      min: g.min,
-      max: g.max,
-      range: [g.min, g.max], // For range band
-      stdDev: g.stdDev,
-      solveCount: g.solves.length,
-    }));
-  }, [periodGroups]);
+  const chartData = periodGroups.map((g, idx) => ({
+    index: idx + 1,
+    label: g.label,
+    mean: g.mean,
+    median: g.median,
+    min: g.min,
+    max: g.max,
+    range: [g.min, g.max], // For range band
+    stdDev: g.stdDev,
+    solveCount: g.solves.length,
+  }));
 
   // Determine Y ranges
-  const minTime = useMemo(() => {
-    if (periodGroups.length === 0) return 10;
-    return Math.max(0, Math.floor(Math.min(...periodGroups.map((g) => g.min)) - 2));
-  }, [periodGroups]);
+  const minTime =
+    periodGroups.length === 0
+      ? 10
+      : Math.max(0, Math.floor(Math.min(...periodGroups.map((g) => g.min)) - 2));
 
-  const maxTime = useMemo(() => {
-    if (periodGroups.length === 0) return 45;
-    return Math.ceil(Math.max(...periodGroups.map((g) => g.max)) + 3);
-  }, [periodGroups]);
+  const maxTime =
+    periodGroups.length === 0 ? 45 : Math.ceil(Math.max(...periodGroups.map((g) => g.max)) + 3);
 
-  const maxStdDev = useMemo(() => {
-    if (periodGroups.length === 0) return 10;
-    return Math.ceil(Math.max(...periodGroups.map((g) => g.stdDev)) + 2);
-  }, [periodGroups]);
+  const maxStdDev =
+    periodGroups.length === 0 ? 10 : Math.ceil(Math.max(...periodGroups.map((g) => g.stdDev)) + 2);
 
   const CustomTooltip = ({
     active,

@@ -1,6 +1,6 @@
 import { Calendar, Filter, Hash, RotateCcw, SlidersHorizontal, Sparkles } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   CartesianGrid,
   ComposedChart,
@@ -149,7 +149,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
   };
 
   // Filter solves based on active range selection
-  const filteredSolves = useMemo(() => {
+  const filteredSolves = (() => {
     if (solves.length === 0) return [];
 
     if (rangeMode === 'dateRange') {
@@ -169,61 +169,54 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
     }
 
     return solves;
-  }, [solves, rangeMode, startSolve, endSolve, startDate, endDate, totalCount]);
+  })();
 
   // Re-estimate OLS Linear Regression for the filtered range
-  const filteredRegression = useMemo(() => {
-    return calculateLinearRegression(filteredSolves);
-  }, [filteredSolves]);
+  const filteredRegression = calculateLinearRegression(filteredSolves);
 
   // Map solve index to period group info for hover tooltips
-  const solvePeriodMap = useMemo(() => {
-    const map = new Map<number, { periodNumber: number; periodLabel: string }>();
-    periodGroups.forEach((group, gIdx) => {
-      group.solves.forEach((s) => {
-        map.set(s.index, {
-          periodNumber: gIdx + 1,
-          periodLabel: group.label || `${unitInfo.unitSingular} ${gIdx + 1}`,
-        });
+  const solvePeriodMap = new Map<number, { periodNumber: number; periodLabel: string }>();
+  periodGroups.forEach((group, gIdx) => {
+    group.solves.forEach((s) => {
+      solvePeriodMap.set(s.index, {
+        periodNumber: gIdx + 1,
+        periodLabel: group.label || `${unitInfo.unitSingular} ${gIdx + 1}`,
       });
     });
-    return map;
-  }, [periodGroups, unitInfo]);
+  });
 
   // Construct chart data for filtered range
-  const chartData = useMemo(() => {
-    return filteredSolves.map((solve) => {
-      const fullIdx = solves.findIndex((s) => s.id === solve.id);
-      const predY = filteredRegression.slope * solve.index + filteredRegression.intercept;
+  const chartData = filteredSolves.map((solve) => {
+    const fullIdx = solves.findIndex((s) => s.id === solve.id);
+    const predY = filteredRegression.slope * solve.index + filteredRegression.intercept;
 
-      const ao5 = solve.ao5 ?? calculateAoN(solves, fullIdx, 5);
-      const ao12 = solve.ao12 ?? calculateAoN(solves, fullIdx, 12);
-      const ao50 = solve.ao50 ?? calculateAoN(solves, fullIdx, 50);
-      const ao100 = solve.ao100 ?? calculateAoN(solves, fullIdx, 100);
-      const customAo =
-        showCustomAo && customAoN >= 3 ? calculateAoN(solves, fullIdx, customAoN) : null;
-      const pInfo = solvePeriodMap.get(solve.index);
+    const ao5 = solve.ao5 ?? calculateAoN(solves, fullIdx, 5);
+    const ao12 = solve.ao12 ?? calculateAoN(solves, fullIdx, 12);
+    const ao50 = solve.ao50 ?? calculateAoN(solves, fullIdx, 50);
+    const ao100 = solve.ao100 ?? calculateAoN(solves, fullIdx, 100);
+    const customAo =
+      showCustomAo && customAoN >= 3 ? calculateAoN(solves, fullIdx, customAoN) : null;
+    const pInfo = solvePeriodMap.get(solve.index);
 
-      return {
-        index: solve.index,
-        single: solve.penalty === 'DNF' ? null : solve.finalTimeSec,
-        ao5,
-        ao12,
-        ao50,
-        ao100,
-        customAo,
-        trend: Number(predY.toFixed(2)),
-        dateStr: solve.dateStr,
-        scramble: solve.scramble,
-        penalty: solve.penalty,
-        periodNumber: pInfo?.periodNumber,
-        periodLabel: pInfo?.periodLabel,
-      };
-    });
-  }, [filteredSolves, filteredRegression, solves, showCustomAo, customAoN, solvePeriodMap]);
+    return {
+      index: solve.index,
+      single: solve.penalty === 'DNF' ? null : solve.finalTimeSec,
+      ao5,
+      ao12,
+      ao50,
+      ao100,
+      customAo,
+      trend: Number(predY.toFixed(2)),
+      dateStr: solve.dateStr,
+      scramble: solve.scramble,
+      penalty: solve.penalty,
+      periodNumber: pInfo?.periodNumber,
+      periodLabel: pInfo?.periodLabel,
+    };
+  });
 
   // Calculate high level stats for the focused range
-  const rangeStats = useMemo(() => {
+  const rangeStats = (() => {
     const validTimes = filteredSolves.filter((s) => s.penalty !== 'DNF').map((s) => s.finalTimeSec);
     const count = filteredSolves.length;
     const isFiltered = count < totalCount;
@@ -241,41 +234,36 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
       bestSec,
       pctOfTotal,
     };
-  }, [filteredSolves, totalCount]);
+  })();
 
   // Raw period boundaries matching the filtered solves range
-  const rawPeriodBoundaries = useMemo(() => {
-    let acc = 0;
-    const boundaries: {
-      index: number;
-      periodNumber: number;
-      label: string;
-      groupLabel: string;
-      midIndex: number;
-    }[] = [];
-
-    periodGroups.forEach((group, idx) => {
-      const count = group.solves.length;
-      acc += count;
-      const periodNumber = idx + 1;
-      const inRange = filteredSolves.some((s) => s.index === acc);
-      if (inRange) {
-        const unitSingular = unitInfo.unitSingular;
-        boundaries.push({
-          index: acc,
-          periodNumber,
-          label: `${unitSingular} ${periodNumber}`,
-          groupLabel: group.label,
-          midIndex: Math.round(acc - count / 2),
-        });
-      }
-    });
-
-    return boundaries;
-  }, [periodGroups, unitInfo, filteredSolves]);
+  const rawPeriodBoundaries: {
+    index: number;
+    periodNumber: number;
+    label: string;
+    groupLabel: string;
+    midIndex: number;
+  }[] = [];
+  let boundaryAcc = 0;
+  periodGroups.forEach((group, idx) => {
+    const count = group.solves.length;
+    boundaryAcc += count;
+    const periodNumber = idx + 1;
+    const inRange = filteredSolves.some((s) => s.index === boundaryAcc);
+    if (inRange) {
+      const unitSingular = unitInfo.unitSingular;
+      rawPeriodBoundaries.push({
+        index: boundaryAcc,
+        periodNumber,
+        label: `${unitSingular} ${periodNumber}`,
+        groupLabel: group.label,
+        midIndex: Math.round(boundaryAcc - count / 2),
+      });
+    }
+  });
 
   // Responsive tick calculation for vertical period boundary labels (maximizes visible ticks without overlapping)
-  const responsiveBoundaryInfo = useMemo(() => {
+  const responsiveBoundaryInfo = (() => {
     const totalCount = rawPeriodBoundaries.length;
     if (totalCount === 0) {
       return { boundaries: [], step: 1, isDownsampled: false, totalCount };
@@ -304,22 +292,19 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
       isDownsampled: true,
       totalCount,
     };
-  }, [rawPeriodBoundaries, windowWidth]);
+  })();
 
   // Y domain with padding based on active visible metrics in filtered dataset
-  const yValues = useMemo(() => {
-    const vals: number[] = [];
-    chartData.forEach((dp) => {
-      if (solveVisibility !== 'hidden' && dp.single !== null) vals.push(dp.single);
-      if (showAo5 && dp.ao5 !== null) vals.push(dp.ao5);
-      if (showAo12 && dp.ao12 !== null) vals.push(dp.ao12);
-      if (showAo50 && dp.ao50 !== null) vals.push(dp.ao50);
-      if (showAo100 && dp.ao100 !== null) vals.push(dp.ao100);
-      if (showCustomAo && dp.customAo !== null) vals.push(dp.customAo);
-      if (showTrend && dp.trend !== null) vals.push(dp.trend);
-    });
-    return vals;
-  }, [chartData, solveVisibility, showAo5, showAo12, showAo50, showAo100, showCustomAo, showTrend]);
+  const yValues: number[] = [];
+  chartData.forEach((dp) => {
+    if (solveVisibility !== 'hidden' && dp.single !== null) yValues.push(dp.single);
+    if (showAo5 && dp.ao5 !== null) yValues.push(dp.ao5);
+    if (showAo12 && dp.ao12 !== null) yValues.push(dp.ao12);
+    if (showAo50 && dp.ao50 !== null) yValues.push(dp.ao50);
+    if (showAo100 && dp.ao100 !== null) yValues.push(dp.ao100);
+    if (showCustomAo && dp.customAo !== null) yValues.push(dp.customAo);
+    if (showTrend && dp.trend !== null) yValues.push(dp.trend);
+  });
 
   const minY = yValues.length > 0 ? Math.max(0, Math.floor(Math.min(...yValues) - 2)) : 0;
   const maxY = yValues.length > 0 ? Math.ceil(Math.max(...yValues) + 3) : 50;
@@ -428,7 +413,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
     );
   };
 
-  const singleLineStyle = useMemo(() => {
+  const singleLineStyle = (() => {
     switch (solveVisibility) {
       case 'hidden':
         return {
@@ -460,7 +445,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
           dot: false,
         };
     }
-  }, [solveVisibility]);
+  })();
 
   return (
     <ChartCardWrapper

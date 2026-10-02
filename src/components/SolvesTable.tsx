@@ -1,6 +1,6 @@
 import { AlertCircle, ChevronLeft, ChevronRight, Clock, Search } from 'lucide-react';
 import type React from 'react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { Solve } from '../types';
 
 interface SolvesTableProps {
@@ -12,24 +12,21 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 15;
 
-  const filteredSolves = useMemo(() => {
-    if (!searchTerm.trim()) return solves;
-    const term = searchTerm.toLowerCase();
-    return solves.filter(
-      (s) =>
-        s.index.toString().includes(term) ||
-        s.finalTimeSec.toString().includes(term) ||
-        s.dateStr.includes(term) ||
-        s.penalty?.toLowerCase().includes(term) ||
-        s.scramble?.toLowerCase().includes(term),
-    );
-  }, [solves, searchTerm]);
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredSolves = !normalizedSearch
+    ? solves
+    : solves.filter(
+        (s) =>
+          s.index.toString().includes(normalizedSearch) ||
+          s.finalTimeSec.toString().includes(normalizedSearch) ||
+          s.dateStr.includes(normalizedSearch) ||
+          s.penalty?.toLowerCase().includes(normalizedSearch) ||
+          s.scramble?.toLowerCase().includes(normalizedSearch),
+      );
 
   const totalPages = Math.ceil(filteredSolves.length / pageSize) || 1;
-  const currentSolves = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredSolves.slice(start, start + pageSize);
-  }, [filteredSolves, currentPage]);
+  const start = (currentPage - 1) * pageSize;
+  const currentSolves = filteredSolves.slice(start, start + pageSize);
 
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-stone-800 bg-stone-900 p-4 sm:p-6 text-stone-100 shadow-xl">

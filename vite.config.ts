@@ -8,7 +8,14 @@ import { defineConfig } from 'vite';
 export default defineConfig(() => {
   return {
     base: process.env.BASE_PATH || './',
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react({
+        compiler: {
+          target: '19',
+        },
+      }),
+      tailwindcss(),
+    ],
     resolve: {
       alias: {
         '@': path.resolve(import.meta.dirname, '.'),

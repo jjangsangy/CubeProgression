@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { GroupingPeriod, PeriodGroup } from '../types';
 import { getPeriodUnitInfo } from '../utils/statsMath';
 import { ChartCardWrapper } from './ChartCardWrapper';
@@ -63,43 +63,25 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
   const plotHeight = height - padding.top - padding.bottom;
 
   // Calculate Y min & max across all period groups
-  const allTimes = useMemo(() => {
-    const times: number[] = [];
-    periodGroups.forEach((g) => {
-      times.push(...g.timesSec);
-    });
-    return times;
-  }, [periodGroups]);
+  const allTimes = periodGroups.flatMap((g) => g.timesSec);
 
-  const minY = useMemo(() => {
-    if (allTimes.length === 0) return 10;
-    return Math.max(0, Math.floor(Math.min(...allTimes) - 2));
-  }, [allTimes]);
+  const minY = allTimes.length === 0 ? 10 : Math.max(0, Math.floor(Math.min(...allTimes) - 2));
 
-  const maxY = useMemo(() => {
-    if (allTimes.length === 0) return 45;
-    return Math.ceil(Math.max(...allTimes) + 3);
-  }, [allTimes]);
+  const maxY = allTimes.length === 0 ? 45 : Math.ceil(Math.max(...allTimes) + 3);
 
   // Y-axis scale function
-  const yScale = useCallback(
-    (val: number) => {
-      return padding.top + plotHeight - ((val - minY) / (maxY - minY)) * plotHeight;
-    },
-    [padding.top, plotHeight, minY, maxY],
-  );
+  const yScale = (val: number) => {
+    return padding.top + plotHeight - ((val - minY) / (maxY - minY)) * plotHeight;
+  };
 
   // X-axis column centers
   const numGroups = periodGroups.length;
   const colWidth = numGroups > 0 ? plotWidth / numGroups : plotWidth;
   const boxWidth = Math.min(55, colWidth * 0.55);
 
-  const getGroupX = useCallback(
-    (idx: number) => {
-      return padding.left + idx * colWidth + colWidth / 2;
-    },
-    [padding.left, colWidth],
-  );
+  const getGroupX = (idx: number) => {
+    return padding.left + idx * colWidth + colWidth / 2;
+  };
 
   // Seeded deterministic jitter generator for scatter points
   const getJitterOffset = (seedIdx: number) => {
@@ -120,26 +102,21 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
   };
 
   // Generate Median Trend path points
-  const medianPoints = useMemo(() => {
-    return periodGroups.map((g, idx) => ({
-      x: getGroupX(idx),
-      y: yScale(g.median),
-      median: g.median,
-      label: g.label,
-    }));
-  }, [periodGroups, yScale, getGroupX]);
+  const medianPoints = periodGroups.map((g, idx) => ({
+    x: getGroupX(idx),
+    y: yScale(g.median),
+    median: g.median,
+    label: g.label,
+  }));
 
   const medianPolylinePoints = medianPoints.map((p) => `${p.x},${p.y}`).join(' ');
 
   // Y ticks (e.g., 10, 15, 20, 25, 30, 35, 40)
-  const yTicks = useMemo(() => {
-    const ticks: number[] = [];
-    const step = maxY - minY > 25 ? 5 : 2;
-    for (let t = Math.ceil(minY / step) * step; t <= maxY; t += step) {
-      ticks.push(t);
-    }
-    return ticks;
-  }, [minY, maxY]);
+  const yTicks: number[] = [];
+  const step = maxY - minY > 25 ? 5 : 2;
+  for (let t = Math.ceil(minY / step) * step; t <= maxY; t += step) {
+    yTicks.push(t);
+  }
 
   return (
     <ChartCardWrapper

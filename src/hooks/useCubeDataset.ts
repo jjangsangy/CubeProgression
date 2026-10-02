@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { GlobalStats, GroupingPeriod, PeriodGroup, Session } from '../types';
 import { parseCsTimerFile } from '../utils/csTimerParser';
 import { exportPeriodStatsCsv } from '../utils/csvExport';
@@ -332,19 +332,13 @@ export function useCubeDataset(): UseCubeDatasetReturn {
     }
   };
 
-  const activeSession = useMemo(() => {
-    return sessions.find((s) => s.id === selectedSessionId) || sessions[0] || null;
-  }, [sessions, selectedSessionId]);
+  const activeSession = sessions.find((s) => s.id === selectedSessionId) || sessions[0] || null;
 
-  const periodGroups = useMemo(() => {
-    if (!activeSession) return [];
-    return groupSolvesByPeriod(activeSession.solves, groupingPeriod, customBatchSize);
-  }, [activeSession, groupingPeriod, customBatchSize]);
+  const periodGroups = activeSession
+    ? groupSolvesByPeriod(activeSession.solves, groupingPeriod, customBatchSize)
+    : [];
 
-  const globalStats = useMemo(() => {
-    if (!activeSession) return null;
-    return calculateGlobalStats(activeSession.solves);
-  }, [activeSession]);
+  const globalStats = activeSession ? calculateGlobalStats(activeSession.solves) : null;
 
   const handleExportCSV = () => {
     exportPeriodStatsCsv(periodGroups, activeSession?.name);

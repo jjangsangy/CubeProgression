@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -27,30 +27,29 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
 }) => {
   const [splitPercent, setSplitPercent] = useState<number>(0.3); // 30% default baseline/recent split
 
-  const kdeData = useMemo(() => {
-    return calculateKDE(solves, splitPercent, splitPercent, 120);
-  }, [solves, splitPercent]);
+  const kdeData = calculateKDE(solves, splitPercent, splitPercent, 120);
 
   // Compute peak density and mean times for annotations
-  const statsSummary = useMemo(() => {
-    const valid = solves.filter((s) => s.penalty !== 'DNF');
-    if (valid.length < 10) return null;
+  const valid = solves.filter((s) => s.penalty !== 'DNF');
+  const statsSummary =
+    valid.length < 10
+      ? null
+      : (() => {
+          const n = Math.floor(valid.length * splitPercent);
+          const baselineSolves = valid.slice(0, n).map((s) => s.finalTimeSec);
+          const recentSolves = valid.slice(valid.length - n).map((s) => s.finalTimeSec);
 
-    const n = Math.floor(valid.length * splitPercent);
-    const baselineSolves = valid.slice(0, n).map((s) => s.finalTimeSec);
-    const recentSolves = valid.slice(valid.length - n).map((s) => s.finalTimeSec);
+          const bMean = baselineSolves.reduce((a, b) => a + b, 0) / baselineSolves.length;
+          const rMean = recentSolves.reduce((a, b) => a + b, 0) / recentSolves.length;
 
-    const bMean = baselineSolves.reduce((a, b) => a + b, 0) / baselineSolves.length;
-    const rMean = recentSolves.reduce((a, b) => a + b, 0) / recentSolves.length;
-
-    return {
-      baselineCount: baselineSolves.length,
-      recentCount: recentSolves.length,
-      baselineMean: bMean.toFixed(2),
-      recentMean: rMean.toFixed(2),
-      diff: (bMean - rMean).toFixed(2),
-    };
-  }, [solves, splitPercent]);
+          return {
+            baselineCount: baselineSolves.length,
+            recentCount: recentSolves.length,
+            baselineMean: bMean.toFixed(2),
+            recentMean: rMean.toFixed(2),
+            diff: (bMean - rMean).toFixed(2),
+          };
+        })();
 
   const CustomTooltip = ({
     active,

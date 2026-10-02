@@ -1,5 +1,5 @@
 import { Award, ChevronDown, ChevronUp, Flame, History, Sparkles, Trophy, Zap } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   CartesianGrid,
   ComposedChart,
@@ -38,16 +38,12 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
 
   const _unitInfo = getPeriodUnitInfo(groupingPeriod);
 
-  const pbResult = useMemo(() => {
-    return calculatePbProgression(solves);
-  }, [solves]);
-
+  const pbResult = calculatePbProgression(solves);
   const { dataPoints, summary, pbMilestones } = pbResult;
 
   // Compute Y-axis bounds
-  const minY = useMemo(() => {
-    if (dataPoints.length === 0) return 0;
-    const validPbs: number[] = [];
+  const validPbs: number[] = [];
+  if (dataPoints.length > 0) {
     dataPoints.forEach((dp) => {
       if (showSingle && dp.pbSingle) validPbs.push(dp.pbSingle);
       if (showAo5 && dp.pbAo5) validPbs.push(dp.pbAo5);
@@ -56,29 +52,15 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
       if (showAo100 && dp.pbAo100) validPbs.push(dp.pbAo100);
       if (showRawSolves && dp.single) validPbs.push(dp.single);
     });
-    if (validPbs.length === 0) return 0;
-    return Math.max(0, Math.floor(Math.min(...validPbs) - 1));
-  }, [dataPoints, showSingle, showAo5, showAo12, showAo50, showAo100, showRawSolves]);
+  }
 
-  const maxY = useMemo(() => {
-    if (dataPoints.length === 0) return 30;
-    const validPbs: number[] = [];
-    dataPoints.forEach((dp) => {
-      if (showSingle && dp.pbSingle) validPbs.push(dp.pbSingle);
-      if (showAo5 && dp.pbAo5) validPbs.push(dp.pbAo5);
-      if (showAo12 && dp.pbAo12) validPbs.push(dp.pbAo12);
-      if (showAo50 && dp.pbAo50) validPbs.push(dp.pbAo50);
-      if (showAo100 && dp.pbAo100) validPbs.push(dp.pbAo100);
-      if (showRawSolves && dp.single) validPbs.push(dp.single);
-    });
-    if (validPbs.length === 0) return 30;
-    return Math.ceil(Math.max(...validPbs) + 2);
-  }, [dataPoints, showSingle, showAo5, showAo12, showAo50, showAo100, showRawSolves]);
+  const minY = validPbs.length === 0 ? 0 : Math.max(0, Math.floor(Math.min(...validPbs) - 1));
+  const maxY = validPbs.length === 0 ? 30 : Math.ceil(Math.max(...validPbs) + 2);
 
-  const filteredMilestones = useMemo(() => {
-    if (milestoneFilter === 'All') return pbMilestones;
-    return pbMilestones.filter((m) => m.type === milestoneFilter);
-  }, [pbMilestones, milestoneFilter]);
+  const filteredMilestones =
+    milestoneFilter === 'All'
+      ? pbMilestones
+      : pbMilestones.filter((m) => m.type === milestoneFilter);
 
   const CustomTooltip = ({
     active,
