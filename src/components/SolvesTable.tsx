@@ -20,6 +20,7 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
         s.index.toString().includes(term) ||
         s.finalTimeSec.toString().includes(term) ||
         s.dateStr.includes(term) ||
+        s.penalty?.toLowerCase().includes(term) ||
         s.scramble?.toLowerCase().includes(term),
     );
   }, [solves, searchTerm]);
@@ -141,6 +142,7 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
         <div className="flex items-center gap-2">
           <button
             type="button"
+            aria-label="Previous page"
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             className="rounded-lg bg-stone-800 p-1.5 text-stone-300 transition-colors hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-40"
@@ -152,6 +154,7 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
           </span>
           <button
             type="button"
+            aria-label="Next page"
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             className="rounded-lg bg-stone-800 p-1.5 text-stone-300 transition-colors hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-40"

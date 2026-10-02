@@ -1,0 +1,1 @@
+This is random corrupted text from an invalid download without valid JSON brackets.

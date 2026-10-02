@@ -23,6 +23,9 @@ export default defineConfig({
     /* Headless mode */
     headless: true,
 
+    /* Deterministic timezone */
+    timezoneId: 'UTC',
+
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
   },
