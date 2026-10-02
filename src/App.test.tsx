@@ -13,14 +13,11 @@ describe('App component', () => {
 
     expect(screen.getByText('CubeProgression')).toBeInTheDocument();
 
-    await waitFor(
-      () => {
-        expect(
-          screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-        ).toBeInTheDocument();
-      },
-      { timeout: 4000 },
-    );
+    await waitFor(() => {
+      expect(
+        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
+      ).toBeInTheDocument();
+    });
   });
 
   it('restores saved dataset from IndexedDB on initial mount when available', async () => {
@@ -65,25 +62,19 @@ describe('App component', () => {
 
     render(<App />);
 
-    await waitFor(
-      () => {
-        expect(screen.getAllByText(/Restored Session/).length).toBeGreaterThan(0);
-      },
-      { timeout: 4000 },
-    );
+    await waitFor(() => {
+      expect(screen.getAllByText(/Restored Session/).length).toBeGreaterThan(0);
+    });
   });
 
   it('allows changing session and grouping period', async () => {
     render(<App />);
 
-    await waitFor(
-      () => {
-        expect(
-          screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-        ).toBeInTheDocument();
-      },
-      { timeout: 4000 },
-    );
+    await waitFor(() => {
+      expect(
+        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
+      ).toBeInTheDocument();
+    });
 
     const weeklyBtn = screen.getByText('Weekly');
     fireEvent.click(weeklyBtn);
@@ -103,14 +94,11 @@ describe('App component', () => {
   it('allows resetting dataset and re-loading demo data', async () => {
     render(<App />);
 
-    await waitFor(
-      () => {
-        expect(
-          screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-        ).toBeInTheDocument();
-      },
-      { timeout: 4000 },
-    );
+    await waitFor(() => {
+      expect(
+        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
+      ).toBeInTheDocument();
+    });
 
     const resetBtn = screen.getByTitle('Reset Data');
     fireEvent.click(resetBtn);
@@ -122,14 +110,11 @@ describe('App component', () => {
     const loadDemoBtns = screen.getAllByText(/Load Sample Data/);
     fireEvent.click(loadDemoBtns[0]);
 
-    await waitFor(
-      () => {
-        expect(
-          screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-        ).toBeInTheDocument();
-      },
-      { timeout: 4000 },
-    );
+    await waitFor(() => {
+      expect(
+        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
+      ).toBeInTheDocument();
+    });
   });
 
   it('exports period summary statistics as a CSV download', async () => {
@@ -145,14 +130,11 @@ describe('App component', () => {
 
     render(<App />);
 
-    await waitFor(
-      () => {
-        expect(
-          screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-        ).toBeInTheDocument();
-      },
-      { timeout: 4000 },
-    );
+    await waitFor(() => {
+      expect(
+        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
+      ).toBeInTheDocument();
+    });
 
     fireEvent.click(screen.getByTitle('Export Period Summary Stats as CSV'));
 
@@ -172,12 +154,9 @@ describe('App component', () => {
     render(<App />);
 
     const fileInput = screen.getByLabelText('Upload csTimer file');
-    await waitFor(
-      () => {
-        expect(fileInput).not.toBeDisabled();
-      },
-      { timeout: 4000 },
-    );
+    await waitFor(() => {
+      expect(fileInput).not.toBeDisabled();
+    });
 
     // Upload an invalid JSON file
     const invalidFile = new File(['invalid content without json'], 'bad_file.txt', {
@@ -185,12 +164,9 @@ describe('App component', () => {
     });
     fireEvent.change(fileInput, { target: { files: [invalidFile] } });
 
-    await waitFor(
-      () => {
-        expect(screen.getByText(/Invalid csTimer file format/i)).toBeInTheDocument();
-      },
-      { timeout: 4000 },
-    );
+    await waitFor(() => {
+      expect(screen.getByText(/Invalid csTimer file format/i)).toBeInTheDocument();
+    });
     expect(consoleErrorSpy).toHaveBeenCalled();
   });
 
@@ -198,12 +174,9 @@ describe('App component', () => {
     render(<App />);
 
     const fileInput = screen.getByLabelText('Upload csTimer file');
-    await waitFor(
-      () => {
-        expect(fileInput).not.toBeDisabled();
-      },
-      { timeout: 4000 },
-    );
+    await waitFor(() => {
+      expect(fileInput).not.toBeDisabled();
+    });
 
     // Upload a valid csTimer JSON file
     const validData = JSON.stringify({
@@ -218,24 +191,18 @@ describe('App component', () => {
     const validFile = new File([validData], 'valid_cstimer.txt', { type: 'text/plain' });
     fireEvent.change(fileInput, { target: { files: [validFile] } });
 
-    await waitFor(
-      () => {
-        expect(screen.getAllByText(/Uploaded 3x3 Session/).length).toBeGreaterThan(0);
-      },
-      { timeout: 4000 },
-    );
+    await waitFor(() => {
+      expect(screen.getAllByText(/Uploaded 3x3 Session/).length).toBeGreaterThan(0);
+    });
   });
 
   it('handles clearing storage via FileUploader and selecting sessions', async () => {
     render(<App />);
 
     const fileInput = screen.getByLabelText('Upload csTimer file');
-    await waitFor(
-      () => {
-        expect(fileInput).not.toBeDisabled();
-      },
-      { timeout: 4000 },
-    );
+    await waitFor(() => {
+      expect(fileInput).not.toBeDisabled();
+    });
 
     // Change session selector if available
     const sessionSelector = screen.getByRole('combobox');
@@ -249,5 +216,29 @@ describe('App component', () => {
       expect(screen.queryByText(/F2L Yellow Cross Progression/)).not.toBeInTheDocument();
       expect(screen.getByLabelText('File upload dropzone')).toBeInTheDocument();
     });
+  });
+
+  it('handles FileReader error during file upload', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(FileReader.prototype, 'readAsText').mockImplementationOnce(function (
+      this: FileReader,
+    ) {
+      this.onerror?.(new ProgressEvent('error') as ProgressEvent<FileReader>);
+    });
+
+    render(<App />);
+
+    const fileInput = screen.getByLabelText('Upload csTimer file');
+    await waitFor(() => {
+      expect(fileInput).not.toBeDisabled();
+    });
+
+    const file = new File(['content'], 'read_err.txt', { type: 'text/plain' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByText('Error reading uploaded file.')).toBeInTheDocument();
+    });
+    consoleErrorSpy.mockRestore();
   });
 });
