@@ -126,7 +126,8 @@ Match these rules when hand-writing code; run `bun run check:write` before finis
 ## Gotchas & notes
 
 - **Pruned dependencies**: legacy unused packages (`@google/genai`, `d3`, `@types/d3`, `motion`) have been completely pruned from `package.json`. Animations are handled with standard Tailwind / CSS `@keyframes`.
-- **Chunking & Build Optimizations**: `vite.config.ts` partitions production builds into `react-vendor`, `recharts-vendor`, and `temporal-vendor` chunks, targeted to `es2022` with `lightningcss`. Heavy vendor scripts are filtered from initial `<link rel="modulepreload">` tags to protect critical path metrics.
+- **Chunking & Build Optimizations**: `vite.config.ts` partitions production builds into `react-vendor`, `recharts-vendor`, and `temporal-vendor` chunks, targeted to `es2022` with `lightningcss`. Compiled CSS is inlined directly into `index.html` by `inlineCriticalCss()` to eliminate render-blocking network requests. Heavy deferred scripts (`recharts-vendor`, `temporal-vendor`) are filtered from initial `<link rel="modulepreload">` tags to protect critical path metrics.
+- **Conditional Polyfills**: `temporal-polyfill` is loaded conditionally via `src/utils/temporalLoader.ts` (`ensureTemporal()`) only on older browsers that lack standard `Temporal`. Modern engines run native `Temporal` with zero polyfill transfer overhead.
 - **IndexedDB in tests**: `openDB()` returns `null` under jsdom, so persistence is disabled
   and `App.test.tsx` always exercises the demo fallback.
 - **Determinism**: `generateSampleData()` is seeded, so demo output is stable —

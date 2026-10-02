@@ -21,7 +21,7 @@ Presentational container for session metrics and progression charts. Props: `ses
 
 - Renders `MetricsOverviewCards`, `ProgressionChart`, `PbProgressionChart`, `DailyDistributionBoxPlot`, `DensityShiftChart`, `MetricsEvolutionChart`, and `SolvesTable`.
 - Renders `null` when `session` or `stats` are empty.
-- Code-splits all Recharts-based visualizations via `React.lazy` and wraps them in `<DeferredChart>` to eliminate off-screen chart mounting and reduce initial bundle execution.
+- Statically renders Plot 1 (`ProgressionChart`) with synchronous shell/controls, while below-the-fold visualizations are code-split and wrapped in `<DeferredChart>` with calibrated minimum heights (640px PB, 550px Box Plot, 550px Density Shift, 525px Metrics Evolution, 780px Solves Table) ensuring **CLS = 0.000**.
 - Enables isolated testing of the entire progression visualization grid without mounting dataset storage hooks.
 
 ## `DeferredChart` (`DeferredChart.tsx`)
@@ -30,8 +30,8 @@ Viewport-aware wrapper that delays mounting heavy visualization components until
 
 - Uses `IntersectionObserver` with a `250px` root margin to trigger pre-emptive rendering before coming into view.
 - Latches mounted state permanently once visible; disconnects observer immediately.
-- Encloses children in an internal `<Suspense>` boundary displaying an animated skeleton loader.
-- Applies `.chart-content-visibility` (`content-visibility: auto`) to avoid off-screen layout work.
+- Encloses children in an internal `<Suspense>` boundary displaying an animated skeleton loader with responsive padding (`p-4 sm:p-6`) matching `ChartCardWrapper`.
+- Applies `.chart-content-visibility` (`content-visibility: auto`) with dynamic `containIntrinsicSize: auto [minHeight]` to avoid off-screen layout work without content jumping.
 - Automatically falls back to synchronous rendering in jsdom or browsers lacking `IntersectionObserver`.
 
 ## `Footer` (`Footer.tsx`)
@@ -95,7 +95,10 @@ Rate (regression slope), Progression Gain (baseline vs recent delta + %), and Se
 The main time-series chart (Recharts `ComposedChart`). Props: `solves`, `periodGroups`,
 `regression`, `groupingPeriod?`, `title?`. Modularized with `ProgressionChartCanvas` and `progressionMath`.
 
+- Decouples Recharts execution from initial paint: the outer shell, card wrapper, title, badges, metric toggles, and range slider render synchronously on Frame 0 with an exact 420px canvas skeleton, while `ProgressionChartCanvas` mounts during idle time via `requestIdleCallback` (or immediately in tests/JSDOM).
 - Disables non-composited SVG animations (`isAnimationActive={false}`) across all lines for instant scrubbing and mobile responsiveness.
+- Adds numeric `interval` on `<XAxis>` to bypass Recharts `DOMUtils.js:54` text measurement, completely eliminating the 29 ms forced reflow.
+- Sets explicit `initialDimension={{ width: 800, height: 420 }}` on `ResponsiveContainer`, preventing the 32 ms layout recalculation during effect flushes.
 - Plots individual solve times (`single`) plus toggleable moving averages `ao5`/`ao12`/
   `ao50`/`ao100`, a trend line, and an optional custom Ao-N (`customAoN`, default 25).
 - Uses $O(N)$ hash-map indexing in `buildProgressionChartData` to eliminate quadratic lookup overhead during range filtering.

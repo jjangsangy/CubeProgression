@@ -19,7 +19,7 @@ network dependency.
 | Charts | Recharts 3 (code-split, lazy) + hand-authored SVG (box plot) |
 | Icons | `lucide-react` |
 | Animation | GPU-accelerated CSS keyframes (no runtime motion library) |
-| Dates/timezones | Standard `Temporal` (browser native) |
+| Dates/timezones | Standard `Temporal` (browser native) with conditional dynamic polyfill (`temporalLoader.ts`) |
 | PNG export | `html-to-image` (dynamically imported) |
 | Persistence | Native IndexedDB |
 | Lint / format | Biome 2 |
@@ -119,8 +119,10 @@ Persisted settings: whenever the user changes session, grouping period, or batch
 
 To guarantee rapid initial mobile paint (<0.5s FCP) and eliminate main-thread blocking time:
 
-- **Vendor Chunking (`vite.config.ts`)**: Configures `manualChunks` into `react-vendor` and `recharts-vendor`. Standard `Temporal` is native, eliminating polyfill chunks. `modulePreload` excludes heavy deferred vendors (`recharts-vendor`) from the critical HTML parse path, while compiled CSS is inlined directly into `index.html`.
-- **Zero-Recharts Initial Paint**: `DashboardView` and all Recharts-based chart components are loaded dynamically via `React.lazy` inside `<Suspense fallback={...}>`. Initial page load executes 0 kB of Recharts code.
+- **Vendor Chunking (`vite.config.ts`)**: Configures `manualChunks` into `react-vendor`, `recharts-vendor`, and `temporal-vendor`. `modulePreload` excludes heavy deferred vendors (`recharts-vendor`, `temporal-vendor`) from the critical HTML parse path, while compiled CSS is inlined directly into `index.html`.
+- **Zero-Recharts Initial Paint**: `DashboardView` and all Recharts-based chart canvases are loaded dynamically via `React.lazy` inside `<Suspense fallback={...}>`. Plot 1 (`ProgressionChart`) renders its shell and controls synchronously on Frame 0, deferring the Recharts SVG canvas mounting to browser idle time (`requestIdleCallback`). Initial page load executes 0 kB of Recharts code.
+- **Conditional Temporal Polyfilling**: `src/utils/temporalLoader.ts` (`ensureTemporal()`) dynamically imports `temporal-polyfill` only when `typeof globalThis.Temporal === 'undefined'`. Modern browsers execute standard native `Temporal` and transfer 0 bytes of polyfill code.
+- **Cooperative Task Scheduling**: `src/utils/scheduler.ts` (`yieldToMain()`) yields to the browser event loop via `scheduler.yield()` before atomic state flushes, ensuring initialization tasks remain below the 50 ms long-task budget.
 - **Viewport-Driven Rendering**: Below-the-fold charts and heavy tables are wrapped in `<DeferredChart>`, mounting only when within 250px of the viewport using `IntersectionObserver` (or immediately in test/jsdom environments).
-- **Static Inlined Shell**: `index.html` embeds a lightweight static CSS/SVG shell in `#root` to ensure instant first paint before JavaScript hydration completes.
+- **Static Inlined Shell**: `index.html` embeds a lightweight static CSS/SVG shell in `#root` matching the exact responsive coordinates (`px-4 sm:px-6 safe-area-x`, `#0c0a09` continuity) to ensure instant first paint before JavaScript hydration completes.
 - **Atomic Hydration**: Storage queries and dataset checks in `useCubeDatasetCore.ts` resolve concurrently and batch into a single state update, eliminating redundant hydration re-render passes.
