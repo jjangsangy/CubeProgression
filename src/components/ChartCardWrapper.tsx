@@ -329,7 +329,7 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
         <div className="hidden" />
 
         {/* Fullscreen Backdrop Overlay */}
-        <div className="fade-in fixed inset-0 z-[100] flex animate-in flex-col items-center justify-center overflow-y-auto bg-stone-950/95 p-4 backdrop-blur-xl duration-200 sm:p-8">
+        <div className="fade-in fixed inset-0 z-[100] flex animate-in flex-col items-center justify-center overflow-y-auto bg-stone-950/95 p-4 backdrop-blur-xl duration-200 sm:p-8 safe-area-modal">
           <div className="flex h-full max-h-[92vh] w-full max-w-7xl flex-col">{cardContent}</div>
         </div>
       </>

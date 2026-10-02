@@ -22,7 +22,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   return (
     <header className="relative border-b border-stone-800 bg-stone-950">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 safe-area-x">
         {/* Brand Logo & Title */}
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-rose-500 font-black text-stone-950 shadow-lg shadow-amber-500/10">

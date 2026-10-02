@@ -359,7 +359,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6">
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6 safe-area-x">
         {/* Upload & Session Configuration Panel */}
         <FileUploader
           sessions={sessions}
@@ -429,7 +429,7 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-stone-800/80 bg-stone-950 py-6 text-center text-xs text-stone-500">
+      <footer className="border-t border-stone-800/80 bg-stone-950 px-4 py-6 text-center text-xs text-stone-500 sm:px-6 safe-area-x safe-area-bottom">
         Speedcubing Progression Analyzer &bull; Built with React, Recharts & TypeScript
       </footer>
     </div>

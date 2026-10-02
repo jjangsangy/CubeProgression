@@ -250,13 +250,68 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       const maximizeBtn = card.getByRole('button', { name: /Maximize/i });
       await maximizeBtn.click();
 
-      // Fullscreen backdrop overlay is visible
+      // Fullscreen backdrop overlay is visible and includes safe area padding
       const modal = page.locator('.fixed.inset-0.z-\\[100\\]');
       await expect(modal).toBeVisible();
+      await expect(modal).toHaveClass(/safe-area-modal/);
 
       // Press Escape to dismiss
       await page.keyboard.press('Escape');
       await expect(modal).toHaveCount(0);
+    });
+
+    test('prevents white sides on iOS Safari landscape: validates viewport-fit=cover, theme-color, and stone-950 dark canvas background on html & body', async ({
+      page,
+    }) => {
+      // 1. Viewport meta tag must include viewport-fit=cover
+      const viewportMeta = await page.locator('meta[name="viewport"]').getAttribute('content');
+      expect(viewportMeta).toContain('viewport-fit=cover');
+
+      // 2. Theme color and color-scheme must be dark stone-950
+      const themeColor = await page.locator('meta[name="theme-color"]').getAttribute('content');
+      expect(themeColor).toBe('#0c0a09');
+      const colorScheme = await page.locator('meta[name="color-scheme"]').getAttribute('content');
+      expect(colorScheme).toBe('dark');
+
+      // 3. Computed background color of html, body, and root must be rgb(12, 10, 9) (stone-950), never transparent or white
+      const backgroundColors = await page.evaluate(() => {
+        return {
+          html: window.getComputedStyle(document.documentElement).backgroundColor,
+          body: window.getComputedStyle(document.body).backgroundColor,
+          root: window.getComputedStyle(document.getElementById('root') as HTMLElement)
+            .backgroundColor,
+        };
+      });
+
+      expect(backgroundColors.html).toBe('rgb(12, 10, 9)');
+      expect(backgroundColors.body).toBe('rgb(12, 10, 9)');
+      expect(backgroundColors.root).toBe('rgb(12, 10, 9)');
+
+      // 4. Page width matches viewport exactly (no white side margins or letterboxes)
+      const dimensions = await page.evaluate(() => {
+        return {
+          windowWidth: window.innerWidth,
+          htmlWidth: document.documentElement.clientWidth,
+          bodyWidth: document.body.clientWidth,
+        };
+      });
+      expect(dimensions.windowWidth).toBe(844);
+      expect(dimensions.htmlWidth).toBe(844);
+      expect(dimensions.bodyWidth).toBe(844);
+    });
+
+    test('applies safe-area insets to Navbar, Main, and Footer to prevent content clipping in landscape mode', async ({
+      page,
+    }) => {
+      const headerContainer = page.locator('header > div');
+      await expect(headerContainer).toHaveClass(/safe-area-x/);
+
+      const mainContainer = page.locator('main');
+      await expect(mainContainer).toHaveClass(/safe-area-x/);
+
+      const footer = page.locator('footer');
+      await expect(footer).toHaveClass(/safe-area-x/);
+      await expect(footer).toHaveClass(/safe-area-bottom/);
     });
   });
 
