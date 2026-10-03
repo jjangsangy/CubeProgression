@@ -8,6 +8,7 @@ on:
       - '**.md'
       - '.github/workflows/deploy.yml'
       - '.github/workflows/test.yml'
+      - '.github/workflows/lint.yml'
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
@@ -16,6 +17,7 @@ on:
       - '**.md'
       - '.github/workflows/deploy.yml'
       - '.github/workflows/test.yml'
+      - '.github/workflows/lint.yml'
   workflow_dispatch:
 
 concurrency:
