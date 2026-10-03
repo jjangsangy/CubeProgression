@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -81,6 +81,18 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     trackWidth: number;
     pointerId: number;
   } | null>(null);
+
+  const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileScreen(window.innerWidth < 640);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Sample subsets based on scrubber positions and symmetrical width
   const sample1Solves = useMemo(
@@ -378,18 +390,28 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     if (!active || !payload?.length) return null;
 
     return (
-      <div className="rounded-xl border border-stone-700 bg-stone-900/95 p-3 text-xs text-stone-200 shadow-2xl backdrop-blur-md">
-        <div className="mb-2 border-b border-stone-800 pb-1 font-mono font-bold text-stone-100">
-          Solve Time: {label}s
+      <div className="max-w-[240px] rounded-xl border border-stone-700/80 bg-stone-900/95 p-2.5 text-xs text-stone-200 shadow-2xl backdrop-blur-md sm:max-w-xs sm:p-3">
+        <div className="mb-2 flex items-center justify-between gap-2 border-b border-stone-800 pb-1.5 font-semibold text-stone-100">
+          <span>Solve Time: {label}s</span>
         </div>
-        <div className="space-y-1 font-mono">
-          <div className="flex items-center justify-between gap-4 text-rose-400">
-            <span>Baseline Density:</span>
-            <span>{payload[0]?.value?.toFixed(4)}</span>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            <span className="flex items-center gap-1.5 text-stone-400">
+              <span className="h-2 w-2 shrink-0 rounded-full border border-rose-400 bg-rose-500/80" />
+              <span>Baseline Density:</span>
+            </span>
+            <span className="font-mono font-semibold text-rose-300">
+              {payload[0]?.value?.toFixed(4)}
+            </span>
           </div>
-          <div className="flex items-center justify-between gap-4 text-emerald-400">
-            <span>Recent Density:</span>
-            <span>{payload[1]?.value?.toFixed(4)}</span>
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            <span className="flex items-center gap-1.5 text-stone-400">
+              <span className="h-2 w-2 shrink-0 rounded-full border border-emerald-400 bg-emerald-500/80" />
+              <span>Recent Density:</span>
+            </span>
+            <span className="font-mono font-semibold text-emerald-300">
+              {payload[1]?.value?.toFixed(4)}
+            </span>
           </div>
         </div>
       </div>
@@ -409,25 +431,25 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
       {/* Symmetrical, consistently distributed mean shift banner */}
       {statsSummary && (
         <div className="grid grid-cols-1 divide-y divide-stone-800/80 rounded-xl border border-stone-800/70 bg-stone-950/60 text-xs sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-          <div className="flex items-center justify-center gap-2 p-3 text-center">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 p-2.5 sm:p-3 text-center">
             <span className="h-2.5 w-2.5 shrink-0 rounded-full border border-rose-400 bg-rose-500/80"></span>
-            <span className="text-stone-400">Baseline Mean:</span>
+            <span className="text-stone-400 whitespace-nowrap">Baseline Mean:</span>
             <span className="font-mono font-bold text-rose-300">{statsSummary.baselineMean}s</span>
-            <span className="font-mono text-[11px] text-stone-500">
+            <span className="font-mono text-[11px] text-stone-500 whitespace-nowrap">
               (#{statsSummary.start1Index}–#{statsSummary.end1Index})
             </span>
           </div>
-          <div className="flex items-center justify-center gap-2 p-3 text-center">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 p-2.5 sm:p-3 text-center">
             <span className="h-2.5 w-2.5 shrink-0 rounded-full border border-emerald-400 bg-emerald-500/80"></span>
-            <span className="text-stone-400">Recent Mean:</span>
+            <span className="text-stone-400 whitespace-nowrap">Recent Mean:</span>
             <span className="font-mono font-bold text-emerald-300">{statsSummary.recentMean}s</span>
-            <span className="font-mono text-[11px] text-stone-500">
+            <span className="font-mono text-[11px] text-stone-500 whitespace-nowrap">
               (#{statsSummary.start2Index}–#{statsSummary.end2Index})
             </span>
           </div>
-          <div className="flex items-center justify-center gap-2 p-3 text-center">
-            <span className="text-stone-400">Distribution Shift:</span>
-            <span className="font-mono font-bold text-amber-400">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 p-2.5 sm:p-3 text-center">
+            <span className="text-stone-400 whitespace-nowrap">Distribution Shift:</span>
+            <span className="font-mono font-bold text-amber-400 whitespace-nowrap">
               {Number(statsSummary.diff) > 0
                 ? `-${statsSummary.diff}s faster`
                 : Number(statsSummary.diff) < 0
@@ -440,7 +462,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
 
       {/* Main Area Chart with GPU-composited fluid transitions */}
       <div
-        className={`h-[360px] w-full pt-2 ${
+        className={`${isMobileScreen ? 'h-[340px]' : 'h-[360px]'} w-full pt-2 ${
           activeDrag
             ? ''
             : '[&_.recharts-curve]:transition-[d] [&_.recharts-curve]:duration-200 [&_.recharts-curve]:ease-out'
@@ -449,9 +471,17 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
         <ResponsiveContainer
           width="100%"
           height="100%"
-          initialDimension={{ width: 800, height: 360 }}
+          initialDimension={{ width: 800, height: isMobileScreen ? 340 : 360 }}
         >
-          <AreaChart data={kdeData} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
+          <AreaChart
+            data={kdeData}
+            margin={{
+              top: isMobileScreen ? 15 : 20,
+              right: isMobileScreen ? 4 : 30,
+              left: isMobileScreen ? 4 : 10,
+              bottom: 20,
+            }}
+          >
             <defs>
               <linearGradient id="colorBaseline" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4} />
@@ -465,26 +495,26 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
             <XAxis
               dataKey="x"
-              interval={Math.max(1, Math.floor(kdeData.length / 8))}
+              interval={Math.max(1, Math.floor(kdeData.length / (isMobileScreen ? 6 : 8)))}
               stroke="#94a3b8"
-              fontSize={11}
+              fontSize={isMobileScreen ? 10 : 11}
               tickLine={false}
               axisLine={{ stroke: '#475569' }}
               tickFormatter={(v: number) => `${Number(v.toFixed(1))}s`}
               label={{
                 value: 'Solve Time (seconds)',
                 position: 'insideBottom',
-                offset: -12,
+                offset: isMobileScreen ? -10 : -12,
                 fill: '#94a3b8',
-                fontSize: 12,
+                fontSize: isMobileScreen ? 11 : 12,
               }}
             />
             <YAxis
-              width={48}
+              width={isMobileScreen ? 36 : 48}
               domain={[0, yCeiling]}
               allowDataOverflow={false}
               stroke="#94a3b8"
-              fontSize={11}
+              fontSize={isMobileScreen ? 10 : 11}
               tickLine={false}
               axisLine={{ stroke: '#475569' }}
               tickFormatter={(v: number) => {
@@ -492,27 +522,36 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
                 if (yCeiling < 0.02) return v.toFixed(3);
                 return v.toFixed(2);
               }}
-              label={{
-                value: 'Density',
-                angle: -90,
-                position: 'insideLeft',
-                offset: 5,
-                fill: '#94a3b8',
-                fontSize: 12,
-              }}
+              label={
+                isMobileScreen
+                  ? undefined
+                  : {
+                      value: 'Density',
+                      angle: -90,
+                      position: 'insideLeft',
+                      offset: 5,
+                      fill: '#94a3b8',
+                      fontSize: 12,
+                    }
+              }
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip
+              content={<CustomTooltip />}
+              allowEscapeViewBox={{ x: false, y: false }}
+              wrapperStyle={{ pointerEvents: 'none', zIndex: 50 }}
+            />
             <Legend
               verticalAlign="top"
               align="right"
-              wrapperStyle={{ paddingBottom: '12px', fontSize: '12px' }}
+              wrapperStyle={{
+                paddingBottom: '12px',
+                fontSize: isMobileScreen ? '11px' : '12px',
+              }}
             />
 
             {/* Baseline Density Area (Red) */}
             <Area
-              isAnimationActive={!activeDrag}
-              animationDuration={250}
-              animationEasing="ease-out"
+              isAnimationActive={false}
               type="monotone"
               dataKey="baselineDensity"
               name={baselineSeriesName}
@@ -524,9 +563,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
 
             {/* Recent Density Area (Green) */}
             <Area
-              isAnimationActive={!activeDrag}
-              animationDuration={250}
-              animationEasing="ease-out"
+              isAnimationActive={false}
               type="monotone"
               dataKey="recentDensity"
               name={recentSeriesName}
@@ -538,6 +575,13 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
           </AreaChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Mobile-only bottom axis title aligned with the graph edges, using graph-matching font & color */}
+      {isMobileScreen && (
+        <div className="-mt-1.5 flex items-center justify-between px-1 text-[11px] leading-tight select-none">
+          <span style={{ color: '#94a3b8' }}>Density</span>
+        </div>
+      )}
 
       {/* Direct-Manipulation Distribution Scrubbers Track (below the chart, under Solve Time) */}
       <div className="mt-3 flex flex-col gap-2">
@@ -625,7 +669,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
                 setStart1State(Math.min(maxStart, start1 + step));
               }
             }}
-            className={`group absolute top-0 bottom-0 z-10 flex cursor-grab items-center justify-between rounded-lg border-2 border-rose-500/80 bg-rose-500/25 shadow-lg backdrop-blur-[1px] touch-none hover:border-rose-400 hover:bg-rose-500/35 focus:ring-2 focus:ring-rose-400 focus:outline-none active:cursor-grabbing ${
+            className={`group absolute top-0 bottom-0 z-10 flex min-w-[28px] cursor-grab items-center justify-between rounded-lg border-2 border-rose-500/80 bg-rose-500/25 shadow-lg backdrop-blur-[1px] touch-none hover:border-rose-400 hover:bg-rose-500/35 focus:ring-2 focus:ring-rose-400 focus:outline-none active:cursor-grabbing ${
               activeDrag ? '' : 'transition-all duration-150 ease-out'
             }`}
           >
@@ -700,7 +744,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
                 setStart2State(Math.min(maxStart, start2 + step));
               }
             }}
-            className={`group absolute top-0 bottom-0 z-20 flex cursor-grab items-center justify-between rounded-lg border-2 border-emerald-500/80 bg-emerald-500/25 shadow-lg backdrop-blur-[1px] touch-none hover:border-emerald-400 hover:bg-emerald-500/35 focus:ring-2 focus:ring-emerald-400 focus:outline-none active:cursor-grabbing ${
+            className={`group absolute top-0 bottom-0 z-20 flex min-w-[28px] cursor-grab items-center justify-between rounded-lg border-2 border-emerald-500/80 bg-emerald-500/25 shadow-lg backdrop-blur-[1px] touch-none hover:border-emerald-400 hover:bg-emerald-500/35 focus:ring-2 focus:ring-emerald-400 focus:outline-none active:cursor-grabbing ${
               activeDrag ? '' : 'transition-all duration-150 ease-out'
             }`}
           >

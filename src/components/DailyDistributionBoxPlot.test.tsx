@@ -280,4 +280,98 @@ describe('DailyDistributionBoxPlot component', () => {
       clientWidthSpy.mockRestore();
     }
   });
+
+  it('renders bottom axis title and maximizes chart width with compact Y-axis on mobile portrait', () => {
+    const originalInnerWidth = window.innerWidth;
+    try {
+      window.innerWidth = 390;
+      const { container } = render(
+        <DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="daily" />,
+      );
+
+      // Bottom title is rendered on mobile portrait
+      expect(screen.getByText('Time (s)')).toBeInTheDocument();
+
+      // Rotated axis label inside SVG is omitted
+      expect(screen.queryByText('Solve Time (seconds)')).toBeNull();
+
+      // Ticks are rendered
+      const ticks = container.querySelectorAll('svg text[data-testid="y-axis-tick"]');
+      expect(ticks.length).toBeGreaterThan(0);
+    } finally {
+      window.innerWidth = originalInnerWidth;
+    }
+  });
+
+  it('renders standard rotated Y-axis label on desktop without bottom text', () => {
+    const originalInnerWidth = window.innerWidth;
+    try {
+      window.innerWidth = 1024;
+      const { container } = render(
+        <DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="daily" />,
+      );
+
+      expect(screen.getByText('Solve Time (seconds)')).toBeInTheDocument();
+      expect(screen.queryByText('Time (s)')).not.toBeInTheDocument();
+
+      // Ticks are rendered
+      const ticks = container.querySelectorAll('svg text[data-testid="y-axis-tick"]');
+      expect(ticks.length).toBeGreaterThan(0);
+    } finally {
+      window.innerWidth = originalInnerWidth;
+    }
+  });
+
+  it('updates mobile responsive state on resize and cleans up listeners on unmount', () => {
+    const originalInnerWidth = window.innerWidth;
+    const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
+    const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
+
+    try {
+      window.innerWidth = 1024;
+      const { unmount } = render(
+        <DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="daily" />,
+      );
+
+      expect(addEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
+      expect(screen.getByText('Solve Time (seconds)')).toBeInTheDocument();
+      expect(screen.queryByText('Time (s)')).not.toBeInTheDocument();
+
+      act(() => {
+        window.innerWidth = 375;
+        fireEvent(window, new Event('resize'));
+      });
+
+      expect(screen.getByText('Time (s)')).toBeInTheDocument();
+      expect(screen.queryByText('Solve Time (seconds)')).not.toBeInTheDocument();
+
+      act(() => {
+        window.innerWidth = 1024;
+        fireEvent(window, new Event('resize'));
+      });
+
+      expect(screen.getByText('Solve Time (seconds)')).toBeInTheDocument();
+      expect(screen.queryByText('Time (s)')).not.toBeInTheDocument();
+
+      unmount();
+      expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
+    } finally {
+      window.innerWidth = originalInnerWidth;
+      addEventListenerSpy.mockRestore();
+      removeEventListenerSpy.mockRestore();
+    }
+  });
+
+  it('provides accessible aria-label and title when title prop is omitted', () => {
+    const { container } = render(
+      <DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="daily" />,
+    );
+
+    const svg = container.querySelector('svg[role="img"]');
+    expect(svg).toBeInTheDocument();
+    expect(svg?.getAttribute('aria-label')).toBe('Daily Solve Time Distribution & Variance');
+    expect(svg?.querySelector('title')?.textContent).toBe(
+      'Box Plot Chart - Daily Solve Time Distribution & Variance',
+    );
+  });
 });

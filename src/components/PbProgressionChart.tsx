@@ -1,5 +1,5 @@
 import { Award, ChevronDown, ChevronUp, Flame, History, Sparkles, Trophy, Zap } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   CartesianGrid,
   ComposedChart,
@@ -35,6 +35,18 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
   const [milestoneFilter, setMilestoneFilter] = useState<
     'All' | 'Single' | 'Ao5' | 'Ao12' | 'Ao50' | 'Ao100'
   >('All');
+
+  const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileScreen(window.innerWidth < 640);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const _unitInfo = getPeriodUnitInfo(groupingPeriod);
 
@@ -81,14 +93,14 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
     const data = payload[0].payload;
 
     const hasNewPb =
-      data.isNewPbSingle ||
-      data.isNewPbAo5 ||
-      data.isNewPbAo12 ||
-      data.isNewPbAo50 ||
-      data.isNewPbAo100;
+      (showSingle && data.isNewPbSingle) ||
+      (showAo5 && data.isNewPbAo5) ||
+      (showAo12 && data.isNewPbAo12) ||
+      (showAo50 && data.isNewPbAo50) ||
+      (showAo100 && data.isNewPbAo100);
 
     return (
-      <div className="max-w-xs rounded-xl border border-stone-700/80 bg-stone-900/95 p-3 text-xs text-stone-200 shadow-2xl backdrop-blur-md">
+      <div className="max-w-[240px] sm:max-w-xs rounded-xl border border-stone-700/80 bg-stone-900/95 p-2.5 sm:p-3 text-xs text-stone-200 shadow-2xl backdrop-blur-md">
         <div className="mb-2 flex items-center justify-between border-b border-stone-800 pb-1.5 font-semibold text-stone-100">
           <span className="flex items-center gap-1.5">
             <Trophy className="h-3.5 w-3.5 text-amber-400" /> Solve #{label}
@@ -102,11 +114,11 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             <span>
               New Record Set!{' '}
               {[
-                data.isNewPbSingle && 'Single',
-                data.isNewPbAo5 && 'Ao5',
-                data.isNewPbAo12 && 'Ao12',
-                data.isNewPbAo50 && 'Ao50',
-                data.isNewPbAo100 && 'Ao100',
+                showSingle && data.isNewPbSingle && 'Single',
+                showAo5 && data.isNewPbAo5 && 'Ao5',
+                showAo12 && data.isNewPbAo12 && 'Ao12',
+                showAo50 && data.isNewPbAo50 && 'Ao50',
+                showAo100 && data.isNewPbAo100 && 'Ao100',
               ]
                 .filter(Boolean)
                 .join(', ')}
@@ -116,7 +128,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
 
         <div className="space-y-1">
           {data.single != null && (
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-2 sm:gap-4">
               <span className="text-stone-400">Solve Time:</span>
               <span className="font-mono font-bold text-stone-100">
                 {data.single.toFixed(2)}s
@@ -124,10 +136,10 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               </span>
             </div>
           )}
-          {data.pbSingle != null && (
-            <div className="flex items-center justify-between gap-4">
+          {showSingle && data.pbSingle != null && (
+            <div className="flex items-center justify-between gap-2 sm:gap-4">
               <span className="flex items-center gap-1 text-amber-400">
-                <Flame className="h-3 w-3" /> PB Single:
+                <Flame className="h-3 w-3 shrink-0" /> PB Single:
               </span>
               <span className="font-mono font-semibold text-amber-300">
                 {data.pbSingle.toFixed(2)}s
@@ -139,10 +151,10 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               </span>
             </div>
           )}
-          {data.pbAo5 != null && (
-            <div className="flex items-center justify-between gap-4">
+          {showAo5 && data.pbAo5 != null && (
+            <div className="flex items-center justify-between gap-2 sm:gap-4">
               <span className="flex items-center gap-1 text-orange-400">
-                <Zap className="h-3 w-3" /> PB Ao5:
+                <Zap className="h-3 w-3 shrink-0" /> PB Ao5:
               </span>
               <span className="font-mono font-semibold text-orange-300">
                 {data.pbAo5.toFixed(2)}s
@@ -154,10 +166,10 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               </span>
             </div>
           )}
-          {data.pbAo12 != null && (
-            <div className="flex items-center justify-between gap-4">
+          {showAo12 && data.pbAo12 != null && (
+            <div className="flex items-center justify-between gap-2 sm:gap-4">
               <span className="flex items-center gap-1 text-sky-400">
-                <Award className="h-3 w-3" /> PB Ao12:
+                <Award className="h-3 w-3 shrink-0" /> PB Ao12:
               </span>
               <span className="font-mono font-semibold text-sky-300">
                 {data.pbAo12.toFixed(2)}s
@@ -169,10 +181,10 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               </span>
             </div>
           )}
-          {data.pbAo50 != null && (
-            <div className="flex items-center justify-between gap-4">
+          {showAo50 && data.pbAo50 != null && (
+            <div className="flex items-center justify-between gap-2 sm:gap-4">
               <span className="flex items-center gap-1 text-purple-400">
-                <Trophy className="h-3 w-3" /> PB Ao50:
+                <Trophy className="h-3 w-3 shrink-0" /> PB Ao50:
               </span>
               <span className="font-mono font-semibold text-purple-300">
                 {data.pbAo50.toFixed(2)}s
@@ -184,10 +196,10 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               </span>
             </div>
           )}
-          {data.pbAo100 != null && (
-            <div className="flex items-center justify-between gap-4">
+          {showAo100 && data.pbAo100 != null && (
+            <div className="flex items-center justify-between gap-2 sm:gap-4">
               <span className="flex items-center gap-1 text-emerald-400">
-                <Award className="h-3 w-3" /> PB Ao100:
+                <Award className="h-3 w-3 shrink-0" /> PB Ao100:
               </span>
               <span className="font-mono font-semibold text-emerald-300">
                 {data.pbAo100.toFixed(2)}s
@@ -202,7 +214,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
         </div>
 
         {data.scramble && (
-          <div className="mt-2 truncate border-t border-stone-800 pt-2 font-mono text-[10px] text-stone-400">
+          <div className="mt-2 max-w-[215px] truncate border-t border-stone-800 pt-2 font-mono text-[10px] text-stone-400 sm:max-w-none">
             Scramble: {data.scramble}
           </div>
         )}
@@ -222,14 +234,14 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
       }
       filenamePrefix="pb_progression"
       headerControls={
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full min-w-0 flex-wrap items-center py-0.5">
           {/* Controls to toggle line visibility */}
           <div className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-stone-700/60 bg-stone-800/80 p-1 text-xs">
             <span className="px-1 text-[11px] font-medium text-stone-400">Metrics:</span>
             <button
               type="button"
               onClick={() => setShowSingle(!showSingle)}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                 showSingle
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
                   : 'text-stone-400 hover:text-stone-200'
@@ -240,7 +252,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             <button
               type="button"
               onClick={() => setShowAo5(!showAo5)}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                 showAo5
                   ? 'bg-orange-500/20 text-orange-300 border border-orange-500/40 shadow-sm'
                   : 'text-stone-400 hover:text-stone-200'
@@ -251,7 +263,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             <button
               type="button"
               onClick={() => setShowAo12(!showAo12)}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                 showAo12
                   ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40 shadow-sm'
                   : 'text-stone-400 hover:text-stone-200'
@@ -262,7 +274,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             <button
               type="button"
               onClick={() => setShowAo50(!showAo50)}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                 showAo50
                   ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm'
                   : 'text-stone-400 hover:text-stone-200'
@@ -273,7 +285,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             <button
               type="button"
               onClick={() => setShowAo100(!showAo100)}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                 showAo100
                   ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
                   : 'text-stone-400 hover:text-stone-200'
@@ -284,7 +296,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             <button
               type="button"
               onClick={() => setShowRawSolves(!showRawSolves)}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                 showRawSolves
                   ? 'bg-stone-700 text-stone-100 border border-stone-600 shadow-sm'
                   : 'text-stone-400 hover:text-stone-200'
@@ -297,127 +309,152 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
       }
     >
       {/* Top Stat Badges Summary */}
-      <div className="mb-2 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <div className="flex flex-col gap-1 rounded-xl border border-amber-500/20 bg-stone-950/60 p-3">
-          <div className="flex items-center justify-between text-xs font-medium text-amber-400">
-            <span className="flex items-center gap-1">
-              <Flame className="h-3.5 w-3.5" /> PB Single
+      <div className="mb-2 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="flex flex-col gap-1 rounded-xl border border-amber-500/20 bg-stone-950/60 p-2.5 sm:p-3">
+          <div className="flex items-center justify-between gap-1 text-xs font-medium text-amber-400">
+            <span className="flex items-center gap-1 truncate">
+              <Flame className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">PB Single</span>
             </span>
-            <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-300">
+            <span className="shrink-0 whitespace-nowrap rounded-full border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-300">
               {summary.totalSinglePbs} set
             </span>
           </div>
-          <div className="font-mono text-xl font-bold text-amber-200">
+          <div className="font-mono text-lg sm:text-xl font-bold text-amber-200">
             {summary.currentPbSingle ? `${summary.currentPbSingle.toFixed(2)}s` : '—'}
           </div>
           {summary.singlePbImprovement > 0 && (
-            <div className="text-[11px] font-medium text-emerald-400">
+            <div className="truncate text-[10px] sm:text-[11px] font-medium text-emerald-400">
               -{summary.singlePbImprovement.toFixed(2)}s overall drop
             </div>
           )}
         </div>
 
-        <div className="flex flex-col gap-1 rounded-xl border border-orange-500/20 bg-stone-950/60 p-3">
-          <div className="flex items-center justify-between text-xs font-medium text-orange-400">
-            <span className="flex items-center gap-1">
-              <Zap className="h-3.5 w-3.5" /> PB Ao5
+        <div className="flex flex-col gap-1 rounded-xl border border-orange-500/20 bg-stone-950/60 p-2.5 sm:p-3">
+          <div className="flex items-center justify-between gap-1 text-xs font-medium text-orange-400">
+            <span className="flex items-center gap-1 truncate">
+              <Zap className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">PB Ao5</span>
             </span>
-            <span className="rounded-full border border-orange-500/20 bg-orange-500/10 px-1.5 py-0.5 text-[10px] text-orange-300">
+            <span className="shrink-0 whitespace-nowrap rounded-full border border-orange-500/20 bg-orange-500/10 px-1.5 py-0.5 text-[10px] text-orange-300">
               {summary.totalAo5Pbs} set
             </span>
           </div>
-          <div className="font-mono text-xl font-bold text-orange-200">
+          <div className="font-mono text-lg sm:text-xl font-bold text-orange-200">
             {summary.currentPbAo5 ? `${summary.currentPbAo5.toFixed(2)}s` : '—'}
           </div>
         </div>
 
-        <div className="flex flex-col gap-1 rounded-xl border border-sky-500/20 bg-stone-950/60 p-3">
-          <div className="flex items-center justify-between text-xs font-medium text-sky-400">
-            <span className="flex items-center gap-1">
-              <Award className="h-3.5 w-3.5" /> PB Ao12
+        <div className="flex flex-col gap-1 rounded-xl border border-sky-500/20 bg-stone-950/60 p-2.5 sm:p-3">
+          <div className="flex items-center justify-between gap-1 text-xs font-medium text-sky-400">
+            <span className="flex items-center gap-1 truncate">
+              <Award className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">PB Ao12</span>
             </span>
-            <span className="rounded-full border border-sky-500/20 bg-sky-500/10 px-1.5 py-0.5 text-[10px] text-sky-300">
+            <span className="shrink-0 whitespace-nowrap rounded-full border border-sky-500/20 bg-sky-500/10 px-1.5 py-0.5 text-[10px] text-sky-300">
               {summary.totalAo12Pbs} set
             </span>
           </div>
-          <div className="font-mono text-xl font-bold text-sky-200">
+          <div className="font-mono text-lg sm:text-xl font-bold text-sky-200">
             {summary.currentPbAo12 ? `${summary.currentPbAo12.toFixed(2)}s` : '—'}
           </div>
         </div>
 
-        <div className="flex flex-col gap-1 rounded-xl border border-purple-500/20 bg-stone-950/60 p-3">
-          <div className="flex items-center justify-between text-xs font-medium text-purple-400">
-            <span className="flex items-center gap-1">
-              <Trophy className="h-3.5 w-3.5" /> PB Ao50
+        <div className="flex flex-col gap-1 rounded-xl border border-purple-500/20 bg-stone-950/60 p-2.5 sm:p-3">
+          <div className="flex items-center justify-between gap-1 text-xs font-medium text-purple-400">
+            <span className="flex items-center gap-1 truncate">
+              <Trophy className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">PB Ao50</span>
             </span>
-            <span className="rounded-full border border-purple-500/20 bg-purple-500/10 px-1.5 py-0.5 text-[10px] text-purple-300">
+            <span className="shrink-0 whitespace-nowrap rounded-full border border-purple-500/20 bg-purple-500/10 px-1.5 py-0.5 text-[10px] text-purple-300">
               {summary.totalAo50Pbs} set
             </span>
           </div>
-          <div className="font-mono text-xl font-bold text-purple-200">
+          <div className="font-mono text-lg sm:text-xl font-bold text-purple-200">
             {summary.currentPbAo50 ? `${summary.currentPbAo50.toFixed(2)}s` : '—'}
           </div>
         </div>
 
-        <div className="flex flex-col gap-1 rounded-xl border border-emerald-500/20 bg-stone-950/60 p-3 col-span-2 sm:col-span-1">
-          <div className="flex items-center justify-between text-xs font-medium text-emerald-400">
-            <span className="flex items-center gap-1">
-              <Award className="h-3.5 w-3.5" /> PB Ao100
+        <div className="flex flex-col gap-1 rounded-xl border border-emerald-500/20 bg-stone-950/60 p-2.5 sm:p-3 col-span-2 sm:col-span-1">
+          <div className="flex items-center justify-between gap-1 text-xs font-medium text-emerald-400">
+            <span className="flex items-center gap-1 truncate">
+              <Award className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">PB Ao100</span>
             </span>
-            <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-300">
+            <span className="shrink-0 whitespace-nowrap rounded-full border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-300">
               {summary.totalAo100Pbs} set
             </span>
           </div>
-          <div className="font-mono text-xl font-bold text-emerald-200">
+          <div className="font-mono text-lg sm:text-xl font-bold text-emerald-200">
             {summary.currentPbAo100 ? `${summary.currentPbAo100.toFixed(2)}s` : '—'}
           </div>
         </div>
       </div>
 
       {/* Main Plot */}
-      <div className="h-[400px] w-full pt-2">
+      <div className={`${isMobileScreen ? 'h-[380px]' : 'h-[400px]'} w-full pt-1`}>
         <ResponsiveContainer
           width="100%"
           height="100%"
-          initialDimension={{ width: 800, height: 400 }}
+          initialDimension={{ width: 800, height: isMobileScreen ? 380 : 400 }}
         >
-          <ComposedChart data={dataPoints} margin={{ top: 25, right: 30, left: 10, bottom: 25 }}>
+          <ComposedChart
+            data={dataPoints}
+            margin={{
+              top: isMobileScreen ? 15 : 25,
+              right: isMobileScreen ? 4 : 30,
+              left: isMobileScreen ? 2 : 10,
+              bottom: isMobileScreen ? 20 : 25,
+            }}
+          >
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
             <XAxis
               dataKey="index"
-              interval={Math.max(1, Math.floor(dataPoints.length / 10))}
+              interval={Math.max(1, Math.floor(dataPoints.length / (isMobileScreen ? 6 : 10)))}
               stroke="#94a3b8"
-              fontSize={11}
+              fontSize={isMobileScreen ? 10 : 11}
               tickLine={false}
               axisLine={{ stroke: '#475569' }}
               label={{
                 value: `Solve Number (${solves.length} Total Solves)`,
                 position: 'insideBottom',
-                offset: -15,
+                offset: isMobileScreen ? -12 : -15,
                 fill: '#94a3b8',
-                fontSize: 12,
+                fontSize: isMobileScreen ? 11 : 12,
               }}
             />
             <YAxis
+              width={isMobileScreen ? 26 : 42}
               stroke="#94a3b8"
-              fontSize={11}
+              fontSize={isMobileScreen ? 10 : 11}
               domain={[minY, maxY]}
               tickLine={false}
               axisLine={{ stroke: '#475569' }}
-              label={{
-                value: 'Personal Best Time (seconds)',
-                angle: -90,
-                position: 'insideLeft',
-                offset: 5,
-                fill: '#94a3b8',
-                fontSize: 12,
-              }}
+              label={
+                isMobileScreen
+                  ? undefined
+                  : {
+                      value: 'Personal Best Time (seconds)',
+                      angle: -90,
+                      position: 'insideLeft',
+                      offset: 5,
+                      fill: '#94a3b8',
+                      fontSize: 12,
+                    }
+              }
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip
+              content={<CustomTooltip />}
+              allowEscapeViewBox={{ x: false, y: false }}
+              wrapperStyle={{ pointerEvents: 'none', zIndex: 50 }}
+            />
             <Legend
               verticalAlign="top"
               align="right"
-              wrapperStyle={{ paddingBottom: '15px', fontSize: '12px' }}
+              wrapperStyle={{
+                paddingBottom: isMobileScreen ? '10px' : '15px',
+                fontSize: isMobileScreen ? '11px' : '12px',
+              }}
             />
 
             {/* Optional Raw Solves Overlay */}
@@ -608,38 +645,51 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
         </ResponsiveContainer>
       </div>
 
+      {/* Mobile-only bottom axis title aligned with the graph edges, using graph-matching font & color */}
+      {isMobileScreen && (
+        <div className="-mt-1.5 flex items-center justify-between px-1 text-[11px] leading-tight select-none">
+          <span style={{ color: '#94a3b8' }}>Personal Best Time (s)</span>
+        </div>
+      )}
+
       {/* Expandable PB Record Milestones Drawer */}
       <div className="mt-1 border-t border-stone-800 pt-3">
         <button
           type="button"
+          aria-label={`Record Milestones History (${pbMilestones.length} Record Breaks)`}
           onClick={() => setShowMilestoneList(!showMilestoneList)}
           className="flex w-full cursor-pointer items-center justify-between py-1 text-xs font-semibold text-stone-300 transition-colors hover:text-stone-100"
         >
-          <span className="flex items-center gap-2">
-            <History className="h-4 w-4 text-amber-400" />
-            <span>Record Milestones History ({pbMilestones.length} Record Breaks)</span>
+          <span className="flex items-center gap-2 min-w-0">
+            <History className="h-4 w-4 shrink-0 text-amber-400" />
+            <span className="truncate">
+              <span className="sm:hidden">Milestones ({pbMilestones.length} PBs)</span>
+              <span className="hidden sm:inline">
+                Record Milestones History ({pbMilestones.length} Record Breaks)
+              </span>
+            </span>
           </span>
           {showMilestoneList ? (
-            <ChevronUp className="h-4 w-4 text-stone-400" />
+            <ChevronUp className="h-4 w-4 shrink-0 text-stone-400" />
           ) : (
-            <ChevronDown className="h-4 w-4 text-stone-400" />
+            <ChevronDown className="h-4 w-4 shrink-0 text-stone-400" />
           )}
         </button>
 
         {showMilestoneList && (
           <div className="fade-in mt-3 flex animate-in flex-col gap-3 duration-200">
             {/* Filter Pills */}
-            <div className="flex flex-wrap items-center gap-1.5 text-xs">
-              <span className="mr-1 text-[11px] text-stone-400">Filter Record Type:</span>
+            <div className="flex flex-wrap items-center gap-1.5 py-1 text-xs">
+              <span className="mr-1 shrink-0 text-[11px] text-stone-400">Filter Record Type:</span>
               {(['All', 'Single', 'Ao5', 'Ao12', 'Ao50', 'Ao100'] as const).map((cat) => (
                 <button
                   key={cat}
                   type="button"
                   onClick={() => setMilestoneFilter(cat)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium shrink-0 transition-colors cursor-pointer ${
                     milestoneFilter === cat
-                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                      : 'bg-stone-800/80 text-stone-400 hover:text-stone-200 border border-stone-700/50'
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
+                      : 'text-stone-400 hover:text-stone-200 border border-stone-800 bg-stone-900/60'
                   }`}
                 >
                   {cat}

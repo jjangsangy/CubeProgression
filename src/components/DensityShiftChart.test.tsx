@@ -7,10 +7,18 @@ import { DensityShiftChart } from './DensityShiftChart';
 const captured = vi.hoisted(() => ({
   tooltipContent: null as React.ReactElement | null,
   chartData: null as Array<{ x: number; baselineDensity: number; recentDensity: number }> | null,
+  chartProps: null as {
+    margin?: { top: number; right: number; left: number; bottom: number };
+  } | null,
   yAxisProps: null as {
     domain?: [number, number];
     width?: number;
     tickFormatter?: (v: number) => string;
+    label?: {
+      value?: string;
+      offset?: number;
+      fontSize?: number;
+    };
   } | null,
   xAxisProps: null as {
     tickFormatter?: (v: number) => string;
@@ -22,17 +30,16 @@ vi.mock('recharts', async (importOriginal) => {
   return {
     ...original,
     ResponsiveContainer: ({ children }: { children: React.ReactNode }) => children,
-    AreaChart: ({
-      children,
-      data,
-    }: {
+    AreaChart: (props: {
       children: React.ReactNode;
       data?: Array<{ x: number; baselineDensity: number; recentDensity: number }>;
+      margin?: { top: number; right: number; left: number; bottom: number };
     }) => {
-      captured.chartData = data ?? null;
+      captured.chartData = props.data ?? null;
+      captured.chartProps = props;
       return (
         <svg role="img" aria-label="Mock AreaChart">
-          {children}
+          {props.children}
         </svg>
       );
     },
@@ -45,6 +52,11 @@ vi.mock('recharts', async (importOriginal) => {
       domain?: [number, number];
       width?: number;
       tickFormatter?: (v: number) => string;
+      label?: {
+        value?: string;
+        offset?: number;
+        fontSize?: number;
+      };
     }) => {
       captured.yAxisProps = props;
       return null;
@@ -821,6 +833,71 @@ describe('DensityShiftChart component', () => {
       // On mobile portrait, instruction is hidden via Tailwind 'hidden sm:inline'
       expect(instruction).toHaveClass('hidden');
       expect(instruction).toHaveClass('sm:inline');
+    });
+
+    it('renders bottom axis title and maximizes chart width with compact Y-axis on mobile portrait', () => {
+      const originalInnerWidth = window.innerWidth;
+      try {
+        window.innerWidth = 390;
+        render(<DensityShiftChart solves={mockSolves} />);
+
+        expect(screen.getByText('Density')).toBeInTheDocument();
+
+        expect(captured.yAxisProps?.width).toBeLessThan(45);
+        expect(captured.yAxisProps?.label).toBeUndefined();
+      } finally {
+        window.innerWidth = originalInnerWidth;
+      }
+    });
+
+    it('renders standard rotated Y-axis label on desktop without bottom text', () => {
+      const originalInnerWidth = window.innerWidth;
+      try {
+        window.innerWidth = 1024;
+        render(<DensityShiftChart solves={mockSolves} />);
+
+        // In desktop mode, bottom axis title is omitted (Density only in rotated label)
+        expect(screen.queryByText('Density')).not.toBeInTheDocument();
+        expect(captured.yAxisProps?.width).toBeGreaterThanOrEqual(45);
+        expect(captured.yAxisProps?.label?.value).toBe('Density');
+      } finally {
+        window.innerWidth = originalInnerWidth;
+      }
+    });
+
+    it('updates mobile responsive state on resize and cleans up listeners on unmount', () => {
+      const originalInnerWidth = window.innerWidth;
+      const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
+      const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
+
+      try {
+        window.innerWidth = 1024;
+        const { unmount } = render(<DensityShiftChart solves={mockSolves} />);
+
+        expect(addEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
+        expect(screen.queryByText('Density')).not.toBeInTheDocument();
+
+        act(() => {
+          window.innerWidth = 375;
+          fireEvent(window, new Event('resize'));
+        });
+
+        expect(screen.getByText('Density')).toBeInTheDocument();
+
+        act(() => {
+          window.innerWidth = 1024;
+          fireEvent(window, new Event('resize'));
+        });
+
+        expect(screen.queryByText('Density')).not.toBeInTheDocument();
+
+        unmount();
+        expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
+      } finally {
+        window.innerWidth = originalInnerWidth;
+        addEventListenerSpy.mockRestore();
+        removeEventListenerSpy.mockRestore();
+      }
     });
   });
 });

@@ -1,12 +1,24 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LinearRegression, PeriodGroup, Solve } from '../types';
 import { ProgressionChart } from './ProgressionChart';
 
 const captured = vi.hoisted(() => ({
   tooltipContent: null as React.ReactElement | null,
   referenceLineLabels: [] as Array<(props: unknown) => React.ReactNode>,
+  chartProps: null as {
+    margin?: { top: number; right: number; left: number; bottom: number };
+  } | null,
+  yAxes: [] as Array<{
+    width?: number;
+    fontSize?: number;
+    label?: {
+      value?: string;
+      offset?: number;
+      fontSize?: number;
+    };
+  }>,
 }));
 
 vi.mock('recharts', async (importOriginal) => {
@@ -14,15 +26,32 @@ vi.mock('recharts', async (importOriginal) => {
   return {
     ...original,
     ResponsiveContainer: ({ children }: { children: React.ReactNode }) => children,
-    ComposedChart: ({ children }: { children: React.ReactNode }) => (
-      <svg role="img" aria-label="Mock ComposedChart">
-        {children}
-      </svg>
-    ),
+    ComposedChart: (props: {
+      children: React.ReactNode;
+      margin?: { top: number; right: number; left: number; bottom: number };
+    }) => {
+      captured.chartProps = props;
+      return (
+        <svg role="img" aria-label="Mock ComposedChart">
+          {props.children}
+        </svg>
+      );
+    },
     CartesianGrid: () => null,
     XAxis: () => null,
-    YAxis: () => null,
-    Legend: () => null,
+    YAxis: (props: {
+      width?: number;
+      fontSize?: number;
+      label?: {
+        value?: string;
+        offset?: number;
+        fontSize?: number;
+      };
+    }) => {
+      captured.yAxes.push(props);
+      return null;
+    },
+    Legend: (props: { content?: React.ReactElement }) => props.content ?? null,
     Tooltip: (props: { content?: React.ReactElement }) => {
       captured.tooltipContent = props.content ?? null;
       return null;
@@ -97,6 +126,12 @@ const mockRegression: LinearRegression = {
 };
 
 describe('ProgressionChart component', () => {
+  beforeEach(() => {
+    captured.chartProps = null;
+    captured.yAxes = [];
+    captured.referenceLineLabels = [];
+    captured.tooltipContent = null;
+  });
   it('renders chart title, slope info, and solve visibility controls', () => {
     render(
       <ProgressionChart
@@ -506,6 +541,7 @@ describe('ProgressionChart component', () => {
         />,
       );
       expect(await screen.findByTestId('progression-chart-canvas')).toBeInTheDocument();
+      expect(screen.getByText('Time (s)')).toBeInTheDocument();
     } finally {
       window.innerWidth = originalInnerWidth;
     }
@@ -570,6 +606,54 @@ describe('ProgressionChart component', () => {
       window.innerWidth = originalInnerWidth;
       addEventListenerSpy.mockRestore();
       removeEventListenerSpy.mockRestore();
+    }
+  });
+
+  it('renders bottom axis title and maximizes chart width with compact Y-axis on mobile portrait', async () => {
+    const originalInnerWidth = window.innerWidth;
+    try {
+      window.innerWidth = 390;
+      render(
+        <ProgressionChart
+          solves={mockSolves}
+          periodGroups={mockPeriodGroups}
+          regression={mockRegression}
+        />,
+      );
+
+      await screen.findByTestId('progression-chart-canvas');
+
+      expect(screen.getByText('Time (s)')).toBeInTheDocument();
+
+      const yAxis = captured.yAxes[0];
+      expect(yAxis?.width).toBeLessThan(40);
+      expect(yAxis?.label).toBeUndefined();
+    } finally {
+      window.innerWidth = originalInnerWidth;
+    }
+  });
+
+  it('renders standard rotated Y-axis label on desktop without bottom text', async () => {
+    const originalInnerWidth = window.innerWidth;
+    try {
+      window.innerWidth = 1024;
+      render(
+        <ProgressionChart
+          solves={mockSolves}
+          periodGroups={mockPeriodGroups}
+          regression={mockRegression}
+        />,
+      );
+
+      await screen.findByTestId('progression-chart-canvas');
+
+      expect(screen.queryByText('Time (s)')).not.toBeInTheDocument();
+
+      const yAxis = captured.yAxes[0];
+      expect(yAxis?.width).toBeGreaterThanOrEqual(40);
+      expect(yAxis?.label?.value).toBe('Time (seconds)');
+    } finally {
+      window.innerWidth = originalInnerWidth;
     }
   });
 });

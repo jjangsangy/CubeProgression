@@ -77,7 +77,7 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
 
   const CustomLegend = () => {
     return (
-      <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1.5 pb-2 text-[11px] select-none sm:gap-x-4 sm:text-xs">
+      <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-3 gap-y-1.5 pb-2 text-[11px] select-none sm:gap-x-4 sm:text-xs">
         <div className="flex items-center gap-1.5 text-teal-400">
           <span className="inline-block h-2.5 w-4 rounded-xs border border-teal-400/80 bg-teal-500/25" />
           <span className="recharts-legend-item-text font-medium text-teal-400">Min-Max Range</span>
@@ -141,30 +141,50 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
     const data = payload[0].payload;
 
     return (
-      <div className="rounded-xl border border-stone-700/80 bg-stone-900/95 p-3 text-xs text-stone-200 shadow-2xl backdrop-blur-md">
-        <div className="mb-2 flex justify-between gap-4 border-b border-stone-800 pb-1 font-semibold text-stone-100">
-          <span>{data.label}</span>
-          <span className="font-normal text-stone-400">n={data.solveCount} solves</span>
+      <div className="max-w-[260px] rounded-xl border border-stone-700/80 bg-stone-900/95 p-2.5 text-xs text-stone-200 shadow-2xl backdrop-blur-md sm:max-w-xs sm:p-3">
+        <div className="mb-2 flex items-center justify-between gap-2 border-b border-stone-800 pb-1.5 font-semibold text-stone-100">
+          <span className="truncate">{data.label}</span>
+          <span className="shrink-0 text-[11px] font-normal text-stone-400">
+            n={data.solveCount} solves
+          </span>
         </div>
-        <div className="space-y-1.5 font-mono">
-          <div className="flex items-center justify-between gap-4 text-sky-400">
-            <span>Mean Time:</span>
-            <span className="font-bold">{data.mean?.toFixed(2)}s</span>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            <span className="flex items-center gap-1.5 text-stone-400">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-sky-400" />
+              <span>Mean:</span>
+            </span>
+            <span className="font-mono font-semibold text-sky-300">{data.mean?.toFixed(2)}s</span>
           </div>
-          <div className="flex items-center justify-between gap-4 text-orange-400">
-            <span>Median Time:</span>
-            <span className="font-bold">{data.median?.toFixed(2)}s</span>
-          </div>
-          <div className="flex items-center justify-between gap-4 text-emerald-400">
-            <span>Std Dev (Consistency):</span>
-            <span className="font-bold">{data.stdDev?.toFixed(2)}s</span>
-          </div>
-          <div className="mt-1 flex items-center justify-between gap-4 border-t border-stone-800 pt-1 text-teal-400">
-            <span>Min - Max Range:</span>
-            <span>
-              {data.min?.toFixed(2)}s - {data.max?.toFixed(2)}s
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            <span className="flex items-center gap-1.5 text-stone-400">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-orange-400" />
+              <span>Median:</span>
+            </span>
+            <span className="font-mono font-semibold text-orange-300">
+              {data.median?.toFixed(2)}s
             </span>
           </div>
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            <span className="flex items-center gap-1.5 text-stone-400">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
+              <span>Std Dev:</span>
+            </span>
+            <span className="font-mono font-semibold text-emerald-300">
+              {data.stdDev?.toFixed(2)}s
+            </span>
+          </div>
+          {data.min != null && data.max != null && (
+            <div className="mt-1 flex items-center justify-between gap-2 border-t border-stone-800 pt-1 text-[11px] sm:gap-4">
+              <span className="flex items-center gap-1.5 text-stone-400">
+                <span className="h-1.5 w-2 shrink-0 rounded-xs border border-teal-400/80 bg-teal-500/30" />
+                <span>Range:</span>
+              </span>
+              <span className="font-mono text-teal-300">
+                {data.min.toFixed(2)}s - {data.max.toFixed(2)}s
+              </span>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -213,7 +233,7 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
                 position: 'insideBottom',
                 offset: isMobileScreen ? -12 : -15,
                 fill: '#94a3b8',
-                fontSize: 11,
+                fontSize: isMobileScreen ? 11 : 12,
               }}
             />
 
@@ -222,7 +242,7 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
               yAxisId="left"
               width={isMobileScreen ? 26 : 42}
               stroke="#94a3b8"
-              fontSize={11}
+              fontSize={isMobileScreen ? 10 : 11}
               domain={[minTime, maxTime]}
               tickLine={false}
               axisLine={{ stroke: '#475569' }}
@@ -235,7 +255,7 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
                       position: 'insideLeft',
                       offset: 4,
                       fill: '#94a3b8',
-                      fontSize: 11,
+                      fontSize: 12,
                     }
               }
             />
@@ -246,7 +266,7 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
               orientation="right"
               width={isMobileScreen ? 20 : 42}
               stroke="#22c55e"
-              fontSize={11}
+              fontSize={isMobileScreen ? 10 : 11}
               domain={[0, maxStdDev]}
               tickLine={false}
               axisLine={{ stroke: '#15803d' }}
@@ -259,12 +279,16 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
                       position: 'insideRight',
                       offset: 4,
                       fill: '#22c55e',
-                      fontSize: 11,
+                      fontSize: 12,
                     }
               }
             />
 
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip
+              content={<CustomTooltip />}
+              allowEscapeViewBox={{ x: false, y: false }}
+              wrapperStyle={{ pointerEvents: 'none', zIndex: 50 }}
+            />
             <Legend
               verticalAlign="top"
               align="right"

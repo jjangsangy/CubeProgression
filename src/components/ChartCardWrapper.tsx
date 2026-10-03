@@ -261,7 +261,7 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
               disabled={isDownloading}
               title="Download Plot as PNG Image"
               aria-label="Download Plot as PNG Image"
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800 px-2.5 py-1.5 text-xs font-medium text-stone-300 shadow-sm transition-all hover:bg-stone-700/80 hover:text-stone-100 active:scale-95 disabled:opacity-50"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800 px-2.5 py-1.5 text-xs font-medium whitespace-nowrap text-stone-300 shadow-sm transition-all hover:bg-stone-700/80 hover:text-stone-100 active:scale-95 disabled:opacity-50"
             >
               {isDownloading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-400" />
@@ -277,7 +277,7 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
               onClick={() => setIsMaximized(!isMaximized)}
               title={isMaximized ? 'Restore View (Esc)' : 'Maximize to Fullscreen'}
               aria-label={isMaximized ? 'Restore View (Esc)' : 'Maximize to Fullscreen'}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800 px-2.5 py-1.5 text-xs font-medium text-stone-300 shadow-sm transition-all hover:bg-stone-700/80 hover:text-stone-100 active:scale-95"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800 px-2.5 py-1.5 text-xs font-medium whitespace-nowrap text-stone-300 shadow-sm transition-all hover:bg-stone-700/80 hover:text-stone-100 active:scale-95"
             >
               {isMaximized ? (
                 <>

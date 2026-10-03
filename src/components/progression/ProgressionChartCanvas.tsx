@@ -36,6 +36,55 @@ export interface ProgressionChartCanvasProps {
   slopeFormatted: string;
 }
 
+interface ProgressionCustomLegendContentProps {
+  payload?: Array<{ value: string; color: string; dataKey?: string }>;
+  isMobileScreen?: boolean;
+}
+
+const ProgressionCustomLegendContent: React.FC<ProgressionCustomLegendContentProps> = ({
+  payload,
+  isMobileScreen,
+}) => {
+  return (
+    <div className="w-full select-none">
+      {/* Mobile-only bottom axis title positioned directly below chart axes and above legend keys */}
+      {isMobileScreen && (
+        <div className="mb-2 flex items-center justify-between px-1 text-[11px] leading-tight">
+          <span style={{ color: '#94a3b8' }}>Time (s)</span>
+        </div>
+      )}
+
+      {/* Legend series items */}
+      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 sm:gap-x-4 sm:gap-y-1.5 pt-0.5 text-[10px] sm:text-xs">
+        {payload?.map((entry) => (
+          <div
+            key={`legend-${entry.dataKey || entry.value}`}
+            className="flex items-center gap-1 sm:gap-1.5"
+          >
+            <svg className="h-2.5 w-3.5" viewBox="0 0 16 10" aria-hidden="true">
+              <line
+                x1="0"
+                y1="5"
+                x2="16"
+                y2="5"
+                stroke={entry.color}
+                strokeWidth={entry.dataKey === 'trend' ? 2 : 2.5}
+                strokeDasharray={entry.dataKey === 'trend' ? '4 3' : undefined}
+              />
+              {entry.dataKey !== 'trend' && (
+                <circle cx="8" cy="5" r="2.5" fill={entry.color} stroke="#ffffff" strokeWidth="1" />
+              )}
+            </svg>
+            <span className="recharts-legend-item-text font-medium text-stone-300">
+              {entry.value}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
   chartData,
   minY,
@@ -66,9 +115,9 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
           data={chartData}
           margin={{
             top: 65,
-            right: isMobileScreen ? 12 : 30,
-            left: isMobileScreen ? 4 : 10,
-            bottom: 10,
+            right: isMobileScreen ? 4 : 30,
+            left: isMobileScreen ? 2 : 10,
+            bottom: isMobileScreen ? 12 : 10,
           }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
@@ -76,24 +125,29 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
             dataKey="index"
             interval={xInterval}
             stroke="#94a3b8"
-            fontSize={11}
+            fontSize={isMobileScreen ? 10 : 11}
             tickLine={false}
             axisLine={{ stroke: '#475569' }}
           />
           <YAxis
+            width={isMobileScreen ? 26 : 42}
             stroke="#94a3b8"
-            fontSize={11}
+            fontSize={isMobileScreen ? 10 : 11}
             domain={[minY, maxY]}
             tickLine={false}
             axisLine={{ stroke: '#475569' }}
-            label={{
-              value: 'Time (seconds)',
-              angle: -90,
-              position: 'insideLeft',
-              offset: 5,
-              fill: '#94a3b8',
-              fontSize: 12,
-            }}
+            label={
+              isMobileScreen
+                ? undefined
+                : {
+                    value: 'Time (seconds)',
+                    angle: -90,
+                    position: 'insideLeft',
+                    offset: 5,
+                    fill: '#94a3b8',
+                    fontSize: 12,
+                  }
+            }
           />
           <Tooltip
             content={
@@ -108,11 +162,16 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
                 showTrend={showTrend}
               />
             }
+            allowEscapeViewBox={{ x: false, y: false }}
+            wrapperStyle={{ pointerEvents: 'none', zIndex: 50 }}
           />
           <Legend
             verticalAlign="bottom"
             align="center"
-            wrapperStyle={{ paddingTop: '14px', fontSize: '12px' }}
+            content={<ProgressionCustomLegendContent isMobileScreen={isMobileScreen} />}
+            wrapperStyle={{
+              paddingTop: '6px',
+            }}
           />
 
           {/* Vertical Period Boundaries (Responsive Ticks rendered vertically) */}

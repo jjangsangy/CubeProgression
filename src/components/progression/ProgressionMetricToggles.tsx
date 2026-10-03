@@ -107,7 +107,7 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
         </button>
 
         {/* Custom AoN toggle and input */}
-        <div className="ml-0.5 inline-flex items-center gap-1 border-l border-stone-700/80 pl-1.5">
+        <div className="ml-0.5 inline-flex items-center gap-1 sm:border-l sm:border-stone-700/80 sm:pl-1.5">
           <button
             type="button"
             onClick={onToggleCustomAo}

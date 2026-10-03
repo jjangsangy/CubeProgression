@@ -175,7 +175,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                 .
               </p>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-center gap-2">
                 <span className="rounded-md border border-stone-700 bg-stone-800 px-2.5 py-1 font-mono text-[11px] text-stone-300">
                   .txt / .json
                 </span>
@@ -186,9 +186,9 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                     e.stopPropagation();
                     onLoadDemo();
                   }}
-                  className="flex cursor-pointer items-center gap-1 text-xs font-semibold text-amber-400 underline underline-offset-2 hover:text-amber-300"
+                  className="inline-flex cursor-pointer items-center gap-1 text-xs font-semibold whitespace-nowrap text-amber-400 underline underline-offset-2 hover:text-amber-300"
                 >
-                  <Sparkles className="h-3 w-3" />
+                  <Sparkles className="h-3 w-3 shrink-0" />
                   Load Sample Data
                 </button>
               </div>
@@ -250,7 +250,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                     type="button"
                     key={item.id}
                     onClick={() => onChangeGrouping(item.id as GroupingPeriod)}
-                    className={`px-3 py-2 rounded-xl text-left border transition-all cursor-pointer ${
+                    className={`px-3 py-2 rounded-xl text-left border transition-all cursor-pointer min-h-[58px] flex flex-col justify-center ${
                       isActive
                         ? 'bg-amber-500/15 border-amber-500/80 text-amber-300 shadow-md'
                         : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200 hover:border-stone-700'
@@ -265,34 +265,36 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
             {/* Custom Batch Size Controls (shown when grouping by solve count) */}
             {(groupingPeriod === 'customBatch' || groupingPeriod === 'batch50') && (
-              <div className="fade-in flex animate-in flex-wrap items-center gap-3 rounded-xl border border-amber-500/30 bg-stone-900/90 p-3 duration-150">
-                <span className="text-xs font-medium text-stone-300">Solves per group:</span>
+              <div className="fade-in flex animate-in flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl border border-amber-500/30 bg-stone-900/90 p-3 duration-150">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-medium text-stone-300">Solves per group:</span>
 
-                {/* Preset pills */}
-                <div className="flex items-center gap-1.5">
-                  {[10, 25, 50, 100].map((preset) => (
-                    <button
-                      type="button"
-                      key={preset}
-                      onClick={() => onChangeCustomBatchSize(preset)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-all cursor-pointer ${
-                        customBatchSize === preset
-                          ? 'bg-amber-500 text-stone-950 font-bold'
-                          : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
-                      }`}
-                    >
-                      {preset}
-                    </button>
-                  ))}
+                  {/* Preset pills */}
+                  <div className="flex items-center gap-1.5">
+                    {[10, 25, 50, 100].map((preset) => (
+                      <button
+                        type="button"
+                        key={preset}
+                        onClick={() => onChangeCustomBatchSize(preset)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-all cursor-pointer ${
+                          customBatchSize === preset
+                            ? 'bg-amber-500 text-stone-950 font-bold'
+                            : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
+                        }`}
+                      >
+                        {preset}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Custom Number Input */}
-                <div className="ml-auto flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 pt-1 sm:pt-0 border-t border-stone-800/60 sm:border-0">
                   <span className="text-xs text-stone-400">Custom:</span>
                   <input
                     type="number"
-                    min="1"
-                    max="5000"
+                    min="2"
+                    max="1000"
                     value={customBatchSize}
                     onChange={(e) => {
                       const val = parseInt(e.target.value, 10);
@@ -300,7 +302,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                         onChangeCustomBatchSize(val);
                       }
                     }}
-                    className="w-16 rounded-lg border border-stone-700 bg-stone-950 px-2 py-1 text-center font-mono text-sm sm:text-xs text-stone-100 focus:border-amber-400 focus:outline-none"
+                    className="w-16 rounded-lg border border-stone-700 bg-stone-950 px-2 py-1 text-center font-mono text-base sm:text-xs text-stone-100 focus:border-amber-400 focus:outline-none"
                   />
                   <span className="text-xs text-stone-400">solves</span>
                 </div>
@@ -312,8 +314,8 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
       {/* Storage Status & Persistence Info */}
       {isSaved && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-stone-800 bg-stone-950/80 px-4 py-2.5 text-xs text-stone-300">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl border border-stone-800 bg-stone-950/80 px-4 py-2.5 text-xs text-stone-300">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-emerald-400" />
             <Database className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
             <span className="font-semibold text-stone-200">
@@ -334,10 +336,10 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
             <button
               type="button"
               onClick={onClearStorage}
-              className="ml-auto flex cursor-pointer items-center gap-1 font-medium text-stone-400 transition-colors hover:text-rose-400 hover:underline"
+              className="self-end sm:self-auto flex cursor-pointer items-center gap-1 font-medium text-stone-400 transition-colors hover:text-rose-400 hover:underline whitespace-nowrap"
               title="Clear saved data from browser storage"
             >
-              <Trash2 className="h-3 w-3" />
+              <Trash2 className="h-3 w-3 shrink-0" />
               <span>Clear Saved Storage</span>
             </button>
           )}

@@ -37,9 +37,9 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
       {/* Table Header Controls */}
       <div className="flex flex-col justify-between gap-3 border-b border-stone-800/80 pb-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="flex items-center gap-2 text-lg font-bold tracking-tight text-stone-100">
-            <Clock className="h-4 w-4 text-amber-400" />
-            Session Solve Log ({solves.length} Total)
+          <h2 className="flex items-start sm:items-center gap-2 text-base sm:text-lg font-bold tracking-tight text-stone-100">
+            <Clock className="h-4 w-4 shrink-0 text-amber-400 mt-0.5 sm:mt-0" />
+            <span>Session Solve Log ({solves.length} Total)</span>
           </h2>
           <p className="mt-0.5 text-xs text-stone-400">
             Detailed breakdown of individual solve times, scrambles, and rolling averages.
@@ -57,14 +57,14 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
               setCurrentPage(1);
             }}
             placeholder="Search solves or scrambles..."
-            className="w-full rounded-xl border border-stone-700/80 bg-stone-950/70 py-1.5 pr-3 pl-9 text-sm sm:text-xs text-stone-200 placeholder-stone-500 focus:border-amber-500 focus:outline-none"
+            className="w-full rounded-xl border border-stone-700/80 bg-stone-950/70 py-1.5 pr-3 pl-9 text-base sm:text-xs text-stone-200 placeholder-stone-500 focus:border-amber-500 focus:outline-none"
           />
         </div>
       </div>
 
       {/* Table Canvas */}
       <div className="min-h-[460px] overflow-x-auto rounded-xl border border-stone-800/80">
-        <table className="w-full min-w-[680px] table-fixed text-left text-xs text-stone-300">
+        <table className="w-full min-w-[780px] table-fixed text-left text-xs text-stone-300">
           <thead className="border-b border-stone-800 bg-stone-950/80 font-mono text-[10px] tracking-wider text-stone-400 uppercase">
             <tr>
               <th className="w-16 px-4 py-3">#</th>
@@ -74,7 +74,7 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
               <th className="w-20 px-4 py-3">Ao50</th>
               <th className="w-20 px-4 py-3">Ao100</th>
               <th className="w-28 px-4 py-3">Date</th>
-              <th className="px-4 py-3">Scramble</th>
+              <th className="w-56 min-w-[180px] px-4 py-3">Scramble</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-stone-800/60 font-mono">
@@ -134,13 +134,13 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
 
       {/* Pagination Footer */}
       <div className="flex flex-col gap-3 pt-2 text-xs text-stone-400 sm:flex-row sm:items-center sm:justify-between">
-        <span>
+        <span className="text-center sm:text-left">
           Showing {Math.min(filteredSolves.length, (currentPage - 1) * pageSize + 1)} to{' '}
           {Math.min(filteredSolves.length, currentPage * pageSize)} of {filteredSolves.length}{' '}
           solves
         </span>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto">
+        <div className="flex items-center justify-center sm:justify-end gap-2">
           <button
             type="button"
             aria-label="Previous page"
@@ -150,7 +150,7 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="font-mono text-stone-200">
+          <span className="font-mono text-stone-200 px-1">
             {currentPage} / {totalPages}
           </span>
           <button

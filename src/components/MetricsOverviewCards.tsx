@@ -48,13 +48,13 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
         <div className="mt-2 flex items-baseline justify-between gap-2">
           <div>
             <span className="block font-mono text-[10px] text-stone-400">Ao12</span>
-            <span className="font-mono text-xl font-bold text-sky-300">
+            <span className="font-mono text-xl font-black text-sky-300">
               {stats.bestAo12 ? `${stats.bestAo12.toFixed(2)}s` : '—'}
             </span>
           </div>
           <div className="border-l border-stone-800 pl-3">
             <span className="block font-mono text-[10px] text-stone-400">Ao50</span>
-            <span className="font-mono text-xl font-bold text-sky-400">
+            <span className="font-mono text-xl font-black text-sky-400">
               {stats.bestAo50 ? `${stats.bestAo50.toFixed(2)}s` : '—'}
             </span>
           </div>
@@ -73,7 +73,7 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
         </div>
         <div className="mt-2">
           <div
-            className={`font-mono text-lg xl:text-xl font-black truncate ${
+            className={`font-mono text-base sm:text-xl lg:text-[15px] xl:text-xl font-black tracking-tight truncate ${
               stats.regression.slope <= 0 ? 'text-emerald-400' : 'text-rose-400'
             }`}
           >
@@ -94,7 +94,7 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
           </div>
         </div>
         <div className="mt-2">
-          <div className="flex items-baseline gap-1.5 font-mono text-xl font-black text-stone-100">
+          <div className="flex flex-wrap items-baseline gap-1.5 font-mono text-xl font-black text-stone-100">
             <span>
               {stats.improvementSec > 0
                 ? `-${stats.improvementSec}s`
@@ -103,7 +103,7 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
                   : '0s'}
             </span>
             <span
-              className={`text-xs font-semibold ${
+              className={`text-xs font-semibold whitespace-nowrap ${
                 stats.improvementPct >= 0 ? 'text-emerald-400' : 'text-rose-400'
               }`}
             >

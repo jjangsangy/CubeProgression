@@ -21,6 +21,18 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number>(1000);
 
+  const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileScreen(window.innerWidth < 640);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -55,8 +67,10 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
 
   // Compute SVG dimensions and scale mappings dynamically based on container width
   const width = Math.max(300, containerWidth);
-  const height = 400;
-  const padding = { top: 40, right: 25, bottom: 60, left: 50 };
+  const height = isMobileScreen ? 380 : 400;
+  const padding = isMobileScreen
+    ? { top: 35, right: 12, bottom: 66, left: 28 }
+    : { top: 40, right: 25, bottom: 68, left: 50 };
 
   const plotWidth = width - padding.left - padding.right;
   const plotHeight = height - padding.top - padding.bottom;
@@ -132,15 +146,15 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
       }
     >
       {/* SVG Canvas Container */}
-      <div ref={containerRef} className="relative w-full overflow-hidden">
+      <div ref={containerRef} className="relative w-full">
         <svg
           role="img"
-          aria-label={title}
+          aria-label={displayTitle}
           viewBox={`0 0 ${width} ${height}`}
           className="block h-[380px] w-full font-sans selection:bg-none sm:h-[400px]"
           preserveAspectRatio="none"
         >
-          <title>{`Box Plot Chart - ${title}`}</title>
+          <title>{`Box Plot Chart - ${displayTitle}`}</title>
           {/* Background Grid Lines */}
           {yTicks.map((tick) => {
             const y = yScale(tick);
@@ -156,12 +170,13 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                   strokeDasharray="3 3"
                 />
                 <text
-                  x={padding.left - 12}
+                  key={tick}
+                  data-testid="y-axis-tick"
+                  x={padding.left - (isMobileScreen ? 6 : 12)}
                   y={y + 4}
                   fill="#94a3b8"
-                  fontSize="11"
+                  fontSize={isMobileScreen ? 10 : 11}
                   textAnchor="end"
-                  fontFamily="monospace"
                 >
                   {tick}
                 </text>
@@ -170,16 +185,18 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
           })}
 
           {/* Y Axis Label */}
-          <text
-            x={18}
-            y={height / 2}
-            fill="#94a3b8"
-            fontSize="12"
-            textAnchor="middle"
-            transform={`rotate(-90, 18, ${height / 2})`}
-          >
-            Solve Time (seconds)
-          </text>
+          {!isMobileScreen && (
+            <text
+              x={18}
+              y={height / 2}
+              fill="#94a3b8"
+              fontSize="12"
+              textAnchor="middle"
+              transform={`rotate(-90, 18, ${height / 2})`}
+            >
+              Solve Time (seconds)
+            </text>
+          )}
 
           {/* X Axis Line */}
           <line
@@ -315,9 +332,9 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                     <>
                       <text
                         x={cx}
-                        y={height - padding.bottom + 22}
+                        y={height - padding.bottom + 18}
                         fill="#cbd5e1"
-                        fontSize="11"
+                        fontSize={isMobileScreen ? 10 : 11}
                         fontWeight="600"
                         textAnchor="middle"
                       >
@@ -326,9 +343,9 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
 
                       <text
                         x={cx}
-                        y={height - padding.bottom + 38}
+                        y={height - padding.bottom + 32}
                         fill="#64748b"
-                        fontSize="10"
+                        fontSize={isMobileScreen ? 9 : 10}
                         textAnchor="middle"
                       >
                         n={group.solves.length}
@@ -376,28 +393,73 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
           )}
 
           {/* X Axis Title */}
-          <text x={width / 2} y={height - 8} fill="#94a3b8" fontSize="12" textAnchor="middle">
+          <text
+            x={width / 2}
+            y={height - 10}
+            fill="#94a3b8"
+            fontSize={isMobileScreen ? 11 : 12}
+            textAnchor="middle"
+          >
             {unitInfo.axisLabel}
           </text>
         </svg>
 
         {/* Hover Tooltip */}
-        {hoveredPoint && (
-          <div
-            style={{
-              left: `${Math.max(12, Math.min(88, (hoveredPoint.x / width) * 100))}%`,
-              top: `calc(${Math.max(15, (hoveredPoint.y / height) * 100)}% - 45px)`,
-            }}
-            className="pointer-events-none absolute z-20 -translate-x-1/2 transform rounded border border-stone-700 bg-stone-900 px-2.5 py-1 font-mono text-[11px] text-stone-100 shadow-xl"
-          >
-            <div className="font-semibold text-amber-400">
-              {periodGroups[hoveredPoint.periodIdx]?.label ||
-                `${unitInfo.unitSingular} ${hoveredPoint.periodIdx + 1}`}
-            </div>
-            <div>Solve: {hoveredPoint.time.toFixed(2)}s</div>
-          </div>
-        )}
+        {hoveredPoint &&
+          (() => {
+            const xPercent = (hoveredPoint.x / width) * 100;
+            const yPercent = (hoveredPoint.y / height) * 100;
+            const isNearLeft = xPercent < 24;
+            const isNearRight = xPercent > 76;
+            const isNearTop = hoveredPoint.y < 65;
+
+            const transformClass = isNearLeft
+              ? 'translate-x-0'
+              : isNearRight
+                ? '-translate-x-full'
+                : '-translate-x-1/2';
+
+            const leftStyle = isNearLeft
+              ? `${Math.max(2, xPercent)}%`
+              : isNearRight
+                ? `${Math.min(98, xPercent)}%`
+                : `${xPercent}%`;
+
+            const topStyle = isNearTop
+              ? `calc(${yPercent}% + 14px)`
+              : `calc(${Math.max(15, yPercent)}% - 50px)`;
+
+            return (
+              <div
+                style={{
+                  left: leftStyle,
+                  top: topStyle,
+                }}
+                className={`pointer-events-none absolute z-20 transform ${transformClass} rounded-xl border border-stone-700/80 bg-stone-900/95 p-2 text-xs text-stone-200 shadow-2xl backdrop-blur-md sm:p-2.5`}
+              >
+                <div className="mb-1 flex items-center justify-between gap-3 border-b border-stone-800 pb-1 font-semibold text-stone-100">
+                  <span className="text-amber-400">
+                    {periodGroups[hoveredPoint.periodIdx]?.label ||
+                      `${unitInfo.unitSingular} ${hoveredPoint.periodIdx + 1}`}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-stone-400">Solve:</span>{' '}
+                  <span className="font-mono font-bold text-stone-100">
+                    {hoveredPoint.time.toFixed(2)}s
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
       </div>
+
+      {/* Mobile-only bottom axis title aligned with the graph edges, using graph-matching font & color */}
+      {isMobileScreen && (
+        <div className="-mt-1.5 flex items-center justify-between px-1 text-[11px] leading-tight select-none">
+          <span style={{ color: '#94a3b8' }}>Time (s)</span>
+        </div>
+      )}
     </ChartCardWrapper>
   );
 };

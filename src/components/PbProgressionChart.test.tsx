@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Solve } from '../types';
 import { calculatePbProgression } from '../utils/statsMath';
 import { PbProgressionChart } from './PbProgressionChart';
@@ -10,6 +10,18 @@ import { PbProgressionChart } from './PbProgressionChart';
 const captured = vi.hoisted(() => ({
   lines: [] as Array<Record<string, unknown>>,
   tooltipContent: null as React.ReactElement | null,
+  chartProps: null as {
+    margin?: { top: number; right: number; left: number; bottom: number };
+  } | null,
+  yAxes: [] as Array<{
+    width?: number;
+    fontSize?: number;
+    label?: {
+      value?: string;
+      offset?: number;
+      fontSize?: number;
+    };
+  }>,
 }));
 
 vi.mock('recharts', async (importOriginal) => {
@@ -17,10 +29,31 @@ vi.mock('recharts', async (importOriginal) => {
   return {
     ...original,
     ResponsiveContainer: ({ children }: { children: React.ReactNode }) => children,
-    ComposedChart: ({ children }: { children: React.ReactNode }) => children,
+    ComposedChart: (props: {
+      children: React.ReactNode;
+      margin?: { top: number; right: number; left: number; bottom: number };
+    }) => {
+      captured.chartProps = props;
+      return (
+        <svg role="img" aria-label="Mock ComposedChart">
+          {props.children}
+        </svg>
+      );
+    },
     CartesianGrid: () => null,
     XAxis: () => null,
-    YAxis: () => null,
+    YAxis: (props: {
+      width?: number;
+      fontSize?: number;
+      label?: {
+        value?: string;
+        offset?: number;
+        fontSize?: number;
+      };
+    }) => {
+      captured.yAxes.push(props);
+      return null;
+    },
     Legend: () => null,
     Tooltip: (props: { content?: React.ReactElement }) => {
       captured.tooltipContent = props.content ?? null;
@@ -105,6 +138,12 @@ const longSolves: Solve[] = Array.from({ length: 110 }, (_, i) => ({
 }));
 
 describe('PbProgressionChart component', () => {
+  beforeEach(() => {
+    captured.lines = [];
+    captured.tooltipContent = null;
+    captured.chartProps = null;
+    captured.yAxes = [];
+  });
   it('renders PB progression title and stat badges', () => {
     render(<PbProgressionChart solves={mockSolves} title="Personal Best Progression" />);
 
@@ -301,5 +340,131 @@ describe('PbProgressionChart component', () => {
 
     const milestoneItem = scrollContainer?.querySelector('.flex-col.sm\\:flex-row');
     expect(milestoneItem).toBeInTheDocument();
+  });
+
+  it('renders bottom axis title and maximizes chart width with compact Y-axis on mobile portrait', () => {
+    const originalInnerWidth = window.innerWidth;
+    try {
+      window.innerWidth = 390;
+      render(<PbProgressionChart solves={mockSolves} />);
+
+      // Bottom title is rendered on mobile portrait
+      expect(screen.getByText('Personal Best Time (s)')).toBeInTheDocument();
+
+      const yAxis = captured.yAxes[0];
+      expect(yAxis?.width).toBeLessThan(40);
+      expect(yAxis?.label).toBeUndefined();
+    } finally {
+      window.innerWidth = originalInnerWidth;
+    }
+  });
+
+  it('renders standard rotated Y-axis label on desktop without bottom text', () => {
+    const originalInnerWidth = window.innerWidth;
+    try {
+      window.innerWidth = 1024;
+      render(<PbProgressionChart solves={mockSolves} />);
+
+      expect(screen.queryByText('Personal Best Time (s)')).not.toBeInTheDocument();
+
+      const yAxis = captured.yAxes[0];
+      expect(yAxis?.width).toBeGreaterThanOrEqual(40);
+      expect(yAxis?.label?.value).toBe('Personal Best Time (seconds)');
+    } finally {
+      window.innerWidth = originalInnerWidth;
+    }
+  });
+
+  it('updates mobile responsive state on resize and cleans up listeners on unmount', () => {
+    const originalInnerWidth = window.innerWidth;
+    const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
+    const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
+
+    try {
+      window.innerWidth = 1024;
+      const { unmount } = render(<PbProgressionChart solves={mockSolves} />);
+
+      expect(addEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
+      expect(screen.queryByText('Personal Best Time (s)')).not.toBeInTheDocument();
+
+      act(() => {
+        window.innerWidth = 375;
+        fireEvent(window, new Event('resize'));
+      });
+
+      expect(screen.getByText('Personal Best Time (s)')).toBeInTheDocument();
+
+      act(() => {
+        window.innerWidth = 1024;
+        fireEvent(window, new Event('resize'));
+      });
+
+      expect(screen.queryByText('Personal Best Time (s)')).not.toBeInTheDocument();
+
+      unmount();
+      expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
+    } finally {
+      window.innerWidth = originalInnerWidth;
+      addEventListenerSpy.mockRestore();
+      removeEventListenerSpy.mockRestore();
+    }
+  });
+
+  it('hides PB metrics in tooltip and "New Record Set!" banner when metric toggled off', () => {
+    render(<PbProgressionChart solves={mockSolves} />);
+
+    // Initially all metrics are active
+    type TooltipProps = {
+      active?: boolean;
+      payload?: Array<{ payload: unknown }>;
+      label?: string | number;
+    };
+    const tooltipEl = captured.tooltipContent as React.ReactElement<TooltipProps> | null;
+    expect(tooltipEl).not.toBeNull();
+    if (!tooltipEl) return;
+
+    // Render tooltip with a data point that sets both Single and Ao5 PBs
+    const pointWithMultiplePbs = {
+      solveNum: 5,
+      single: 12.5,
+      pbSingle: 12.5,
+      pbAo5: 14.2,
+      isNewPbSingle: true,
+      isNewPbAo5: true,
+      dateStr: '2023-01-01',
+      scramble: 'R U R',
+    };
+
+    const { rerender } = render(
+      React.cloneElement(tooltipEl, {
+        active: true,
+        payload: [{ payload: pointWithMultiplePbs }],
+        label: 5,
+      }),
+    );
+
+    expect(screen.getByText(/PB Single:/)).toBeInTheDocument();
+    expect(screen.getByText(/PB Ao5:/)).toBeInTheDocument();
+    expect(screen.getByText(/New Record Set!/)).toHaveTextContent('Single, Ao5');
+
+    // Toggle off Ao5
+    const ao5Btn = screen.getByRole('button', { name: /^Ao5$/i });
+    fireEvent.click(ao5Btn);
+
+    // Re-render tooltip with the updated tooltip component from captured
+    const updatedTooltipEl = captured.tooltipContent as React.ReactElement<TooltipProps>;
+    rerender(
+      React.cloneElement(updatedTooltipEl, {
+        active: true,
+        payload: [{ payload: pointWithMultiplePbs }],
+        label: 5,
+      }),
+    );
+
+    // Ao5 PB is now hidden and excluded from the record banner
+    expect(screen.queryByText(/PB Ao5:/)).not.toBeInTheDocument();
+    expect(screen.getByText(/PB Single:/)).toBeInTheDocument();
+    expect(screen.getByText(/New Record Set!/)).toHaveTextContent('Single');
+    expect(screen.getByText(/New Record Set!/)).not.toHaveTextContent('Ao5');
   });
 });

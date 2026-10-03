@@ -311,6 +311,43 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       // Previously plotWidth was only ~156px due to 170px margins + widths; now maximized to >= 250px
       expect(plotWidth).toBeGreaterThan(250);
     });
+
+    test('renders bottom axis titles and compact layout across ProgressionChart, PbProgressionChart, BoxPlot, and DensityShiftChart on mobile portrait', async ({
+      page,
+    }) => {
+      // 1. ProgressionChart
+      const progressionCard = page.locator('div.rounded-2xl').filter({
+        has: page.getByRole('heading', { name: /Progression Over \d+ Solves/i }),
+      });
+      await expect(progressionCard).toBeVisible();
+      await expect(progressionCard.getByText('Time (s)', { exact: true })).toBeVisible();
+
+      // 2. PbProgressionChart
+      const pbContainer = page.getByTestId('deferred-chart-pb-progression');
+      await pbContainer.scrollIntoViewIfNeeded();
+      await expect(
+        pbContainer.getByRole('heading', { name: /PB Progression Over Time/i }),
+      ).toBeVisible();
+      await expect(pbContainer.getByText('Personal Best Time (s)', { exact: true })).toBeVisible();
+
+      // 3. DailyDistributionBoxPlot
+      const boxPlotContainer = page.getByTestId('deferred-chart-solve-time-distribution');
+      await boxPlotContainer.scrollIntoViewIfNeeded();
+      await expect(
+        boxPlotContainer.getByRole('heading', {
+          name: /Solve Time Distribution & Variance/i,
+        }),
+      ).toBeVisible();
+      await expect(boxPlotContainer.getByText('Time (s)', { exact: true })).toBeVisible();
+
+      // 4. DensityShiftChart
+      const densityContainer = page.getByTestId('deferred-chart-density-shift');
+      await densityContainer.scrollIntoViewIfNeeded();
+      await expect(
+        densityContainer.getByRole('heading', { name: /Time Distribution Shift/i }),
+      ).toBeVisible();
+      await expect(densityContainer.getByText('Density', { exact: true })).toBeVisible();
+    });
   });
 
   test.describe('Mobile Landscape Mode (844x390)', () => {
