@@ -67,41 +67,56 @@ function normalizeSessionsDates(sessions: Session[]): Session[] {
   }));
 }
 
+let saveQueue: Promise<void> = Promise.resolve();
+
 /**
  * Saves the active csTimer dataset to IndexedDB
  */
-export async function saveDataset(data: {
+export function saveDataset(data: {
   fileName: string;
   sessions: Session[];
   selectedSessionId: string;
   groupingPeriod?: GroupingPeriod;
   customBatchSize?: number;
 }): Promise<void> {
-  try {
-    const db = await openDB();
-    if (!db) return;
+  const op = saveQueue.then(async () => {
+    try {
+      const db = await openDB();
+      if (!db) return;
 
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const store = tx.objectStore(STORE_NAME);
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
 
-    const record: StoredDataset = {
-      id: ACTIVE_KEY,
-      fileName: data.fileName,
-      sessions: data.sessions,
-      selectedSessionId: data.selectedSessionId,
-      groupingPeriod: data.groupingPeriod,
-      customBatchSize: data.customBatchSize,
-      updatedAt: Date.now(),
-    };
+      const record: StoredDataset = {
+        id: ACTIVE_KEY,
+        fileName: data.fileName,
+        sessions: data.sessions,
+        selectedSessionId: data.selectedSessionId,
+        groupingPeriod: data.groupingPeriod,
+        customBatchSize: data.customBatchSize,
+        updatedAt: Date.now(),
+      };
 
-    await new Promise<void>((resolve, reject) => {
-      const req = store.put(record);
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-    });
-  } catch (err) {
-    console.error('Error saving dataset to IndexedDB:', err);
-  }
+      await new Promise<void>((resolve, reject) => {
+        const req = store.put(record);
+        req.onsuccess = () => {
+          if (tx && 'oncomplete' in tx && typeof tx.addEventListener === 'function') {
+            tx.addEventListener('complete', () => resolve(), { once: true });
+            tx.addEventListener('error', () => reject(tx.error), { once: true });
+            tx.addEventListener('abort', () => reject(tx.error), { once: true });
+          } else {
+            resolve();
+          }
+        };
+        req.onerror = () => reject(req.error);
+      });
+    } catch (err) {
+      console.error('Error saving dataset to IndexedDB:', err);
+    }
+  });
+
+  saveQueue = op.catch(() => {});
+  return op;
 }
 
 /**

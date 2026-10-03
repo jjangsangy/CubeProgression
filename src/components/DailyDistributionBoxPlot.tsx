@@ -154,7 +154,6 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
           className="block h-[380px] w-full font-sans selection:bg-none sm:h-[400px]"
           preserveAspectRatio="none"
         >
-          <title>{`Box Plot Chart - ${displayTitle}`}</title>
           {/* Background Grid Lines */}
           {yTicks.map((tick) => {
             const y = yScale(tick);

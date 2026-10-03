@@ -64,8 +64,8 @@ text (RTL) and mocking only external/browser APIs (see `ChartCardWrapper.test.ts
 - **CI**: Automated test runner on GitHub Actions (`.github/workflows/test.yml`) runs tests
   on pushes and pull requests targeting `main` across all supported platforms:
   `ubuntu-latest`, `macos-latest`, and `windows-latest`. Automated deployment to GitHub Pages
-  is configured via `.github/workflows/deploy.yml` and is gated to the `Test Runner` workflow
-  passing on `main`.
+  is configured via `.github/workflows/deploy.yml` and is gated to both `Test Runner` and
+  `E2E Tests` workflows passing on `main`.
 
 ## Lint & format — Biome `biome.json`
 

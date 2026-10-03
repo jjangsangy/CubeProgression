@@ -1,6 +1,6 @@
 import { Download, Loader2, Maximize2, Minimize2 } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 interface ChartCardWrapperProps {
@@ -82,14 +82,14 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
   }, [isMaximized]);
 
   // Lock body scroll when maximized
-  useEffect(() => {
-    if (isMaximized) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+  useLayoutEffect(() => {
+    if (!isMaximized) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = originalOverflow;
     };
   }, [isMaximized]);
 

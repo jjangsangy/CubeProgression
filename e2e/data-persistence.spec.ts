@@ -135,6 +135,7 @@ test.describe('Data Ingestion & IndexedDB Persistence', () => {
     const monthlyBtn = page.getByRole('button', { name: /^Monthly/i });
     await monthlyBtn.click();
     await expect(monthlyBtn).toHaveClass(/bg-amber-500\/15/);
+    await page.waitForTimeout(200);
 
     // 4. Hard reload the page
     await page.reload();

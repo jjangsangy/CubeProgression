@@ -362,7 +362,7 @@ describe('DailyDistributionBoxPlot component', () => {
     }
   });
 
-  it('provides accessible aria-label and title when title prop is omitted', () => {
+  it('provides accessible aria-label when title prop is omitted', () => {
     const { container } = render(
       <DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="daily" />,
     );
@@ -370,8 +370,5 @@ describe('DailyDistributionBoxPlot component', () => {
     const svg = container.querySelector('svg[role="img"]');
     expect(svg).toBeInTheDocument();
     expect(svg?.getAttribute('aria-label')).toBe('Daily Solve Time Distribution & Variance');
-    expect(svg?.querySelector('title')?.textContent).toBe(
-      'Box Plot Chart - Daily Solve Time Distribution & Variance',
-    );
   });
 });
