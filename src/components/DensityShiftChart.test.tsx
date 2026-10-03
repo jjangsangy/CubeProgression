@@ -86,20 +86,28 @@ vi.mock('recharts', async (importOriginal) => {
       label?:
         | { value?: string }
         | ((labelProps: {
-            viewBox?: { x?: number; y?: number; width?: number };
+            viewBox?: { x?: number; y?: number; width?: number; height?: number };
             x?: number;
             y?: number;
           }) => React.ReactNode);
     }) => {
       captured.referenceLines.push(props);
       const isSegment = Boolean(props.segment && props.segment.length === 2);
-      const mockViewBox = isSegment ? { x: 150, y: 50, width: 100, height: 0 } : { x: 200, y: 20 };
+      const pixelX = props.x != null ? props.x * 20 : 200;
+      const segX1 = props.segment?.[0]?.x != null ? props.segment[0].x * 20 : 150;
+      const segX2 = props.segment?.[1]?.x != null ? props.segment[1].x * 20 : 250;
+      const segWidth = Math.abs(segX2 - segX1);
+
+      const mockViewBox = isSegment
+        ? { x: Math.min(segX1, segX2), y: 50, width: segWidth, height: 0 }
+        : { x: pixelX, y: 20, width: 0, height: 300 };
+
       const labelElement =
         typeof props.label === 'function'
           ? props.label({
               viewBox: mockViewBox,
-              x: isSegment ? 200 : undefined,
-              y: isSegment ? 50 : undefined,
+              x: isSegment ? Math.min(segX1, segX2) + segWidth / 2 : pixelX,
+              y: isSegment ? 50 : 20,
             })
           : null;
       return (
@@ -183,48 +191,48 @@ describe('DensityShiftChart component', () => {
     // 2 vertical lines (baseline + recent) + 1 horizontal distance line
     expect(captured.referenceLines.length).toBe(3);
 
-    const baselineLine = captured.referenceLines.find((line) => line.stroke === '#ef4444');
-    const recentLine = captured.referenceLines.find((line) => line.stroke === '#22c55e');
-    const distanceLine = captured.referenceLines.find((line) => line.stroke === '#f59e0b');
+    const verticalLines = captured.referenceLines.filter((line) => typeof line.x === 'number');
+    const distanceLine = captured.referenceLines.find((line) => Boolean(line.segment));
 
-    expect(baselineLine).toBeDefined();
-    expect(recentLine).toBeDefined();
+    expect(verticalLines).toHaveLength(2);
     expect(distanceLine).toBeDefined();
-    expect(baselineLine?.x).toBeTypeOf('number');
-    expect(recentLine?.x).toBeTypeOf('number');
     expect(distanceLine?.segment).toBeDefined();
     expect(distanceLine?.segment?.length).toBe(2);
 
     // Both vertical lines must have label render functions
-    expect(typeof baselineLine?.label).toBe('function');
-    expect(typeof recentLine?.label).toBe('function');
+    expect(typeof verticalLines[0]?.label).toBe('function');
+    expect(typeof verticalLines[1]?.label).toBe('function');
     expect(typeof distanceLine?.label).toBe('function');
 
-    // Query vertical reference line text labels
-    const verticalLabelTexts = Array.from(
-      container.querySelectorAll('g[data-testid="mock-reference-line"][data-x] text'),
+    // Query vertical reference line groups
+    const verticalGroups = Array.from(
+      container.querySelectorAll('g[data-testid="mock-reference-line"][data-x]'),
     );
-    expect(verticalLabelTexts.length).toBe(2);
+    expect(verticalGroups.length).toBe(2);
 
-    for (const text of verticalLabelTexts) {
-      const textAnchor = text.getAttribute('text-anchor');
-      const textX = Number(text.getAttribute('x'));
+    for (const group of verticalGroups) {
+      const xAttr = Number(group.getAttribute('data-x'));
+      const linePixelX = xAttr * 20;
+      const text = group.querySelector('text');
+      expect(text).not.toBeNull();
+      const textAnchor = text?.getAttribute('text-anchor');
+      const textX = Number(text?.getAttribute('x'));
 
       // The label must be off-center (start or end), NEVER centered ('middle')
       expect(textAnchor).not.toBe('middle');
       expect(['start', 'end']).toContain(textAnchor);
 
-      // In the mock viewBox (x=200), text must be offset from the line at 200 so the line does not pass through it
-      expect(textX).not.toBe(200);
+      // Label must be offset from the line at linePixelX so the line does not cut through the text
+      expect(textX).not.toBe(linePixelX);
       if (textAnchor === 'start') {
-        expect(textX).toBeGreaterThan(200);
+        expect(textX).toBeGreaterThan(linePixelX);
       } else {
-        expect(textX).toBeLessThan(200);
+        expect(textX).toBeLessThan(linePixelX);
       }
 
-      // No redundant "Peak" word, only formatted time e.g. "11.24s"
-      expect(text.textContent).not.toMatch(/peak/i);
-      expect(text.textContent).toMatch(/^\d+\.\d{2}s$/);
+      // No redundant "Peak" word, only formatted time e.g. "11.76s"
+      expect(text?.textContent).not.toMatch(/peak/i);
+      expect(text?.textContent).toMatch(/^\d+\.\d{2}s$/);
     }
 
     // Query horizontal distance bar text label
@@ -240,7 +248,7 @@ describe('DensityShiftChart component', () => {
   it('renders horizontal peak distance bar connecting baseline and recent peaks', () => {
     const { container } = render(<DensityShiftChart solves={mockSolves} />);
 
-    const distanceRefLine = captured.referenceLines.find((line) => line.stroke === '#f59e0b');
+    const distanceRefLine = captured.referenceLines.find((line) => Boolean(line.segment));
     expect(distanceRefLine).toBeDefined();
     expect(distanceRefLine?.segment).toBeDefined();
     expect(distanceRefLine?.strokeDasharray).toBe('3 3');
@@ -261,24 +269,70 @@ describe('DensityShiftChart component', () => {
     }));
 
     const { container } = render(<DensityShiftChart solves={slowingSolves} />);
-    const verticalLabelTexts = Array.from(
-      container.querySelectorAll('g[data-testid="mock-reference-line"][data-x] text'),
+    const verticalGroups = Array.from(
+      container.querySelectorAll('g[data-testid="mock-reference-line"][data-x]'),
     );
-    expect(verticalLabelTexts.length).toBe(2);
+    expect(verticalGroups.length).toBe(2);
 
-    for (const text of verticalLabelTexts) {
-      const textAnchor = text.getAttribute('text-anchor');
-      expect(textAnchor).not.toBe('middle');
-      expect(['start', 'end']).toContain(textAnchor);
-      expect(text.textContent).not.toMatch(/peak/i);
-      expect(text.textContent).toMatch(/^\d+\.\d{2}s$/);
-    }
+    // In slowingSolves: baseline (earlier solves) is faster (~10.35s), recent (later solves) is slower (~11.76s)
+    const baselineGroup = verticalGroups.find((g) => Number(g.getAttribute('data-x')) < 11.0);
+    const recentGroup = verticalGroups.find((g) => Number(g.getAttribute('data-x')) > 11.0);
+    expect(baselineGroup).toBeDefined();
+    expect(recentGroup).toBeDefined();
+
+    const baselineText = baselineGroup?.querySelector('text');
+    const recentText = recentGroup?.querySelector('text');
+
+    // Baseline on the left: textAnchor must be 'end' and offset to the left of the line
+    const baselineLineX = Number(baselineGroup?.getAttribute('data-x')) * 20;
+    expect(baselineText?.getAttribute('text-anchor')).toBe('end');
+    expect(Number(baselineText?.getAttribute('x'))).toBeLessThan(baselineLineX);
+    expect(baselineText?.textContent).toMatch(/^\d+\.\d{2}s$/);
+
+    // Recent on the right: textAnchor must be 'start' and offset to the right of the line
+    const recentLineX = Number(recentGroup?.getAttribute('data-x')) * 20;
+    expect(recentText?.getAttribute('text-anchor')).toBe('start');
+    expect(Number(recentText?.getAttribute('x'))).toBeGreaterThan(recentLineX);
+    expect(recentText?.textContent).toMatch(/^\d+\.\d{2}s$/);
 
     const distanceText = container.querySelector(
       'g[data-testid="mock-reference-line"][data-segment] text',
     );
     expect(distanceText?.textContent).toBe('1.40s');
     expect(distanceText?.getAttribute('text-anchor')).toBe('middle');
+  });
+
+  it('staggers recent peak label vertically when peaks cluster closely', () => {
+    // Solves with identical solve times so baseline and recent peaks coincide
+    const identicalSolves: Solve[] = mockSolves.map((solve) => ({
+      ...solve,
+      finalTimeSec: 10.5,
+      rawTimeSec: 10.5,
+      timeMs: 10500,
+    }));
+
+    const { container } = render(<DensityShiftChart solves={identicalSolves} />);
+    const verticalTexts = Array.from(
+      container.querySelectorAll('g[data-testid="mock-reference-line"][data-x] text'),
+    );
+    expect(verticalTexts).toHaveLength(2);
+
+    const yValues = verticalTexts.map((el) => Number(el.getAttribute('y')));
+    // Baseline y = viewBox.y + 14 = 34, Recent y = viewBox.y + 28 = 48 -> delta = 14
+    expect(Math.abs(yValues[1] - yValues[0])).toBe(14);
+  });
+
+  it('suppresses peak reference lines and distance bar when dataset is empty or all DNF', () => {
+    render(<DensityShiftChart solves={[]} />);
+    expect(captured.referenceLines).toHaveLength(0);
+
+    captured.referenceLines = [];
+    const dnfSolves: Solve[] = [
+      { ...mockSolves[0], penalty: 'DNF' },
+      { ...mockSolves[1], penalty: 'DNF' },
+    ];
+    render(<DensityShiftChart solves={dnfSolves} />);
+    expect(captured.referenceLines).toHaveLength(0);
   });
 
   it('renders mean shift banner with centered symmetrical 3-column classes', () => {
@@ -493,10 +547,24 @@ describe('DensityShiftChart component', () => {
       // Dispatch pointerdown and pointerup synchronously in the same act/batch (fast click)
       act(() => {
         scrubber1.dispatchEvent(
-          new PointerEvent('pointerdown', { clientX: 100, pointerId: 1, bubbles: true }),
+          new PointerEvent('pointerdown', {
+            clientX: 100,
+            pointerId: 1,
+            pointerType: 'mouse',
+            button: 0,
+            buttons: 1,
+            bubbles: true,
+          }),
         );
         scrubber1.dispatchEvent(
-          new PointerEvent('pointerup', { clientX: 100, pointerId: 1, bubbles: true }),
+          new PointerEvent('pointerup', {
+            clientX: 100,
+            pointerId: 1,
+            pointerType: 'mouse',
+            button: 0,
+            buttons: 0,
+            bubbles: true,
+          }),
         );
       });
 
@@ -530,10 +598,24 @@ describe('DensityShiftChart component', () => {
 
       act(() => {
         scrubber2.dispatchEvent(
-          new PointerEvent('pointerdown', { clientX: 450, pointerId: 2, bubbles: true }),
+          new PointerEvent('pointerdown', {
+            clientX: 450,
+            pointerId: 2,
+            pointerType: 'mouse',
+            button: 0,
+            buttons: 1,
+            bubbles: true,
+          }),
         );
         scrubber2.dispatchEvent(
-          new PointerEvent('pointerup', { clientX: 450, pointerId: 2, bubbles: true }),
+          new PointerEvent('pointerup', {
+            clientX: 450,
+            pointerId: 2,
+            pointerType: 'mouse',
+            button: 0,
+            buttons: 0,
+            bubbles: true,
+          }),
         );
       });
 
@@ -567,10 +649,24 @@ describe('DensityShiftChart component', () => {
 
       act(() => {
         rightHandle.dispatchEvent(
-          new PointerEvent('pointerdown', { clientX: 250, pointerId: 3, bubbles: true }),
+          new PointerEvent('pointerdown', {
+            clientX: 250,
+            pointerId: 3,
+            pointerType: 'mouse',
+            button: 0,
+            buttons: 1,
+            bubbles: true,
+          }),
         );
         rightHandle.dispatchEvent(
-          new PointerEvent('pointerup', { clientX: 250, pointerId: 3, bubbles: true }),
+          new PointerEvent('pointerup', {
+            clientX: 250,
+            pointerId: 3,
+            pointerType: 'mouse',
+            button: 0,
+            buttons: 0,
+            bubbles: true,
+          }),
         );
       });
 
@@ -583,7 +679,7 @@ describe('DensityShiftChart component', () => {
       expect(scrubber1.style.width).toBe(initialWidth);
     });
 
-    it('immediately aborts drag when pointermove occurs with buttons: 0 (mouse button released)', () => {
+    it('immediately aborts drag and freezes position when mouse button is released during movement', () => {
       render(<DensityShiftChart solves={mockSolves} />);
       const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
       vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
@@ -600,17 +696,25 @@ describe('DensityShiftChart component', () => {
 
       const scrubber1 = screen.getByLabelText('Baseline scrubber position');
 
-      // Start drag with button pressed (buttons: 1)
+      // Start drag with button pressed (buttons: 1) and move to 300 (100px delta = +4 solves -> position 5)
       fireEvent.pointerDown(scrubber1, {
         clientX: 200,
         pointerId: 1,
         pointerType: 'mouse',
+        button: 0,
         buttons: 1,
       });
+      fireEvent.pointerMove(scrubber1, {
+        clientX: 300,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      });
+      expect(scrubber1).toHaveAttribute('aria-valuenow', '5');
 
       // Move with buttons: 0 (indicating button was released without pointerup event)
       fireEvent.pointerMove(scrubber1, {
-        clientX: 300,
+        clientX: 400,
         pointerId: 1,
         pointerType: 'mouse',
         buttons: 0,
@@ -618,10 +722,88 @@ describe('DensityShiftChart component', () => {
 
       // Subsequent moves do not alter position
       fireEvent.pointerMove(scrubber1, {
-        clientX: 400,
+        clientX: 500,
         pointerId: 1,
         pointerType: 'mouse',
         buttons: 0,
+      });
+      expect(scrubber1).toHaveAttribute('aria-valuenow', '5');
+    });
+
+    it('ignores non-primary pointerdown events (e.g. right click) without initiating drag', () => {
+      render(<DensityShiftChart solves={mockSolves} />);
+      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
+        left: 100,
+        top: 50,
+        right: 600,
+        bottom: 130,
+        width: 500,
+        height: 80,
+        x: 100,
+        y: 50,
+        toJSON: () => {},
+      });
+
+      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+
+      // Right-click pointerdown (button: 2, buttons: 2)
+      fireEvent.pointerDown(scrubber1, {
+        clientX: 200,
+        pointerId: 1,
+        pointerType: 'mouse',
+        button: 2,
+        buttons: 2,
+      });
+
+      // Move cursor
+      fireEvent.pointerMove(scrubber1, {
+        clientX: 300,
+        pointerId: 1,
+        pointerType: 'mouse',
+        button: 2,
+        buttons: 2,
+      });
+
+      expect(scrubber1).toHaveAttribute('aria-valuenow', '1');
+    });
+
+    it('terminates active drag when window blur event fires', () => {
+      render(<DensityShiftChart solves={mockSolves} />);
+      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
+        left: 100,
+        top: 50,
+        right: 600,
+        bottom: 130,
+        width: 500,
+        height: 80,
+        x: 100,
+        y: 50,
+        toJSON: () => {},
+      });
+
+      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+
+      fireEvent.pointerDown(scrubber1, {
+        clientX: 200,
+        pointerId: 1,
+        pointerType: 'mouse',
+        button: 0,
+        buttons: 1,
+      });
+
+      // Window loses focus
+      act(() => {
+        window.dispatchEvent(new Event('blur'));
+      });
+
+      // Subsequent moves do not alter position
+      fireEvent.pointerMove(scrubber1, {
+        clientX: 400,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
       });
       expect(scrubber1).toHaveAttribute('aria-valuenow', '1');
     });

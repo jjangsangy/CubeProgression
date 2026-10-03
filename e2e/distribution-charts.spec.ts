@@ -45,9 +45,8 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
         steps: 5,
       },
     );
-    // Scrubber 1 must remain at initial position and not follow the mouse
-    const afterMoveVal1 = await scrubber1.getAttribute('aria-valuenow');
-    expect(afterMoveVal1).toBe(initialVal1);
+    // Scrubber 1 must remain at initial position and not follow the mouse (auto-retrying assertion)
+    await expect(scrubber1).toHaveAttribute('aria-valuenow', initialVal1 ?? '1');
 
     // 2. Quick click on recent scrubber body
     const s2BoxBefore = await scrubber2.boundingBox();
@@ -57,18 +56,21 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
     await page.mouse.move(s2BoxBefore.x - 100, s2BoxBefore.y + s2BoxBefore.height / 2, {
       steps: 5,
     });
-    const afterMoveVal2 = await scrubber2.getAttribute('aria-valuenow');
-    expect(afterMoveVal2).toBe(initialVal2);
+    await expect(scrubber2).toHaveAttribute('aria-valuenow', initialVal2 ?? '1');
 
-    // 3. Quick click on resize handle
+    // 3. Quick click on resize handle (capture baseline immediately prior to click)
     const handleBox = await handle1.boundingBox();
-    if (!handleBox) throw new Error('Missing handle bounding box');
+    const s1BoxPreHandle = await scrubber1.boundingBox();
+    if (!handleBox || !s1BoxPreHandle)
+      throw new Error('Missing bounding boxes before handle click');
 
     await handle1.click();
     await page.mouse.move(handleBox.x + 80, handleBox.y + handleBox.height / 2, { steps: 5 });
-    const s1BoxAfter = await scrubber1.boundingBox();
-    if (!s1BoxAfter) throw new Error('Missing Scrubber 1 bounding box after handle click');
-    expect(Math.abs(s1BoxAfter.width - s1BoxBefore.width)).toBeLessThan(1);
+    await expect(async () => {
+      const s1BoxAfter = await scrubber1.boundingBox();
+      if (!s1BoxAfter) throw new Error('Missing Scrubber 1 bounding box after handle click');
+      expect(Math.abs(s1BoxAfter.width - s1BoxPreHandle.width)).toBeLessThan(1);
+    }).toPass({ timeout: 1000 });
   });
 
   test('DensityShiftChart renders centered summary banner, timeline scrubbers, and ribbed resize handles', async ({
@@ -88,15 +90,23 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
     await expect(densityCard.getByText('Distribution Shift:', { exact: true })).toBeVisible();
 
     // Verify peak vertical reference lines and horizontal distance bar in real SVG rendering
-    const refLines = densityCard.locator('.recharts-reference-line');
-    await expect(refLines).toHaveCount(3);
+    const baselineRefLine = densityCard.locator('.recharts-reference-line').filter({
+      has: page.locator('line[stroke="#ef4444"]'),
+    });
+    const recentRefLine = densityCard.locator('.recharts-reference-line').filter({
+      has: page.locator('line[stroke="#22c55e"]'),
+    });
+    const distanceRefLine = densityCard.locator('.recharts-reference-line').filter({
+      has: page.locator('line[stroke="#f59e0b"]'),
+    });
 
-    const refLabels = densityCard.locator('.recharts-reference-line text');
-    await expect(refLabels).toHaveCount(3);
+    await expect(baselineRefLine).toBeVisible();
+    await expect(recentRefLine).toBeVisible();
+    await expect(distanceRefLine).toBeVisible();
 
-    // Verify vertical peak reference lines (indices 0 and 1) have off-center labels
-    for (let i = 0; i < 2; i++) {
-      const label = refLabels.nth(i);
+    // Verify vertical peak reference lines have off-center labels formatted as times
+    for (const peakRefLine of [baselineRefLine, recentRefLine]) {
+      const label = peakRefLine.locator('text');
       const textAnchor = await label.getAttribute('text-anchor');
       expect(textAnchor).not.toBe('middle');
       expect(['start', 'end']).toContain(textAnchor);
@@ -107,7 +117,7 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
       expect(textContent).toMatch(/^\d+\.\d{2}s$/);
 
       // Verify the label x coordinate is offset from the line x1 coordinate
-      const line = refLines.nth(i).locator('line');
+      const line = peakRefLine.locator('line');
       const lineX = Number(await line.getAttribute('x1'));
       const textX = Number(await label.getAttribute('x'));
       expect(textX).not.toEqual(lineX);
@@ -118,8 +128,8 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
       }
     }
 
-    // Verify horizontal peak distance bar (index 2) is strictly horizontal, dotted, and has centered label
-    const distanceLine = refLines.nth(2).locator('line');
+    // Verify horizontal peak distance bar is strictly horizontal, dotted, and has centered label
+    const distanceLine = distanceRefLine.locator('line');
     const dX1 = Number(await distanceLine.getAttribute('x1'));
     const dX2 = Number(await distanceLine.getAttribute('x2'));
     const dY1 = Number(await distanceLine.getAttribute('y1'));
@@ -128,9 +138,8 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
     expect(dY1).toEqual(dY2);
     expect(await distanceLine.getAttribute('stroke-dasharray')).toBe('3 3');
 
-    const distanceLabel = refLabels.nth(2);
-    const distanceAnchor = await distanceLabel.getAttribute('text-anchor');
-    expect(distanceAnchor).toBe('middle');
+    const distanceLabel = distanceRefLine.locator('text');
+    await expect(distanceLabel).toHaveAttribute('text-anchor', 'middle');
     const distanceText = await distanceLabel.textContent();
     expect(distanceText).not.toMatch(/peak/i);
     expect(distanceText).toMatch(/^\d+\.\d{2}s$/);

@@ -295,6 +295,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
 
   // Pointer drag handler for moving scrubber body
   const handleBodyPointerDown = (e: React.PointerEvent<HTMLDivElement>, scrubber: 1 | 2) => {
+    if (e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
     dragMovedRef.current = false;
@@ -327,6 +328,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     scrubber: 1 | 2,
     edge: 'start' | 'end',
   ) => {
+    if (e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
     dragMovedRef.current = false;
@@ -355,7 +357,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
 
   const applyDragDelta = useCallback(
     (deltaSolves: number, overrideDrag?: DragState) => {
-      const drag = overrideDrag ?? activeDragRef.current ?? activeDrag;
+      const drag = overrideDrag ?? activeDragRef.current;
       if (!drag) return;
 
       if (drag.type === 'move') {
@@ -411,12 +413,23 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
         }
       }
     },
-    [activeDrag, totalSolves, maxStart],
+    [totalSolves, maxStart],
   );
+
+  const dragMovedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear any pending dragMoved reset timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (dragMovedTimeoutRef.current !== null) {
+        clearTimeout(dragMovedTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handlePointerUp = useCallback(
     (e: React.PointerEvent<HTMLElement> | PointerEvent) => {
-      const drag = activeDragRef.current ?? activeDrag;
+      const drag = activeDragRef.current;
       if (drag) {
         activeDragRef.current = null;
         setActiveDrag(null);
@@ -433,20 +446,24 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
         } catch {
           // Safe fallback
         }
-        setTimeout(() => {
+        if (dragMovedTimeoutRef.current !== null) {
+          clearTimeout(dragMovedTimeoutRef.current);
+        }
+        dragMovedTimeoutRef.current = setTimeout(() => {
           dragMovedRef.current = false;
+          dragMovedTimeoutRef.current = null;
         }, 50);
       }
     },
-    [activeDrag, applyDragDelta],
+    [applyDragDelta],
   );
 
   const handlePointerMove = (e: React.PointerEvent<HTMLElement> | PointerEvent) => {
-    const drag = activeDragRef.current ?? activeDrag;
+    const drag = activeDragRef.current;
     if (!drag) return;
 
-    // If mouse button was released without a pointerup event, immediately cancel drag
-    if (e.pointerType === 'mouse' && (e.buttons & 1) === 0) {
+    // If mouse or pen button was released without a pointerup event, immediately cancel drag
+    if ((e.pointerType === 'mouse' || e.pointerType === 'pen') && (e.buttons & 1) === 0) {
       handlePointerUp(e);
       return;
     }
@@ -480,26 +497,39 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     if (!activeDrag) return;
 
     const onWindowPointerUp = (e: PointerEvent) => {
-      const currentDrag = activeDragRef.current ?? activeDrag;
-      if (currentDrag && (e.pointerId === currentDrag.pointerId || e.pointerType === 'mouse')) {
+      const currentDrag = activeDragRef.current;
+      if (
+        currentDrag &&
+        (e.pointerId === currentDrag.pointerId ||
+          e.pointerType === 'mouse' ||
+          e.pointerType === 'pen')
+      ) {
         handlePointerUp(e);
       }
     };
 
     const onWindowPointerMove = (e: PointerEvent) => {
-      if (e.pointerType === 'mouse' && (e.buttons & 1) === 0) {
+      if ((e.pointerType === 'mouse' || e.pointerType === 'pen') && (e.buttons & 1) === 0) {
         onWindowPointerUp(e);
+      }
+    };
+
+    const onWindowBlur = (e: FocusEvent) => {
+      if (activeDragRef.current) {
+        handlePointerUp(e as unknown as PointerEvent);
       }
     };
 
     window.addEventListener('pointerup', onWindowPointerUp);
     window.addEventListener('pointercancel', onWindowPointerUp);
     window.addEventListener('pointermove', onWindowPointerMove);
+    window.addEventListener('blur', onWindowBlur);
 
     return () => {
       window.removeEventListener('pointerup', onWindowPointerUp);
       window.removeEventListener('pointercancel', onWindowPointerUp);
       window.removeEventListener('pointermove', onWindowPointerMove);
+      window.removeEventListener('blur', onWindowBlur);
     };
   }, [activeDrag, handlePointerUp]);
 

@@ -560,6 +560,17 @@ export function findKDEPeak(
   const y0 = points[maxIdx - 1][key];
   const y1 = points[maxIdx][key];
   const y2 = points[maxIdx + 1][key];
+
+  // Guard against non-finite neighbor densities
+  if (!Number.isFinite(y0) || !Number.isFinite(y2)) {
+    return {
+      x: points[maxIdx].x,
+      interpolatedTime: points[maxIdx].x,
+      density: y1,
+      index: maxIdx,
+    };
+  }
+
   const denom = 2 * (y0 - 2 * y1 + y2);
 
   if (Math.abs(denom) < 1e-12) {
@@ -571,9 +582,11 @@ export function findKDEPeak(
     };
   }
 
-  // Fractional offset delta in range [-0.5, 0.5]
-  const delta = (y0 - y2) / denom;
-  const dx = points[maxIdx].x - points[maxIdx - 1].x;
+  // Fractional offset delta clamped to [-0.5, 0.5]
+  const rawDelta = (y0 - y2) / denom;
+  const delta = Math.max(-0.5, Math.min(0.5, rawDelta));
+  // Use centered step across neighboring intervals to normalize discretization step
+  const dx = (points[maxIdx + 1].x - points[maxIdx - 1].x) / 2;
   const peakTime = points[maxIdx].x + delta * dx;
   const peakDensity = y1 - 0.25 * (y0 - y2) * delta;
 
@@ -594,6 +607,9 @@ export function findKDEPeak(
  */
 export function calculatePeakDistance(peak1: KDEPeak | null, peak2: KDEPeak | null): number | null {
   if (!peak1 || !peak2) return null;
+  if (!Number.isFinite(peak1.interpolatedTime) || !Number.isFinite(peak2.interpolatedTime)) {
+    return null;
+  }
   return Number(Math.abs(peak1.interpolatedTime - peak2.interpolatedTime).toFixed(2));
 }
 

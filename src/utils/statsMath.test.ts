@@ -469,19 +469,35 @@ describe('statsMath utils', () => {
 
     it('refines peak to sub-grid position using parabolic interpolation for skewed neighbors', () => {
       // Discrete peak at x=11, but right neighbor (0.45) is significantly higher than left neighbor (0.2)
-      // True peak should be shifted towards the right (> 11.0)
-      const skewedPoints: KDEPoint[] = [
+      // Analytical solution: delta = (0.2 - 0.45) / (2*(0.2 - 1.0 + 0.45)) = 5/14 approx 0.3571
+      // peakTime = 11 + (5/14)*1 = 11.36, peakDensity = 0.5 - 0.25*(-0.25)*(5/14) = 0.5223
+      const rightSkewedPoints: KDEPoint[] = [
         { x: 10, baselineDensity: 0.2, recentDensity: 0.1 },
         { x: 11, baselineDensity: 0.5, recentDensity: 0.3 },
         { x: 12, baselineDensity: 0.45, recentDensity: 0.2 },
       ];
-      const peak = findKDEPeak(skewedPoints, 'baselineDensity');
-      expect(peak).not.toBeNull();
-      expect(peak?.x).toBe(11);
-      expect(peak?.index).toBe(1);
-      expect(peak?.interpolatedTime).toBeGreaterThan(11.0);
-      expect(peak?.interpolatedTime).toBeLessThan(12.0);
-      expect(peak?.density).toBeGreaterThanOrEqual(0.5);
+      const peakRight = findKDEPeak(rightSkewedPoints, 'baselineDensity');
+      expect(peakRight).toEqual({
+        x: 11,
+        interpolatedTime: 11.36,
+        density: 0.5223,
+        index: 1,
+      });
+
+      // Left-skewed: neighbor at x=10 (0.45) higher than neighbor at x=12 (0.2)
+      // Analytical solution: peakTime = 11 - (5/14)*1 = 10.64, peakDensity = 0.5223
+      const leftSkewedPoints: KDEPoint[] = [
+        { x: 10, baselineDensity: 0.45, recentDensity: 0.1 },
+        { x: 11, baselineDensity: 0.5, recentDensity: 0.3 },
+        { x: 12, baselineDensity: 0.2, recentDensity: 0.2 },
+      ];
+      const peakLeft = findKDEPeak(leftSkewedPoints, 'baselineDensity');
+      expect(peakLeft).toEqual({
+        x: 11,
+        interpolatedTime: 10.64,
+        density: 0.5223,
+        index: 1,
+      });
     });
 
     it('handles boundary peaks at first or last index without errors', () => {
@@ -508,15 +524,54 @@ describe('statsMath utils', () => {
       expect(peakLast?.index).toBe(2);
     });
 
-    it('handles flat peak plateaus without division by zero', () => {
-      const flatPeak: KDEPoint[] = [
+    it('handles interior flat peak plateaus with delta shifted to midpoint', () => {
+      const interiorPlateau: KDEPoint[] = [
+        { x: 9, baselineDensity: 0.1, recentDensity: 0.1 },
         { x: 10, baselineDensity: 0.5, recentDensity: 0.5 },
         { x: 11, baselineDensity: 0.5, recentDensity: 0.5 },
-        { x: 12, baselineDensity: 0.5, recentDensity: 0.5 },
+        { x: 12, baselineDensity: 0.1, recentDensity: 0.1 },
       ];
-      const peak = findKDEPeak(flatPeak, 'recentDensity');
+      const peak = findKDEPeak(interiorPlateau, 'recentDensity');
+      expect(peak).toEqual({
+        x: 10,
+        interpolatedTime: 10.5,
+        density: 0.55,
+        index: 1,
+      });
+    });
+
+    it('handles single-point and two-point distributions without errors', () => {
+      const single: KDEPoint[] = [{ x: 10, baselineDensity: 0.5, recentDensity: 0.2 }];
+      expect(findKDEPeak(single, 'baselineDensity')).toEqual({
+        x: 10,
+        interpolatedTime: 10,
+        density: 0.5,
+        index: 0,
+      });
+
+      const double: KDEPoint[] = [
+        { x: 10, baselineDensity: 0.2, recentDensity: 0.1 },
+        { x: 11, baselineDensity: 0.6, recentDensity: 0.3 },
+      ];
+      expect(findKDEPeak(double, 'baselineDensity')).toEqual({
+        x: 11,
+        interpolatedTime: 11,
+        density: 0.6,
+        index: 1,
+      });
+    });
+
+    it('safely handles non-finite or NaN neighbor densities without returning NaN', () => {
+      const nanNeighbor: KDEPoint[] = [
+        { x: 10, baselineDensity: 0.2, recentDensity: 0 },
+        { x: 11, baselineDensity: 0.8, recentDensity: 0 },
+        { x: 12, baselineDensity: Number.NaN, recentDensity: 0 },
+      ];
+      const peak = findKDEPeak(nanNeighbor, 'baselineDensity');
       expect(peak).not.toBeNull();
-      expect(peak?.interpolatedTime).toBe(10);
+      expect(Number.isFinite(peak?.interpolatedTime)).toBe(true);
+      expect(Number.isFinite(peak?.density)).toBe(true);
+      expect(peak?.interpolatedTime).toBe(11);
     });
 
     it('accurately evaluates recentDensity independent of baselineDensity', () => {
@@ -527,17 +582,29 @@ describe('statsMath utils', () => {
       ];
       const baselinePeak = findKDEPeak(dualPoints, 'baselineDensity');
       const recentPeak = findKDEPeak(dualPoints, 'recentDensity');
-      expect(baselinePeak?.x).toBe(10);
-      expect(recentPeak?.x).toBe(12);
+      expect(baselinePeak).toEqual({
+        x: 10,
+        interpolatedTime: 10,
+        density: 0.9,
+        index: 0,
+      });
+      expect(recentPeak).toEqual({
+        x: 12,
+        interpolatedTime: 12,
+        density: 0.85,
+        index: 2,
+      });
     });
   });
 
   describe('calculatePeakDistance', () => {
-    it('returns null when either or both peaks are null', () => {
+    it('returns null when either or both peaks are null or non-finite', () => {
       const peak: KDEPeak = { x: 10, interpolatedTime: 10.25, density: 0.5, index: 1 };
+      const nanPeak: KDEPeak = { x: 10, interpolatedTime: Number.NaN, density: 0.5, index: 1 };
       expect(calculatePeakDistance(null, null)).toBeNull();
       expect(calculatePeakDistance(peak, null)).toBeNull();
       expect(calculatePeakDistance(null, peak)).toBeNull();
+      expect(calculatePeakDistance(peak, nanPeak)).toBeNull();
     });
 
     it('calculates absolute distance when baseline is slower than recent', () => {
