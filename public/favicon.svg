@@ -1,17 +1,87 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <title>Speedcubing Progression Analyzer Icon</title>
-  <rect width="64" height="64" rx="16" fill="#0f172a" />
-  <g transform="translate(32, 33)">
-    <!-- Top Face (Yellow / Amber) -->
-    <path d="M 0 -18 L 18 -9 L 0 0 L -18 -9 Z" fill="#f59e0b" stroke="#0f172a" stroke-width="1.8" stroke-linejoin="round"/>
-    <path d="M -12 -12 L 6 -3 M -6 -15 L 12 -6 M -6 -3 L 12 -12 M -12 -6 L 6 -15" stroke="#0f172a" stroke-width="1.5" stroke-linecap="round"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>CubeProgression - Speedcubing Progression Analyzer</title>
+  <defs>
+    <!-- Background: Obsidian / Dark Slate matching #0c0a09 app theme -->
+    <linearGradient id="cp-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141824"/>
+      <stop offset="50%" stop-color="#0c0e17"/>
+      <stop offset="100%" stop-color="#06070a"/>
+    </linearGradient>
 
-    <!-- Left Face (Blue / Cyan) -->
-    <path d="M -18 -9 L 0 0 L 0 18 L -18 9 Z" fill="#0284c7" stroke="#0f172a" stroke-width="1.8" stroke-linejoin="round"/>
-    <path d="M -12 -6 L -12 12 M -6 -3 L -6 15 M -18 -3 L 0 6 M -18 3 L 0 12" stroke="#0f172a" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Progression Sweep Track: Cyan to Violet to Rose -->
+    <linearGradient id="cp-sweep" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#f43f5e"/>
+    </linearGradient>
 
-    <!-- Right Face (Emerald / Green) -->
-    <path d="M 0 0 L 18 -9 L 18 9 L 0 18 Z" fill="#10b981" stroke="#0f172a" stroke-width="1.8" stroke-linejoin="round"/>
-    <path d="M 6 -3 L 6 15 M 12 -6 L 12 12 M 0 6 L 18 -3 M 0 12 L 18 3" stroke="#0f172a" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Pure Lemon Yellow Face -->
+    <linearGradient id="cp-yellow" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#facc15"/>
+      <stop offset="100%" stop-color="#fef08a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- PWA Squircle App Icon Container (Apple & Android Adaptive Safe Area Compliant) -->
+  <rect width="512" height="512" rx="118" fill="url(#cp-bg)"/>
+  <rect width="506" height="506" x="3" y="3" rx="115" fill="none" stroke="#334155" stroke-width="2.5" opacity="0.6"/>
+
+  <!-- Centered Speedcube Stopwatch -->
+  <g transform="translate(256, 275)">
+    <!-- Shadow beneath stopwatch body -->
+    <ellipse cx="0" cy="180" rx="140" ry="16" fill="#000000" opacity="0.45"/>
+
+    <!-- Top Stopwatch Crown Button -->
+    <rect x="-24" y="-192" width="48" height="24" rx="6" fill="#334155" stroke="#475569" stroke-width="2"/>
+    <rect x="-14" y="-172" width="28" height="18" fill="#1e293b"/>
+    <!-- Angled Pushers -->
+    <rect x="-115" y="-165" width="20" height="14" rx="4" transform="rotate(-35, -105, -158)" fill="#334155"/>
+    <rect x="95" y="-165" width="20" height="14" rx="4" transform="rotate(35, 105, -158)" fill="#334155"/>
+
+    <!-- Stopwatch Outer Ring -->
+    <circle cx="0" cy="0" r="156" fill="#090d16" stroke="#1e293b" stroke-width="12"/>
+    <!-- Glowing Progression Arc (75% completed) -->
+    <circle cx="0" cy="0" r="156" fill="none" stroke="url(#cp-sweep)" stroke-width="12" stroke-dasharray="735, 245" stroke-dashoffset="180" stroke-linecap="round"/>
+
+    <!-- CFOP Yellow Top Face (The iconic solved last layer) -->
+    <!-- 3x3 Yellow Tiles -->
+    <g transform="translate(-79, -79)">
+      <!-- Row 0 -->
+      <rect x="0" y="0" width="48" height="48" rx="10" fill="url(#cp-yellow)"/>
+      <rect x="55" y="0" width="48" height="48" rx="10" fill="url(#cp-yellow)"/>
+      <rect x="110" y="0" width="48" height="48" rx="10" fill="url(#cp-yellow)"/>
+      <!-- Row 1 -->
+      <rect x="0" y="55" width="48" height="48" rx="10" fill="url(#cp-yellow)"/>
+      <rect x="55" y="55" width="48" height="48" rx="10" fill="url(#cp-yellow)"/>
+      <rect x="110" y="55" width="48" height="48" rx="10" fill="url(#cp-yellow)"/>
+      <!-- Row 2 -->
+      <rect x="0" y="110" width="48" height="48" rx="10" fill="url(#cp-yellow)"/>
+      <rect x="55" y="110" width="48" height="48" rx="10" fill="url(#cp-yellow)"/>
+      <rect x="110" y="110" width="48" height="48" rx="10" fill="url(#cp-yellow)"/>
+
+      <!-- Peripheral Side Indicator Tabs (Western standard: Orange Top, Green Right, Red Bottom, Blue Left) -->
+      <!-- Top edge tabs: Orange -->
+      <rect x="0" y="-12" width="48" height="7" rx="3" fill="#ea580c"/>
+      <rect x="55" y="-12" width="48" height="7" rx="3" fill="#ea580c"/>
+      <rect x="110" y="-12" width="48" height="7" rx="3" fill="#ea580c"/>
+      <!-- Right edge tabs: Green -->
+      <rect x="163" y="0" width="7" height="48" rx="3" fill="#16a34a"/>
+      <rect x="163" y="55" width="7" height="48" rx="3" fill="#16a34a"/>
+      <rect x="163" y="110" width="7" height="48" rx="3" fill="#16a34a"/>
+      <!-- Bottom edge tabs: Red -->
+      <rect x="0" y="163" width="48" height="7" rx="3" fill="#dc2626"/>
+      <rect x="55" y="163" width="48" height="7" rx="3" fill="#dc2626"/>
+      <rect x="110" y="163" width="48" height="7" rx="3" fill="#dc2626"/>
+      <!-- Left edge tabs: Blue -->
+      <rect x="-12" y="0" width="7" height="48" rx="3" fill="#0284c7"/>
+      <rect x="-12" y="55" width="7" height="48" rx="3" fill="#0284c7"/>
+      <rect x="-12" y="110" width="7" height="48" rx="3" fill="#0284c7"/>
+    </g>
+
+    <!-- Center Timer Pivot & Precision Hand Pointing Up-Right (Progressing) -->
+    <circle cx="0" cy="0" r="16" fill="#0f172a" stroke="#38bdf8" stroke-width="4"/>
+    <line x1="0" y1="0" x2="68" y2="-68" stroke="#38bdf8" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="0" cy="0" r="5" fill="#ffffff"/>
   </g>
 </svg>
