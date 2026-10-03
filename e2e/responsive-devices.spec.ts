@@ -265,6 +265,13 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       const s1Box = await scrubber1.boundingBox();
       if (!s1Box) throw new Error('Missing scrubber 1 bounding box');
 
+      // Verify scrubber height is shrunk responsively on mobile portrait (track h-12 = 48px, inner scrubber = 46px)
+      const track = densityCard.getByLabel('Solve distribution timeline scrubbers track');
+      const trackBox = await track.boundingBox();
+      expect(trackBox).not.toBeNull();
+      expect(Math.round(trackBox?.height ?? 0)).toBe(48);
+      expect(Math.round(s1Box.height)).toBe(46);
+
       await page.mouse.move(s1Box.x + s1Box.width / 2, s1Box.y + s1Box.height / 2);
       await page.mouse.down();
       await page.mouse.move(s1Box.x + s1Box.width / 2 + 50, s1Box.y + s1Box.height / 2, {
@@ -611,6 +618,12 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       const s1BoxBefore = await scrubber1.boundingBox();
       const s2BoxBefore = await scrubber2.boundingBox();
       if (!s1BoxBefore || !s2BoxBefore) throw new Error('Missing scrubber bounding box');
+      // Verify scrubber height is shrunk responsively on tablet portrait (track md:h-16 = 64px, inner scrubber = 62px)
+      const track = densityCard.getByLabel('Solve distribution timeline scrubbers track');
+      const trackBox = await track.boundingBox();
+      expect(trackBox).not.toBeNull();
+      expect(Math.round(trackBox?.height ?? 0)).toBe(64);
+      expect(Math.round(s1BoxBefore.height)).toBe(62);
       const s1WidthBefore = s1BoxBefore.width;
       const s2WidthBefore = s2BoxBefore.width;
 

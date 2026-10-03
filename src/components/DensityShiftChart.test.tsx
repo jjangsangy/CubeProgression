@@ -155,6 +155,9 @@ describe('DensityShiftChart component', () => {
     // Verify dataset visual representation inside the track
     const sparklineSvg = track.querySelector('svg');
     expect(sparklineSvg).toBeInTheDocument();
+
+    // Verify responsive height classes on the timeline scrubber track
+    expect(track).toHaveClass('h-12', 'sm:h-14', 'md:h-16', 'lg:h-20');
   });
 
   it('maintains symmetry: resizing one scrubber updates the other scrubber by the exact same amount', () => {

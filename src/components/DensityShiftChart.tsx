@@ -668,7 +668,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               e.preventDefault();
             }
           }}
-          className="relative h-20 w-full cursor-pointer select-none rounded-xl border border-stone-800 bg-stone-950/90 shadow-inner"
+          className="relative h-12 sm:h-14 md:h-16 lg:h-20 w-full cursor-pointer select-none rounded-xl border border-stone-800 bg-stone-950/90 shadow-inner"
           aria-label="Solve distribution timeline scrubbers track"
         >
           {/* Visual representation of dataset on the track (sparkline & mean line) */}
@@ -781,8 +781,8 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               aria-label="Baseline left resize handle"
               title="Drag to resize sample window"
             >
-              <span className="h-4 w-[1.5px] rounded-full bg-rose-200/70 transition-colors group-hover/handle:bg-white" />
-              <span className="h-4 w-[1.5px] rounded-full bg-rose-200/70 transition-colors group-hover/handle:bg-white" />
+              <span className="h-3.5 sm:h-4 w-[1.5px] rounded-full bg-rose-200/70 transition-colors group-hover/handle:bg-white" />
+              <span className="h-3.5 sm:h-4 w-[1.5px] rounded-full bg-rose-200/70 transition-colors group-hover/handle:bg-white" />
             </button>
 
             {/* Right Ribbed Resize Handle */}
@@ -797,8 +797,8 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               aria-label="Baseline right resize handle"
               title="Drag to resize sample window"
             >
-              <span className="h-4 w-[1.5px] rounded-full bg-rose-200/70 transition-colors group-hover/handle:bg-white" />
-              <span className="h-4 w-[1.5px] rounded-full bg-rose-200/70 transition-colors group-hover/handle:bg-white" />
+              <span className="h-3.5 sm:h-4 w-[1.5px] rounded-full bg-rose-200/70 transition-colors group-hover/handle:bg-white" />
+              <span className="h-3.5 sm:h-4 w-[1.5px] rounded-full bg-rose-200/70 transition-colors group-hover/handle:bg-white" />
             </button>
           </div>
 
@@ -856,8 +856,8 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               aria-label="Recent left resize handle"
               title="Drag to resize sample window"
             >
-              <span className="h-4 w-[1.5px] rounded-full bg-emerald-200/70 transition-colors group-hover/handle:bg-white" />
-              <span className="h-4 w-[1.5px] rounded-full bg-emerald-200/70 transition-colors group-hover/handle:bg-white" />
+              <span className="h-3.5 sm:h-4 w-[1.5px] rounded-full bg-emerald-200/70 transition-colors group-hover/handle:bg-white" />
+              <span className="h-3.5 sm:h-4 w-[1.5px] rounded-full bg-emerald-200/70 transition-colors group-hover/handle:bg-white" />
             </button>
 
             {/* Right Ribbed Resize Handle */}
@@ -872,8 +872,8 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               aria-label="Recent right resize handle"
               title="Drag to resize sample window"
             >
-              <span className="h-4 w-[1.5px] rounded-full bg-emerald-200/70 transition-colors group-hover/handle:bg-white" />
-              <span className="h-4 w-[1.5px] rounded-full bg-emerald-200/70 transition-colors group-hover/handle:bg-white" />
+              <span className="h-3.5 sm:h-4 w-[1.5px] rounded-full bg-emerald-200/70 transition-colors group-hover/handle:bg-white" />
+              <span className="h-3.5 sm:h-4 w-[1.5px] rounded-full bg-emerald-200/70 transition-colors group-hover/handle:bg-white" />
             </button>
           </div>
         </section>

@@ -142,7 +142,7 @@ Full-width Recharts `AreaChart` of KDE curves with an interactive solve timeline
 - Uses `calculateKDEFromSamples(sample1Solves, sample2Solves, 120, globalDomain)` to compute probability density curves between any two sampled subsets over an anchored session-wide domain to prevent X-axis jitter.
 - Normalizes Y-axis ceiling dynamically (`getNormalizedYCeiling`) so peaks comfortably fill ~75-80% of chart height regardless of sample size or clustering, preventing peaks from being too small (flat) or too large (clipping).
 - Plots `baselineDensity` (red/rose) and `recentDensity` (green/emerald) areas.
-- Features dual draggable scrubbers with semi-transparent opacity (`bg-rose-500/25` and `bg-emerald-500/25`) placed on an interactive dataset timeline track below the chart.
+- Features dual draggable scrubbers with semi-transparent opacity (`bg-rose-500/25` and `bg-emerald-500/25`) placed on an interactive dataset timeline track below the chart with responsive height scaling across mobile, tablet, and desktop viewports (`h-12 sm:h-14 md:h-16 lg:h-20`).
 - Each scrubber features ribbed resize handles on both ends (`cursor-ew-resize`) allowing users to drag the ends left or right to dynamically increase or decrease the sample window width. Dragging the center body slides the window along the timeline.
 - The scrubber track features an SVG sparkline, mean reference line, and vertical dashed grouping boundary lines showing where aggregation periods (e.g. daily/weekly sessions, batches) begin and end.
 - Computes a centered, evenly distributed summary banner (baseline mean, recent mean, solve index ranges, and "faster/slower by X" shift).
