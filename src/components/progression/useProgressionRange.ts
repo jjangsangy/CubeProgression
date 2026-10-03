@@ -61,7 +61,8 @@ export function useProgressionRange(solves: Solve[]) {
       setEndSolve(Math.min(totalCount, 100));
     } else if (selectedPreset === 'last7d') {
       setRangeMode('dateRange');
-      const lastTs = solves[solves.length - 1]?.timestamp || Date.now();
+      const lastTs =
+        solves[solves.length - 1]?.timestamp ?? Temporal.Now.instant().epochMilliseconds;
       const lastZdt = Temporal.Instant.fromEpochMilliseconds(lastTs).toZonedDateTimeISO(
         Temporal.Now.timeZoneId(),
       );
@@ -70,7 +71,8 @@ export function useProgressionRange(solves: Solve[]) {
       setEndDate(latestDate);
     } else if (selectedPreset === 'last30d') {
       setRangeMode('dateRange');
-      const lastTs = solves[solves.length - 1]?.timestamp || Date.now();
+      const lastTs =
+        solves[solves.length - 1]?.timestamp ?? Temporal.Now.instant().epochMilliseconds;
       const lastZdt = Temporal.Instant.fromEpochMilliseconds(lastTs).toZonedDateTimeISO(
         Temporal.Now.timeZoneId(),
       );

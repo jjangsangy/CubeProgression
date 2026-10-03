@@ -16,7 +16,7 @@ describe('dbStorage IndexedDB utility', () => {
           finalTimeSec: 12.45,
           penalty: 'OK',
           timestamp: 1690000000000,
-          date: new Date(1690000000000),
+          date: Temporal.PlainDate.from('2023-07-22'),
           dateStr: '2023-07-22',
         },
       ],
@@ -141,7 +141,8 @@ describe('dbStorage IndexedDB utility', () => {
     expect(dataset?.groupingPeriod).toBe('weekly');
     expect(dataset?.customBatchSize).toBe(25);
     expect(dataset?.sessions.length).toBe(1);
-    expect(dataset?.sessions[0].solves[0].date).toBeInstanceOf(Date);
+    expect(dataset?.sessions[0].solves[0].date).toBeInstanceOf(Temporal.PlainDate);
+    expect(dataset?.sessions[0].solves[0].date.toString()).toBe('2023-07-22');
 
     await clearSavedDataset();
     const afterClear = await getSavedDataset();
@@ -174,7 +175,7 @@ describe('dbStorage IndexedDB utility', () => {
               finalTimeSec: 10,
               penalty: 'OK',
               timestamp: 1680000000000,
-              date: null,
+              date: null as unknown as Temporal.PlainDate,
             },
             {
               id: 2,
@@ -196,18 +197,18 @@ describe('dbStorage IndexedDB utility', () => {
           ],
         },
       ],
-      updatedAt: Date.now(),
+      updatedAt: Temporal.Now.instant().epochMilliseconds,
     });
 
     const dataset = await getSavedDataset();
     expect(dataset).not.toBeNull();
-    expect(dataset?.sessions[0].solves[0].date).toBeInstanceOf(Date);
-    expect(dataset?.sessions[0].solves[0].date.getTime()).toBe(1680000000000);
-    expect(dataset?.sessions[0].solves[1].date).toBeInstanceOf(Date);
-    expect(dataset?.sessions[0].solves[2].date).toBeInstanceOf(Date);
+    expect(dataset?.sessions[0].solves[0].date).toBeInstanceOf(Temporal.PlainDate);
+    expect(dataset?.sessions[0].solves[1].date).toBeInstanceOf(Temporal.PlainDate);
+    expect(dataset?.sessions[0].solves[1].date.toString()).toBe('2023-05-10');
+    expect(dataset?.sessions[0].solves[2].date).toBeInstanceOf(Temporal.PlainDate);
   });
 
-  it('handles existing valid Date instances, invalid Date instances, and non-array sessions', async () => {
+  it('handles existing valid PlainDate instances, string representations, and non-array sessions', async () => {
     const { mockFactory, store } = createMockIndexedDB();
     Object.defineProperty(window, 'indexedDB', {
       value: mockFactory,
@@ -215,10 +216,9 @@ describe('dbStorage IndexedDB utility', () => {
       writable: true,
     });
 
-    const validDate = new Date(1690000000000);
-    const invalidDate = new Date(Number.NaN);
+    const validDate = Temporal.PlainDate.from('2023-07-22');
 
-    // Save directly to the map to preserve Date instances without JSON serialization
+    // Save directly to the map to test normalization
     store.set('active_dataset', {
       id: 'active_dataset',
       fileName: 'dates.txt',
@@ -226,7 +226,7 @@ describe('dbStorage IndexedDB utility', () => {
       sessions: [
         {
           id: 's1',
-          name: 'Session with Date objects',
+          name: 'Session with PlainDate objects',
           solves: [
             {
               id: 1,
@@ -237,6 +237,7 @@ describe('dbStorage IndexedDB utility', () => {
               penalty: 'OK',
               timestamp: 1690000000000,
               date: validDate,
+              dateStr: '2023-07-22',
             },
             {
               id: 2,
@@ -246,18 +247,19 @@ describe('dbStorage IndexedDB utility', () => {
               finalTimeSec: 11,
               penalty: 'OK',
               timestamp: 1690000000000,
-              date: invalidDate,
+              date: 'invalid-date' as unknown as Temporal.PlainDate,
+              dateStr: '2023-07-22',
             },
           ],
         },
       ],
-      updatedAt: Date.now(),
+      updatedAt: Temporal.Now.instant().epochMilliseconds,
     });
 
     const dataset = await getSavedDataset();
     expect(dataset?.sessions[0].solves[0].date).toBe(validDate);
-    expect(dataset?.sessions[0].solves[1].date).toBeInstanceOf(Date);
-    expect(!Number.isNaN(dataset?.sessions[0].solves[1].date.getTime())).toBe(true);
+    expect(dataset?.sessions[0].solves[1].date).toBeInstanceOf(Temporal.PlainDate);
+    expect(dataset?.sessions[0].solves[1].date.toString()).toBe('2023-07-22');
 
     // Corrupted record with non-array sessions
     store.set('active_dataset', {

@@ -75,7 +75,7 @@ text (RTL) and mocking only external/browser APIs (see `ChartCardWrapper.test.ts
 - Formatter: **2-space** indent, **LF** line endings, **line width 100**.
 - JS: **single quotes**, **always semicolons**, **trailing commas everywhere**.
 - JSX: **double quotes** for attributes.
-- Linter: `recommended` preset.
+- Linter: `recommended` preset, with `noRestrictedGlobals` and `noRestrictedTypes` denying JavaScript `Date`.
 - Assist: **organize imports** is on (`biome check --write` will reorder imports).
 
 Match these rules when hand-writing code; run `bun run check:write` before finishing.
@@ -93,6 +93,7 @@ Match these rules when hand-writing code; run `bun run check:write` before finis
 
 ## Conventions
 
+- **Temporal only — JS `Date` strictly forbidden**: All date, time, and timestamp handling must use ECMAScript standard `Temporal` (e.g. `Temporal.Now.instant().epochMilliseconds`, `Temporal.Instant`, `Temporal.PlainDate`, `Temporal.ZonedDateTime`). Never use `new Date()`, `Date.now()`, `Date.UTC()`, or the `Date` type anywhere in source files, utilities, or test fixtures. Biome enforces this via `noRestrictedGlobals` and `noRestrictedTypes`.
 - **Imports**: relative paths are the norm (`../types`, `./statsMath`); `@/...` also works.
   Node built-ins use the `node:` prefix.
 - **Styling**: Tailwind utility classes inline. The dark "stone" palette is the design
@@ -135,7 +136,7 @@ Match these rules when hand-writing code; run `bun run check:write` before finis
   and `App.test.tsx` always exercises the demo fallback.
 - **Determinism**: `generateSampleData()` is seeded, so demo output is stable —
   `App.test.tsx` asserts on the exact session title `F2L Yellow Cross Progression (Demo)`.
-- **Locale/timezone**: dates use the runtime local timezone via `Temporal`. Tests that
+- **Locale/timezone**: dates use the runtime local timezone via `Temporal`. Native JS `Date` is strictly forbidden. Tests that
   assert on `dateStr` values should avoid timezone-sensitive fixtures.
 - **`DISABLE_HMR`**: setting it to `"true"` disables HMR and file watching (used by AI Studio).
 - **No backend**: never introduce server calls or secret-dependent code; this is a static SPA.

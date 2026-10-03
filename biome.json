@@ -35,7 +35,25 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "preset": "recommended"
+      "preset": "recommended",
+      "style": {
+        "noRestrictedGlobals": {
+          "level": "error",
+          "options": {
+            "deniedGlobals": {
+              "Date": "JavaScript Date is strictly forbidden across the codebase and tests. Use standard Temporal (e.g. Temporal.Now, Temporal.Instant, Temporal.PlainDate, Temporal.ZonedDateTime) instead."
+            }
+          }
+        },
+        "noRestrictedTypes": {
+          "level": "error",
+          "options": {
+            "types": {
+              "Date": "JavaScript Date type is strictly forbidden. Use standard Temporal types (e.g. Temporal.Instant, Temporal.PlainDate, Temporal.ZonedDateTime) instead."
+            }
+          }
+        }
+      }
     }
   },
   "assist": {

@@ -62,6 +62,7 @@ bun run preview        # preview production bundle → http://localhost:3100
   quotes** in JSX, always semicolons, trailing commas everywhere, imports auto-organized.
   Run `bun run check:write` before finishing.
 - **Keep `statsMath.ts` pure** — no React, no DOM, no I/O. Memoize in components with `useMemo`.
+- **Temporal only — JS `Date` is strictly forbidden**: Never use JavaScript `Date` (`new Date()`, `Date.now()`, `Date.UTC()`, or the `Date` type) anywhere in source files, utilities, or test fixtures. All dates, timestamps, durations, and timezones must use ECMAScript standard `Temporal` (e.g. `Temporal.Now.instant().epochMilliseconds`, `Temporal.Instant`, `Temporal.PlainDate`, `Temporal.ZonedDateTime`). Biome enforces this via `noRestrictedGlobals` and `noRestrictedTypes`.
 - **Write tests** for logic changes, colocated as `*.test.ts(x)`. The statistics engine is
   the most-tested surface; don't change math without updating `statsMath.test.ts`.
 - **Run E2E tests (`bun run test:e2e`)** — all UI, layout, deferral, and persistence changes
@@ -80,7 +81,7 @@ bun run preview        # preview production bundle → http://localhost:3100
   seeded demo dataset** (`generateSampleData()`), whose session title
   `F2L Yellow Cross Progression (Demo)` is asserted in `App.test.tsx`.
 - Dates are computed in the **runtime local timezone** via standard `Temporal`; avoid
-  timezone-sensitive test assertions.
+  timezone-sensitive test assertions. Native JS `Date` is strictly forbidden across the entire codebase and tests.
 - `ResponsiveContainer` is mocked to a fixed 800×400 box in `src/setupTests.tsx`.
 
 ## Where to make common changes

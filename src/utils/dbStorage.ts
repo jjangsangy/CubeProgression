@@ -1,5 +1,4 @@
 import type { GroupingPeriod, Session } from '../types';
-import { formatLocalDate } from './csTimerParser';
 
 const DB_NAME = 'CubeProgressionDB';
 const DB_VERSION = 1;
@@ -47,21 +46,35 @@ function openDB(): Promise<IDBDatabase | null> {
 }
 
 /**
- * Ensures that all Solve objects in sessions have proper Date objects for `date`
+ * Ensures that all Solve objects in sessions have proper Temporal.PlainDate instances for `date`
  */
-function normalizeSessionsDates(sessions: Session[]): Session[] {
+export function normalizeSessionsDates(sessions: Session[]): Session[] {
   if (!Array.isArray(sessions)) return [];
+  const tz = Temporal.Now.timeZoneId();
   return sessions.map((session) => ({
     ...session,
     solves: (session.solves || []).map((solve) => {
-      let d = solve.date;
-      if (!(d instanceof Date) || Number.isNaN(d.getTime())) {
-        d = new Date(solve.timestamp || solve.dateStr || Date.now());
+      let plainDate: Temporal.PlainDate;
+      const rawDate = solve.date as unknown;
+
+      if (rawDate instanceof Temporal.PlainDate) {
+        plainDate = rawDate;
+      } else if (typeof solve.dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(solve.dateStr)) {
+        plainDate = Temporal.PlainDate.from(solve.dateStr);
+      } else if (typeof rawDate === 'string' && /^\d{4}-\d{2}-\d{2}/.test(rawDate)) {
+        plainDate = Temporal.PlainDate.from(rawDate.slice(0, 10));
+      } else if (typeof solve.timestamp === 'number' && Number.isFinite(solve.timestamp)) {
+        plainDate = Temporal.Instant.fromEpochMilliseconds(solve.timestamp)
+          .toZonedDateTimeISO(tz)
+          .toPlainDate();
+      } else {
+        plainDate = Temporal.Now.plainDateISO(tz);
       }
+
       return {
         ...solve,
-        date: d,
-        dateStr: formatLocalDate(d),
+        date: plainDate,
+        dateStr: plainDate.toString(),
       };
     }),
   }));
@@ -87,14 +100,27 @@ export function saveDataset(data: {
       const tx = db.transaction(STORE_NAME, 'readwrite');
       const store = tx.objectStore(STORE_NAME);
 
+      const sanitizedSessions = data.sessions.map((session) => ({
+        ...session,
+        solves: (session.solves || []).map(({ date, ...rest }) => ({
+          ...rest,
+          date:
+            date instanceof Temporal.PlainDate
+              ? date.toString()
+              : typeof date === 'string'
+                ? date
+                : (rest.dateStr ?? ''),
+        })),
+      }));
+
       const record: StoredDataset = {
         id: ACTIVE_KEY,
         fileName: data.fileName,
-        sessions: data.sessions,
+        sessions: sanitizedSessions as unknown as Session[],
         selectedSessionId: data.selectedSessionId,
         groupingPeriod: data.groupingPeriod,
         customBatchSize: data.customBatchSize,
-        updatedAt: Date.now(),
+        updatedAt: Temporal.Now.instant().epochMilliseconds,
       };
 
       await new Promise<void>((resolve, reject) => {
@@ -138,7 +164,7 @@ export async function getSavedDataset(): Promise<StoredDataset | null> {
 
     if (!record) return null;
 
-    // Restore Date objects inside sessions
+    // Restore Temporal.PlainDate objects inside sessions
     record.sessions = normalizeSessionsDates(record.sessions);
     return record;
   } catch (err) {

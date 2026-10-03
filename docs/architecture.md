@@ -19,7 +19,7 @@ network dependency.
 | Charts | Recharts 3 (code-split, lazy) + hand-authored SVG (box plot) |
 | Icons | `lucide-react` |
 | Animation | GPU-accelerated CSS keyframes (no runtime motion library) |
-| Dates/timezones | Standard `Temporal` (browser native) with conditional dynamic polyfill (`temporalLoader.ts`) |
+| Dates/timezones | Standard `Temporal` (browser native) with conditional dynamic polyfill (`temporalLoader.ts`); native JS `Date` is strictly forbidden |
 | PNG export | `html-to-image` (dynamically imported) |
 | Persistence | Native IndexedDB |
 | Lint / format | Biome 2 |

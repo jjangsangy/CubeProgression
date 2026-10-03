@@ -19,11 +19,11 @@ export const LoadingElapsedTimer: React.FC<LoadingElapsedTimerProps> = memo(
     const [elapsed, setElapsed] = useState<number>(0);
 
     useEffect(() => {
-      const startTime = initialStartTime ?? Date.now();
-      setElapsed((Date.now() - startTime) / 1000);
+      const startTime = initialStartTime ?? Temporal.Now.instant().epochMilliseconds;
+      setElapsed((Temporal.Now.instant().epochMilliseconds - startTime) / 1000);
 
       const interval = setInterval(() => {
-        setElapsed((Date.now() - startTime) / 1000);
+        setElapsed((Temporal.Now.instant().epochMilliseconds - startTime) / 1000);
       }, intervalMs);
 
       return () => {

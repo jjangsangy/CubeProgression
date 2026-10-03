@@ -50,7 +50,7 @@ describe('LoadingElapsedTimer', () => {
   });
 
   it('supports custom initialStartTime prop', () => {
-    const fixedStartTime = Date.now() - 1000;
+    const fixedStartTime = Temporal.Now.instant().epochMilliseconds - 1000;
     render(<LoadingElapsedTimer initialStartTime={fixedStartTime} />);
 
     expect(screen.getByText('1.00s')).toBeInTheDocument();

@@ -40,7 +40,7 @@ A modern, high-performance web application built for speedcubers to analyze **cs
 - **Build Tool**: [Vite 8](https://vite.dev/) (via `@tailwindcss/vite` & `@vitejs/plugin-react`)
 - **Styling & UI**: [Tailwind CSS v4](https://tailwindcss.com/), [Lucide React](https://lucide.dev/), GPU-composited CSS keyframe animations
 - **Charts & Statistics**: [Recharts 3](https://recharts.org/), hand-authored SVG box plot, and pure in-memory statistical algorithms
-- **Dates & Timezones**: Standard `Temporal` with conditional dynamic polyfill for older browsers
+- **Dates & Timezones**: Standard `Temporal` with conditional dynamic polyfill for older browsers (native JS `Date` is strictly forbidden project-wide)
 - **Storage & Offline Persistence**: Native browser [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)
 - **Snapshot & Export**: [html-to-image](https://github.com/bubkoo/html-to-image) for high-resolution PNG chart downloads and CSV export
 - **Linter & Formatter**: [Biome 2](https://biomejs.dev/)

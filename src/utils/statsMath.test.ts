@@ -23,7 +23,7 @@ const mockSolves: Solve[] = [
     finalTimeSec: 12.0,
     penalty: 'OK',
     timestamp: 1600000000000,
-    date: new Date(1600000000000),
+    date: Temporal.PlainDate.from('2020-09-13'),
     dateStr: '2020-09-13',
   },
   {
@@ -34,7 +34,7 @@ const mockSolves: Solve[] = [
     finalTimeSec: 10.0,
     penalty: 'OK',
     timestamp: 1600000100000,
-    date: new Date(1600000100000),
+    date: Temporal.PlainDate.from('2020-09-13'),
     dateStr: '2020-09-13',
   },
   {
@@ -45,7 +45,7 @@ const mockSolves: Solve[] = [
     finalTimeSec: 15.0,
     penalty: 'OK',
     timestamp: 1600000200000,
-    date: new Date(1600000200000),
+    date: Temporal.PlainDate.from('2020-09-13'),
     dateStr: '2020-09-13',
   },
   {
@@ -56,7 +56,7 @@ const mockSolves: Solve[] = [
     finalTimeSec: 11.0,
     penalty: 'OK',
     timestamp: 1600000300000,
-    date: new Date(1600000300000),
+    date: Temporal.PlainDate.from('2020-09-13'),
     dateStr: '2020-09-13',
   },
   {
@@ -67,7 +67,7 @@ const mockSolves: Solve[] = [
     finalTimeSec: 13.0,
     penalty: 'OK',
     timestamp: 1600000400000,
-    date: new Date(1600000400000),
+    date: Temporal.PlainDate.from('2020-09-13'),
     dateStr: '2020-09-13',
   },
 ];
@@ -195,14 +195,16 @@ describe('statsMath utils', () => {
   describe('computeGroupStats', () => {
     it('returns zeroed group stats when no valid solves exist in group', () => {
       const dnfSolves = [{ ...mockSolves[0], penalty: 'DNF' as const }];
-      const stats = computeGroupStats(dnfSolves, 'Group 1', new Date(), new Date());
+      const dummyDate = Temporal.Now.plainDateISO();
+      const stats = computeGroupStats(dnfSolves, 'Group 1', dummyDate, dummyDate);
       expect(stats.mean).toBe(0);
       expect(stats.solves).toEqual(dnfSolves);
       expect(stats.outliers).toEqual([]);
     });
 
     it('calculates mean, median, quantiles, and outliers accurately', () => {
-      const stats = computeGroupStats(mockSolves, 'Group 1', new Date(), new Date());
+      const dummyDate = Temporal.Now.plainDateISO();
+      const stats = computeGroupStats(mockSolves, 'Group 1', dummyDate, dummyDate);
       // Times: 10.0, 11.0, 12.0, 13.0, 15.0
       expect(stats.mean).toBe(12.2);
       expect(stats.median).toBe(12.0);
@@ -220,7 +222,8 @@ describe('statsMath utils', () => {
         rawTimeSec: t,
       }));
 
-      const stats = computeGroupStats(solvesWithOutliers, 'Outlier Group', new Date(), new Date());
+      const dummyDate = Temporal.Now.plainDateISO();
+      const stats = computeGroupStats(solvesWithOutliers, 'Outlier Group', dummyDate, dummyDate);
       expect(stats.outliers).toEqual([2.0, 25.0]);
       expect(stats.whiskerLow).toBe(10.0);
       expect(stats.whiskerHigh).toBe(13.0);
@@ -228,7 +231,8 @@ describe('statsMath utils', () => {
 
     it('handles single solve and identical solves without errors', () => {
       const singleSolve = [mockSolves[0]];
-      const singleStats = computeGroupStats(singleSolve, 'Single', new Date(), new Date());
+      const dummyDate = Temporal.Now.plainDateISO();
+      const singleStats = computeGroupStats(singleSolve, 'Single', dummyDate, dummyDate);
       expect(singleStats.mean).toBe(12.0);
       expect(singleStats.median).toBe(12.0);
       expect(singleStats.iqr).toBe(0);
@@ -241,12 +245,7 @@ describe('statsMath utils', () => {
         index: i + 1,
         finalTimeSec: 10.0,
       }));
-      const identicalStats = computeGroupStats(
-        identicalSolves,
-        'Identical',
-        new Date(),
-        new Date(),
-      );
+      const identicalStats = computeGroupStats(identicalSolves, 'Identical', dummyDate, dummyDate);
       expect(identicalStats.iqr).toBe(0);
       expect(identicalStats.stdDev).toBe(0);
       expect(identicalStats.whiskerLow).toBe(10.0);
@@ -287,15 +286,25 @@ describe('statsMath utils', () => {
     });
 
     it('correctly tracks dateRange start when timestamps are not in chronological order', () => {
-      // Solve 1 at 12:00, Solve 2 at 10:00 (earlier timestamp encountered second)
+      // Solve 1 on Tuesday, Solve 2 on Monday (earlier date encountered second within same week)
       const outOfOrderSolves: Solve[] = [
-        { ...mockSolves[0], timestamp: 1600005000000, date: new Date(1600005000000) },
-        { ...mockSolves[1], timestamp: 1600001000000, date: new Date(1600001000000) },
+        {
+          ...mockSolves[0],
+          timestamp: 1600170000000,
+          date: Temporal.PlainDate.from('2020-09-15'),
+          dateStr: '2020-09-15',
+        },
+        {
+          ...mockSolves[1],
+          timestamp: 1600083600000,
+          date: Temporal.PlainDate.from('2020-09-14'),
+          dateStr: '2020-09-14',
+        },
       ];
-      const groups = groupSolvesByPeriod(outOfOrderSolves, 'daily');
+      const groups = groupSolvesByPeriod(outOfOrderSolves, 'weekly');
       expect(groups.length).toBe(1);
-      expect(groups[0].startDate.getTime()).toBe(1600001000000);
-      expect(groups[0].endDate.getTime()).toBe(1600005000000);
+      expect(groups[0].startDate.toString()).toBe('2020-09-14');
+      expect(groups[0].endDate.toString()).toBe('2020-09-15');
     });
 
     it('handles multi-day gaps between solves cleanly', () => {
@@ -522,7 +531,7 @@ describe('statsMath utils', () => {
         finalTimeSec: (15000 - i * 10) / 1000,
         penalty: 'OK',
         timestamp: 1600000000000 + i * 1000,
-        date: new Date(1600000000000 + i * 1000),
+        date: Temporal.PlainDate.from('2020-09-13'),
         dateStr: '2020-09-13',
       }));
 
@@ -579,7 +588,7 @@ describe('statsMath utils', () => {
           finalTimeSec,
           penalty: 'OK' as const,
           timestamp: 1600000000000 + i * 1000,
-          date: new Date(1600000000000 + i * 1000),
+          date: Temporal.PlainDate.from('2020-09-13'),
           dateStr: '2020-09-13',
           ao5: i >= 4 ? Number((finalTimeSec + 0.2).toFixed(2)) : null,
         };

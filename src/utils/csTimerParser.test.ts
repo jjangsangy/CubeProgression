@@ -50,7 +50,7 @@ describe('csTimerParser utils', () => {
       expect(solves[0].timeMs).toBe(10000);
     });
 
-    it('falls back to Date.now() when timestamp is missing or NaN', () => {
+    it('falls back to current timestamp when timestamp is missing or NaN', () => {
       const solvesWithoutTs = parseSolvesList([
         [[0, 10000], 'R U R'], // missing timestamp
         [[0, 11000], 'R U R', '', Number.NaN], // NaN timestamp
@@ -85,18 +85,27 @@ describe('csTimerParser utils', () => {
     });
 
     it('computes dateStr matching local calendar date instead of UTC', () => {
-      // Create a local date at 11:30 PM (often the next day in UTC for western timezones)
-      const testDate = new Date(2026, 9, 1, 23, 30, 0); // Oct 1, 2026 local
-      const tsSec = Math.floor(testDate.getTime() / 1000);
+      // Create a local timestamp at 11:30 PM (often the next day in UTC for western timezones)
+      const tz = Temporal.Now.timeZoneId();
+      const testZdt = Temporal.ZonedDateTime.from({
+        year: 2026,
+        month: 10,
+        day: 1,
+        hour: 23,
+        minute: 30,
+        second: 0,
+        timeZone: tz,
+      });
+      const tsSec = Math.floor(testZdt.epochMilliseconds / 1000);
 
       const solves = parseSolvesList([[[0, 15000], 'R U R', '', tsSec]]);
       expect(solves[0].dateStr).toBe('2026-10-01');
-      expect(solves[0].dateStr).toBe(formatLocalDate(testDate));
+      expect(solves[0].dateStr).toBe(formatLocalDate(testZdt));
     });
 
     it('formats dates accurately across timezones using Temporal', () => {
       // 2026-10-02T01:30:00Z: 1:30 AM Oct 2 in UTC, but 6:30 PM Oct 1 in America/Los_Angeles
-      const tsMs = Date.UTC(2026, 9, 2, 1, 30, 0);
+      const tsMs = Temporal.Instant.from('2026-10-02T01:30:00Z').epochMilliseconds;
       expect(formatLocalDate(tsMs, 'America/Los_Angeles')).toBe('2026-10-01');
       expect(formatLocalDate(tsMs, 'UTC')).toBe('2026-10-02');
 

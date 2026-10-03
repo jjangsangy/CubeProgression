@@ -6,8 +6,8 @@ describe('csvExport', () => {
   const sampleGroups: PeriodGroup[] = [
     {
       label: 'Day 1 (Jan 01, 2026)',
-      startDate: new Date('2026-01-01T00:00:00Z'),
-      endDate: new Date('2026-01-01T23:59:59Z'),
+      startDate: Temporal.PlainDate.from('2026-01-01'),
+      endDate: Temporal.PlainDate.from('2026-01-01'),
       solves: [],
       timesSec: [],
       mean: 12.34,
@@ -24,8 +24,8 @@ describe('csvExport', () => {
     },
     {
       label: 'Day 2 (Jan 02, 2026)',
-      startDate: new Date('2026-01-02T00:00:00Z'),
-      endDate: new Date('2026-01-02T23:59:59Z'),
+      startDate: Temporal.PlainDate.from('2026-01-02'),
+      endDate: Temporal.PlainDate.from('2026-01-02'),
       solves: [],
       timesSec: [],
       mean: 11.5,

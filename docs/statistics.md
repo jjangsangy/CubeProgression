@@ -29,7 +29,7 @@ Ordinary Least Squares fit of `finalTimeSec` against 1-based `index`, ignoring D
   `-0.0095s/solve`.
 - A negative slope means solve times are decreasing (getting faster).
 
-## `computeGroupStats(groupSolves, label, startDate, endDate): PeriodGroup`
+## `computeGroupStats(groupSolves, label, startDate: Temporal.PlainDate, endDate: Temporal.PlainDate): PeriodGroup`
 
 Aggregates one bucket of solves:
 

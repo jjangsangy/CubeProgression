@@ -35,7 +35,7 @@ describe('App component', () => {
       selectedSessionId: 'session1',
       groupingPeriod: 'weekly',
       customBatchSize: 30,
-      updatedAt: Date.now(),
+      updatedAt: Temporal.Now.instant().epochMilliseconds,
       sessions: [
         {
           id: 'session1',
@@ -49,7 +49,7 @@ describe('App component', () => {
               finalTimeSec: 11.5,
               penalty: 'OK',
               timestamp: 1600000000000,
-              date: new Date(1600000000000),
+              date: Temporal.PlainDate.from('2020-09-13'),
               dateStr: '2020-09-13',
             },
             {
@@ -60,7 +60,7 @@ describe('App component', () => {
               finalTimeSec: 12.5,
               penalty: 'OK',
               timestamp: 1600000060000,
-              date: new Date(1600000060000),
+              date: Temporal.PlainDate.from('2020-09-13'),
               dateStr: '2020-09-13',
             },
           ],

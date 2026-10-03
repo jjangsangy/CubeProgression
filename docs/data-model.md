@@ -36,7 +36,7 @@ interface Solve {
   scramble?: string;
   comment?: string;
   timestamp: number;        // Unix ms
-  date: Date;
+  date: Temporal.PlainDate; // calendar date in local timezone
   dateStr: string;          // local YYYY-MM-DD
   ao5/ao12/ao50/ao100?: number | null;
 }
@@ -56,7 +56,7 @@ A single csTimer export can contain multiple sessions (e.g. `session1`, `session
 ### Grouping / aggregation types
 
 - `GroupingPeriod` — `'daily' | 'weekly' | 'monthly' | 'customBatch' | 'batch50'`.
-- `PeriodGroup` — one aggregated bucket: `label`, `startDate`/`endDate`, `solves`,
+- `PeriodGroup` — one aggregated bucket: `label`, `startDate`/`endDate` (`Temporal.PlainDate`), `solves`,
   `timesSec`, and computed `mean`, `median`, `min`, `max`, `stdDev`, `q1`, `q3`, `iqr`,
   `whiskerLow`, `whiskerHigh`, `outliers`.
 - `LinearRegression` — `slope`, `intercept`, `r2`, and a preformatted `slopeFormatted`
@@ -126,7 +126,7 @@ For each item it:
 5. Resolves the timestamp:
    - `item[3]` if numeric; values `< 1e10` are treated as **seconds** and multiplied by 1000.
    - otherwise `item[1]` if numeric (same seconds heuristic).
-   - otherwise `Date.now()`.
+   - otherwise `Temporal.Now.instant().epochMilliseconds`.
 6. Computes `ao5`, `ao12`, `ao50`, `ao100` in one forward pass via `calculateAoN`.
 
 > Note: solves are **not** re-sorted by timestamp. The array order from the export is the

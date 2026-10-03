@@ -20,8 +20,13 @@ const mockSolves: Solve[] = Array.from({ length: 50 }, (_, idx) => ({
   finalTimeSec: idx === 0 ? Infinity : (10000 + idx * 10) / 1000,
   penalty: idx === 0 ? 'DNF' : 'OK',
   timestamp: 1600000000000 + idx * 86400000,
-  date: new Date(1600000000000 + idx * 86400000),
-  dateStr: new Date(1600000000000 + idx * 86400000).toISOString().split('T')[0],
+  date: Temporal.Instant.fromEpochMilliseconds(1600000000000 + idx * 86400000)
+    .toZonedDateTimeISO('UTC')
+    .toPlainDate(),
+  dateStr: Temporal.Instant.fromEpochMilliseconds(1600000000000 + idx * 86400000)
+    .toZonedDateTimeISO('UTC')
+    .toPlainDate()
+    .toString(),
   scramble: `R U R' U' #${idx + 1}`,
 }));
 
@@ -185,8 +190,8 @@ describe('progressionMath pure helpers', () => {
       const periodGroups: PeriodGroup[] = [
         {
           label: 'Group 1',
-          startDate: new Date(1600000000000),
-          endDate: new Date(1600000000000 + 86400000),
+          startDate: Temporal.PlainDate.from('2020-09-13'),
+          endDate: Temporal.PlainDate.from('2020-09-14'),
           solves: mockSolves.slice(0, 10),
           timesSec: mockSolves.slice(0, 10).map((s) => s.finalTimeSec),
           mean: 10.0,
@@ -235,8 +240,8 @@ describe('progressionMath pure helpers', () => {
       const periodGroups: PeriodGroup[] = [
         {
           label: 'Group 1',
-          startDate: new Date(1600000000000),
-          endDate: new Date(1600000000000 + 86400000),
+          startDate: Temporal.PlainDate.from('2020-09-13'),
+          endDate: Temporal.PlainDate.from('2020-09-14'),
           solves: mockSolves.slice(0, 10),
           timesSec: mockSolves.slice(0, 10).map((s) => s.finalTimeSec),
           mean: 10.0,
@@ -270,7 +275,7 @@ describe('progressionMath pure helpers', () => {
         finalTimeSec: (12000 + (i % 5) * 100) / 1000,
         penalty: 'OK',
         timestamp: 1600000000000 + i * 60000,
-        date: new Date(1600000000000 + i * 60000),
+        date: Temporal.PlainDate.from('2020-09-13'),
         dateStr: '2020-09-13',
       }));
 

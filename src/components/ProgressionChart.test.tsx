@@ -69,8 +69,13 @@ const mockSolves: Solve[] = Array.from({ length: 120 }, (_, idx) => ({
   finalTimeSec: idx === 5 ? Infinity : (12000 - idx * 20) / 1000,
   penalty: idx === 5 ? 'DNF' : idx === 10 ? '+2' : 'OK',
   timestamp: 1600000000000 + idx * 86400000,
-  date: new Date(1600000000000 + idx * 86400000),
-  dateStr: new Date(1600000000000 + idx * 86400000).toISOString().split('T')[0],
+  date: Temporal.Instant.fromEpochMilliseconds(1600000000000 + idx * 86400000)
+    .toZonedDateTimeISO('UTC')
+    .toPlainDate(),
+  dateStr: Temporal.Instant.fromEpochMilliseconds(1600000000000 + idx * 86400000)
+    .toZonedDateTimeISO('UTC')
+    .toPlainDate()
+    .toString(),
   scramble: `R2 U2 #${idx + 1}`,
   comment: idx === 1 ? 'fast execution' : '',
 }));
@@ -78,8 +83,8 @@ const mockSolves: Solve[] = Array.from({ length: 120 }, (_, idx) => ({
 const mockPeriodGroups: PeriodGroup[] = [
   {
     label: 'Period 1',
-    startDate: new Date(1600000000000),
-    endDate: new Date(1600000000000 + 60 * 86400000),
+    startDate: Temporal.PlainDate.from('2020-09-13'),
+    endDate: Temporal.PlainDate.from('2020-11-12'),
     solves: mockSolves.slice(0, 60),
     timesSec: mockSolves.slice(0, 60).map((s) => s.finalTimeSec),
     mean: 11.5,
@@ -96,8 +101,8 @@ const mockPeriodGroups: PeriodGroup[] = [
   },
   {
     label: 'Period 2',
-    startDate: new Date(1600000000000 + 61 * 86400000),
-    endDate: new Date(1600000000000 + 120 * 86400000),
+    startDate: Temporal.PlainDate.from('2020-11-13'),
+    endDate: Temporal.PlainDate.from('2021-01-11'),
     solves: mockSolves.slice(60),
     timesSec: mockSolves.slice(60).map((s) => s.finalTimeSec),
     mean: 10.0,

@@ -7,7 +7,7 @@ import { parseSolvesList } from './csTimerParser';
  */
 export function generateSampleData(): Session[] {
   const rawSolves: unknown[] = [];
-  const baseTimestamp = new Date('2026-07-25T09:00:00Z').getTime();
+  const baseTimestamp = Temporal.Instant.from('2026-07-25T09:00:00Z').epochMilliseconds;
 
   // Pseudo random generator with deterministic seed for reproducible nice plots
   let seed = 12345;

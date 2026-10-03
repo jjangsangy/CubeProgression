@@ -12,7 +12,7 @@ const mockSolves: Solve[] = Array.from({ length: 20 }, (_, idx) => ({
   penalty: idx === 18 ? 'DNF' : idx === 19 ? '+2' : 'OK',
   scramble: `R2 U2 F2 #${idx + 1}`,
   timestamp: 1600000000000 + idx * 1000,
-  date: new Date(1600000000000 + idx * 1000),
+  date: Temporal.PlainDate.from('2020-09-13'),
   dateStr: '2020-09-13',
   ao5: idx >= 4 ? 12.0 : null,
   ao12: idx >= 11 ? 12.0 : null,

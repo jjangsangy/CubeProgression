@@ -123,8 +123,8 @@ export function calculateLinearRegression(solves: Solve[]): LinearRegression {
 export function computeGroupStats(
   groupSolves: Solve[],
   label: string,
-  startDate: Date,
-  endDate: Date,
+  startDate: Temporal.PlainDate,
+  endDate: Temporal.PlainDate,
 ): PeriodGroup {
   const validTimes = groupSolves
     .filter((s) => s.penalty !== 'DNF')
@@ -288,17 +288,20 @@ export function groupSolvesByPeriod(
 
   // Time-based grouping
   const mapKeyToSolves = new Map<string, Solve[]>();
-  const mapKeyToDates = new Map<string, { start: Date; end: Date; label: string }>();
+  const mapKeyToDates = new Map<
+    string,
+    { start: Temporal.PlainDate; end: Temporal.PlainDate; label: string }
+  >();
   const tz = Temporal.Now.timeZoneId();
 
   solves.forEach((s) => {
     let key = '';
     let label = '';
-    const d = new Date(s.timestamp);
     const zdt = Temporal.Instant.fromEpochMilliseconds(s.timestamp).toZonedDateTimeISO(tz);
+    const plainDate = zdt.toPlainDate();
 
     if (period === 'daily') {
-      key = zdt.toPlainDate().toString();
+      key = plainDate.toString();
       label = key;
     } else if (period === 'weekly') {
       const weekNum = zdt.weekOfYear;
@@ -326,7 +329,7 @@ export function groupSolvesByPeriod(
 
     if (!mapKeyToSolves.has(key)) {
       mapKeyToSolves.set(key, []);
-      mapKeyToDates.set(key, { start: d, end: d, label });
+      mapKeyToDates.set(key, { start: plainDate, end: plainDate, label });
     }
 
     const solvesList = mapKeyToSolves.get(key);
@@ -335,8 +338,8 @@ export function groupSolvesByPeriod(
     }
     const dateRange = mapKeyToDates.get(key);
     if (dateRange) {
-      if (d < dateRange.start) dateRange.start = d;
-      if (d > dateRange.end) dateRange.end = d;
+      if (Temporal.PlainDate.compare(plainDate, dateRange.start) < 0) dateRange.start = plainDate;
+      if (Temporal.PlainDate.compare(plainDate, dateRange.end) > 0) dateRange.end = plainDate;
     }
   });
 

@@ -11,11 +11,32 @@ export function toLocalZonedDateTime(ts: number, timeZoneId?: string): Temporal.
 }
 
 /**
- * Formats a Date instance or epoch timestamp as YYYY-MM-DD using Temporal in the user's local timezone
+ * Accepts epoch ms, Temporal.Instant, Temporal.PlainDate, or Temporal.ZonedDateTime
  */
-export function formatLocalDate(dateOrTs: Date | number, timeZoneId?: string): string {
-  const ts = typeof dateOrTs === 'number' ? dateOrTs : dateOrTs.getTime();
-  return toLocalZonedDateTime(ts, timeZoneId).toPlainDate().toString();
+export type TemporalDateInput =
+  | number
+  | Temporal.Instant
+  | Temporal.PlainDate
+  | Temporal.ZonedDateTime;
+
+/**
+ * Formats a Temporal instance or epoch timestamp as YYYY-MM-DD using Temporal in the user's local timezone
+ */
+export function formatLocalDate(dateOrTs: TemporalDateInput, timeZoneId?: string): string {
+  if (typeof dateOrTs === 'number') {
+    return toLocalZonedDateTime(dateOrTs, timeZoneId).toPlainDate().toString();
+  }
+  if (dateOrTs instanceof Temporal.PlainDate) {
+    return dateOrTs.toString();
+  }
+  if (dateOrTs instanceof Temporal.ZonedDateTime) {
+    const zdt = timeZoneId ? dateOrTs.withTimeZone(timeZoneId) : dateOrTs;
+    return zdt.toPlainDate().toString();
+  }
+  return dateOrTs
+    .toZonedDateTimeISO(timeZoneId || Temporal.Now.timeZoneId())
+    .toPlainDate()
+    .toString();
 }
 
 /**
@@ -153,7 +174,7 @@ export function parseSolvesList(rawSolves: unknown[]): Solve[] {
     const comment = typeof item[2] === 'string' ? item[2] : undefined;
 
     // Extract timestamp
-    let ts = Date.now();
+    let ts = Temporal.Now.instant().epochMilliseconds;
     if (typeof item[3] === 'number' && Number.isFinite(item[3])) {
       ts = item[3];
       // If timestamp is in seconds, convert to ms
@@ -166,8 +187,8 @@ export function parseSolvesList(rawSolves: unknown[]): Solve[] {
 
     // Default synthetic timestamps if timestamps are missing or uniform
     // (Spread solves across realistic timeline if needed)
-    const solveDate = new Date(ts);
-    const dateStr = formatLocalDate(ts);
+    const solveDate = toLocalZonedDateTime(ts).toPlainDate();
+    const dateStr = solveDate.toString();
 
     solves.push({
       id: validSolveIndex,

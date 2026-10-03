@@ -27,7 +27,7 @@ interface StoredDataset {
   selectedSessionId: string;
   groupingPeriod?: GroupingPeriod;
   customBatchSize?: number;
-  updatedAt: number;             // Date.now()
+  updatedAt: number;             // Temporal.Now.instant().epochMilliseconds
 }
 ```
 
@@ -36,7 +36,7 @@ interface StoredDataset {
 | Function | Behavior |
 | --- | --- |
 | `saveDataset({ fileName, sessions, selectedSessionId, groupingPeriod?, customBatchSize? })` | Opens the DB, `put`s the record. Errors are caught and logged (never throws). |
-| `getSavedDataset(): Promise<StoredDataset | null>` | Reads `active_dataset`, normalizes solve `Date` objects, returns `null` if absent/error. |
+| `getSavedDataset(): Promise<StoredDataset | null>` | Reads `active_dataset`, normalizes solve `date` to `Temporal.PlainDate`, returns `null` if absent/error. |
 | `clearSavedDataset(): Promise<void>` | Deletes the `active_dataset` key. Errors caught/logged. |
 | `getStorageInfo(): Promise<StorageEstimateInfo | null>` | Wraps `navigator.storage.estimate()`, returns `{ usageMB, quotaMB? }` in MB (usage to 2 dp, quota to 0 dp). |
 
@@ -48,10 +48,11 @@ interface StoredDataset {
 
 ### Private helper: `normalizeSessionsDates(sessions)`
 
-IndexedDB structured-clones values, so `Date` instances can arrive as strings/numbers.
-This helper rebuilds `solve.date` from `date`/`timestamp`/`dateStr` and recomputes
-`dateStr` with `formatLocalDate` (from `csTimerParser`), guaranteeing downstream code always
-has a real `Date` and a consistent local date string.
+IndexedDB structured cloning cannot clone custom Temporal prototypes natively.
+When persisting, `saveDataset` stringifies `solve.date`. Upon retrieval,
+`normalizeSessionsDates` reconstructs `solve.date` as a native `Temporal.PlainDate`
+instance from `dateStr` or `timestamp`, guaranteeing downstream code receives
+a genuine `Temporal.PlainDate` object. Native JS `Date` is strictly forbidden.
 
 ## How `App.tsx` uses storage
 

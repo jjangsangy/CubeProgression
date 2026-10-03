@@ -44,7 +44,7 @@ describe('useCubeDataset', () => {
       selectedSessionId: 'sess_1',
       groupingPeriod: 'weekly',
       customBatchSize: 25,
-      updatedAt: Date.now(),
+      updatedAt: Temporal.Now.instant().epochMilliseconds,
       sessions: [
         {
           id: 'sess_1',
@@ -58,7 +58,7 @@ describe('useCubeDataset', () => {
               finalTimeSec: 10.0,
               penalty: 'OK',
               timestamp: 1600000000000,
-              date: new Date(1600000000000),
+              date: Temporal.PlainDate.from('2020-09-13'),
               dateStr: '2020-09-13',
             },
           ],
