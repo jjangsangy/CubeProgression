@@ -334,7 +334,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
             <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-emerald-400" />
             <Database className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
             <span className="truncate font-semibold text-stone-200">
-              <span className="hidden sm:inline">Persistent Storage Active (IndexedDB)</span>
+              <span className="hidden sm:inline">Persistent Storage Active</span>
               <span className="sm:hidden">Storage Active</span>
             </span>
             <span className="hidden text-stone-500 sm:inline">&bull;</span>

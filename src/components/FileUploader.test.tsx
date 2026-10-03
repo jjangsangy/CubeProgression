@@ -332,7 +332,7 @@ describe('FileUploader component', () => {
       />,
     );
 
-    expect(screen.getByText('Persistent Storage Active (IndexedDB)')).toBeInTheDocument();
+    expect(screen.getByText('Persistent Storage Active')).toBeInTheDocument();
     expect(screen.getByText(/0.42\s*MB/i)).toBeInTheDocument();
 
     const clearBtn = screen.getByRole('button', { name: /Clear Saved Storage/i });
