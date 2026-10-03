@@ -142,8 +142,8 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       // 2. Brand identity: "CubeProgression" brand text and logo icon are visible
       const brandHeading = header.getByRole('heading', { level: 1 });
       await expect(brandHeading).toBeVisible();
-      const timerIcon = header.locator('div[title="CubeProgression"]');
-      await expect(timerIcon).toBeVisible();
+      const logoIcon = header.locator('[title="CubeProgression"]');
+      await expect(logoIcon).toBeVisible();
 
       // 3. Header items are spaced cleanly throughout, fill the header, and never overlap
       const brandBox = await brandHeading.boundingBox();
@@ -462,7 +462,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
 
       // 3. All visible header elements stay within bounds and do not overlap
       const visibleElements = await header
-        .locator('button, div[title="CubeProgression"], div.font-mono')
+        .locator('button, [title="CubeProgression"], div.font-mono')
         .all();
       const boxes = [];
       for (const el of visibleElements) {
@@ -639,7 +639,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
 
       // 3. All visible header elements stay within bounds and do not overlap
       const visibleElements = await header
-        .locator('button, div[title="CubeProgression"], div.font-mono')
+        .locator('button, [title="CubeProgression"], div.font-mono')
         .all();
       const boxes = [];
       for (const el of visibleElements) {

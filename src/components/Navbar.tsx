@@ -1,13 +1,4 @@
-import {
-  Database,
-  Download,
-  FileText,
-  HelpCircle,
-  RefreshCw,
-  Timer,
-  Trash2,
-  WifiOff,
-} from 'lucide-react';
+import { Database, Download, FileText, HelpCircle, RefreshCw, Trash2, WifiOff } from 'lucide-react';
 import type React from 'react';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { usePwaInstall } from '../hooks/usePwaInstall';
@@ -24,6 +15,9 @@ interface NavbarProps {
   isOnline?: boolean;
   onOpenInstructions?: () => void;
 }
+
+const baseUrl = import.meta.env.BASE_URL || './';
+const logoSrc = baseUrl.endsWith('/') ? `${baseUrl}favicon.svg` : `${baseUrl}/favicon.svg`;
 
 export const Navbar: React.FC<NavbarProps> = ({
   fileName,
@@ -51,13 +45,14 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 safe-area-x w-full gap-2 sm:gap-4">
         {/* Brand Logo & Title */}
         <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
-          <div
-            className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-rose-500 font-black text-stone-950 shadow-lg shadow-amber-500/10"
+          <img
+            src={logoSrc}
+            alt="CubeProgression Logo"
             title="CubeProgression"
-            aria-hidden="true"
-          >
-            <Timer className="h-5 w-5 sm:h-6 sm:w-6 stroke-[2.5]" />
-          </div>
+            width={40}
+            height={40}
+            className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-xl shadow-lg shadow-amber-500/10"
+          />
           <div className="flex flex-col justify-center min-w-0">
             <div className="flex items-center gap-1.5 sm:gap-2">
               <h1 className="text-[15px] sm:text-base md:text-lg leading-tight font-bold tracking-tight text-stone-100 whitespace-nowrap">

@@ -8,6 +8,9 @@ describe('Navbar component', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'CubeProgression' })).toBeInTheDocument();
     expect(screen.getByText('csTimer Analytics')).toBeInTheDocument();
+    const logo = screen.getByRole('img', { name: 'CubeProgression Logo' });
+    expect(logo).toBeInTheDocument();
+    expect(logo.getAttribute('src')).toContain('favicon.svg');
   });
 
   it('renders active filename pill when fileName is provided', () => {
