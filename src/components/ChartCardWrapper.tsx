@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 interface ChartCardWrapperProps {
   title: string;
   subtitle?: string;
+  mobileSubtitle?: string;
   children: React.ReactNode;
   headerBadge?: React.ReactNode;
   headerControls?: React.ReactNode;
@@ -61,6 +62,7 @@ const triggerBlobDownload = (dataUrl: string, filename: string) => {
 export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
   title,
   subtitle,
+  mobileSubtitle,
   children,
   headerBadge,
   headerControls,
@@ -302,7 +304,18 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
           </h2>
 
           {/* Subtitle */}
-          {subtitle && <p className="mt-1 text-xs leading-relaxed text-stone-400">{subtitle}</p>}
+          {(subtitle || mobileSubtitle) && (
+            <p className="mt-1 text-xs leading-relaxed text-stone-400">
+              {mobileSubtitle ? (
+                <>
+                  <span className="sm:hidden">{mobileSubtitle}</span>
+                  {subtitle && <span className="hidden sm:inline">{subtitle}</span>}
+                </>
+              ) : (
+                subtitle
+              )}
+            </p>
+          )}
 
           <div className="clear-both" />
         </div>

@@ -37,12 +37,18 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
       {/* Table Header Controls */}
       <div className="flex flex-col justify-between gap-3 border-b border-stone-800/80 pb-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="flex items-start sm:items-center gap-2 text-base sm:text-lg font-bold tracking-tight text-stone-100">
+          <h2
+            id="session-solve-log-heading"
+            className="flex items-start sm:items-center gap-2 text-base sm:text-lg font-bold tracking-tight text-stone-100"
+          >
             <Clock className="h-4 w-4 shrink-0 text-amber-400 mt-0.5 sm:mt-0" />
             <span>Session Solve Log ({solves.length} Total)</span>
           </h2>
           <p className="mt-0.5 text-xs text-stone-400">
-            Detailed breakdown of individual solve times, scrambles, and rolling averages.
+            <span className="hidden sm:inline">
+              Detailed breakdown of individual solve times, scrambles, and rolling averages.
+            </span>
+            <span className="sm:hidden">Times, scrambles &amp; rolling averages.</span>
           </p>
         </div>
 
@@ -51,6 +57,7 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
           <Search className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-stone-500" />
           <input
             type="text"
+            aria-label="Search solves or scrambles"
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -64,7 +71,10 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
 
       {/* Table Canvas */}
       <div className="min-h-[460px] overflow-x-auto rounded-xl border border-stone-800/80">
-        <table className="w-full min-w-[780px] table-fixed text-left text-xs text-stone-300">
+        <table
+          aria-labelledby="session-solve-log-heading"
+          className="w-full min-w-[780px] table-fixed text-left text-xs text-stone-300"
+        >
           <thead className="border-b border-stone-800 bg-stone-950/80 font-mono text-[10px] tracking-wider text-stone-400 uppercase">
             <tr>
               <th className="w-16 px-4 py-3">#</th>
@@ -133,7 +143,7 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
       </div>
 
       {/* Pagination Footer */}
-      <div className="flex flex-col gap-3 pt-2 text-xs text-stone-400 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2.5 pt-2 text-xs text-stone-400 sm:flex-row sm:items-center sm:justify-between">
         <span className="text-center sm:text-left">
           Showing {Math.min(filteredSolves.length, (currentPage - 1) * pageSize + 1)} to{' '}
           {Math.min(filteredSolves.length, currentPage * pageSize)} of {filteredSolves.length}{' '}

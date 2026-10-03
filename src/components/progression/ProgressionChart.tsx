@@ -173,6 +173,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
     <ChartCardWrapper
       title={title}
       subtitle="Individual solve plot with interactive range selector, toggleable moving averages (Ao5, Ao12, Ao50, Ao100, Custom N), and OLS regression."
+      mobileSubtitle="Individual solve plot with range filter and moving averages."
       headerBadge={<span className="inline-block h-2.5 w-2.5 rounded-full bg-sky-400"></span>}
       filenamePrefix="progression_moving_averages"
       headerControls={

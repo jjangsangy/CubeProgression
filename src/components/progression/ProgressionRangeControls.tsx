@@ -1,4 +1,4 @@
-import { Calendar, Filter, Hash, RotateCcw, Sparkles } from 'lucide-react';
+import { Calendar, Filter, Hash, Layers, RotateCcw, Sparkles } from 'lucide-react';
 import type React from 'react';
 import type { LinearRegression } from '../../types';
 import type { FocusedRangeStats, RangeMode, RangePreset } from './types';
@@ -60,53 +60,54 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
           <div className="grid w-full grid-cols-3 gap-1 rounded-lg border border-stone-700/60 bg-stone-900/80 p-0.5 sm:flex sm:w-auto">
             <button
               type="button"
+              aria-label="All Solves"
+              title="All Solves"
               onClick={() => {
                 onModeChange('all');
                 onApplyPreset('all');
               }}
-              className={`flex items-center justify-center rounded px-2 py-1.5 text-center text-[11px] font-medium leading-tight transition-colors cursor-pointer sm:flex-initial sm:px-2.5 sm:py-1 sm:text-xs ${
+              className={`inline-flex items-center justify-center gap-1.5 rounded px-2 py-1.5 text-center text-[11px] font-medium leading-tight transition-colors cursor-pointer sm:flex-initial sm:px-2.5 sm:py-1 sm:text-xs ${
                 rangeMode === 'all'
                   ? 'bg-sky-500 text-stone-950 font-bold shadow'
                   : 'text-stone-400 hover:text-stone-200'
               }`}
             >
-              All Solves
+              <Layers className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden sm:inline">All Solves</span>
             </button>
             <button
               type="button"
               aria-label="Solve # Interval"
+              title="Solve # Interval"
               onClick={() => {
                 onModeChange('solveIndex');
                 if (preset === 'all') onApplyPreset('last100');
               }}
-              className={`inline-flex items-center justify-center gap-1 rounded px-2 py-1.5 text-center text-[11px] font-medium leading-tight transition-colors cursor-pointer sm:flex-initial sm:px-2.5 sm:py-1 sm:text-xs ${
+              className={`inline-flex items-center justify-center gap-1.5 rounded px-2 py-1.5 text-center text-[11px] font-medium leading-tight transition-colors cursor-pointer sm:flex-initial sm:px-2.5 sm:py-1 sm:text-xs ${
                 rangeMode === 'solveIndex'
                   ? 'bg-sky-500 text-stone-950 font-bold shadow'
                   : 'text-stone-400 hover:text-stone-200'
               }`}
             >
-              <Hash className="h-3 w-3 shrink-0" />
-              <span>
-                <span>Solve #</span> <span className="block sm:inline">Interval</span>
-              </span>
+              <Hash className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden sm:inline">Solve # Interval</span>
             </button>
             <button
               type="button"
               aria-label="Date Range"
+              title="Date Range"
               onClick={() => {
                 onModeChange('dateRange');
                 if (preset === 'all') onApplyPreset('last30d');
               }}
-              className={`inline-flex items-center justify-center gap-1 rounded px-2 py-1.5 text-center text-[11px] font-medium leading-tight transition-colors cursor-pointer sm:flex-initial sm:px-2.5 sm:py-1 sm:text-xs ${
+              className={`inline-flex items-center justify-center gap-1.5 rounded px-2 py-1.5 text-center text-[11px] font-medium leading-tight transition-colors cursor-pointer sm:flex-initial sm:px-2.5 sm:py-1 sm:text-xs ${
                 rangeMode === 'dateRange'
                   ? 'bg-sky-500 text-stone-950 font-bold shadow'
                   : 'text-stone-400 hover:text-stone-200'
               }`}
             >
-              <Calendar className="h-3 w-3 shrink-0" />
-              <span>
-                <span>Date</span> <span className="block sm:inline">Range</span>
-              </span>
+              <Calendar className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden sm:inline">Date Range</span>
             </button>
           </div>
         </div>
@@ -115,10 +116,12 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
         {rangeStats.isFiltered && (
           <button
             type="button"
+            aria-label={`Reset Range (${rangeStats.count} / ${totalCount})`}
+            title={`Reset Range (${rangeStats.count} / ${totalCount})`}
             onClick={onResetRange}
             className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/15 px-2.5 py-1 text-xs font-medium text-amber-300 transition-all hover:bg-amber-500/25 active:scale-95"
           >
-            <RotateCcw className="h-3.5 w-3.5" />
+            <RotateCcw className="h-3.5 w-3.5 shrink-0" />
             <span>
               Reset Range ({rangeStats.count} / {totalCount})
             </span>
@@ -128,7 +131,9 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
 
       {/* Presets Toolbar */}
       <div className="flex flex-col gap-1.5 w-full min-w-0 sm:flex-row sm:items-center sm:gap-2">
-        <span className="shrink-0 text-[11px] font-medium text-stone-400">Quick Presets:</span>
+        <span className="shrink-0 text-[11px] font-medium text-stone-400">
+          <span className="hidden sm:inline">Quick </span>Presets:
+        </span>
         <div className="flex flex-wrap items-center gap-1.5 py-0.5 w-full">
           {[
             { key: 'all', label: 'All Solves' },
@@ -143,7 +148,7 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
               key={p.key}
               type="button"
               onClick={() => onApplyPreset(p.key as RangePreset)}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer ${
+              className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer ${
                 preset === p.key
                   ? 'bg-stone-100 text-stone-900 font-bold shadow'
                   : 'bg-stone-900/60 text-stone-300 hover:text-stone-100 hover:bg-stone-800 border border-stone-700/50'
@@ -166,6 +171,7 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
               </span>
               <input
                 type="number"
+                aria-label="From solve number"
                 min={1}
                 max={endSolve}
                 value={startSolve}
@@ -177,6 +183,7 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
               />
               <input
                 type="range"
+                aria-label="Filter start solve slider"
                 min={1}
                 max={totalCount}
                 value={startSolve}
@@ -198,6 +205,7 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
               </span>
               <input
                 type="number"
+                aria-label="To solve number"
                 min={startSolve}
                 max={totalCount}
                 value={endSolve}
@@ -209,6 +217,7 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
               />
               <input
                 type="range"
+                aria-label="Filter end solve slider"
                 min={1}
                 max={totalCount}
                 value={endSolve}
@@ -235,6 +244,7 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
               </span>
               <input
                 type="date"
+                aria-label="Start date filter"
                 value={startDate}
                 min={earliestDate}
                 max={endDate || latestDate}
@@ -248,6 +258,7 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
               </span>
               <input
                 type="date"
+                aria-label="End date filter"
                 value={endDate}
                 min={startDate || earliestDate}
                 max={latestDate}
@@ -263,10 +274,10 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
       )}
 
       {/* Focused Range Stats Banner */}
-      <div className="flex flex-col gap-2 rounded-lg border border-stone-700/60 bg-stone-900/90 p-2.5 font-mono text-xs sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 rounded-lg border border-stone-700/60 bg-stone-900/90 p-2.5 font-mono text-xs">
         <div className="flex flex-wrap items-center gap-2 text-stone-300">
           <Sparkles className="h-3.5 w-3.5 shrink-0 text-amber-400" />
-          <span className="font-sans text-[11px] font-medium text-stone-400">Range Focus:</span>
+          <span className="font-sans text-[11px] font-medium text-stone-400">Focus:</span>
           <span className="font-bold text-sky-300">
             {rangeMode === 'dateRange'
               ? `${startDate || earliestDate} – ${endDate || latestDate}`
@@ -277,29 +288,25 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 text-[10px] sm:flex sm:items-center sm:gap-3 sm:text-[11px]">
-          <div className="flex flex-col rounded-md border border-stone-800/80 bg-stone-950/50 p-1.5 text-stone-300 sm:border-0 sm:bg-transparent sm:p-0 sm:flex-row sm:items-center sm:gap-1">
-            <span className="text-[10px] text-stone-400 sm:text-[11px]">Mean:</span>
+        <div className="flex flex-wrap items-center gap-2 text-[11px]">
+          <div className="flex items-center gap-1.5 rounded-md border border-stone-800/80 bg-stone-950/60 px-2.5 py-1 text-stone-300">
+            <span className="text-stone-400">Mean:</span>
             <span className="font-bold text-stone-100">{rangeStats.meanSec}s</span>
           </div>
-          <div className="flex flex-col rounded-md border border-stone-800/80 bg-stone-950/50 p-1.5 text-stone-300 sm:border-0 sm:bg-transparent sm:p-0 sm:flex-row sm:items-center sm:gap-1">
-            <span className="text-[10px] text-stone-400 sm:text-[11px]">Best:</span>
+          <div className="flex items-center gap-1.5 rounded-md border border-stone-800/80 bg-stone-950/60 px-2.5 py-1 text-stone-300">
+            <span className="text-stone-400">Best:</span>
             <span className="font-bold text-emerald-400">{rangeStats.bestSec}s</span>
           </div>
-          <div className="flex flex-col rounded-md border border-stone-800/80 bg-stone-950/50 p-1.5 sm:border-0 sm:bg-transparent sm:p-0 sm:flex-row sm:items-center sm:gap-1 sm:border-l sm:border-stone-700/80 sm:pl-2.5">
-            <span className="text-[10px] text-stone-400 sm:text-[11px]">
-              <span className="hidden sm:inline">Range </span>Slope:
-            </span>
+          <div className="flex items-center gap-1.5 rounded-md border border-stone-800/80 bg-stone-950/60 px-2.5 py-1 text-stone-300">
+            <span className="text-stone-400">Slope:</span>
             <span
               className={`font-bold whitespace-nowrap ${filteredRegression.slope <= 0 ? 'text-emerald-400' : 'text-rose-400'}`}
             >
               {filteredRegression.slopeFormatted}
             </span>
           </div>
-          <div className="flex flex-col rounded-md border border-stone-800/80 bg-stone-950/50 p-1.5 sm:border-0 sm:bg-transparent sm:p-0 sm:flex-row sm:items-center sm:gap-1">
-            <span className="text-[10px] text-stone-400 sm:text-[11px]">
-              <span className="hidden sm:inline">Range </span>R²:
-            </span>
+          <div className="flex items-center gap-1.5 rounded-md border border-stone-800/80 bg-stone-950/60 px-2.5 py-1 text-stone-300">
+            <span className="text-stone-400">R²:</span>
             <span className="font-semibold text-sky-300 whitespace-nowrap">
               {(filteredRegression.r2 * 100).toFixed(1)}%
             </span>

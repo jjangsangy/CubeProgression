@@ -329,6 +329,8 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
         pbContainer.getByRole('heading', { name: /PB Progression Over Time/i }),
       ).toBeVisible();
       await expect(pbContainer.getByText('Personal Best Time (s)', { exact: true })).toBeVisible();
+      // On mobile portrait, rotated desktop Y-axis label is omitted
+      await expect(pbContainer.getByText('Personal Best Time (seconds)')).toHaveCount(0);
 
       // 3. DailyDistributionBoxPlot
       const boxPlotContainer = page.getByTestId('deferred-chart-solve-time-distribution');
@@ -339,6 +341,8 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
         }),
       ).toBeVisible();
       await expect(boxPlotContainer.getByText('Time (s)', { exact: true })).toBeVisible();
+      // On mobile portrait, rotated desktop Y-axis label is omitted
+      await expect(boxPlotContainer.getByText('Solve Time (seconds)')).toHaveCount(0);
 
       // 4. DensityShiftChart
       const densityContainer = page.getByTestId('deferred-chart-density-shift');
@@ -690,9 +694,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       await expect(spinInput).toBeVisible();
       await spinInput.fill('35');
 
-      await expect(
-        card.locator('.recharts-legend-item-text', { hasText: '35-Solve Moving Average (Ao35)' }),
-      ).toBeVisible();
+      await expect(card.locator('.recharts-legend-item-text', { hasText: 'Ao35' })).toBeVisible();
     });
 
     test('interacts with DensityShiftChart on Tablet Landscape: timeline track clicking and fullscreen modal view', async ({
@@ -749,4 +751,3 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     });
   });
 });
-// test

@@ -1,6 +1,8 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PeriodGroup } from '../types';
+import { parseSolvesList } from '../utils/csTimerParser';
+import { groupSolvesByPeriod } from '../utils/statsMath';
 import { DailyDistributionBoxPlot } from './DailyDistributionBoxPlot';
 
 const mockPeriodGroups: PeriodGroup[] = [
@@ -285,9 +287,7 @@ describe('DailyDistributionBoxPlot component', () => {
     const originalInnerWidth = window.innerWidth;
     try {
       window.innerWidth = 390;
-      const { container } = render(
-        <DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="daily" />,
-      );
+      render(<DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="daily" />);
 
       // Bottom title is rendered on mobile portrait
       expect(screen.getByText('Time (s)')).toBeInTheDocument();
@@ -295,9 +295,8 @@ describe('DailyDistributionBoxPlot component', () => {
       // Rotated axis label inside SVG is omitted
       expect(screen.queryByText('Solve Time (seconds)')).toBeNull();
 
-      // Ticks are rendered
-      const ticks = container.querySelectorAll('svg text[data-testid="y-axis-tick"]');
-      expect(ticks.length).toBeGreaterThan(0);
+      // Numeric Y-axis ticks are rendered
+      expect(screen.getByText('10')).toBeInTheDocument();
     } finally {
       window.innerWidth = originalInnerWidth;
     }
@@ -307,16 +306,13 @@ describe('DailyDistributionBoxPlot component', () => {
     const originalInnerWidth = window.innerWidth;
     try {
       window.innerWidth = 1024;
-      const { container } = render(
-        <DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="daily" />,
-      );
+      render(<DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="daily" />);
 
       expect(screen.getByText('Solve Time (seconds)')).toBeInTheDocument();
       expect(screen.queryByText('Time (s)')).not.toBeInTheDocument();
 
-      // Ticks are rendered
-      const ticks = container.querySelectorAll('svg text[data-testid="y-axis-tick"]');
-      expect(ticks.length).toBeGreaterThan(0);
+      // Numeric Y-axis ticks are rendered
+      expect(screen.getByText('10')).toBeInTheDocument();
     } finally {
       window.innerWidth = originalInnerWidth;
     }
@@ -370,5 +366,26 @@ describe('DailyDistributionBoxPlot component', () => {
     const svg = container.querySelector('svg[role="img"]');
     expect(svg).toBeInTheDocument();
     expect(svg?.getAttribute('aria-label')).toBe('Daily Solve Time Distribution & Variance');
+  });
+
+  it('gracefully handles period groups with 0 valid solves without plotting off-screen elements', () => {
+    const solves = parseSolvesList([
+      [[0, 15000], 'R U R', '', 1600000000], // Valid solve on Day 1
+      [[-1, 15000], 'R U R', '', 1600086400], // DNF solve on Day 2 (0 valid times)
+    ]);
+    const groupsWithEmptyGroup = groupSolvesByPeriod(solves, 'daily');
+
+    const { container } = render(
+      <DailyDistributionBoxPlot periodGroups={groupsWithEmptyGroup} groupingPeriod="daily" />,
+    );
+
+    // Period tick indices and axis label are both rendered on X-axis
+    expect(screen.getByText('1')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
+    expect(screen.getByText('Day')).toBeInTheDocument();
+
+    // Exactly 1 box rect is rendered (the empty group does not render an off-scale box)
+    const boxes = container.querySelectorAll('rect[rx="3"]');
+    expect(boxes.length).toBe(1);
   });
 });

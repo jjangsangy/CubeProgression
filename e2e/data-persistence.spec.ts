@@ -135,7 +135,24 @@ test.describe('Data Ingestion & IndexedDB Persistence', () => {
     const monthlyBtn = page.getByRole('button', { name: /^Monthly/i });
     await monthlyBtn.click();
     await expect(monthlyBtn).toHaveClass(/bg-amber-500\/15/);
-    await page.waitForTimeout(200);
+    // Wait deterministically until IndexedDB transaction commits the groupingPeriod update
+    await expect
+      .poll(async () => {
+        return await page.evaluate(async () => {
+          return new Promise<string | null>((resolve) => {
+            const req = indexedDB.open('CubeProgressionDB', 1);
+            req.onsuccess = () => {
+              const db = req.result;
+              const tx = db.transaction('datasets', 'readonly');
+              const getReq = tx.objectStore('datasets').get('active_dataset');
+              getReq.onsuccess = () => resolve(getReq.result?.groupingPeriod ?? null);
+              getReq.onerror = () => resolve(null);
+            };
+            req.onerror = () => resolve(null);
+          });
+        });
+      })
+      .toBe('monthly');
 
     // 4. Hard reload the page
     await page.reload();

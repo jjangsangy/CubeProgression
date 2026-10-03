@@ -67,8 +67,14 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
       });
     }
 
-    const min = validPbs.length === 0 ? 0 : Math.max(0, Math.floor(Math.min(...validPbs) - 1));
-    const max = validPbs.length === 0 ? 30 : Math.ceil(Math.max(...validPbs) + 2);
+    let rawMin = Number.POSITIVE_INFINITY;
+    let rawMax = Number.NEGATIVE_INFINITY;
+    for (const val of validPbs) {
+      if (val < rawMin) rawMin = val;
+      if (val > rawMax) rawMax = val;
+    }
+    const min = validPbs.length === 0 ? 0 : Math.max(0, Math.floor(rawMin - 1));
+    const max = validPbs.length === 0 ? 30 : Math.ceil(rawMax + 2);
     return { minY: min, maxY: max };
   }, [dataPoints, showSingle, showAo5, showAo12, showAo50, showAo100, showRawSolves]);
 
@@ -143,7 +149,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               </span>
               <span className="font-mono font-semibold text-amber-300">
                 {data.pbSingle.toFixed(2)}s
-                {data.dropSingle != null && data.dropSingle > 0 && (
+                {data.isNewPbSingle && data.dropSingle != null && data.dropSingle > 0 && (
                   <span className="ml-1 text-[10px] text-emerald-400">
                     (-{data.dropSingle.toFixed(2)}s)
                   </span>
@@ -158,7 +164,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               </span>
               <span className="font-mono font-semibold text-orange-300">
                 {data.pbAo5.toFixed(2)}s
-                {data.dropAo5 != null && data.dropAo5 > 0 && (
+                {data.isNewPbAo5 && data.dropAo5 != null && data.dropAo5 > 0 && (
                   <span className="ml-1 text-[10px] text-emerald-400">
                     (-{data.dropAo5.toFixed(2)}s)
                   </span>
@@ -173,7 +179,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               </span>
               <span className="font-mono font-semibold text-sky-300">
                 {data.pbAo12.toFixed(2)}s
-                {data.dropAo12 != null && data.dropAo12 > 0 && (
+                {data.isNewPbAo12 && data.dropAo12 != null && data.dropAo12 > 0 && (
                   <span className="ml-1 text-[10px] text-emerald-400">
                     (-{data.dropAo12.toFixed(2)}s)
                   </span>
@@ -188,7 +194,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               </span>
               <span className="font-mono font-semibold text-purple-300">
                 {data.pbAo50.toFixed(2)}s
-                {data.dropAo50 != null && data.dropAo50 > 0 && (
+                {data.isNewPbAo50 && data.dropAo50 != null && data.dropAo50 > 0 && (
                   <span className="ml-1 text-[10px] text-emerald-400">
                     (-{data.dropAo50.toFixed(2)}s)
                   </span>
@@ -203,7 +209,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               </span>
               <span className="font-mono font-semibold text-emerald-300">
                 {data.pbAo100.toFixed(2)}s
-                {data.dropAo100 != null && data.dropAo100 > 0 && (
+                {data.isNewPbAo100 && data.dropAo100 != null && data.dropAo100 > 0 && (
                   <span className="ml-1 text-[10px] text-emerald-400">
                     (-{data.dropAo100.toFixed(2)}s)
                   </span>
@@ -226,10 +232,12 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
     <ChartCardWrapper
       title={title}
       subtitle="Step-down personal record progression curves tracking step functions of historical best single times and WCA averages."
+      mobileSubtitle="Step-down curves tracking PB singles and WCA rolling averages."
       headerBadge={
         <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-300">
           <Trophy className="h-3.5 w-3.5 text-amber-400" />
-          <span>PB Records</span>
+          <span className="sm:hidden">PBs</span>
+          <span className="hidden sm:inline">PB Records</span>
         </span>
       }
       filenamePrefix="pb_progression"
@@ -237,9 +245,13 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
         <div className="flex w-full min-w-0 flex-wrap items-center py-0.5">
           {/* Controls to toggle line visibility */}
           <div className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-stone-700/60 bg-stone-800/80 p-1 text-xs">
-            <span className="px-1 text-[11px] font-medium text-stone-400">Metrics:</span>
+            <span className="hidden px-1 text-[11px] font-medium text-stone-400 sm:inline">
+              Metrics:
+            </span>
             <button
               type="button"
+              aria-label="Single"
+              aria-pressed={showSingle}
               onClick={() => setShowSingle(!showSingle)}
               className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                 showSingle
@@ -247,10 +259,13 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                   : 'text-stone-400 hover:text-stone-200'
               }`}
             >
-              Single
+              <span className="hidden sm:inline">Single</span>
+              <span className="sm:hidden">1</span>
             </button>
             <button
               type="button"
+              aria-label="Ao5"
+              aria-pressed={showAo5}
               onClick={() => setShowAo5(!showAo5)}
               className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                 showAo5
@@ -258,10 +273,13 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                   : 'text-stone-400 hover:text-stone-200'
               }`}
             >
-              Ao5
+              <span className="hidden sm:inline">Ao5</span>
+              <span className="sm:hidden">5</span>
             </button>
             <button
               type="button"
+              aria-label="Ao12"
+              aria-pressed={showAo12}
               onClick={() => setShowAo12(!showAo12)}
               className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                 showAo12
@@ -269,10 +287,13 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                   : 'text-stone-400 hover:text-stone-200'
               }`}
             >
-              Ao12
+              <span className="hidden sm:inline">Ao12</span>
+              <span className="sm:hidden">12</span>
             </button>
             <button
               type="button"
+              aria-label="Ao50"
+              aria-pressed={showAo50}
               onClick={() => setShowAo50(!showAo50)}
               className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                 showAo50
@@ -280,10 +301,13 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                   : 'text-stone-400 hover:text-stone-200'
               }`}
             >
-              Ao50
+              <span className="hidden sm:inline">Ao50</span>
+              <span className="sm:hidden">50</span>
             </button>
             <button
               type="button"
+              aria-label="Ao100"
+              aria-pressed={showAo100}
               onClick={() => setShowAo100(!showAo100)}
               className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                 showAo100
@@ -291,10 +315,13 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                   : 'text-stone-400 hover:text-stone-200'
               }`}
             >
-              Ao100
+              <span className="hidden sm:inline">Ao100</span>
+              <span className="sm:hidden">100</span>
             </button>
             <button
               type="button"
+              aria-label="Solves Overlay"
+              aria-pressed={showRawSolves}
               onClick={() => setShowRawSolves(!showRawSolves)}
               className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                 showRawSolves
@@ -302,7 +329,8 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                   : 'text-stone-400 hover:text-stone-200'
               }`}
             >
-              Solves Overlay
+              <span className="sm:hidden">Solves</span>
+              <span className="hidden sm:inline">Solves Overlay</span>
             </button>
           </div>
         </div>
@@ -663,7 +691,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
           <span className="flex items-center gap-2 min-w-0">
             <History className="h-4 w-4 shrink-0 text-amber-400" />
             <span className="truncate">
-              <span className="sm:hidden">Milestones ({pbMilestones.length} PBs)</span>
+              <span className="sm:hidden">Milestones ({pbMilestones.length})</span>
               <span className="hidden sm:inline">
                 Record Milestones History ({pbMilestones.length} Record Breaks)
               </span>
@@ -680,19 +708,32 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
           <div className="fade-in mt-3 flex animate-in flex-col gap-3 duration-200">
             {/* Filter Pills */}
             <div className="flex flex-wrap items-center gap-1.5 py-1 text-xs">
-              <span className="mr-1 shrink-0 text-[11px] text-stone-400">Filter Record Type:</span>
-              {(['All', 'Single', 'Ao5', 'Ao12', 'Ao50', 'Ao100'] as const).map((cat) => (
+              <span className="mr-1 shrink-0 text-[11px] text-stone-400 sm:hidden">Filter:</span>
+              <span className="mr-1 shrink-0 text-[11px] text-stone-400 hidden sm:inline">
+                Filter Record Type:
+              </span>
+              {[
+                { key: 'All', label: 'All', mobileLabel: 'All' },
+                { key: 'Single', label: 'Single', mobileLabel: '1' },
+                { key: 'Ao5', label: 'Ao5', mobileLabel: '5' },
+                { key: 'Ao12', label: 'Ao12', mobileLabel: '12' },
+                { key: 'Ao50', label: 'Ao50', mobileLabel: '50' },
+                { key: 'Ao100', label: 'Ao100', mobileLabel: '100' },
+              ].map((cat) => (
                 <button
-                  key={cat}
+                  key={cat.key}
                   type="button"
-                  onClick={() => setMilestoneFilter(cat)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium shrink-0 transition-colors cursor-pointer ${
-                    milestoneFilter === cat
+                  aria-label={cat.label}
+                  aria-pressed={milestoneFilter === cat.key}
+                  onClick={() => setMilestoneFilter(cat.key as typeof milestoneFilter)}
+                  className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-xs font-medium shrink-0 transition-colors cursor-pointer ${
+                    milestoneFilter === cat.key
                       ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
                       : 'text-stone-400 hover:text-stone-200 border border-stone-800 bg-stone-900/60'
                   }`}
                 >
-                  {cat}
+                  <span className="hidden sm:inline">{cat.label}</span>
+                  <span className="sm:hidden">{cat.mobileLabel}</span>
                 </button>
               ))}
             </div>
@@ -718,26 +759,29 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                   return (
                     <div
                       key={`${m.type}-${m.index}-${m.timeSec}`}
-                      className="flex flex-col justify-between gap-2 rounded-xl border border-stone-800/80 bg-stone-950/60 p-2.5 transition-all hover:border-stone-700 sm:flex-row sm:items-center"
+                      className="flex flex-col justify-between gap-1.5 rounded-xl border border-stone-800/80 bg-stone-950/60 p-2 sm:p-2.5 transition-all hover:border-stone-700 sm:flex-row sm:items-center"
                     >
-                      <div className="flex min-w-0 items-center gap-2.5">
+                      <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
                         <span
-                          className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border ${badgeColor}`}
+                          className={`px-1.5 py-0.5 sm:px-2 rounded-md text-[10px] sm:text-[11px] font-semibold border ${badgeColor}`}
                         >
                           PB {m.type}
                         </span>
-                        <span className="font-mono text-sm font-bold text-stone-100">
+                        <span className="font-mono text-xs sm:text-sm font-bold text-stone-100">
                           {m.timeSec.toFixed(2)}s
                         </span>
                         {m.dropSec > 0 && (
-                          <span className="font-mono text-xs font-medium text-emerald-400">
+                          <span className="font-mono text-[10px] sm:text-xs font-medium text-emerald-400">
                             (-{m.dropSec.toFixed(2)}s)
                           </span>
                         )}
                       </div>
 
-                      <div className="flex shrink-0 items-center gap-3 font-mono text-[11px] text-stone-400">
-                        <span>Solve #{m.index}</span>
+                      <div className="flex shrink-0 items-center gap-1.5 sm:gap-3 font-mono text-[10px] sm:text-[11px] text-stone-400">
+                        <span>
+                          <span className="sm:hidden">#{m.index}</span>
+                          <span className="hidden sm:inline">Solve #{m.index}</span>
+                        </span>
                         <span>&bull;</span>
                         <span>{m.dateStr}</span>
                       </div>

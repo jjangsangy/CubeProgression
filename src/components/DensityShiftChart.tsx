@@ -425,6 +425,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     <ChartCardWrapper
       title={title}
       subtitle="Kernel Density Estimation (KDE) comparison showing probability density shift between any two sampled regions across the session distribution."
+      mobileSubtitle="KDE curves showing probability density shifts between sampled solve windows."
       headerBadge={<span className="inline-block h-2.5 w-2.5 rounded-full bg-rose-400"></span>}
       filenamePrefix="density_shift_distribution"
     >
@@ -433,7 +434,10 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
         <div className="grid grid-cols-1 divide-y divide-stone-800/80 rounded-xl border border-stone-800/70 bg-stone-950/60 text-xs sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           <div className="flex flex-wrap items-center justify-center gap-1.5 p-2.5 sm:p-3 text-center">
             <span className="h-2.5 w-2.5 shrink-0 rounded-full border border-rose-400 bg-rose-500/80"></span>
-            <span className="text-stone-400 whitespace-nowrap">Baseline Mean:</span>
+            <span className="text-stone-400 whitespace-nowrap">
+              <span className="hidden sm:inline">Baseline Mean:</span>
+              <span className="sm:hidden">Baseline:</span>
+            </span>
             <span className="font-mono font-bold text-rose-300">{statsSummary.baselineMean}s</span>
             <span className="font-mono text-[11px] text-stone-500 whitespace-nowrap">
               (#{statsSummary.start1Index}–#{statsSummary.end1Index})
@@ -441,14 +445,20 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
           </div>
           <div className="flex flex-wrap items-center justify-center gap-1.5 p-2.5 sm:p-3 text-center">
             <span className="h-2.5 w-2.5 shrink-0 rounded-full border border-emerald-400 bg-emerald-500/80"></span>
-            <span className="text-stone-400 whitespace-nowrap">Recent Mean:</span>
+            <span className="text-stone-400 whitespace-nowrap">
+              <span className="hidden sm:inline">Recent Mean:</span>
+              <span className="sm:hidden">Recent:</span>
+            </span>
             <span className="font-mono font-bold text-emerald-300">{statsSummary.recentMean}s</span>
             <span className="font-mono text-[11px] text-stone-500 whitespace-nowrap">
               (#{statsSummary.start2Index}–#{statsSummary.end2Index})
             </span>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-1.5 p-2.5 sm:p-3 text-center">
-            <span className="text-stone-400 whitespace-nowrap">Distribution Shift:</span>
+            <span className="text-stone-400 whitespace-nowrap">
+              <span className="hidden sm:inline">Distribution Shift:</span>
+              <span className="sm:hidden">Shift:</span>
+            </span>
             <span className="font-mono font-bold text-amber-400 whitespace-nowrap">
               {Number(statsSummary.diff) > 0
                 ? `-${statsSummary.diff}s faster`

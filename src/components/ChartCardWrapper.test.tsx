@@ -65,6 +65,34 @@ describe('ChartCardWrapper component', () => {
     expect(screen.queryByTestId('ctrl')).not.toBeInTheDocument();
   });
 
+  it('renders responsive mobile and desktop subtitle spans when mobileSubtitle is provided', () => {
+    render(
+      <ChartCardWrapper
+        title="Test Title"
+        subtitle="Desktop Subtitle"
+        mobileSubtitle="Mobile Subtitle"
+      >
+        <div>Content</div>
+      </ChartCardWrapper>,
+    );
+
+    const mobileSpan = screen.getByText('Mobile Subtitle');
+    const desktopSpan = screen.getByText('Desktop Subtitle');
+
+    expect(mobileSpan).toHaveClass('sm:hidden');
+    expect(desktopSpan).toHaveClass('hidden', 'sm:inline');
+  });
+
+  it('renders mobileSubtitle alone when subtitle is omitted', () => {
+    render(
+      <ChartCardWrapper title="Test Title" mobileSubtitle="Mobile Only Subtitle">
+        <div>Content</div>
+      </ChartCardWrapper>,
+    );
+
+    expect(screen.getByText('Mobile Only Subtitle')).toBeInTheDocument();
+  });
+
   it('toggles maximize/fullscreen mode and manages body overflow and escape key', () => {
     render(
       <ChartCardWrapper title="Test Chart Title">

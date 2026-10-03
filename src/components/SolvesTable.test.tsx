@@ -45,9 +45,8 @@ describe('SolvesTable component', () => {
   it('navigates next and previous pagination pages and renders penalties', () => {
     render(<SolvesTable solves={mockSolves} />);
 
-    const buttons = screen.getAllByRole('button');
-    const prevBtn = buttons[buttons.length - 2]; // Left chevron button
-    const nextBtn = buttons[buttons.length - 1]; // Right chevron button
+    const prevBtn = screen.getByRole('button', { name: 'Previous page' });
+    const nextBtn = screen.getByRole('button', { name: 'Next page' });
 
     expect(prevBtn).toBeDisabled();
     expect(nextBtn).not.toBeDisabled();

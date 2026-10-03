@@ -14,7 +14,7 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
       {/* 1. Best Single */}
-      <div className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-4 shadow-lg">
+      <div className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-3.5 sm:p-4 shadow-lg">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold tracking-wider text-stone-400 uppercase">
             Best Single
@@ -28,15 +28,20 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
             {stats.bestSingle ? `${stats.bestSingle.finalTimeSec.toFixed(2)}s` : 'N/A'}
           </div>
           <p className="mt-1 truncate text-[11px] text-stone-400">
-            {stats.bestSingle?.dateStr
-              ? `Achieved on ${stats.bestSingle.dateStr}`
-              : 'No valid solves'}
+            {stats.bestSingle?.dateStr ? (
+              <>
+                <span className="hidden sm:inline">Achieved on </span>
+                <span>{stats.bestSingle.dateStr}</span>
+              </>
+            ) : (
+              'No valid solves'
+            )}
           </p>
         </div>
       </div>
 
       {/* 2. Best Ao12 & Best Ao50 */}
-      <div className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-4 shadow-lg">
+      <div className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-3.5 sm:p-4 shadow-lg">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold tracking-wider text-stone-400 uppercase">
             Best Averages
@@ -62,7 +67,7 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
       </div>
 
       {/* 3. Regression Slope */}
-      <div className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-4 shadow-lg">
+      <div className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-3.5 sm:p-4 shadow-lg">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold tracking-wider text-stone-400 uppercase">
             Overall Rate
@@ -79,12 +84,15 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
           >
             {stats.regression.slopeFormatted}
           </div>
-          <p className="mt-1 text-[11px] text-stone-400">Linear OLS trend rate</p>
+          <p className="mt-1 text-[11px] text-stone-400">
+            <span className="hidden sm:inline">Linear OLS trend rate</span>
+            <span className="sm:hidden">OLS trend rate</span>
+          </p>
         </div>
       </div>
 
       {/* 4. Speed Gain (First vs Last sample) */}
-      <div className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-4 shadow-lg">
+      <div className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-3.5 sm:p-4 shadow-lg">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold tracking-wider text-stone-400 uppercase">
             Progression Gain
@@ -112,13 +120,18 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
             </span>
           </div>
           <p className="mt-1 text-[11px] text-stone-400">
-            Baseline ({stats.initialAvg}s) vs Recent ({stats.recentAvg}s)
+            <span className="hidden sm:inline">
+              Baseline ({stats.initialAvg}s) vs Recent ({stats.recentAvg}s)
+            </span>
+            <span className="sm:hidden">
+              Base {stats.initialAvg}s &rarr; Recent {stats.recentAvg}s
+            </span>
           </p>
         </div>
       </div>
 
       {/* 5. Session Solves Summary */}
-      <div className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-4 shadow-lg sm:col-span-2 lg:col-span-1">
+      <div className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-3.5 sm:p-4 shadow-lg sm:col-span-2 lg:col-span-1">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold tracking-wider text-stone-400 uppercase">
             Session Solves

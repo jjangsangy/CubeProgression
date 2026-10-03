@@ -7,9 +7,6 @@ import { ProgressionChart } from './ProgressionChart';
 const captured = vi.hoisted(() => ({
   tooltipContent: null as React.ReactElement | null,
   referenceLineLabels: [] as Array<(props: unknown) => React.ReactNode>,
-  chartProps: null as {
-    margin?: { top: number; right: number; left: number; bottom: number };
-  } | null,
   yAxes: [] as Array<{
     width?: number;
     fontSize?: number;
@@ -30,7 +27,6 @@ vi.mock('recharts', async (importOriginal) => {
       children: React.ReactNode;
       margin?: { top: number; right: number; left: number; bottom: number };
     }) => {
-      captured.chartProps = props;
       return (
         <svg role="img" aria-label="Mock ComposedChart">
           {props.children}
@@ -127,7 +123,6 @@ const mockRegression: LinearRegression = {
 
 describe('ProgressionChart component', () => {
   beforeEach(() => {
-    captured.chartProps = null;
     captured.yAxes = [];
     captured.referenceLineLabels = [];
     captured.tooltipContent = null;

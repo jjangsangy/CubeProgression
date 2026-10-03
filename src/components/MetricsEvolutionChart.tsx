@@ -80,14 +80,20 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
       <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-3 gap-y-1.5 pb-2 text-[11px] select-none sm:gap-x-4 sm:text-xs">
         <div className="flex items-center gap-1.5 text-teal-400">
           <span className="inline-block h-2.5 w-4 rounded-xs border border-teal-400/80 bg-teal-500/25" />
-          <span className="recharts-legend-item-text font-medium text-teal-400">Min-Max Range</span>
+          <span className="recharts-legend-item-text font-medium text-teal-400">
+            <span className="sm:hidden">Range</span>
+            <span className="hidden sm:inline">Min-Max Range</span>
+          </span>
         </div>
         <div className="flex items-center gap-1.5 text-sky-400">
           <svg className="h-3 w-4" viewBox="0 0 16 10" aria-hidden="true">
             <line x1="0" y1="5" x2="16" y2="5" stroke="#0284c7" strokeWidth="2.5" />
             <circle cx="8" cy="5" r="3" fill="#0284c7" stroke="#ffffff" strokeWidth="1.2" />
           </svg>
-          <span className="recharts-legend-item-text font-medium text-sky-400">Mean Time (s)</span>
+          <span className="recharts-legend-item-text font-medium text-sky-400">
+            <span className="sm:hidden">Mean</span>
+            <span className="hidden sm:inline">Mean Time (s)</span>
+          </span>
         </div>
         <div className="flex items-center gap-1.5 text-orange-400">
           <svg className="h-3 w-4" viewBox="0 0 16 10" aria-hidden="true">
@@ -95,7 +101,8 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
             <circle cx="8" cy="5" r="3" fill="#f97316" stroke="#ffffff" strokeWidth="1.2" />
           </svg>
           <span className="recharts-legend-item-text font-medium text-orange-400">
-            Median Time (s)
+            <span className="sm:hidden">Median</span>
+            <span className="hidden sm:inline">Median Time (s)</span>
           </span>
         </div>
         <div className="flex items-center gap-1.5 text-emerald-400">
@@ -112,7 +119,8 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
             <circle cx="8" cy="5" r="3" fill="#15803d" stroke="#4ade80" strokeWidth="1.2" />
           </svg>
           <span className="recharts-legend-item-text font-medium text-emerald-400">
-            Std Dev / Consistency (s)
+            <span className="sm:hidden">Std Dev</span>
+            <span className="hidden sm:inline">Std Dev / Consistency (s)</span>
           </span>
         </div>
       </div>
@@ -194,6 +202,7 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
     <ChartCardWrapper
       title={displayTitle}
       subtitle="Progression of central tendencies (Mean, Median), full Min-Max range band, and Standard Deviation on right axis."
+      mobileSubtitle="Central tendencies (Mean, Median), Min-Max range band, and Standard Deviation."
       headerBadge={<span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-400"></span>}
       filenamePrefix={`${unitInfo.adjective.toLowerCase()}_metrics_evolution`}
     >

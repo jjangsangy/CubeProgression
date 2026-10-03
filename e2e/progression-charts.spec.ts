@@ -15,35 +15,25 @@ test.describe('Progression & Personal Best Progression Charts', () => {
       });
 
       // Ensure legends are rendered
-      await expect(
-        card.locator('.recharts-legend-item-text', { hasText: '5-Solve Moving Average (Ao5)' }),
-      ).toBeVisible();
-      await expect(
-        card.locator('.recharts-legend-item-text', { hasText: '12-Solve Moving Average (Ao12)' }),
-      ).toBeVisible();
+      await expect(card.locator('.recharts-legend-item-text', { hasText: /^Ao5$/ })).toBeVisible();
+      await expect(card.locator('.recharts-legend-item-text', { hasText: 'Ao12' })).toBeVisible();
 
       // Toggle Ao5 off in the card toolbar
       const ao5Btn = card.getByRole('button', { name: 'Ao5', exact: true });
       await ao5Btn.click();
       await expect(ao5Btn).not.toHaveClass(/bg-emerald-500\/20/);
-      await expect(
-        card.locator('.recharts-legend-item-text', { hasText: '5-Solve Moving Average (Ao5)' }),
-      ).toHaveCount(0);
+      await expect(card.locator('.recharts-legend-item-text', { hasText: /^Ao5$/ })).toHaveCount(0);
 
       // Toggle Trend off
       const trendBtn = card.getByRole('button', { name: 'Trend', exact: true });
       await trendBtn.click();
       await expect(trendBtn).not.toHaveClass(/bg-rose-500\/20/);
-      await expect(
-        card.locator('.recharts-legend-item-text', { hasText: /Range Trend/ }),
-      ).toHaveCount(0);
+      await expect(card.locator('.recharts-legend-item-text', { hasText: /Trend/ })).toHaveCount(0);
 
       // Toggle Ao5 back on
       await ao5Btn.click();
       await expect(ao5Btn).toHaveClass(/bg-emerald-500\/20/);
-      await expect(
-        card.locator('.recharts-legend-item-text', { hasText: '5-Solve Moving Average (Ao5)' }),
-      ).toBeVisible();
+      await expect(card.locator('.recharts-legend-item-text', { hasText: /^Ao5$/ })).toBeVisible();
     });
 
     test('activates Custom Ao, modifies N window, and updates legend text', async ({ page }) => {
@@ -58,18 +48,12 @@ test.describe('Progression & Personal Best Progression Charts', () => {
       const spinInput = card.getByRole('spinbutton');
       await expect(spinInput).toBeVisible();
       await expect(spinInput).toHaveValue('25');
-      await expect(
-        card.locator('.recharts-legend-item-text', { hasText: '25-Solve Moving Average (Ao25)' }),
-      ).toBeVisible();
+      await expect(card.locator('.recharts-legend-item-text', { hasText: 'Ao25' })).toBeVisible();
 
       // Update to custom Ao 30
       await spinInput.fill('30');
-      await expect(
-        card.locator('.recharts-legend-item-text', { hasText: '30-Solve Moving Average (Ao30)' }),
-      ).toBeVisible();
-      await expect(
-        card.locator('.recharts-legend-item-text', { hasText: '25-Solve Moving Average (Ao25)' }),
-      ).toHaveCount(0);
+      await expect(card.locator('.recharts-legend-item-text', { hasText: 'Ao30' })).toBeVisible();
+      await expect(card.locator('.recharts-legend-item-text', { hasText: 'Ao25' })).toHaveCount(0);
     });
 
     test('switches solve visibility modes (Muted, Hidden, Unmuted)', async ({ page }) => {
@@ -83,24 +67,20 @@ test.describe('Progression & Personal Best Progression Charts', () => {
 
       // Default is Muted
       await expect(mutedBtn).toHaveClass(/bg-stone-700/);
-      await expect(
-        card.locator('.recharts-legend-item-text', { hasText: 'Single Solve Time' }),
-      ).toBeVisible();
+      await expect(card.locator('.recharts-legend-item-text', { hasText: 'Single' })).toBeVisible();
 
       // Switch to Hidden mode
       await hiddenBtn.click();
       await expect(hiddenBtn).toHaveClass(/bg-stone-700/);
       await expect(mutedBtn).not.toHaveClass(/bg-stone-700/);
-      await expect(
-        card.locator('.recharts-legend-item-text', { hasText: 'Single Solve Time' }),
-      ).toHaveCount(0);
+      await expect(card.locator('.recharts-legend-item-text', { hasText: 'Single' })).toHaveCount(
+        0,
+      );
 
       // Switch to Unmuted mode
       await unmutedBtn.click();
       await expect(unmutedBtn).toHaveClass(/bg-stone-700/);
-      await expect(
-        card.locator('.recharts-legend-item-text', { hasText: 'Single Solve Time' }),
-      ).toBeVisible();
+      await expect(card.locator('.recharts-legend-item-text', { hasText: 'Single' })).toBeVisible();
     });
 
     test('applies range presets, updates focused range stats, and resets range', async ({

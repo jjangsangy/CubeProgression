@@ -204,8 +204,11 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
               htmlFor="session-selector"
               className="mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wider text-stone-300 uppercase"
             >
-              <Layers className="h-3.5 w-3.5 text-amber-400" />
-              Select Session ({sessions.length} available)
+              <Layers className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+              <span>
+                <span className="hidden sm:inline">Select </span>Session ({sessions.length}
+                <span className="hidden sm:inline"> available</span>)
+              </span>
             </label>
             <select
               id="session-selector"
@@ -223,13 +226,15 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
           {/* Row 2: Grouping Period Toggle */}
           <div>
-            <div className="mb-2 flex items-center justify-between">
+            <div className="mb-2 flex items-center justify-between gap-2">
               <span className="flex items-center gap-1.5 text-xs font-semibold tracking-wider text-stone-300 uppercase">
-                <Calendar className="h-3.5 w-3.5 text-amber-400" />
-                Grouping Period for Aggregations
+                <Calendar className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+                <span>
+                  Grouping Period<span className="hidden sm:inline"> for Aggregations</span>
+                </span>
               </span>
               {(groupingPeriod === 'customBatch' || groupingPeriod === 'batch50') && (
-                <span className="text-[11px] font-medium text-amber-400">
+                <span className="text-[11px] font-medium text-amber-400 whitespace-nowrap">
                   {customBatchSize} solves per group
                 </span>
               )}
@@ -237,10 +242,15 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
             <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {[
-                { id: 'daily', label: 'Daily', desc: 'Per Day' },
-                { id: 'weekly', label: 'Weekly', desc: 'Per Week' },
-                { id: 'monthly', label: 'Monthly', desc: 'Per Month' },
-                { id: 'customBatch', label: 'By Solve Count', desc: 'Custom Batch Size' },
+                { id: 'daily', label: 'Daily', desc: 'Per Day', mobileDesc: 'Day' },
+                { id: 'weekly', label: 'Weekly', desc: 'Per Week', mobileDesc: 'Week' },
+                { id: 'monthly', label: 'Monthly', desc: 'Per Month', mobileDesc: 'Month' },
+                {
+                  id: 'customBatch',
+                  label: 'By Solve Count',
+                  desc: 'Custom Batch Size',
+                  mobileDesc: 'Batch',
+                },
               ].map((item) => {
                 const isActive =
                   groupingPeriod === item.id ||
@@ -249,15 +259,19 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                   <button
                     type="button"
                     key={item.id}
+                    aria-pressed={isActive}
                     onClick={() => onChangeGrouping(item.id as GroupingPeriod)}
-                    className={`px-3 py-2 rounded-xl text-left border transition-all cursor-pointer min-h-[58px] flex flex-col justify-center ${
+                    className={`px-3 py-2 rounded-xl text-left border transition-all cursor-pointer min-h-[54px] sm:min-h-[58px] flex flex-col justify-center ${
                       isActive
                         ? 'bg-amber-500/15 border-amber-500/80 text-amber-300 shadow-md'
                         : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200 hover:border-stone-700'
                     }`}
                   >
                     <div className="text-xs leading-tight font-bold">{item.label}</div>
-                    <div className="mt-0.5 text-[10px] text-stone-500">{item.desc}</div>
+                    <div className="mt-0.5 text-[10px] text-stone-500 truncate">
+                      <span className="hidden sm:inline">{item.desc}</span>
+                      <span className="sm:hidden">{item.mobileDesc}</span>
+                    </div>
                   </button>
                 );
               })}
@@ -293,6 +307,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                   <span className="text-xs text-stone-400">Custom:</span>
                   <input
                     type="number"
+                    aria-label="Custom solves per group"
                     min="2"
                     max="1000"
                     value={customBatchSize}
@@ -314,19 +329,20 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
       {/* Storage Status & Persistence Info */}
       {isSaved && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl border border-stone-800 bg-stone-950/80 px-4 py-2.5 text-xs text-stone-300">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-row items-center justify-between gap-2 rounded-xl border border-stone-800 bg-stone-950/80 px-3 py-2 sm:px-4 sm:py-2.5 text-xs text-stone-300">
+          <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
             <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-emerald-400" />
             <Database className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
-            <span className="font-semibold text-stone-200">
-              Persistent Storage Active (IndexedDB)
+            <span className="truncate font-semibold text-stone-200">
+              <span className="hidden sm:inline">Persistent Storage Active (IndexedDB)</span>
+              <span className="sm:hidden">Storage Active</span>
             </span>
             <span className="hidden text-stone-500 sm:inline">&bull;</span>
             <span className="hidden text-[11px] text-stone-400 sm:inline">
               Your dataset stays saved across browser reloads
             </span>
             {storageUsageMB !== undefined && storageUsageMB > 0 && (
-              <span className="ml-1 rounded bg-stone-800 px-2 py-0.5 font-mono text-[10px] text-stone-300">
+              <span className="shrink-0 rounded bg-stone-800 px-1.5 py-0.5 sm:px-2 font-mono text-[10px] text-stone-300">
                 {storageUsageMB} MB
               </span>
             )}
@@ -336,11 +352,13 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
             <button
               type="button"
               onClick={onClearStorage}
-              className="self-end sm:self-auto flex cursor-pointer items-center gap-1 font-medium text-stone-400 transition-colors hover:text-rose-400 hover:underline whitespace-nowrap"
+              aria-label="Clear Saved Storage"
+              className="flex shrink-0 cursor-pointer items-center gap-1 font-medium text-stone-400 transition-colors hover:text-rose-400 hover:underline whitespace-nowrap text-xs"
               title="Clear saved data from browser storage"
             >
-              <Trash2 className="h-3 w-3 shrink-0" />
-              <span>Clear Saved Storage</span>
+              <Trash2 className="h-3.5 w-3.5 sm:h-3 sm:w-3 shrink-0" />
+              <span className="hidden sm:inline">Clear Saved Storage</span>
+              <span className="sm:hidden">Clear</span>
             </button>
           )}
         </div>

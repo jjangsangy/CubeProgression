@@ -39,7 +39,7 @@ export function DashboardView({
       <MetricsOverviewCards stats={stats} sessionName={session.name} />
 
       {/* The 4 Progression Plots & Solves Table */}
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-6 sm:gap-8">
         {/* Plot 1: Overall Progression & Moving Averages (Instant Shell + Idle Recharts Mount) */}
         <ProgressionChart
           solves={session.solves}

@@ -114,13 +114,16 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
     return `rgb(${r}, ${g}, ${b})`;
   };
 
-  // Generate Median Trend path points
-  const medianPoints = periodGroups.map((g, idx) => ({
-    x: getGroupX(idx),
-    y: yScale(g.median),
-    median: g.median,
-    label: g.label,
-  }));
+  // Generate Median Trend path points (skipping empty groups with 0 valid times)
+  const medianPoints = periodGroups
+    .map((g, idx) => ({
+      x: getGroupX(idx),
+      y: yScale(g.median),
+      median: g.median,
+      label: g.label,
+      hasData: g.timesSec.length > 0,
+    }))
+    .filter((p) => p.hasData);
 
   const medianPolylinePoints = medianPoints.map((p) => `${p.x},${p.y}`).join(' ');
 
@@ -135,13 +138,17 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
     <ChartCardWrapper
       title={displayTitle}
       subtitle="Box plots (Q1, Median, Q3, Whiskers) overlaid with individual jittered solves and connected Median Trend."
+      mobileSubtitle="Box plots with jittered solves and connected Median Trend."
       headerBadge={<span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-400"></span>}
       filenamePrefix={`${unitInfo.adjective.toLowerCase()}_solve_distribution_boxplot`}
       headerControls={
         <div className="flex items-center gap-2 text-xs text-stone-300">
           <span className="inline-block h-0.5 w-3 border-t border-dashed border-rose-500 bg-rose-500"></span>
           <span className="inline-block h-2 w-2 rounded-full bg-rose-500"></span>
-          <span className="font-medium text-stone-300">Median Trend</span>
+          <span className="font-medium text-stone-300">
+            <span className="hidden sm:inline">Median Trend</span>
+            <span className="sm:hidden">Median</span>
+          </span>
         </div>
       }
     >
@@ -170,7 +177,6 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                 />
                 <text
                   key={tick}
-                  data-testid="y-axis-tick"
                   x={padding.left - (isMobileScreen ? 6 : 12)}
                   y={y + 4}
                   fill="#94a3b8"
@@ -210,6 +216,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
           {/* Period Groups / Box Plots */}
           {periodGroups.map((group, idx) => {
             const cx = getGroupX(idx);
+            const hasData = group.timesSec.length > 0;
             const yQ1 = yScale(group.q1);
             const yQ3 = yScale(group.q3);
             const yMedian = yScale(group.median);
@@ -220,82 +227,94 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
 
             return (
               <g key={group.label} className="group">
-                {/* Vertical Whisker Line */}
-                <line x1={cx} y1={yWLow} x2={cx} y2={yWHigh} stroke="#64748b" strokeWidth="1.8" />
+                {hasData && (
+                  <>
+                    {/* Vertical Whisker Line */}
+                    <line
+                      x1={cx}
+                      y1={yWLow}
+                      x2={cx}
+                      y2={yWHigh}
+                      stroke="#64748b"
+                      strokeWidth="1.8"
+                    />
 
-                {/* Whisker Top Cap */}
-                <line
-                  x1={cx - boxWidth / 3}
-                  y1={yWHigh}
-                  x2={cx + boxWidth / 3}
-                  y2={yWHigh}
-                  stroke="#64748b"
-                  strokeWidth="2"
-                />
+                    {/* Whisker Top Cap */}
+                    <line
+                      x1={cx - boxWidth / 3}
+                      y1={yWHigh}
+                      x2={cx + boxWidth / 3}
+                      y2={yWHigh}
+                      stroke="#64748b"
+                      strokeWidth="2"
+                    />
 
-                {/* Whisker Bottom Cap */}
-                <line
-                  x1={cx - boxWidth / 3}
-                  y1={yWLow}
-                  x2={cx + boxWidth / 3}
-                  y2={yWLow}
-                  stroke="#64748b"
-                  strokeWidth="2"
-                />
+                    {/* Whisker Bottom Cap */}
+                    <line
+                      x1={cx - boxWidth / 3}
+                      y1={yWLow}
+                      x2={cx + boxWidth / 3}
+                      y2={yWLow}
+                      stroke="#64748b"
+                      strokeWidth="2"
+                    />
 
-                {/* Main Box Rect (Q1 to Q3) */}
-                <rect
-                  x={cx - boxWidth / 2}
-                  y={yQ3}
-                  width={boxWidth}
-                  height={Math.max(2, yQ1 - yQ3)}
-                  fill={boxColor}
-                  fillOpacity="0.85"
-                  stroke="#1e293b"
-                  strokeWidth="1.5"
-                  rx="3"
-                />
+                    {/* Main Box Rect (Q1 to Q3) */}
+                    <rect
+                      x={cx - boxWidth / 2}
+                      y={yQ3}
+                      width={boxWidth}
+                      height={Math.max(2, yQ1 - yQ3)}
+                      fill={boxColor}
+                      fillOpacity="0.85"
+                      stroke="#1e293b"
+                      strokeWidth="1.5"
+                      rx="3"
+                    />
 
-                {/* Median Horizontal Line Inside Box */}
-                <line
-                  x1={cx - boxWidth / 2}
-                  y1={yMedian}
-                  x2={cx + boxWidth / 2}
-                  y2={yMedian}
-                  stroke="#0f172a"
-                  strokeWidth="2.5"
-                />
+                    {/* Median Horizontal Line Inside Box */}
+                    <line
+                      x1={cx - boxWidth / 2}
+                      y1={yMedian}
+                      x2={cx + boxWidth / 2}
+                      y2={yMedian}
+                      stroke="#0f172a"
+                      strokeWidth="2.5"
+                    />
 
-                {/* Jittered Scatter Solve Dots */}
-                {group.solves
-                  .filter((s) => s.penalty !== 'DNF')
-                  .map((solve) => {
-                    const jX = cx + getJitterOffset(solve.id);
-                    const jY = yScale(solve.finalTimeSec);
-                    return (
-                      <circle
-                        key={`solve-${solve.id}`}
-                        cx={jX}
-                        cy={jY}
-                        r={2.2}
-                        fill="#64748b"
-                        fillOpacity="0.4"
-                        stroke="#f8fafc"
-                        strokeWidth="0.3"
-                        onPointerEnter={() =>
-                          setHoveredPoint({
-                            periodIdx: idx,
-                            time: solve.finalTimeSec,
-                            x: jX,
-                            y: jY,
-                          })
-                        }
-                        onPointerLeave={() => setHoveredPoint(null)}
-                        className="cursor-pointer hover:stroke-amber-400 hover:fill-amber-300"
-                      />
-                    );
-                  })}
+                    {/* Jittered Scatter Solve Dots */}
+                    {group.solves
+                      .filter((s) => s.penalty !== 'DNF')
+                      .map((solve) => {
+                        const jX = cx + getJitterOffset(solve.id);
+                        const jY = yScale(solve.finalTimeSec);
+                        return (
+                          <circle
+                            key={`solve-${solve.id}`}
+                            cx={jX}
+                            cy={jY}
+                            r={2.2}
+                            className="cursor-pointer"
+                            fill="#64748b"
+                            fillOpacity="0.4"
+                            stroke="#f8fafc"
+                            strokeWidth="0.3"
+                            onPointerEnter={() =>
+                              setHoveredPoint({
+                                periodIdx: idx,
+                                time: solve.finalTimeSec,
+                                x: jX,
+                                y: jY,
+                              })
+                            }
+                            onPointerLeave={() => setHoveredPoint(null)}
+                          />
+                        );
+                      })}
+                  </>
+                )}
 
+                {/* X Axis Tick & Date Label */}
                 {/* Outlier Diamond Markers */}
                 {group.solves
                   .filter(

@@ -10,9 +10,6 @@ import { PbProgressionChart } from './PbProgressionChart';
 const captured = vi.hoisted(() => ({
   lines: [] as Array<Record<string, unknown>>,
   tooltipContent: null as React.ReactElement | null,
-  chartProps: null as {
-    margin?: { top: number; right: number; left: number; bottom: number };
-  } | null,
   yAxes: [] as Array<{
     width?: number;
     fontSize?: number;
@@ -33,7 +30,6 @@ vi.mock('recharts', async (importOriginal) => {
       children: React.ReactNode;
       margin?: { top: number; right: number; left: number; bottom: number };
     }) => {
-      captured.chartProps = props;
       return (
         <svg role="img" aria-label="Mock ComposedChart">
           {props.children}
@@ -141,7 +137,6 @@ describe('PbProgressionChart component', () => {
   beforeEach(() => {
     captured.lines = [];
     captured.tooltipContent = null;
-    captured.chartProps = null;
     captured.yAxes = [];
   });
   it('renders PB progression title and stat badges', () => {
@@ -466,5 +461,39 @@ describe('PbProgressionChart component', () => {
     expect(screen.getByText(/PB Single:/)).toBeInTheDocument();
     expect(screen.getByText(/New Record Set!/)).toHaveTextContent('Single');
     expect(screen.getByText(/New Record Set!/)).not.toHaveTextContent('Ao5');
+  });
+
+  it('omits drop badges when a solve does not set a new PB', () => {
+    render(<PbProgressionChart solves={mockSolves} />);
+    type TooltipProps = {
+      active?: boolean;
+      payload?: Array<{ payload: unknown }>;
+      label?: string | number;
+    };
+    const tooltipEl = captured.tooltipContent as React.ReactElement<TooltipProps> | null;
+    expect(tooltipEl).not.toBeNull();
+    if (!tooltipEl) return;
+
+    // Point where isNewPbSingle is false even if dropSingle has a value
+    const nonPbPoint = {
+      solveNum: 6,
+      single: 15.0,
+      pbSingle: 12.5,
+      dropSingle: 2.0,
+      isNewPbSingle: false,
+      dateStr: '2023-01-02',
+      scramble: 'R U R',
+    };
+
+    render(
+      React.cloneElement(tooltipEl, {
+        active: true,
+        payload: [{ payload: nonPbPoint }],
+        label: 6,
+      }),
+    );
+
+    expect(screen.getByText(/PB Single:/)).toBeInTheDocument();
+    expect(screen.queryByText(/\(-2\.00s\)/)).not.toBeInTheDocument();
   });
 });
