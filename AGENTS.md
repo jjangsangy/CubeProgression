@@ -69,6 +69,7 @@ bun run preview        # preview production bundle → http://localhost:3100
   **must** pass the full Playwright E2E test suite. Vitest runs in `jsdom` where
   `IntersectionObserver` and real viewport geometry are absent, so E2E tests are mandatory to
   validate real browser rendering, responsive viewports, and deferred components.
+- **Visual verification with screenshot confirmation**: Any UI or layout changes **must always be verified with screenshot confirmation** across viewports (e.g. mobile portrait `390x844`, mobile landscape `844x390`, tablet portrait `768x1024`, and desktop `1280x800`) using `scripts/screenshot.ts` before finalizing work. Never assume visual layout correctness without visually inspecting the rendered screenshots to confirm balanced spacing, no element overlap, and no boundary overflow.
 - **Wrap charts in `ChartCardWrapper`** so they get PNG export + fullscreen for free.
 - **Guard browser APIs** (`window`, `indexedDB`, `navigator`) — tests run in `jsdom`.
 - **No backend / no secrets.** This is a static SPA.

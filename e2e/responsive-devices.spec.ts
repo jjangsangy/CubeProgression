@@ -137,6 +137,71 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       await expect(filenamePill).toBeHidden();
     });
 
+    test('verifies mobile portrait header layout: completely filled, no overlap, evenly spaced, no overflow, brand uses icon only', async ({
+      page,
+    }) => {
+      const header = page.locator('header');
+      const headerBox = await header.boundingBox();
+      expect(headerBox).not.toBeNull();
+      if (!headerBox) return;
+
+      // 1. Header does not go outside viewport bounds
+      expect(headerBox.x).toBeGreaterThanOrEqual(0);
+      expect(headerBox.x + headerBox.width).toBeLessThanOrEqual(390 + 1);
+
+      // 2. Constrained space: "CubeProgression" brand text is sr-only (no visible text), only logo icon is shown
+      const brandHeading = header.getByRole('heading', { level: 1 });
+      const brandSpan = brandHeading.locator('span');
+      await expect(brandSpan).toHaveClass(/sr-only/);
+      const timerIcon = header.locator('div[title="CubeProgression"]');
+      await expect(timerIcon).toBeVisible();
+
+      // 3. Header items are spaced evenly throughout, fill the header, and never overlap
+      const logoBox = await timerIcon.boundingBox();
+      const demoBtn = header.getByRole('button', { name: 'Demo' });
+      const guideBtn = header.getByRole('button', { name: 'Export Guide' });
+      const exportBtn = header.getByRole('button', { name: 'Export CSV' });
+      const resetBtn = header.getByRole('button', { name: 'Reset Data' });
+
+      const buttons = [demoBtn, guideBtn, exportBtn, resetBtn];
+      for (const btn of buttons) {
+        await expect(btn).toBeVisible();
+      }
+
+      const buttonBoxes = [];
+      for (const btn of buttons) {
+        const box = await btn.boundingBox();
+        expect(box).not.toBeNull();
+        if (box) buttonBoxes.push(box);
+      }
+
+      expect(logoBox).not.toBeNull();
+      if (!logoBox) return;
+      expect(logoBox.x).toBeGreaterThanOrEqual(headerBox.x);
+
+      for (const box of buttonBoxes) {
+        expect(box.x + box.width).toBeLessThanOrEqual(headerBox.x + headerBox.width + 1);
+      }
+
+      // Check elements never overlap each other horizontally
+      const allBoxes = [logoBox, ...buttonBoxes];
+      for (let i = 0; i < allBoxes.length - 1; i++) {
+        const current = allBoxes[i];
+        const next = allBoxes[i + 1];
+        expect(current.x + current.width).toBeLessThanOrEqual(next.x + 1);
+      }
+
+      // Check all interactive elements have adequate touch target dimensions
+      for (const box of buttonBoxes) {
+        expect(box.width).toBeGreaterThanOrEqual(24);
+        expect(box.height).toBeGreaterThanOrEqual(24);
+      }
+
+      // Check header does not cause horizontal page overflow
+      const pageScrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+      expect(pageScrollWidth).toBeLessThanOrEqual(390 + 1);
+    });
+
     test('stacks FileUploader into single column and renders 2x2 grouping grid', async ({
       page,
     }) => {
@@ -394,6 +459,42 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       expect(box4.width).toBeGreaterThan(box0.width * 1.5);
     });
 
+    test('verifies mobile landscape header layout: stays within bounds, no overlap, brand title visible', async ({
+      page,
+    }) => {
+      const header = page.locator('header');
+      const headerBox = await header.boundingBox();
+      expect(headerBox).not.toBeNull();
+      if (!headerBox) return;
+
+      // 1. Header does not go outside viewport bounds
+      expect(headerBox.x).toBeGreaterThanOrEqual(0);
+      expect(headerBox.x + headerBox.width).toBeLessThanOrEqual(844 + 1);
+
+      // 2. Brand title "CubeProgression" is visible on landscape mode
+      const brandSpan = header.locator('h1 span:has-text("CubeProgression")');
+      await expect(brandSpan).toBeVisible();
+
+      // 3. All visible header elements stay within bounds and do not overlap
+      const visibleElements = await header
+        .locator('button, div[title="CubeProgression"], div.font-mono')
+        .all();
+      const boxes = [];
+      for (const el of visibleElements) {
+        if (await el.isVisible()) {
+          const b = await el.boundingBox();
+          if (b && b.width > 0) boxes.push(b);
+        }
+      }
+      boxes.sort((a, b) => a.x - b.x);
+
+      for (let i = 0; i < boxes.length - 1; i++) {
+        expect(boxes[i].x + boxes[i].width).toBeLessThanOrEqual(boxes[i + 1].x + 1);
+      }
+      const last = boxes[boxes.length - 1];
+      expect(last.x + last.width).toBeLessThanOrEqual(headerBox.x + headerBox.width + 1);
+    });
+
     test('opens chart in fullscreen mode and exits cleanly via button and Escape key', async ({
       page,
     }) => {
@@ -533,6 +634,42 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
 
       // Storage badge is still hidden below lg:
       await expect(header.getByText('Saved locally')).toBeHidden();
+    });
+
+    test('verifies tablet portrait header layout: stays within bounds, no overlap, title visible, no overflow', async ({
+      page,
+    }) => {
+      const header = page.locator('header');
+      const headerBox = await header.boundingBox();
+      expect(headerBox).not.toBeNull();
+      if (!headerBox) return;
+
+      // 1. Header does not go outside viewport bounds
+      expect(headerBox.x).toBeGreaterThanOrEqual(0);
+      expect(headerBox.x + headerBox.width).toBeLessThanOrEqual(768 + 1);
+
+      // 2. Brand title "CubeProgression" is visible on tablet portrait mode
+      const brandSpan = header.locator('h1 span:has-text("CubeProgression")');
+      await expect(brandSpan).toBeVisible();
+
+      // 3. All visible header elements stay within bounds and do not overlap
+      const visibleElements = await header
+        .locator('button, div[title="CubeProgression"], div.font-mono')
+        .all();
+      const boxes = [];
+      for (const el of visibleElements) {
+        if (await el.isVisible()) {
+          const b = await el.boundingBox();
+          if (b && b.width > 0) boxes.push(b);
+        }
+      }
+      boxes.sort((a, b) => a.x - b.x);
+
+      for (let i = 0; i < boxes.length - 1; i++) {
+        expect(boxes[i].x + boxes[i].width).toBeLessThanOrEqual(boxes[i + 1].x + 1);
+      }
+      const last = boxes[boxes.length - 1];
+      expect(last.x + last.width).toBeLessThanOrEqual(headerBox.x + headerBox.width + 1);
     });
 
     test('renders ProgressionChart interval sliders side-by-side on tablet portrait', async ({

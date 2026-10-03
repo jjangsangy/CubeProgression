@@ -322,4 +322,53 @@ describe('App component', () => {
     fireEvent.click(exportBtn);
     expect(clickSpy).not.toHaveBeenCalled();
   });
+
+  it('opens and closes the csTimer instruction modal from Navbar and FileUploader across loaded and empty states', async () => {
+    render(<App />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
+      ).toBeInTheDocument();
+    });
+
+    // Modal is initially closed
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    // 1. Open from Navbar "Export Guide" button and close via Escape key
+    const exportGuideBtn = screen.getByRole('button', { name: 'Export Guide' });
+    fireEvent.click(exportGuideBtn);
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('How to Export from csTimer')).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    // 2. Open from FileUploader button and close via "Got it" button
+    const fileUploaderHelpBtn = screen.getByRole('button', {
+      name: /How to export from csTimer\?/i,
+    });
+    fireEvent.click(fileUploaderHelpBtn);
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    const gotItBtn = screen.getByRole('button', { name: 'Got it' });
+    fireEvent.click(gotItBtn);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    // 3. Reset dataset to empty state and verify modal is still accessible from both Navbar and FileUploader
+    const resetBtn = screen.getByTitle('Reset Data');
+    fireEvent.click(resetBtn);
+
+    const emptyHelpBtn = screen.getByRole('button', {
+      name: /How to export from csTimer\?/i,
+    });
+    fireEvent.click(emptyHelpBtn);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    const closeBtn = screen.getByRole('button', { name: 'Close instructions modal' });
+    fireEvent.click(closeBtn);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
 });

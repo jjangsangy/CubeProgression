@@ -2,6 +2,7 @@ import { RefreshCw, X } from 'lucide-react';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { FileUploader } from './components/FileUploader';
 import { Footer } from './components/Footer';
+import { InstructionModal } from './components/InstructionModal';
 import { Navbar } from './components/Navbar';
 import { useCubeDatasetCore } from './hooks/useCubeDatasetCore';
 import { registerPwa, skipWaitingAndReload } from './utils/pwaRegister';
@@ -36,6 +37,7 @@ export default function App() {
     null,
   );
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
+  const [isInstructionModalOpen, setIsInstructionModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     registerPwa({
@@ -54,6 +56,7 @@ export default function App() {
         onReset={handleClearStorage}
         onExportCSV={handleExportCSV}
         onClearStorage={handleClearStorage}
+        onOpenInstructions={() => setIsInstructionModalOpen(true)}
       />
 
       {/* Main Container */}
@@ -75,6 +78,7 @@ export default function App() {
           loadingStage={loadingStage}
           uploadingFileName={uploadingFileName}
           onClearStorage={handleClearStorage}
+          onOpenInstructions={() => setIsInstructionModalOpen(true)}
         />
 
         {/* Dashboard: Metric Cards, 4 Progression Plots & Solves Table */}
@@ -109,6 +113,12 @@ export default function App() {
 
       {/* Footer */}
       <Footer />
+
+      {/* Instruction Modal */}
+      <InstructionModal
+        isOpen={isInstructionModalOpen}
+        onClose={() => setIsInstructionModalOpen(false)}
+      />
 
       {/* PWA New Version Update Toast */}
       {updateRegistration && (

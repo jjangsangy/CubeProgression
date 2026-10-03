@@ -61,6 +61,7 @@ text (RTL) and mocking only external/browser APIs (see `ChartCardWrapper.test.ts
   Because Vitest runs in `jsdom` where `IntersectionObserver` is absent and elements have 0×0
   dimensions, only the full Playwright suite validates real browser viewport deferral,
   mobile responsive breakpoints, and below-the-fold chart interaction.
+- **Visual verification with screenshot confirmation**: Any UI or layout changes **must always be verified with screenshot confirmation** across viewports (e.g. mobile portrait `390x844`, mobile landscape `844x390`, tablet portrait `768x1024`, and desktop `1280x800`) using `scripts/screenshot.ts` before finalizing work. Never assume visual layout correctness without visually inspecting the rendered screenshots to confirm balanced spacing, no element overlap, and no boundary overflow.
 - **CI**: Automated test runner on GitHub Actions (`.github/workflows/test.yml`) runs tests
   on pushes and pull requests targeting `main` across all supported platforms:
   `ubuntu-latest`, `macos-latest`, and `windows-latest`. Linting and type checking run in

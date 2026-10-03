@@ -1,4 +1,13 @@
-import { Calendar, Database, FileText, FileUp, Layers, Sparkles, Trash2 } from 'lucide-react';
+import {
+  Calendar,
+  Database,
+  FileText,
+  FileUp,
+  HelpCircle,
+  Layers,
+  Sparkles,
+  Trash2,
+} from 'lucide-react';
 import type React from 'react';
 import { useRef, useState } from 'react';
 import { useStorageNotice } from '../hooks/useStorageNotice';
@@ -25,6 +34,7 @@ interface FileUploaderProps {
   storageUsageMB?: number;
   savedNotice?: string | null;
   onClearStorage?: () => void;
+  onOpenInstructions?: () => void;
 }
 
 export const FileUploader: React.FC<FileUploaderProps> = ({
@@ -46,6 +56,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   storageUsageMB: propStorageUsageMB,
   savedNotice: propSavedNotice,
   onClearStorage,
+  onOpenInstructions,
 }) => {
   const storageNotice = useStorageNotice();
   const isSaved = propIsSaved ?? storageNotice.isSaved;
@@ -192,6 +203,21 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                   Load Sample Data
                 </button>
               </div>
+
+              {onOpenInstructions && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenInstructions();
+                  }}
+                  className="mt-3.5 inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium text-stone-400 transition-colors hover:bg-stone-800 hover:text-amber-300 active:scale-95"
+                  title="How to export your solves from csTimer"
+                >
+                  <HelpCircle className="h-3.5 w-3.5 text-amber-400" />
+                  <span>How to export from csTimer?</span>
+                </button>
+              )}
             </div>
           )}
         </section>

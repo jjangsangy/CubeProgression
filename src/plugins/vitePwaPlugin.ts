@@ -24,6 +24,7 @@ export function vitePwaPlugin(): Plugin {
         'pwa-512x512.png',
         'pwa-maskable-512x512.png',
         'apple-touch-icon.png',
+        'instruction.webp',
       ];
 
       for (const asset of publicAssets) {

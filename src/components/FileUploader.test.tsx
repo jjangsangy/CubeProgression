@@ -544,4 +544,69 @@ describe('FileUploader component', () => {
       vi.useRealTimers();
     }
   });
+
+  it('renders "How to export from csTimer?" button when onOpenInstructions is provided and calls callback', () => {
+    const onOpenInstructions = vi.fn();
+    render(
+      <FileUploader
+        sessions={mockSessions}
+        selectedSessionId="s1"
+        onSelectSession={vi.fn()}
+        groupingPeriod="daily"
+        onChangeGrouping={vi.fn()}
+        customBatchSize={50}
+        onChangeCustomBatchSize={vi.fn()}
+        onFileUpload={vi.fn()}
+        onLoadDemo={vi.fn()}
+        onOpenInstructions={onOpenInstructions}
+      />,
+    );
+
+    const helpBtn = screen.getByRole('button', { name: /How to export from csTimer\?/i });
+    expect(helpBtn).toBeInTheDocument();
+    fireEvent.click(helpBtn);
+    expect(onOpenInstructions).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not render "How to export from csTimer?" button when onOpenInstructions is omitted', () => {
+    render(
+      <FileUploader
+        sessions={mockSessions}
+        selectedSessionId="s1"
+        onSelectSession={vi.fn()}
+        groupingPeriod="daily"
+        onChangeGrouping={vi.fn()}
+        customBatchSize={50}
+        onChangeCustomBatchSize={vi.fn()}
+        onFileUpload={vi.fn()}
+        onLoadDemo={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByRole('button', { name: /How to export from csTimer\?/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('does not render "How to export from csTimer?" button while loading is in progress', () => {
+    render(
+      <FileUploader
+        sessions={mockSessions}
+        selectedSessionId="s1"
+        onSelectSession={vi.fn()}
+        groupingPeriod="daily"
+        onChangeGrouping={vi.fn()}
+        customBatchSize={50}
+        onChangeCustomBatchSize={vi.fn()}
+        onFileUpload={vi.fn()}
+        onLoadDemo={vi.fn()}
+        isLoading={true}
+        onOpenInstructions={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByRole('button', { name: /How to export from csTimer\?/i }),
+    ).not.toBeInTheDocument();
+  });
 });

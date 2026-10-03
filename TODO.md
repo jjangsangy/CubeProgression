@@ -10,4 +10,4 @@
     - [ ] scramble generator
 - [ ] feat(ui): Show dates in session
 - [ ] fix(plot): Make ui changes smoother for kde plot
-- [ ] feat(app): Make a instruction modal
+- [x] feat(app): Make a instruction modal

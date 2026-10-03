@@ -3,7 +3,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { Navbar } from './Navbar';
 
 describe('Navbar component', () => {
-  it('renders application title and active file badge', () => {
+  it('renders application heading and brand identity', () => {
+    render(<Navbar onLoadDemo={vi.fn()} onReset={vi.fn()} onExportCSV={vi.fn()} />);
+
+    expect(screen.getByRole('heading', { level: 1, name: 'CubeProgression' })).toBeInTheDocument();
+    expect(screen.getByText('csTimer Analytics')).toBeInTheDocument();
+  });
+
+  it('renders active filename pill when fileName is provided', () => {
     render(
       <Navbar
         fileName="my_solves.json"
@@ -13,8 +20,13 @@ describe('Navbar component', () => {
       />,
     );
 
-    expect(screen.getByText('CubeProgression')).toBeInTheDocument();
     expect(screen.getByText('my_solves.json')).toBeInTheDocument();
+  });
+
+  it('does not render filename pill when fileName is omitted', () => {
+    render(<Navbar onLoadDemo={vi.fn()} onReset={vi.fn()} onExportCSV={vi.fn()} />);
+
+    expect(screen.queryByText('my_solves.json')).not.toBeInTheDocument();
   });
 
   it('calls onLoadDemo when Load Sample Data button is clicked', () => {
@@ -28,61 +40,64 @@ describe('Navbar component', () => {
       />,
     );
 
-    const demoBtn = screen.getByText('Load Sample Data');
+    const demoBtn = screen.getByRole('button', { name: /Load Sample Data/i });
     fireEvent.click(demoBtn);
     expect(onLoadDemo).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onReset when Reset button is clicked', () => {
-    const onReset = vi.fn();
+  it('calls onExportCSV when Export CSV button is clicked', () => {
+    const onExportCSV = vi.fn();
     render(
-      <Navbar fileName="test.txt" onLoadDemo={vi.fn()} onReset={onReset} onExportCSV={vi.fn()} />,
+      <Navbar
+        fileName="test.txt"
+        onLoadDemo={vi.fn()}
+        onReset={vi.fn()}
+        onExportCSV={onExportCSV}
+      />,
     );
 
-    const resetBtn = screen.getByTitle('Reset Data');
+    const exportBtn = screen.getByRole('button', { name: 'Export CSV' });
+    expect(exportBtn).toHaveAttribute('title', 'Export Period Summary Stats as CSV');
+    fireEvent.click(exportBtn);
+    expect(onExportCSV).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onReset when Reset button is clicked in unpersisted state', () => {
+    const onReset = vi.fn();
+    render(
+      <Navbar
+        isSaved={false}
+        fileName="test.txt"
+        onLoadDemo={vi.fn()}
+        onReset={onReset}
+        onExportCSV={vi.fn()}
+      />,
+    );
+
+    const resetBtn = screen.getByRole('button', { name: 'Reset Data' });
     fireEvent.click(resetBtn);
     expect(onReset).toHaveBeenCalledTimes(1);
   });
 
-  it('renders dual responsive labels for Demo button with proper breakpoint classes', () => {
-    render(
-      <Navbar fileName="test.txt" onLoadDemo={vi.fn()} onReset={vi.fn()} onExportCSV={vi.fn()} />,
-    );
-
-    const fullLabel = screen.getByText('Load Sample Data');
-    const mobileLabel = screen.getByText('Demo');
-    expect(fullLabel).toHaveClass('hidden', 'sm:inline');
-    expect(mobileLabel).toHaveClass('sm:hidden');
-  });
-
-  it('renders Export CSV label with mobile-hidden class and provides accessible aria-label', () => {
-    render(
-      <Navbar fileName="test.txt" onLoadDemo={vi.fn()} onReset={vi.fn()} onExportCSV={vi.fn()} />,
-    );
-
-    const exportText = screen.getByText('Export CSV');
-    expect(exportText).toHaveClass('hidden', 'sm:inline');
-
-    const exportButton = screen.getByRole('button', { name: 'Export CSV' });
-    expect(exportButton).toBeInTheDocument();
-  });
-
-  it('renders filename pill with md:flex and truncate class for tablet portrait visibility', () => {
+  it('calls onClearStorage when Reset button is clicked and data is persisted', () => {
+    const onClearStorage = vi.fn();
     render(
       <Navbar
-        fileName="cstimer_long_session_export_name_2026.txt"
+        isSaved={true}
+        onClearStorage={onClearStorage}
+        fileName="test.txt"
         onLoadDemo={vi.fn()}
         onReset={vi.fn()}
         onExportCSV={vi.fn()}
       />,
     );
 
-    const pillText = screen.getByText('cstimer_long_session_export_name_2026.txt');
-    expect(pillText).toHaveClass('truncate');
-    expect(pillText.parentElement).toHaveClass('hidden', 'md:flex');
+    const trashBtn = screen.getByRole('button', { name: 'Reset Data' });
+    fireEvent.click(trashBtn);
+    expect(onClearStorage).toHaveBeenCalledTimes(1);
   });
 
-  it('renders saved storage badge with lg:flex breakpoint class for desktop/tablet landscape only', () => {
+  it('renders saved storage badge with usage size when isSaved is true and storageUsageMB > 0', () => {
     render(
       <Navbar
         fileName="test.txt"
@@ -94,31 +109,100 @@ describe('Navbar component', () => {
       />,
     );
 
-    const badge = screen.getByText('Saved locally');
-    expect(badge.closest('div')).toHaveClass('hidden', 'lg:flex');
+    expect(screen.getByText('Saved locally')).toBeInTheDocument();
     expect(screen.getByText('(1.42 MB)')).toBeInTheDocument();
   });
 
-  it('renders Trash icon button with accessible aria-label when data is saved and onClearStorage is provided', () => {
-    const onClearStorage = vi.fn();
+  it('omits storage usage size when storageUsageMB is 0 or undefined', () => {
     render(
       <Navbar
         fileName="test.txt"
         isSaved={true}
-        onClearStorage={onClearStorage}
+        storageUsageMB={0}
         onLoadDemo={vi.fn()}
         onReset={vi.fn()}
         onExportCSV={vi.fn()}
       />,
     );
 
-    const trashBtn = screen.getByRole('button', { name: 'Reset Data' });
-    expect(trashBtn).toBeInTheDocument();
-    fireEvent.click(trashBtn);
-    expect(onClearStorage).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Saved locally')).toBeInTheDocument();
+    expect(screen.queryByText(/MB/)).not.toBeInTheDocument();
   });
 
-  it('renders Offline mode pill when isOnline is false', () => {
+  it('does not render saved badge when isSaved is false', () => {
+    render(
+      <Navbar
+        fileName="test.txt"
+        isSaved={false}
+        onLoadDemo={vi.fn()}
+        onReset={vi.fn()}
+        onExportCSV={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText('Saved locally')).not.toBeInTheDocument();
+  });
+
+  it('renders Export Guide button when onOpenInstructions is provided and triggers callback', () => {
+    const onOpenInstructions = vi.fn();
+    render(
+      <Navbar
+        fileName="test.txt"
+        onLoadDemo={vi.fn()}
+        onReset={vi.fn()}
+        onExportCSV={vi.fn()}
+        onOpenInstructions={onOpenInstructions}
+      />,
+    );
+
+    const guideBtn = screen.getByRole('button', { name: 'Export Guide' });
+    expect(guideBtn).toHaveAttribute('title', 'How to export solves from csTimer');
+    fireEvent.click(guideBtn);
+    expect(onOpenInstructions).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not render Export Guide button when onOpenInstructions is omitted', () => {
+    render(
+      <Navbar fileName="test.txt" onLoadDemo={vi.fn()} onReset={vi.fn()} onExportCSV={vi.fn()} />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Export Guide' })).not.toBeInTheDocument();
+  });
+
+  it('renders Install App button when canInstall is true and calls onInstall', () => {
+    const onInstall = vi.fn();
+    render(
+      <Navbar
+        fileName="test.txt"
+        canInstall={true}
+        onInstall={onInstall}
+        onLoadDemo={vi.fn()}
+        onReset={vi.fn()}
+        onExportCSV={vi.fn()}
+      />,
+    );
+
+    const installBtn = screen.getByRole('button', { name: 'Install App' });
+    expect(installBtn).toHaveAttribute('title', 'Install CubeProgression as a Progressive Web App');
+    fireEvent.click(installBtn);
+    expect(onInstall).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not render Install App button when canInstall is false', () => {
+    render(
+      <Navbar
+        fileName="test.txt"
+        canInstall={false}
+        onLoadDemo={vi.fn()}
+        onReset={vi.fn()}
+        onExportCSV={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Install App' })).not.toBeInTheDocument();
+  });
+
+  it('renders Offline mode pill with status role when isOnline is false', () => {
     render(
       <Navbar
         fileName="test.txt"
@@ -148,46 +232,5 @@ describe('Navbar component', () => {
     );
 
     expect(screen.queryByRole('status', { name: 'Offline mode' })).not.toBeInTheDocument();
-  });
-
-  it('renders Install App button when canInstall is true and calls onInstall', () => {
-    const onInstall = vi.fn();
-    render(
-      <Navbar
-        fileName="test.txt"
-        canInstall={true}
-        onInstall={onInstall}
-        onLoadDemo={vi.fn()}
-        onReset={vi.fn()}
-        onExportCSV={vi.fn()}
-      />,
-    );
-
-    const installBtn = screen.getByTitle('Install CubeProgression as a Progressive Web App');
-    expect(installBtn).toBeInTheDocument();
-
-    const fullLabel = screen.getByText('Install App');
-    const mobileLabel = screen.getByText('Install');
-    expect(fullLabel).toHaveClass('hidden', 'sm:inline');
-    expect(mobileLabel).toHaveClass('sm:hidden');
-
-    fireEvent.click(installBtn);
-    expect(onInstall).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not render Install App button when canInstall is false', () => {
-    render(
-      <Navbar
-        fileName="test.txt"
-        canInstall={false}
-        onLoadDemo={vi.fn()}
-        onReset={vi.fn()}
-        onExportCSV={vi.fn()}
-      />,
-    );
-
-    expect(
-      screen.queryByTitle('Install CubeProgression as a Progressive Web App'),
-    ).not.toBeInTheDocument();
   });
 });
