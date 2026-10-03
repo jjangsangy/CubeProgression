@@ -8,3 +8,4 @@
     * sorting
     * filtering
     * scramble generator
+* feat(ui): Show dates in session
