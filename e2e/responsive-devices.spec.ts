@@ -113,9 +113,9 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     test('renders compact Navbar and hides desktop badges', async ({ page }) => {
       const header = page.locator('header');
 
-      // Export Guide label is compact on mobile screens
+      // csTimer Guide label is compact on mobile screens
       const guideText = header
-        .locator('button[aria-label="Export Guide"]')
+        .locator('button[aria-label="csTimer Guide"]')
         .getByText('Guide', { exact: true });
       await expect(guideText).toBeVisible();
 
@@ -147,7 +147,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
 
       // 3. Header items are spaced cleanly throughout, fill the header, and never overlap
       const brandBox = await brandHeading.boundingBox();
-      const guideBtn = header.getByRole('button', { name: 'Export Guide' });
+      const guideBtn = header.getByRole('button', { name: 'csTimer Guide' });
       const resetBtn = header.getByRole('button', { name: 'Reset Data' });
 
       const buttons = [guideBtn, resetBtn];
@@ -424,10 +424,10 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     test('renders expanded Navbar buttons and 2-column metrics cards layout', async ({ page }) => {
       const header = page.locator('header');
 
-      // "Export Guide" full text is visible on landscape mode
+      // "csTimer Guide" full text is visible on landscape mode
       const guideTextSpan = header
-        .locator('button[aria-label="Export Guide"]')
-        .getByText('Export Guide', { exact: true });
+        .locator('button[aria-label="csTimer Guide"]')
+        .getByText('csTimer Guide', { exact: true });
       await expect(guideTextSpan).toBeVisible();
 
       // Metrics cards render in 2-columns (Cards 0 and 1 on row 1)

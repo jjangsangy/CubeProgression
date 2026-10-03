@@ -298,8 +298,8 @@ describe('App component', () => {
     // Modal is initially closed
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
-    // 1. Open from Navbar "Export Guide" button and close via Escape key
-    const exportGuideBtn = screen.getByRole('button', { name: 'Export Guide' });
+    // 1. Open from Navbar "csTimer Guide" button and close via Escape key
+    const exportGuideBtn = screen.getByRole('button', { name: 'csTimer Guide' });
     fireEvent.click(exportGuideBtn);
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();

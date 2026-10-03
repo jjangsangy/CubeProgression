@@ -76,8 +76,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Center Status Indicators (Saved badge & Active filename pill) */}
-        <div className="hidden md:flex flex-1 items-center justify-center gap-2 sm:gap-3 min-w-0 px-2">
+        {/* Right Status & Action Items */}
+        <div className="flex items-center justify-end gap-1.5 sm:gap-2 md:gap-2.5 min-w-0">
           {isSaved && (
             <div
               className="hidden items-center gap-1.5 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-400 lg:flex shrink-0"
@@ -101,10 +101,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </div>
           )}
-        </div>
 
-        {/* Right Action Buttons */}
-        <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2 md:gap-2.5">
           {!isOnline && (
             <div
               role="status"
@@ -135,13 +132,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={onOpenInstructions}
-              aria-label="Export Guide"
+              aria-label="csTimer Guide"
               className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800/90 px-2.5 py-1.5 sm:px-3 text-xs font-medium whitespace-nowrap text-stone-200 transition-all hover:border-amber-500/40 hover:bg-stone-700/80 active:scale-95 shadow-sm shrink-0"
               title="How to export solves from csTimer"
             >
               <HelpCircle className="h-3.5 w-3.5 shrink-0 text-amber-400" />
               <span className="sm:hidden">Guide</span>
-              <span className="hidden sm:inline">Export Guide</span>
+              <span className="hidden sm:inline">csTimer Guide</span>
             </button>
           )}
 

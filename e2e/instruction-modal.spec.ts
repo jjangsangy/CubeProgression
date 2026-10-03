@@ -7,11 +7,11 @@ test.describe('csTimer Instruction Modal E2E & Responsive Behavior', () => {
     await expect(page.getByText(/Upload cstimer/i)).toBeVisible({ timeout: 15000 });
   });
 
-  test('opens from Navbar "Export Guide" button, verifies accessibility, body scroll lock, and closes via close button', async ({
+  test('opens from Navbar "csTimer Guide" button, verifies accessibility, body scroll lock, and closes via close button', async ({
     page,
   }) => {
     const navbar = page.locator('header');
-    const guideBtn = navbar.getByRole('button', { name: 'Export Guide' });
+    const guideBtn = navbar.getByRole('button', { name: 'csTimer Guide' });
     await expect(guideBtn).toBeVisible();
     await guideBtn.click();
 
@@ -70,7 +70,7 @@ test.describe('csTimer Instruction Modal E2E & Responsive Behavior', () => {
 
   test('closes modal via backdrop overlay click and Keyboard Escape key', async ({ page }) => {
     const navbar = page.locator('header');
-    const guideBtn = navbar.getByRole('button', { name: 'Export Guide' });
+    const guideBtn = navbar.getByRole('button', { name: 'csTimer Guide' });
 
     // 1. Test backdrop click dismiss
     await guideBtn.click();
@@ -94,7 +94,7 @@ test.describe('csTimer Instruction Modal E2E & Responsive Behavior', () => {
     await page.setViewportSize({ width: 844, height: 390 });
 
     const navbar = page.locator('header');
-    const guideBtn = navbar.getByRole('button', { name: 'Export Guide' });
+    const guideBtn = navbar.getByRole('button', { name: 'csTimer Guide' });
     await guideBtn.click();
 
     const dialog = page.getByRole('dialog');

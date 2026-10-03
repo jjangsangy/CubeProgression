@@ -45,7 +45,7 @@ Top header. Props: `fileName`, `onReset`, `isSaved`,
 
 - Brand block with visible title + "csTimer Analytics" badge.
 - Shows a green "Saved locally (N MB)" pill when `isSaved`, and a file-name chip on larger screens.
-- Buttons: **Export Guide** (when modal handler provided) and a reset control that becomes a
+- Buttons: **csTimer Guide** (when modal handler provided) and a reset control that becomes a
   destructive "clear storage" (trash) icon once data is saved.
 
 ## `FileUploader` (`FileUploader.tsx`)

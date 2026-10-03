@@ -69,23 +69,23 @@ describe('Navbar component', () => {
     expect(screen.queryByText('Saved locally')).not.toBeInTheDocument();
   });
 
-  it('renders Export Guide button when onOpenInstructions is provided and triggers callback', () => {
+  it('renders csTimer Guide button when onOpenInstructions is provided and triggers callback', () => {
     const onOpenInstructions = vi.fn();
     render(
       <Navbar fileName="test.txt" onReset={vi.fn()} onOpenInstructions={onOpenInstructions} />,
     );
 
-    const guideBtn = screen.getByRole('button', { name: 'Export Guide' });
+    const guideBtn = screen.getByRole('button', { name: 'csTimer Guide' });
     expect(guideBtn).toHaveAttribute('title', 'How to export solves from csTimer');
     expect(screen.getByText('Guide')).toBeInTheDocument();
     fireEvent.click(guideBtn);
     expect(onOpenInstructions).toHaveBeenCalledTimes(1);
   });
 
-  it('does not render Export Guide button when onOpenInstructions is omitted', () => {
+  it('does not render csTimer Guide button when onOpenInstructions is omitted', () => {
     render(<Navbar fileName="test.txt" onReset={vi.fn()} />);
 
-    expect(screen.queryByRole('button', { name: 'Export Guide' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'csTimer Guide' })).not.toBeInTheDocument();
   });
 
   it('renders Install App button when canInstall is true and calls onInstall', () => {
