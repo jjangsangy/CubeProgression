@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Solve } from '../types';
+import type { KDEPeak, KDEPoint, Solve } from '../types';
 import {
   calculateAoN,
   calculateGlobalStats,
@@ -7,7 +7,9 @@ import {
   calculateKDEFromSamples,
   calculateLinearRegression,
   calculatePbProgression,
+  calculatePeakDistance,
   computeGroupStats,
+  findKDEPeak,
   getNormalizedYCeiling,
   getNormalizedYCeilingWithHysteresis,
   getPeriodUnitInfo,
@@ -435,6 +437,125 @@ describe('statsMath utils', () => {
 
       const points = calculateKDE(fastSolves);
       expect(points.every((p) => p.x >= 0)).toBe(true);
+    });
+  });
+
+  describe('findKDEPeak', () => {
+    it('returns null for empty points array', () => {
+      expect(findKDEPeak([], 'baselineDensity')).toBeNull();
+    });
+
+    it('returns null when all densities are zero or non-positive', () => {
+      const flatZeroPoints: KDEPoint[] = [
+        { x: 10, baselineDensity: 0, recentDensity: 0 },
+        { x: 11, baselineDensity: 0, recentDensity: 0 },
+      ];
+      expect(findKDEPeak(flatZeroPoints, 'baselineDensity')).toBeNull();
+    });
+
+    it('detects discrete peak on symmetric distribution and refines to exact center', () => {
+      const symmetricPoints: KDEPoint[] = [
+        { x: 10, baselineDensity: 0.1, recentDensity: 0.05 },
+        { x: 11, baselineDensity: 0.5, recentDensity: 0.2 },
+        { x: 12, baselineDensity: 0.1, recentDensity: 0.05 },
+      ];
+      const peak = findKDEPeak(symmetricPoints, 'baselineDensity');
+      expect(peak).not.toBeNull();
+      expect(peak?.x).toBe(11);
+      expect(peak?.interpolatedTime).toBe(11);
+      expect(peak?.density).toBe(0.5);
+      expect(peak?.index).toBe(1);
+    });
+
+    it('refines peak to sub-grid position using parabolic interpolation for skewed neighbors', () => {
+      // Discrete peak at x=11, but right neighbor (0.45) is significantly higher than left neighbor (0.2)
+      // True peak should be shifted towards the right (> 11.0)
+      const skewedPoints: KDEPoint[] = [
+        { x: 10, baselineDensity: 0.2, recentDensity: 0.1 },
+        { x: 11, baselineDensity: 0.5, recentDensity: 0.3 },
+        { x: 12, baselineDensity: 0.45, recentDensity: 0.2 },
+      ];
+      const peak = findKDEPeak(skewedPoints, 'baselineDensity');
+      expect(peak).not.toBeNull();
+      expect(peak?.x).toBe(11);
+      expect(peak?.index).toBe(1);
+      expect(peak?.interpolatedTime).toBeGreaterThan(11.0);
+      expect(peak?.interpolatedTime).toBeLessThan(12.0);
+      expect(peak?.density).toBeGreaterThanOrEqual(0.5);
+    });
+
+    it('handles boundary peaks at first or last index without errors', () => {
+      const boundaryFirst: KDEPoint[] = [
+        { x: 8, baselineDensity: 0.8, recentDensity: 0.1 },
+        { x: 9, baselineDensity: 0.5, recentDensity: 0.2 },
+        { x: 10, baselineDensity: 0.2, recentDensity: 0.3 },
+      ];
+      const peakFirst = findKDEPeak(boundaryFirst, 'baselineDensity');
+      expect(peakFirst).not.toBeNull();
+      expect(peakFirst?.x).toBe(8);
+      expect(peakFirst?.interpolatedTime).toBe(8);
+      expect(peakFirst?.index).toBe(0);
+
+      const boundaryLast: KDEPoint[] = [
+        { x: 8, baselineDensity: 0.2, recentDensity: 0.1 },
+        { x: 9, baselineDensity: 0.5, recentDensity: 0.2 },
+        { x: 10, baselineDensity: 0.8, recentDensity: 0.3 },
+      ];
+      const peakLast = findKDEPeak(boundaryLast, 'baselineDensity');
+      expect(peakLast).not.toBeNull();
+      expect(peakLast?.x).toBe(10);
+      expect(peakLast?.interpolatedTime).toBe(10);
+      expect(peakLast?.index).toBe(2);
+    });
+
+    it('handles flat peak plateaus without division by zero', () => {
+      const flatPeak: KDEPoint[] = [
+        { x: 10, baselineDensity: 0.5, recentDensity: 0.5 },
+        { x: 11, baselineDensity: 0.5, recentDensity: 0.5 },
+        { x: 12, baselineDensity: 0.5, recentDensity: 0.5 },
+      ];
+      const peak = findKDEPeak(flatPeak, 'recentDensity');
+      expect(peak).not.toBeNull();
+      expect(peak?.interpolatedTime).toBe(10);
+    });
+
+    it('accurately evaluates recentDensity independent of baselineDensity', () => {
+      const dualPoints: KDEPoint[] = [
+        { x: 10, baselineDensity: 0.9, recentDensity: 0.1 },
+        { x: 11, baselineDensity: 0.5, recentDensity: 0.2 },
+        { x: 12, baselineDensity: 0.1, recentDensity: 0.85 },
+      ];
+      const baselinePeak = findKDEPeak(dualPoints, 'baselineDensity');
+      const recentPeak = findKDEPeak(dualPoints, 'recentDensity');
+      expect(baselinePeak?.x).toBe(10);
+      expect(recentPeak?.x).toBe(12);
+    });
+  });
+
+  describe('calculatePeakDistance', () => {
+    it('returns null when either or both peaks are null', () => {
+      const peak: KDEPeak = { x: 10, interpolatedTime: 10.25, density: 0.5, index: 1 };
+      expect(calculatePeakDistance(null, null)).toBeNull();
+      expect(calculatePeakDistance(peak, null)).toBeNull();
+      expect(calculatePeakDistance(null, peak)).toBeNull();
+    });
+
+    it('calculates absolute distance when baseline is slower than recent', () => {
+      const baselinePeak: KDEPeak = { x: 12, interpolatedTime: 12.45, density: 0.4, index: 20 };
+      const recentPeak: KDEPeak = { x: 10, interpolatedTime: 10.15, density: 0.6, index: 10 };
+      expect(calculatePeakDistance(baselinePeak, recentPeak)).toBe(2.3);
+    });
+
+    it('calculates absolute distance when recent is slower than baseline', () => {
+      const baselinePeak: KDEPeak = { x: 10, interpolatedTime: 10.15, density: 0.6, index: 10 };
+      const recentPeak: KDEPeak = { x: 12, interpolatedTime: 12.45, density: 0.4, index: 20 };
+      expect(calculatePeakDistance(baselinePeak, recentPeak)).toBe(2.3);
+    });
+
+    it('returns 0 when both peaks have identical interpolated time', () => {
+      const peakA: KDEPeak = { x: 11, interpolatedTime: 11.2, density: 0.5, index: 15 };
+      const peakB: KDEPeak = { x: 11, interpolatedTime: 11.2, density: 0.45, index: 15 };
+      expect(calculatePeakDistance(peakA, peakB)).toBe(0);
     });
   });
 

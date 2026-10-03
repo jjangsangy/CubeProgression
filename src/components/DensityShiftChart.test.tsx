@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { verifyChartTooltipAutoDismiss } from '../test/tooltipTestUtils';
 import type { PeriodGroup, Solve } from '../types';
 import { DensityShiftChart } from './DensityShiftChart';
@@ -25,6 +25,19 @@ const captured = vi.hoisted(() => ({
   xAxisProps: null as {
     tickFormatter?: (v: number) => string;
   } | null,
+  referenceLines: [] as Array<{
+    x?: number;
+    segment?: Array<{ x?: number; y?: number }>;
+    stroke?: string;
+    strokeDasharray?: string;
+    label?:
+      | { value?: string }
+      | ((labelProps: {
+          viewBox?: { x?: number; y?: number; width?: number };
+          x?: number;
+          y?: number;
+        }) => React.ReactNode);
+  }>,
 }));
 
 vi.mock('recharts', async (importOriginal) => {
@@ -65,6 +78,50 @@ vi.mock('recharts', async (importOriginal) => {
     },
     Legend: () => null,
     Area: () => null,
+    ReferenceLine: (props: {
+      x?: number;
+      segment?: Array<{ x?: number; y?: number }>;
+      stroke?: string;
+      strokeDasharray?: string;
+      label?:
+        | { value?: string }
+        | ((labelProps: {
+            viewBox?: { x?: number; y?: number; width?: number };
+            x?: number;
+            y?: number;
+          }) => React.ReactNode);
+    }) => {
+      captured.referenceLines.push(props);
+      const isSegment = Boolean(props.segment && props.segment.length === 2);
+      const mockViewBox = isSegment ? { x: 150, y: 50, width: 100, height: 0 } : { x: 200, y: 20 };
+      const labelElement =
+        typeof props.label === 'function'
+          ? props.label({
+              viewBox: mockViewBox,
+              x: isSegment ? 200 : undefined,
+              y: isSegment ? 50 : undefined,
+            })
+          : null;
+      return (
+        <g
+          data-testid="mock-reference-line"
+          data-x={props.x}
+          data-stroke={props.stroke}
+          data-segment={isSegment ? JSON.stringify(props.segment) : undefined}
+        >
+          <line
+            data-testid="reference-line"
+            x1={isSegment ? props.segment?.[0]?.x : props.x}
+            x2={isSegment ? props.segment?.[1]?.x : props.x}
+            y1={isSegment ? props.segment?.[0]?.y : undefined}
+            y2={isSegment ? props.segment?.[1]?.y : undefined}
+            stroke={props.stroke}
+            strokeDasharray={props.strokeDasharray}
+          />
+          {labelElement}
+        </g>
+      );
+    },
     Tooltip: (props: { content?: React.ReactElement; active?: boolean }) => {
       captured.tooltipContent = props.content ?? null;
       captured.tooltipActive = props.active;
@@ -86,6 +143,10 @@ const mockSolves: Solve[] = Array.from({ length: 20 }, (_, idx) => ({
 }));
 
 describe('DensityShiftChart component', () => {
+  beforeEach(() => {
+    captured.referenceLines = [];
+  });
+
   it('renders density shift chart and baseline vs recent summary', () => {
     render(
       <DensityShiftChart
@@ -114,6 +175,110 @@ describe('DensityShiftChart component', () => {
     // Baseline (first 30%) mean 10.25s vs recent (last 30%) mean 11.65s -> +1.40s slower
     expect(screen.getByText('+1.40s slower')).toBeInTheDocument();
     expect(screen.queryByText(/faster/)).not.toBeInTheDocument();
+  });
+
+  it('renders off-center vertical reference line labels that do not intersect or go through the line', () => {
+    const { container } = render(<DensityShiftChart solves={mockSolves} />);
+
+    // 2 vertical lines (baseline + recent) + 1 horizontal distance line
+    expect(captured.referenceLines.length).toBe(3);
+
+    const baselineLine = captured.referenceLines.find((line) => line.stroke === '#ef4444');
+    const recentLine = captured.referenceLines.find((line) => line.stroke === '#22c55e');
+    const distanceLine = captured.referenceLines.find((line) => line.stroke === '#f59e0b');
+
+    expect(baselineLine).toBeDefined();
+    expect(recentLine).toBeDefined();
+    expect(distanceLine).toBeDefined();
+    expect(baselineLine?.x).toBeTypeOf('number');
+    expect(recentLine?.x).toBeTypeOf('number');
+    expect(distanceLine?.segment).toBeDefined();
+    expect(distanceLine?.segment?.length).toBe(2);
+
+    // Both vertical lines must have label render functions
+    expect(typeof baselineLine?.label).toBe('function');
+    expect(typeof recentLine?.label).toBe('function');
+    expect(typeof distanceLine?.label).toBe('function');
+
+    // Query vertical reference line text labels
+    const verticalLabelTexts = Array.from(
+      container.querySelectorAll('g[data-testid="mock-reference-line"][data-x] text'),
+    );
+    expect(verticalLabelTexts.length).toBe(2);
+
+    for (const text of verticalLabelTexts) {
+      const textAnchor = text.getAttribute('text-anchor');
+      const textX = Number(text.getAttribute('x'));
+
+      // The label must be off-center (start or end), NEVER centered ('middle')
+      expect(textAnchor).not.toBe('middle');
+      expect(['start', 'end']).toContain(textAnchor);
+
+      // In the mock viewBox (x=200), text must be offset from the line at 200 so the line does not pass through it
+      expect(textX).not.toBe(200);
+      if (textAnchor === 'start') {
+        expect(textX).toBeGreaterThan(200);
+      } else {
+        expect(textX).toBeLessThan(200);
+      }
+
+      // No redundant "Peak" word, only formatted time e.g. "11.24s"
+      expect(text.textContent).not.toMatch(/peak/i);
+      expect(text.textContent).toMatch(/^\d+\.\d{2}s$/);
+    }
+
+    // Query horizontal distance bar text label
+    const distanceLabel = container.querySelector(
+      'g[data-testid="mock-reference-line"][data-segment] text',
+    );
+    expect(distanceLabel).not.toBeNull();
+    expect(distanceLabel?.getAttribute('text-anchor')).toBe('middle');
+    expect(distanceLabel?.textContent).toBe('1.40s');
+    expect(distanceLabel?.textContent).toMatch(/^\d+\.\d{2}s$/);
+  });
+
+  it('renders horizontal peak distance bar connecting baseline and recent peaks', () => {
+    const { container } = render(<DensityShiftChart solves={mockSolves} />);
+
+    const distanceRefLine = captured.referenceLines.find((line) => line.stroke === '#f59e0b');
+    expect(distanceRefLine).toBeDefined();
+    expect(distanceRefLine?.segment).toBeDefined();
+    expect(distanceRefLine?.strokeDasharray).toBe('3 3');
+    expect(distanceRefLine?.segment?.[0]?.x).toBe(11.76);
+    expect(distanceRefLine?.segment?.[1]?.x).toBe(10.35);
+    expect(distanceRefLine?.segment?.[0]?.y).toBeCloseTo(0.4683, 1);
+
+    const distanceText = container.querySelector(
+      'g[data-testid="mock-reference-line"][data-segment] text',
+    );
+    expect(distanceText?.textContent).toBe('1.40s');
+  });
+
+  it('positions labels off-center when recent solves are slower than baseline solves', () => {
+    const slowingSolves: Solve[] = mockSolves.map((solve, idx) => ({
+      ...solve,
+      finalTimeSec: 10 + idx * 0.1,
+    }));
+
+    const { container } = render(<DensityShiftChart solves={slowingSolves} />);
+    const verticalLabelTexts = Array.from(
+      container.querySelectorAll('g[data-testid="mock-reference-line"][data-x] text'),
+    );
+    expect(verticalLabelTexts.length).toBe(2);
+
+    for (const text of verticalLabelTexts) {
+      const textAnchor = text.getAttribute('text-anchor');
+      expect(textAnchor).not.toBe('middle');
+      expect(['start', 'end']).toContain(textAnchor);
+      expect(text.textContent).not.toMatch(/peak/i);
+      expect(text.textContent).toMatch(/^\d+\.\d{2}s$/);
+    }
+
+    const distanceText = container.querySelector(
+      'g[data-testid="mock-reference-line"][data-segment] text',
+    );
+    expect(distanceText?.textContent).toBe('1.40s');
+    expect(distanceText?.getAttribute('text-anchor')).toBe('middle');
   });
 
   it('renders mean shift banner with centered symmetrical 3-column classes', () => {

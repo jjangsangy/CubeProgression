@@ -1,6 +1,7 @@
 import type {
   GlobalStats,
   GroupingPeriod,
+  KDEPeak,
   KDEPoint,
   LinearRegression,
   PbDataPoint,
@@ -514,6 +515,86 @@ export function calculateKDE(
     validSolves.slice(splitRecentIndex),
     numPoints,
   );
+}
+
+/**
+ * Detects the dominant peak of a KDE curve using discrete argmax
+ * followed by parabolic sub-grid interpolation for sub-millisecond precision.
+ * Runs in O(M) time where M is the number of grid points (~120).
+ *
+ * @param points - Array of KDE data points
+ * @param key - Density property to evaluate ('baselineDensity' or 'recentDensity')
+ * @returns KDEPeak object containing both grid-snapped x coordinate and interpolated peak time, or null if no valid peak
+ */
+export function findKDEPeak(
+  points: KDEPoint[],
+  key: 'baselineDensity' | 'recentDensity',
+): KDEPeak | null {
+  if (!points || points.length === 0) return null;
+
+  let maxIdx = 0;
+  let maxY = points[0][key];
+
+  for (let i = 1; i < points.length; i++) {
+    const y = points[i][key];
+    if (y > maxY) {
+      maxY = y;
+      maxIdx = i;
+    }
+  }
+
+  // Guard against all-zero or non-positive distributions
+  if (!Number.isFinite(maxY) || maxY <= 0) return null;
+
+  // Boundary peak: cannot interpolate with neighbors
+  if (maxIdx === 0 || maxIdx === points.length - 1) {
+    return {
+      x: points[maxIdx].x,
+      interpolatedTime: points[maxIdx].x,
+      density: maxY,
+      index: maxIdx,
+    };
+  }
+
+  // 3-point parabolic interpolation around discrete peak
+  const y0 = points[maxIdx - 1][key];
+  const y1 = points[maxIdx][key];
+  const y2 = points[maxIdx + 1][key];
+  const denom = 2 * (y0 - 2 * y1 + y2);
+
+  if (Math.abs(denom) < 1e-12) {
+    return {
+      x: points[maxIdx].x,
+      interpolatedTime: points[maxIdx].x,
+      density: y1,
+      index: maxIdx,
+    };
+  }
+
+  // Fractional offset delta in range [-0.5, 0.5]
+  const delta = (y0 - y2) / denom;
+  const dx = points[maxIdx].x - points[maxIdx - 1].x;
+  const peakTime = points[maxIdx].x + delta * dx;
+  const peakDensity = y1 - 0.25 * (y0 - y2) * delta;
+
+  return {
+    x: points[maxIdx].x,
+    interpolatedTime: Number(peakTime.toFixed(2)),
+    density: Number(peakDensity.toFixed(4)),
+    index: maxIdx,
+  };
+}
+
+/**
+ * Calculates the absolute distance in solve time (seconds) between two KDE peaks.
+ * Returns null if either peak is null.
+ *
+ * @param peak1 - First KDE peak
+ * @param peak2 - Second KDE peak
+ */
+export function calculatePeakDistance(peak1: KDEPeak | null, peak2: KDEPeak | null): number | null {
+  if (!peak1 || !peak2) return null;
+  return Number(Math.abs(peak1.interpolatedTime - peak2.interpolatedTime).toFixed(2));
 }
 
 /**

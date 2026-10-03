@@ -67,6 +67,13 @@ export interface KDEPoint {
   recentDensity: number;
 }
 
+export interface KDEPeak {
+  x: number;
+  interpolatedTime: number;
+  density: number;
+  index: number;
+}
+
 export interface PbDataPoint {
   index: number;
   dateStr: string;

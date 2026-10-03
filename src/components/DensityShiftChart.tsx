@@ -5,6 +5,7 @@ import {
   AreaChart,
   CartesianGrid,
   Legend,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -14,6 +15,8 @@ import { useAutoDismissTooltip } from '../hooks/useAutoDismissTooltip';
 import type { GroupingPeriod, PeriodGroup, Solve } from '../types';
 import {
   calculateKDEFromSamples,
+  calculatePeakDistance,
+  findKDEPeak,
   getNormalizedYCeilingWithHysteresis,
   groupSolvesByPeriod,
 } from '../utils/statsMath';
@@ -171,6 +174,48 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     () => calculateKDEFromSamples(sample1Solves, sample2Solves, 120, globalDomain),
     [sample1Solves, sample2Solves, globalDomain],
   );
+
+  // Dominant peak detection with sub-grid parabolic interpolation for Baseline and Recent curves
+  const baselinePeak = useMemo(() => findKDEPeak(kdeData, 'baselineDensity'), [kdeData]);
+  const recentPeak = useMemo(() => findKDEPeak(kdeData, 'recentDensity'), [kdeData]);
+
+  // Absolute distance between dominant peaks
+  const peakDistance = useMemo(
+    () => calculatePeakDistance(baselinePeak, recentPeak),
+    [baselinePeak, recentPeak],
+  );
+
+  // Height of horizontal distance bar spanning between the peaks
+  const peakBarY = useMemo(() => {
+    if (!baselinePeak || !recentPeak) return null;
+    return Math.max(baselinePeak.density, recentPeak.density);
+  }, [baselinePeak, recentPeak]);
+
+  // Position peak labels off-center so the vertical reference line does not cut through the text
+  const baselineSide: 'left' | 'right' = useMemo(() => {
+    if (!baselinePeak) return 'right';
+    if (baselinePeak.index > 105) return 'left';
+    if (baselinePeak.index < 15) return 'right';
+    if (recentPeak) {
+      return baselinePeak.x >= recentPeak.x ? 'right' : 'left';
+    }
+    return baselinePeak.index >= 60 ? 'left' : 'right';
+  }, [baselinePeak, recentPeak]);
+
+  const recentSide: 'left' | 'right' = useMemo(() => {
+    if (!recentPeak) return 'left';
+    if (recentPeak.index > 105) return 'left';
+    if (recentPeak.index < 15) return 'right';
+    if (baselinePeak) {
+      return baselinePeak.x >= recentPeak.x ? 'left' : 'right';
+    }
+    return recentPeak.index >= 60 ? 'left' : 'right';
+  }, [baselinePeak, recentPeak]);
+
+  const isClosePeaks =
+    baselinePeak && recentPeak && Math.abs(baselinePeak.index - recentPeak.index) <= 6;
+  const baselineVerticalOffset = 14;
+  const recentVerticalOffset = isClosePeaks ? 28 : 14;
 
   // Normalized Y-axis ceiling with hysteresis damping to eliminate scale jumping
   const yCeiling = useMemo(() => {
@@ -647,6 +692,107 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               fillOpacity={1}
               fill="url(#colorRecent)"
             />
+
+            {/* Peak Vertical Reference Lines with off-center labels */}
+            {baselinePeak && (
+              <ReferenceLine
+                x={baselinePeak.x}
+                stroke="#ef4444"
+                strokeDasharray="3 3"
+                strokeWidth={1.5}
+                label={(props: { viewBox?: { x?: number; y?: number } }) => {
+                  const { viewBox } = props || {};
+                  if (!viewBox || typeof viewBox.x !== 'number' || typeof viewBox.y !== 'number') {
+                    return null;
+                  }
+                  const tx = baselineSide === 'left' ? viewBox.x - 6 : viewBox.x + 6;
+                  const ty = viewBox.y + baselineVerticalOffset;
+                  const textAnchor = baselineSide === 'left' ? 'end' : 'start';
+                  return (
+                    <text
+                      x={tx}
+                      y={ty}
+                      fill="#fca5a5"
+                      fontSize={isMobileScreen ? 9 : 10}
+                      fontWeight={600}
+                      textAnchor={textAnchor}
+                    >
+                      {`${baselinePeak.interpolatedTime.toFixed(2)}s`}
+                    </text>
+                  );
+                }}
+              />
+            )}
+
+            {recentPeak && (
+              <ReferenceLine
+                x={recentPeak.x}
+                stroke="#22c55e"
+                strokeDasharray="3 3"
+                strokeWidth={1.5}
+                label={(props: { viewBox?: { x?: number; y?: number } }) => {
+                  const { viewBox } = props || {};
+                  if (!viewBox || typeof viewBox.x !== 'number' || typeof viewBox.y !== 'number') {
+                    return null;
+                  }
+                  const tx = recentSide === 'left' ? viewBox.x - 6 : viewBox.x + 6;
+                  const ty = viewBox.y + recentVerticalOffset;
+                  const textAnchor = recentSide === 'left' ? 'end' : 'start';
+                  return (
+                    <text
+                      x={tx}
+                      y={ty}
+                      fill="#86efac"
+                      fontSize={isMobileScreen ? 9 : 10}
+                      fontWeight={600}
+                      textAnchor={textAnchor}
+                    >
+                      {`${recentPeak.interpolatedTime.toFixed(2)}s`}
+                    </text>
+                  );
+                }}
+              />
+            )}
+
+            {/* Peak Distance Horizontal Bar with centered distance label */}
+            {baselinePeak && recentPeak && peakBarY !== null && peakDistance !== null && (
+              <ReferenceLine
+                segment={[
+                  { x: baselinePeak.x, y: peakBarY },
+                  { x: recentPeak.x, y: peakBarY },
+                ]}
+                stroke="#f59e0b"
+                strokeDasharray="3 3"
+                strokeWidth={1.5}
+                label={(props: {
+                  viewBox?: { x?: number; y?: number; width?: number };
+                  x?: number;
+                  y?: number;
+                }) => {
+                  const { viewBox } = props || {};
+                  if (!viewBox || typeof viewBox.x !== 'number' || typeof viewBox.y !== 'number') {
+                    return null;
+                  }
+                  const lx =
+                    typeof props.x === 'number'
+                      ? props.x
+                      : viewBox.x + (typeof viewBox.width === 'number' ? viewBox.width / 2 : 0);
+                  const ly = (typeof props.y === 'number' ? props.y : viewBox.y) - 6;
+                  return (
+                    <text
+                      x={lx}
+                      y={ly}
+                      fill="#fbbf24"
+                      fontSize={isMobileScreen ? 9 : 10}
+                      fontWeight={600}
+                      textAnchor="middle"
+                    >
+                      {`${peakDistance.toFixed(2)}s`}
+                    </text>
+                  );
+                }}
+              />
+            )}
           </AreaChart>
         </ResponsiveContainer>
       </div>

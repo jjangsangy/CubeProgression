@@ -27,6 +27,54 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
     await expect(densityCard.getByText('Recent Mean:')).toBeVisible();
     await expect(densityCard.getByText('Distribution Shift:', { exact: true })).toBeVisible();
 
+    // Verify peak vertical reference lines and horizontal distance bar in real SVG rendering
+    const refLines = densityCard.locator('.recharts-reference-line');
+    await expect(refLines).toHaveCount(3);
+
+    const refLabels = densityCard.locator('.recharts-reference-line text');
+    await expect(refLabels).toHaveCount(3);
+
+    // Verify vertical peak reference lines (indices 0 and 1) have off-center labels
+    for (let i = 0; i < 2; i++) {
+      const label = refLabels.nth(i);
+      const textAnchor = await label.getAttribute('text-anchor');
+      expect(textAnchor).not.toBe('middle');
+      expect(['start', 'end']).toContain(textAnchor);
+
+      // Verify no "Peak" word, only time
+      const textContent = await label.textContent();
+      expect(textContent).not.toMatch(/peak/i);
+      expect(textContent).toMatch(/^\d+\.\d{2}s$/);
+
+      // Verify the label x coordinate is offset from the line x1 coordinate
+      const line = refLines.nth(i).locator('line');
+      const lineX = Number(await line.getAttribute('x1'));
+      const textX = Number(await label.getAttribute('x'));
+      expect(textX).not.toEqual(lineX);
+      if (textAnchor === 'start') {
+        expect(textX).toBeGreaterThan(lineX);
+      } else {
+        expect(textX).toBeLessThan(lineX);
+      }
+    }
+
+    // Verify horizontal peak distance bar (index 2) is strictly horizontal, dotted, and has centered label
+    const distanceLine = refLines.nth(2).locator('line');
+    const dX1 = Number(await distanceLine.getAttribute('x1'));
+    const dX2 = Number(await distanceLine.getAttribute('x2'));
+    const dY1 = Number(await distanceLine.getAttribute('y1'));
+    const dY2 = Number(await distanceLine.getAttribute('y2'));
+    expect(dX1).not.toEqual(dX2);
+    expect(dY1).toEqual(dY2);
+    expect(await distanceLine.getAttribute('stroke-dasharray')).toBe('3 3');
+
+    const distanceLabel = refLabels.nth(2);
+    const distanceAnchor = await distanceLabel.getAttribute('text-anchor');
+    expect(distanceAnchor).toBe('middle');
+    const distanceText = await distanceLabel.textContent();
+    expect(distanceText).not.toMatch(/peak/i);
+    expect(distanceText).toMatch(/^\d+\.\d{2}s$/);
+
     // Verify scrubbers track and visual sparkline
     const track = densityCard.getByLabel('Solve distribution timeline scrubbers track');
     await expect(track).toBeVisible();
