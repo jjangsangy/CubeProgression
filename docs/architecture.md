@@ -22,6 +22,7 @@ network dependency.
 | Dates/timezones | Standard `Temporal` (browser native) with conditional dynamic polyfill (`temporalLoader.ts`); native JS `Date` is strictly forbidden |
 | PNG export | `html-to-image` (dynamically imported) |
 | Persistence | Native IndexedDB |
+| PWA / Offline | Zero-dependency Service Worker precache (`vitePwaPlugin`) + Web App Manifest |
 | Lint / format | Biome 2 |
 | Tests | Vitest 5 + React Testing Library + `jsdom` |
 
@@ -126,3 +127,18 @@ To guarantee rapid initial mobile paint (<0.5s FCP) and eliminate main-thread bl
 - **Viewport-Driven Rendering**: Below-the-fold charts and heavy tables are wrapped in `<DeferredChart>`, mounting only when within 250px of the viewport using `IntersectionObserver` (or immediately in test/jsdom environments).
 - **Static Inlined Shell**: `index.html` embeds a lightweight static CSS/SVG shell in `#root` matching the exact responsive coordinates (`px-4 sm:px-6 safe-area-x`, `#0c0a09` continuity) to ensure instant first paint before JavaScript hydration completes.
 - **Atomic Hydration**: Storage queries and dataset checks in `useCubeDatasetCore.ts` resolve concurrently and batch into a single state update, eliminating redundant hydration re-render passes.
+
+## PWA & Offline Architecture
+
+CubeProgression operates as a fully installable, 100% offline-first Progressive Web App:
+
+- **Zero-Dependency Service Worker (`src/plugins/vitePwaPlugin.ts`)**: Generates and emits `sw.js` at build time by reading all emitted chunks and public static assets from Vite's bundle manifest.
+- **Deterministic Precache**: On `install`, all application shell assets (compiled JS chunks, inlined and external CSS, SVGs, icons, and `index.html`) are precached into a content-hashed cache bucket (`cubeprogression-v-<hash>`).
+- **Caching Strategy**:
+  - **Navigation requests (`request.mode === 'navigate'`)**: Network-First with cached fallback to `index.html`. Users receive instantaneous startup offline while getting the latest build when online.
+  - **Static assets (`assets/*`)**: Cache-First with network fallback. Because Vite filenames are content-hashed, cached assets are immutable.
+  - **Auto-Cleanup**: On `activate`, outdated cache buckets from previous releases are purged, followed by `self.clients.claim()`.
+- **Install & Connectivity UX**:
+  - `usePwaInstall.ts` captures `beforeinstallprompt` to surface an in-app "Install App" button in `Navbar`.
+  - `useOnlineStatus.ts` tracks browser connectivity and displays a subtle "Offline mode" pill in `Navbar` to reassure users that solve imports and statistics are functioning locally without network access.
+  - An update notification banner prompts users to activate new Service Worker versions seamlessly.

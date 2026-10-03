@@ -1,5 +1,16 @@
-import { Database, Download, FileText, RefreshCw, Sparkles, Timer, Trash2 } from 'lucide-react';
+import {
+  Database,
+  Download,
+  FileText,
+  RefreshCw,
+  Sparkles,
+  Timer,
+  Trash2,
+  WifiOff,
+} from 'lucide-react';
 import type React from 'react';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { usePwaInstall } from '../hooks/usePwaInstall';
 import { useStorageStatus } from '../hooks/useStorageNotice';
 
 interface NavbarProps {
@@ -10,6 +21,9 @@ interface NavbarProps {
   isSaved?: boolean;
   storageUsageMB?: number;
   onClearStorage?: () => void;
+  canInstall?: boolean;
+  onInstall?: () => void;
+  isOnline?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -20,13 +34,22 @@ export const Navbar: React.FC<NavbarProps> = ({
   isSaved: propIsSaved,
   storageUsageMB: propStorageUsageMB,
   onClearStorage,
+  canInstall: propCanInstall,
+  onInstall,
+  isOnline: propIsOnline,
 }) => {
   const storageStatus = useStorageStatus();
+  const hookOnlineStatus = useOnlineStatus();
+  const pwaInstall = usePwaInstall();
+
   const isSaved = propIsSaved ?? storageStatus.isSaved;
   const storageUsageMB = propStorageUsageMB ?? storageStatus.storageUsageMB;
+  const isOnline = propIsOnline ?? hookOnlineStatus;
+  const canInstall = propCanInstall ?? pwaInstall.canInstall;
+  const handleInstall = onInstall ?? pwaInstall.promptInstall;
   return (
     <header className="relative border-b border-stone-800 bg-stone-950">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 safe-area-x">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 sm:gap-4 px-4 sm:px-6 safe-area-x">
         {/* Brand Logo & Title */}
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-rose-500 font-black text-stone-950 shadow-lg shadow-amber-500/10">
@@ -49,6 +72,32 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right Action Buttons */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {!isOnline && (
+            <div
+              role="status"
+              aria-label="Offline mode"
+              className="flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 sm:px-2.5 py-1 text-xs font-medium text-amber-400"
+              title="You are offline. All features, solves, and statistics operate locally."
+            >
+              <WifiOff className="h-3.5 w-3.5 shrink-0 text-amber-400" aria-hidden="true" />
+              <span className="hidden sm:inline">Offline mode</span>
+              <span className="sr-only sm:hidden">Offline mode</span>
+            </div>
+          )}
+
+          {canInstall && (
+            <button
+              type="button"
+              onClick={handleInstall}
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-2.5 sm:px-3 py-1.5 text-xs font-medium whitespace-nowrap text-amber-300 shadow-sm transition-all hover:bg-amber-500/20 active:scale-95"
+              title="Install CubeProgression as a Progressive Web App"
+            >
+              <Download className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+              <span className="hidden sm:inline">Install App</span>
+              <span className="sm:hidden">Install</span>
+            </button>
+          )}
+
           {isSaved && (
             <div
               className="hidden items-center gap-1.5 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-400 lg:flex"

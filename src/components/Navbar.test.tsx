@@ -117,4 +117,77 @@ describe('Navbar component', () => {
     fireEvent.click(trashBtn);
     expect(onClearStorage).toHaveBeenCalledTimes(1);
   });
+
+  it('renders Offline mode pill when isOnline is false', () => {
+    render(
+      <Navbar
+        fileName="test.txt"
+        isOnline={false}
+        onLoadDemo={vi.fn()}
+        onReset={vi.fn()}
+        onExportCSV={vi.fn()}
+      />,
+    );
+
+    const offlineBadge = screen.getByRole('status', { name: 'Offline mode' });
+    expect(offlineBadge).toBeInTheDocument();
+    expect(
+      screen.getByTitle('You are offline. All features, solves, and statistics operate locally.'),
+    ).toBeInTheDocument();
+  });
+
+  it('does not render Offline mode pill when isOnline is true', () => {
+    render(
+      <Navbar
+        fileName="test.txt"
+        isOnline={true}
+        onLoadDemo={vi.fn()}
+        onReset={vi.fn()}
+        onExportCSV={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('status', { name: 'Offline mode' })).not.toBeInTheDocument();
+  });
+
+  it('renders Install App button when canInstall is true and calls onInstall', () => {
+    const onInstall = vi.fn();
+    render(
+      <Navbar
+        fileName="test.txt"
+        canInstall={true}
+        onInstall={onInstall}
+        onLoadDemo={vi.fn()}
+        onReset={vi.fn()}
+        onExportCSV={vi.fn()}
+      />,
+    );
+
+    const installBtn = screen.getByTitle('Install CubeProgression as a Progressive Web App');
+    expect(installBtn).toBeInTheDocument();
+
+    const fullLabel = screen.getByText('Install App');
+    const mobileLabel = screen.getByText('Install');
+    expect(fullLabel).toHaveClass('hidden', 'sm:inline');
+    expect(mobileLabel).toHaveClass('sm:hidden');
+
+    fireEvent.click(installBtn);
+    expect(onInstall).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not render Install App button when canInstall is false', () => {
+    render(
+      <Navbar
+        fileName="test.txt"
+        canInstall={false}
+        onLoadDemo={vi.fn()}
+        onReset={vi.fn()}
+        onExportCSV={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByTitle('Install CubeProgression as a Progressive Web App'),
+    ).not.toBeInTheDocument();
+  });
 });

@@ -27,6 +27,7 @@ A modern, high-performance web application built for speedcubers to analyze **cs
 - **🌊 Density Shift Chart**: Kernel density estimation (KDE) chart comparing solve distributions between early session phases (warm-up) and later phases (fatigue/peak).
 - **📉 Metrics Evolution**: Track time-series consistency and variance metrics like Standard Deviation and Interquartile Range over session history.
 - **📋 Interactive Solves Table**: Paginated, filterable table listing every solve with scramble details, timestamps, penalties (+2 / DNF), and search capabilities.
+- **📱 Progressive Web App (PWA) & 100% Offline Capability**: Installable directly to your desktop or mobile home screen with zero network reliance. The application shell and precached chunks load instantaneously, and local solve data remains fully interactive offline.
 - **💾 IndexedDB Persistence**: Automatically preserves imported sessions, active view settings, and solve data locally in the browser so your analysis persists across reloads.
 - **📸 High-Resolution PNG & CSV Export**: Download crisp PNG snapshots of any analytical chart with one click or export period summary statistics as CSV.
 - **🔍 Fullscreen Modal Mode**: Expand any chart into an immersive modal for granular data exploration.

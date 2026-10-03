@@ -5,6 +5,7 @@ import { codecovVitePlugin } from '@codecov/vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
+import { vitePwaPlugin } from './src/plugins/vitePwaPlugin.ts';
 
 /**
  * Inlines the compiled CSS bundle directly into index.html <style> tags.
@@ -54,6 +55,7 @@ export default defineConfig(() => {
       }),
       tailwindcss(),
       inlineCriticalCss(),
+      vitePwaPlugin(),
       codecovVitePlugin({
         enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined || process.env.CI === 'true',
         bundleName: 'CubeProgression',
