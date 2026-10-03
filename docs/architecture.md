@@ -40,7 +40,7 @@ CubeProgression/
 ├── src/
 │   ├── components/           # all React components (+ colocated *.test.tsx)
 │   ├── hooks/                # custom React hooks (useCubeDataset + *.test.ts)
-│   ├── utils/                # pure logic: parsing, stats, storage, sample data, csv export (+ *.test.ts)
+│   ├── utils/                # pure logic: parsing, stats, storage, sample data (+ *.test.ts)
 │   ├── App.tsx               # presentation shell connecting useCubeDataset to layout
 │   ├── App.test.tsx          # integration test of the shell
 │   ├── main.tsx              # testable React root entrypoint (mountApp)

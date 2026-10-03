@@ -96,7 +96,24 @@ async function main() {
     content: '.chart-content-visibility { content-visibility: visible !important; }',
   });
 
-  if (selector) {
+  // Scroll back to top so viewport screenshots capture the initial above-the-fold screen
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(200);
+
+  // If with_install argument is given, dispatch beforeinstallprompt to test install button
+  if (process.argv.includes('--install')) {
+    await page.evaluate(() => {
+      const event = new Event('beforeinstallprompt');
+      Object.assign(event, { prompt: () => Promise.resolve({ outcome: 'accepted' }) });
+      window.dispatchEvent(event);
+    });
+    await page.waitForTimeout(300);
+  }
+
+  if (selector === 'viewport') {
+    await page.screenshot({ path: outName, fullPage: false });
+    console.log(`Saved viewport screenshot to ${outName}`);
+  } else if (selector) {
     const element = await page.$(selector);
     if (element) {
       await element.scrollIntoViewIfNeeded();

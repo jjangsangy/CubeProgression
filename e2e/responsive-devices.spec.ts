@@ -110,24 +110,14 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       await waitForReady(page);
     });
 
-    test('renders compact Navbar with "Demo" label and hides desktop badges', async ({ page }) => {
+    test('renders compact Navbar and hides desktop badges', async ({ page }) => {
       const header = page.locator('header');
 
-      // Demo button shows compact text "Demo"
-      const demoBtn = header.getByRole('button', { name: 'Demo' });
-      await expect(demoBtn).toBeVisible();
-
-      // Long text "Load Sample Data" span is hidden via sm:inline
-      const longDemoSpan = header.locator('span:has-text("Load Sample Data")');
-      await expect(longDemoSpan).toBeHidden();
-
-      // Export CSV label is hidden on mobile screens
-      const exportTextSpan = header.locator('button span:has-text("Export CSV")');
-      await expect(exportTextSpan).toBeHidden();
-
-      // Export CSV button itself is still accessible via aria-label
-      const exportBtn = header.getByRole('button', { name: 'Export CSV' });
-      await expect(exportBtn).toBeVisible();
+      // Export Guide label is compact on mobile screens
+      const guideText = header
+        .locator('button[aria-label="Export Guide"]')
+        .getByText('Guide', { exact: true });
+      await expect(guideText).toBeVisible();
 
       // Storage badge is hidden on mobile screens (has hidden lg:flex)
       await expect(header.getByText('Saved locally')).toBeHidden();
@@ -137,7 +127,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       await expect(filenamePill).toBeHidden();
     });
 
-    test('verifies mobile portrait header layout: completely filled, no overlap, evenly spaced, no overflow, brand uses icon only', async ({
+    test('verifies mobile portrait header layout: completely filled, no overlap, evenly spaced, no overflow, brand and buttons visible', async ({
       page,
     }) => {
       const header = page.locator('header');
@@ -149,21 +139,18 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       expect(headerBox.x).toBeGreaterThanOrEqual(0);
       expect(headerBox.x + headerBox.width).toBeLessThanOrEqual(390 + 1);
 
-      // 2. Constrained space: "CubeProgression" brand text is sr-only (no visible text), only logo icon is shown
+      // 2. Brand identity: "CubeProgression" brand text and logo icon are visible
       const brandHeading = header.getByRole('heading', { level: 1 });
-      const brandSpan = brandHeading.locator('span');
-      await expect(brandSpan).toHaveClass(/sr-only/);
+      await expect(brandHeading).toBeVisible();
       const timerIcon = header.locator('div[title="CubeProgression"]');
       await expect(timerIcon).toBeVisible();
 
-      // 3. Header items are spaced evenly throughout, fill the header, and never overlap
-      const logoBox = await timerIcon.boundingBox();
-      const demoBtn = header.getByRole('button', { name: 'Demo' });
+      // 3. Header items are spaced cleanly throughout, fill the header, and never overlap
+      const brandBox = await brandHeading.boundingBox();
       const guideBtn = header.getByRole('button', { name: 'Export Guide' });
-      const exportBtn = header.getByRole('button', { name: 'Export CSV' });
       const resetBtn = header.getByRole('button', { name: 'Reset Data' });
 
-      const buttons = [demoBtn, guideBtn, exportBtn, resetBtn];
+      const buttons = [guideBtn, resetBtn];
       for (const btn of buttons) {
         await expect(btn).toBeVisible();
       }
@@ -175,16 +162,16 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
         if (box) buttonBoxes.push(box);
       }
 
-      expect(logoBox).not.toBeNull();
-      if (!logoBox) return;
-      expect(logoBox.x).toBeGreaterThanOrEqual(headerBox.x);
+      expect(brandBox).not.toBeNull();
+      if (!brandBox) return;
+      expect(brandBox.x).toBeGreaterThanOrEqual(headerBox.x);
 
       for (const box of buttonBoxes) {
         expect(box.x + box.width).toBeLessThanOrEqual(headerBox.x + headerBox.width + 1);
       }
 
       // Check elements never overlap each other horizontally
-      const allBoxes = [logoBox, ...buttonBoxes];
+      const allBoxes = [brandBox, ...buttonBoxes];
       for (let i = 0; i < allBoxes.length - 1; i++) {
         const current = allBoxes[i];
         const next = allBoxes[i + 1];
@@ -437,13 +424,11 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     test('renders expanded Navbar buttons and 2-column metrics cards layout', async ({ page }) => {
       const header = page.locator('header');
 
-      // "Load Sample Data" text is visible on sm: screens
-      const fullDemoSpan = header.locator('button span:has-text("Load Sample Data")');
-      await expect(fullDemoSpan).toBeVisible();
-
-      // "Export CSV" text is visible
-      const exportTextSpan = header.locator('button span:has-text("Export CSV")');
-      await expect(exportTextSpan).toBeVisible();
+      // "Export Guide" full text is visible on landscape mode
+      const guideTextSpan = header
+        .locator('button[aria-label="Export Guide"]')
+        .getByText('Export Guide', { exact: true });
+      await expect(guideTextSpan).toBeVisible();
 
       // Metrics cards render in 2-columns (Cards 0 and 1 on row 1)
       const cardsGrid = page.locator('.grid.grid-cols-1.gap-4.sm\\:grid-cols-2.lg\\:grid-cols-5');

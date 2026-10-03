@@ -4,7 +4,6 @@ import {
   FileText,
   HelpCircle,
   RefreshCw,
-  Sparkles,
   Timer,
   Trash2,
   WifiOff,
@@ -16,9 +15,7 @@ import { useStorageStatus } from '../hooks/useStorageNotice';
 
 interface NavbarProps {
   fileName?: string;
-  onLoadDemo: () => void;
   onReset: () => void;
-  onExportCSV: () => void;
   isSaved?: boolean;
   storageUsageMB?: number;
   onClearStorage?: () => void;
@@ -30,9 +27,7 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({
   fileName,
-  onLoadDemo,
   onReset,
-  onExportCSV,
   isSaved: propIsSaved,
   storageUsageMB: propStorageUsageMB,
   onClearStorage,
@@ -50,11 +45,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   const isOnline = propIsOnline ?? hookOnlineStatus;
   const canInstall = propCanInstall ?? pwaInstall.canInstall;
   const handleInstall = onInstall ?? pwaInstall.promptInstall;
+
   return (
     <header className="relative border-b border-stone-800 bg-stone-950 w-full">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-3 sm:px-6 safe-area-x w-full gap-2 sm:gap-4">
-        {/* Brand Logo & Title (Icon only in mobile portrait; title visible sm:) */}
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 safe-area-x w-full gap-2 sm:gap-4">
+        {/* Brand Logo & Title */}
+        <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
           <div
             className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-rose-500 font-black text-stone-950 shadow-lg shadow-amber-500/10"
             title="CubeProgression"
@@ -64,13 +60,16 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
           <div className="flex flex-col justify-center min-w-0">
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <h1 className="text-sm sm:text-base md:text-lg leading-tight font-bold tracking-tight text-stone-100 whitespace-nowrap">
-                <span className="sr-only sm:not-sr-only">CubeProgression</span>
+              <h1 className="text-[15px] sm:text-base md:text-lg leading-tight font-bold tracking-tight text-stone-100 whitespace-nowrap">
+                <span>CubeProgression</span>
               </h1>
-              <span className="hidden xl:inline-block rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-amber-400 uppercase">
+              <span className="hidden sm:inline-block rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-amber-400 uppercase">
                 csTimer Analytics
               </span>
             </div>
+            <p className="text-[10px] text-amber-400/90 font-medium tracking-wide sm:hidden leading-none mt-0.5">
+              csTimer Progression
+            </p>
             <p className="text-xs text-stone-400 truncate max-w-xs xl:max-w-md hidden xl:block">
               Speedcubing solve time progression &amp; statistical shift analyzer
             </p>
@@ -105,17 +104,17 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Right Action Buttons */}
-        <div className="flex flex-1 sm:flex-initial items-center justify-between sm:justify-end gap-1.5 sm:gap-2 md:gap-2.5 min-w-0">
+        <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2 md:gap-2.5">
           {!isOnline && (
             <div
               role="status"
               aria-label="Offline mode"
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-2 sm:px-2.5 sm:py-1 text-xs font-medium text-amber-400 shrink-0"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-2 lg:px-2.5 lg:py-1 text-xs font-medium text-amber-400 shrink-0"
               title="You are offline. All features, solves, and statistics operate locally."
             >
               <WifiOff className="h-3.5 w-3.5 shrink-0 text-amber-400" aria-hidden="true" />
-              <span className="hidden xl:inline">Offline mode</span>
-              <span className="sr-only xl:hidden">Offline mode</span>
+              <span className="hidden lg:inline">Offline mode</span>
+              <span className="sr-only lg:hidden">Offline mode</span>
             </div>
           )}
 
@@ -124,7 +123,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               type="button"
               onClick={handleInstall}
               aria-label="Install App"
-              className="flex-1 sm:flex-initial inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-2 lg:px-3 lg:py-1.5 text-xs font-medium whitespace-nowrap text-amber-300 shadow-sm transition-all hover:bg-amber-500/20 active:scale-95"
+              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-2 lg:px-3 lg:py-1.5 text-xs font-medium whitespace-nowrap text-amber-300 shadow-sm transition-all hover:bg-amber-500/20 active:scale-95 shrink-0"
               title="Install CubeProgression as a Progressive Web App"
             >
               <Download className="h-3.5 w-3.5 shrink-0 text-amber-400" />
@@ -132,60 +131,41 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          <button
-            type="button"
-            onClick={onLoadDemo}
-            className="flex-1 sm:flex-initial inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-2 sm:px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-stone-950 shadow-md shadow-amber-500/10 transition-all hover:from-amber-400 hover:to-orange-400 active:scale-95"
-            title="Load Sample Data"
-          >
-            <Sparkles className="h-3.5 w-3.5 shrink-0 fill-current" />
-            <span className="hidden sm:inline">Load Sample Data</span>
-            <span className="sm:hidden">Demo</span>
-          </button>
-
           {onOpenInstructions && (
             <button
               type="button"
               onClick={onOpenInstructions}
               aria-label="Export Guide"
-              className="flex-1 sm:flex-initial inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800 p-2 sm:px-2.5 sm:py-1.5 xl:px-3 text-xs font-medium whitespace-nowrap text-stone-200 transition-all hover:bg-stone-700/80 active:scale-95"
+              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800/90 px-2.5 py-1.5 sm:px-3 text-xs font-medium whitespace-nowrap text-stone-200 transition-all hover:border-amber-500/40 hover:bg-stone-700/80 active:scale-95 shadow-sm shrink-0"
               title="How to export solves from csTimer"
             >
               <HelpCircle className="h-3.5 w-3.5 shrink-0 text-amber-400" />
-              <span className="hidden xl:inline">Export Guide</span>
+              <span className="sm:hidden">Guide</span>
+              <span className="hidden sm:inline">Export Guide</span>
             </button>
           )}
-
-          <button
-            type="button"
-            onClick={onExportCSV}
-            aria-label="Export CSV"
-            className="flex-1 sm:flex-initial inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800 p-2 sm:px-3 sm:py-1.5 text-xs font-medium whitespace-nowrap text-stone-200 transition-all hover:bg-stone-700/80 active:scale-95"
-            title="Export Period Summary Stats as CSV"
-          >
-            <Download className="h-3.5 w-3.5 shrink-0 text-stone-400" />
-            <span className="hidden sm:inline">Export CSV</span>
-          </button>
 
           {isSaved && onClearStorage ? (
             <button
               type="button"
               onClick={onClearStorage}
               aria-label="Reset Data"
-              className="flex-1 sm:flex-initial inline-flex cursor-pointer items-center justify-center rounded-xl border border-stone-700/60 bg-stone-800 p-2 text-stone-400 transition-all hover:border-rose-500/30 hover:bg-rose-500/10 hover:text-rose-400 active:scale-95"
+              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800/90 p-2 md:px-3 md:py-1.5 text-xs font-medium whitespace-nowrap text-stone-300 transition-all hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-300 active:scale-95 shadow-sm shrink-0"
               title="Reset Data"
             >
-              <Trash2 className="h-3.5 w-3.5 shrink-0" />
+              <Trash2 className="h-3.5 w-3.5 shrink-0 text-stone-400" />
+              <span className="hidden md:inline">Reset</span>
             </button>
           ) : (
             <button
               type="button"
               onClick={onReset}
               aria-label="Reset Data"
-              className="flex-1 sm:flex-initial inline-flex cursor-pointer items-center justify-center rounded-xl border border-stone-700/60 bg-stone-800 p-2 text-stone-400 transition-all hover:bg-stone-700/80 hover:text-stone-200 active:scale-95"
+              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800/90 p-2 md:px-3 md:py-1.5 text-xs font-medium whitespace-nowrap text-stone-300 transition-all hover:border-stone-600 hover:bg-stone-700/80 hover:text-stone-100 active:scale-95 shadow-sm shrink-0"
               title="Reset Data"
             >
-              <RefreshCw className="h-3.5 w-3.5 shrink-0" />
+              <RefreshCw className="h-3.5 w-3.5 shrink-0 text-stone-400" />
+              <span className="hidden md:inline">Reset</span>
             </button>
           )}
         </div>

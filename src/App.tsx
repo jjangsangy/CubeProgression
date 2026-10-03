@@ -30,7 +30,6 @@ export default function App() {
     handleSelectSession,
     handleChangeGrouping,
     handleChangeCustomBatchSize,
-    handleExportCSV,
   } = useCubeDatasetCore();
 
   const [updateRegistration, setUpdateRegistration] = useState<ServiceWorkerRegistration | null>(
@@ -52,9 +51,7 @@ export default function App() {
       {/* Top Navigation Bar */}
       <Navbar
         fileName={fileName}
-        onLoadDemo={loadSampleData}
         onReset={handleClearStorage}
-        onExportCSV={handleExportCSV}
         onClearStorage={handleClearStorage}
         onOpenInstructions={() => setIsInstructionModalOpen(true)}
       />

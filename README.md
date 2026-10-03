@@ -29,7 +29,7 @@ A modern, high-performance web application built for speedcubers to analyze **cs
 - **📋 Interactive Solves Table**: Paginated, filterable table listing every solve with scramble details, timestamps, penalties (+2 / DNF), and search capabilities.
 - **📱 Progressive Web App (PWA) & 100% Offline Capability**: Installable directly to your desktop or mobile home screen with zero network reliance. The application shell and precached chunks load instantaneously, and local solve data remains fully interactive offline.
 - **💾 IndexedDB Persistence**: Automatically preserves imported sessions, active view settings, and solve data locally in the browser so your analysis persists across reloads.
-- **📸 High-Resolution PNG & CSV Export**: Download crisp PNG snapshots of any analytical chart with one click or export period summary statistics as CSV.
+- **📸 High-Resolution PNG Export**: Download crisp PNG snapshots of any analytical chart with one click.
 - **🔍 Fullscreen Modal Mode**: Expand any chart into an immersive modal for granular data exploration.
 
 ---
@@ -43,7 +43,7 @@ A modern, high-performance web application built for speedcubers to analyze **cs
 - **Charts & Statistics**: [Recharts 3](https://recharts.org/), hand-authored SVG box plot, and pure in-memory statistical algorithms
 - **Dates & Timezones**: Standard `Temporal` with conditional dynamic polyfill for older browsers (native JS `Date` is strictly forbidden project-wide)
 - **Storage & Offline Persistence**: Native browser [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)
-- **Snapshot & Export**: [html-to-image](https://github.com/bubkoo/html-to-image) for high-resolution PNG chart downloads and CSV export
+- **Snapshot & Export**: [html-to-image](https://github.com/bubkoo/html-to-image) for high-resolution PNG chart downloads
 - **Linter & Formatter**: [Biome 2](https://biomejs.dev/)
 - **Testing**: [Vitest 5](https://vitest.dev/), [React Testing Library](https://testing-library.com/)
 
@@ -155,7 +155,7 @@ bun run preview
 │   │   ├── FileUploader.tsx          # Drag-and-drop csTimer session import
 │   │   ├── MetricsEvolutionChart.tsx # Variance & consistency tracker (Std Dev, IQR)
 │   │   ├── MetricsOverviewCards.tsx  # Summary KPIs (Single, ao5, ao12, Mean, DNF%)
-│   │   ├── Navbar.tsx                # Header with storage stats, demo load, CSV export
+│   │   ├── Navbar.tsx                # Header with storage stats, demo load, guide modal
 │   │   ├── PbProgressionChart.tsx    # PB history step chart
 │   │   ├── ProgressionChart.tsx      # Main solves + moving averages chart
 │   │   └── SolvesTable.tsx           # Paginated, searchable solve details table

@@ -129,38 +129,6 @@ describe('App component', () => {
     });
   });
 
-  it('exports period summary statistics as a CSV download', async () => {
-    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click');
-    const captured: { anchor: HTMLAnchorElement | null } = { anchor: null };
-    const originalAppend = document.body.appendChild.bind(document.body);
-    vi.spyOn(document.body, 'appendChild').mockImplementation((node) => {
-      if (node instanceof HTMLAnchorElement) {
-        captured.anchor = node;
-      }
-      return originalAppend(node);
-    });
-
-    render(<App />);
-
-    await waitFor(() => {
-      expect(
-        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-      ).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByTitle('Export Period Summary Stats as CSV'));
-
-    expect(clickSpy).toHaveBeenCalled();
-    const anchor = captured.anchor;
-    expect(anchor).not.toBeNull();
-    expect(anchor?.getAttribute('download')).toContain('F2L Yellow Cross Progression (Demo)');
-    expect(anchor?.getAttribute('download')).toMatch(/_period_stats\.csv$/);
-
-    const csv = decodeURI(anchor?.getAttribute('href') ?? '');
-    expect(csv).toContain('Period,Solves,Mean(s),Median(s),Min(s),Max(s),Q1(s),Q3(s),StdDev(s)');
-    expect(csv).toContain('"Day 1 (');
-  });
-
   it('handles file upload error handling for invalid files', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     render(<App />);
@@ -300,7 +268,7 @@ describe('App component', () => {
     });
   });
 
-  it('safely handles user interactions and CSV export when dataset is cleared/empty', async () => {
+  it('safely handles user interactions when dataset is cleared/empty', async () => {
     render(<App />);
 
     await waitFor(() => {
@@ -313,14 +281,9 @@ describe('App component', () => {
     const resetBtn = screen.getByTitle('Reset Data');
     fireEvent.click(resetBtn);
 
-    // Grouping change and CSV export should not throw or download
-    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click');
+    // Grouping change should not throw
     const weeklyBtn = screen.getByText('Weekly');
     fireEvent.click(weeklyBtn);
-
-    const exportBtn = screen.getByTitle('Export Period Summary Stats as CSV');
-    fireEvent.click(exportBtn);
-    expect(clickSpy).not.toHaveBeenCalled();
   });
 
   it('opens and closes the csTimer instruction modal from Navbar and FileUploader across loaded and empty states', async () => {

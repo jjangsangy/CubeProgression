@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { GlobalStats, GroupingPeriod, PeriodGroup, Session } from '../types';
 import { parseCsTimerFile } from '../utils/csTimerParser';
-import { exportPeriodStatsCsv } from '../utils/csvExport';
 import {
   clearSavedDataset,
   getSavedDataset,
@@ -41,7 +40,6 @@ export interface UseCubeDatasetCoreReturn {
   handleSelectSession: (id: string) => void;
   handleChangeGrouping: (period: GroupingPeriod) => void;
   handleChangeCustomBatchSize: (size: number) => void;
-  handleExportCSV: () => void;
 }
 
 export function useCubeDatasetCore(): UseCubeDatasetCoreReturn {
@@ -345,10 +343,6 @@ export function useCubeDatasetCore(): UseCubeDatasetCoreReturn {
     return calculateGlobalStats(activeSession.solves);
   }, [activeSession]);
 
-  const handleExportCSV = useCallback(() => {
-    exportPeriodStatsCsv(periodGroups, activeSession?.name);
-  }, [periodGroups, activeSession?.name]);
-
   return {
     sessions,
     selectedSessionId,
@@ -369,6 +363,5 @@ export function useCubeDatasetCore(): UseCubeDatasetCoreReturn {
     handleSelectSession,
     handleChangeGrouping,
     handleChangeCustomBatchSize,
-    handleExportCSV,
   };
 }

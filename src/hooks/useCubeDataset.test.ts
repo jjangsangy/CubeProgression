@@ -1,7 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as csTimerParser from '../utils/csTimerParser';
-import * as csvExport from '../utils/csvExport';
 import * as dbStorage from '../utils/dbStorage';
 import { useCubeDataset } from './useCubeDataset';
 
@@ -357,24 +356,6 @@ describe('useCubeDataset', () => {
     });
 
     expect(result.current.errorMsg).toBe('Error reading uploaded file.');
-  });
-
-  it('triggers CSV export via handleExportCSV', async () => {
-    const exportSpy = vi.spyOn(csvExport, 'exportPeriodStatsCsv');
-    const { result } = renderHook(() => useCubeDataset());
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    act(() => {
-      result.current.handleExportCSV();
-    });
-
-    expect(exportSpy).toHaveBeenCalledWith(
-      result.current.periodGroups,
-      result.current.activeSession?.name,
-    );
   });
 
   it('catches and logs errors when background saveDataset rejects on user preference changes', async () => {

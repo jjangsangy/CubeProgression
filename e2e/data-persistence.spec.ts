@@ -198,15 +198,4 @@ test.describe('Data Ingestion & IndexedDB Persistence', () => {
     // Previous dashboard remains intact without crashing
     await expect(page.locator('#session-selector')).toBeVisible();
   });
-
-  test('triggers CSV export download', async ({ page }) => {
-    const downloadPromise = page.waitForEvent('download', { timeout: 15000 });
-    const exportBtn = page.getByTitle('Export Period Summary Stats as CSV');
-
-    await exportBtn.click();
-    const download = await downloadPromise;
-
-    // Verify downloaded CSV filename format
-    expect(download.suggestedFilename()).toMatch(/.*_period_stats\.csv$/);
-  });
 });
