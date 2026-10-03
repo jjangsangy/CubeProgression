@@ -136,7 +136,7 @@ A **hand-authored SVG** box-and-whisker plot (zero Recharts overhead). Props: `p
 
 ## `DensityShiftChart` (`DensityShiftChart.tsx`)
 
-Full-width Recharts `AreaChart` of KDE curves with an interactive solve timeline track and dual scrubbers. Props: `solves`, `groupingPeriod?`, `title?`.
+Full-width Recharts `AreaChart` of KDE curves with an interactive solve timeline track and dual scrubbers. Props: `solves`, `groupingPeriod?`, `periodGroups?`, `customBatchSize?`, `title?`.
 
 - Disables non-composited SVG animations (`isAnimationActive={false}`) on baseline and recent areas.
 - Uses `calculateKDEFromSamples(sample1Solves, sample2Solves, 120, globalDomain)` to compute probability density curves between any two sampled subsets over an anchored session-wide domain to prevent X-axis jitter.
@@ -144,7 +144,7 @@ Full-width Recharts `AreaChart` of KDE curves with an interactive solve timeline
 - Plots `baselineDensity` (red/rose) and `recentDensity` (green/emerald) areas.
 - Features dual draggable scrubbers with semi-transparent opacity (`bg-rose-500/25` and `bg-emerald-500/25`) placed on an interactive dataset timeline track below the chart.
 - Each scrubber features ribbed resize handles on both ends (`cursor-ew-resize`) allowing users to drag the ends left or right to dynamically increase or decrease the sample window width. Dragging the center body slides the window along the timeline.
-- The scrubber track features an SVG sparkline and mean reference line representing solve times across the entire session distribution.
+- The scrubber track features an SVG sparkline, mean reference line, and vertical dashed grouping boundary lines showing where aggregation periods (e.g. daily/weekly sessions, batches) begin and end.
 - Computes a centered, evenly distributed summary banner (baseline mean, recent mean, solve index ranges, and "faster/slower by X" shift).
 
 ## `MetricsEvolutionChart` (`MetricsEvolutionChart.tsx`)

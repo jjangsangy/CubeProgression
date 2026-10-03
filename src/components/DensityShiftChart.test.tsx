@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import type { Solve } from '../types';
+import type { PeriodGroup, Solve } from '../types';
 import { DensityShiftChart } from './DensityShiftChart';
 
 const captured = vi.hoisted(() => ({
@@ -898,6 +898,219 @@ describe('DensityShiftChart component', () => {
         addEventListenerSpy.mockRestore();
         removeEventListenerSpy.mockRestore();
       }
+    });
+
+    describe('Scrubber background grouping aggregation vertical lines', () => {
+      it('renders vertical lines showing grouping aggregations on the scrubber track background when multiple period groups exist', () => {
+        const mockGroups: PeriodGroup[] = [
+          {
+            label: 'Day 1',
+            startDate: new Date(1600000000000),
+            endDate: new Date(1600000900000),
+            solves: mockSolves.slice(0, 10),
+            timesSec: mockSolves.slice(0, 10).map((s) => s.finalTimeSec),
+            mean: 11.5,
+            median: 11.5,
+            min: 11.0,
+            max: 12.0,
+            stdDev: 0.3,
+            q1: 11.2,
+            q3: 11.8,
+            iqr: 0.6,
+            whiskerLow: 11.0,
+            whiskerHigh: 12.0,
+            outliers: [],
+          },
+          {
+            label: 'Day 2',
+            startDate: new Date(1600100000000),
+            endDate: new Date(1600100900000),
+            solves: mockSolves.slice(10, 20),
+            timesSec: mockSolves.slice(10, 20).map((s) => s.finalTimeSec),
+            mean: 10.5,
+            median: 10.5,
+            min: 10.0,
+            max: 11.0,
+            stdDev: 0.3,
+            q1: 10.2,
+            q3: 10.8,
+            iqr: 0.6,
+            whiskerLow: 10.0,
+            whiskerHigh: 11.0,
+            outliers: [],
+          },
+        ];
+
+        render(<DensityShiftChart solves={mockSolves} periodGroups={mockGroups} />);
+
+        const boundaryLines = screen.getAllByTestId('group-boundary-line');
+        expect(boundaryLines).toHaveLength(1);
+
+        const line = boundaryLines[0];
+        // 10 out of 20 solves -> x = 500 (50% of 1000 SVG viewBox)
+        expect(line).toHaveAttribute('x1', '500');
+        expect(line).toHaveAttribute('x2', '500');
+        expect(line).toHaveAttribute('y1', '0');
+        expect(line).toHaveAttribute('y2', '72');
+        expect(line).toHaveAttribute('stroke-dasharray', '3 3');
+
+        // Accessible title indicates end of Day 1 and start of Day 2
+        const titleEl = line.parentElement?.querySelector('title');
+        expect(titleEl).toHaveTextContent('Day 1 ended · Day 2 began (solve 10)');
+      });
+
+      it('renders multiple boundary lines proportionally matching group sizes', () => {
+        const mockGroups: PeriodGroup[] = [
+          {
+            label: 'Batch 1',
+            startDate: new Date(1600000000000),
+            endDate: new Date(1600000400000),
+            solves: mockSolves.slice(0, 5),
+            timesSec: mockSolves.slice(0, 5).map((s) => s.finalTimeSec),
+            mean: 11.5,
+            median: 11.5,
+            min: 11.0,
+            max: 12.0,
+            stdDev: 0.3,
+            q1: 11.2,
+            q3: 11.8,
+            iqr: 0.6,
+            whiskerLow: 11.0,
+            whiskerHigh: 12.0,
+            outliers: [],
+          },
+          {
+            label: 'Batch 2',
+            startDate: new Date(1600000500000),
+            endDate: new Date(1600001400000),
+            solves: mockSolves.slice(5, 15),
+            timesSec: mockSolves.slice(5, 15).map((s) => s.finalTimeSec),
+            mean: 11.0,
+            median: 11.0,
+            min: 10.5,
+            max: 11.5,
+            stdDev: 0.3,
+            q1: 10.7,
+            q3: 11.3,
+            iqr: 0.6,
+            whiskerLow: 10.5,
+            whiskerHigh: 11.5,
+            outliers: [],
+          },
+          {
+            label: 'Batch 3',
+            startDate: new Date(1600001500000),
+            endDate: new Date(1600001900000),
+            solves: mockSolves.slice(15, 20),
+            timesSec: mockSolves.slice(15, 20).map((s) => s.finalTimeSec),
+            mean: 10.2,
+            median: 10.2,
+            min: 10.0,
+            max: 10.5,
+            stdDev: 0.2,
+            q1: 10.1,
+            q3: 10.4,
+            iqr: 0.3,
+            whiskerLow: 10.0,
+            whiskerHigh: 10.5,
+            outliers: [],
+          },
+        ];
+
+        render(<DensityShiftChart solves={mockSolves} periodGroups={mockGroups} />);
+
+        const boundaryLines = screen.getAllByTestId('group-boundary-line');
+        expect(boundaryLines).toHaveLength(2);
+
+        // Boundary 1: solve 5 / 20 -> x = 250
+        expect(boundaryLines[0]).toHaveAttribute('x1', '250');
+        expect(boundaryLines[0]).toHaveAttribute('x2', '250');
+
+        // Boundary 2: solve 15 / 20 -> x = 750
+        expect(boundaryLines[1]).toHaveAttribute('x1', '750');
+        expect(boundaryLines[1]).toHaveAttribute('x2', '750');
+      });
+
+      it('renders no boundary lines when there is only one period group', () => {
+        const singleGroup: PeriodGroup[] = [
+          {
+            label: 'Day 1',
+            startDate: new Date(1600000000000),
+            endDate: new Date(1600001900000),
+            solves: mockSolves,
+            timesSec: mockSolves.map((s) => s.finalTimeSec),
+            mean: 11.0,
+            median: 11.0,
+            min: 10.0,
+            max: 12.0,
+            stdDev: 0.5,
+            q1: 10.5,
+            q3: 11.5,
+            iqr: 1.0,
+            whiskerLow: 10.0,
+            whiskerHigh: 12.0,
+            outliers: [],
+          },
+        ];
+
+        render(<DensityShiftChart solves={mockSolves} periodGroups={singleGroup} />);
+        expect(screen.queryAllByTestId('group-boundary-line')).toHaveLength(0);
+      });
+
+      it('dynamically computes grouping aggregations from solves and groupingPeriod when periodGroups is omitted', () => {
+        // Solves spanning 2 different calendar days
+        const multiDaySolves: Solve[] = mockSolves.map((solve, idx) => ({
+          ...solve,
+          timestamp:
+            idx < 10
+              ? 1600000000000 + idx * 1000 // 2020-09-13
+              : 1600086400000 + idx * 1000, // 2020-09-14
+          date:
+            idx < 10 ? new Date(1600000000000 + idx * 1000) : new Date(1600086400000 + idx * 1000),
+          dateStr: idx < 10 ? '2020-09-13' : '2020-09-14',
+        }));
+
+        render(<DensityShiftChart solves={multiDaySolves} groupingPeriod="daily" />);
+
+        const boundaryLines = screen.getAllByTestId('group-boundary-line');
+        expect(boundaryLines).toHaveLength(1);
+        expect(boundaryLines[0]).toHaveAttribute('x1', '500');
+        expect(boundaryLines[0]).toHaveAttribute('x2', '500');
+      });
+
+      it('downsamples boundary lines when group count exceeds 35', () => {
+        // 50 groups with 1 solve each
+        const manySolves: Solve[] = Array.from({ length: 50 }, (_, idx) => ({
+          ...mockSolves[0],
+          id: idx + 1,
+          index: idx + 1,
+        }));
+        const manyGroups: PeriodGroup[] = manySolves.map((s, idx) => ({
+          label: `Batch ${idx + 1}`,
+          startDate: new Date(),
+          endDate: new Date(),
+          solves: [s],
+          timesSec: [s.finalTimeSec],
+          mean: s.finalTimeSec,
+          median: s.finalTimeSec,
+          min: s.finalTimeSec,
+          max: s.finalTimeSec,
+          stdDev: 0,
+          q1: s.finalTimeSec,
+          q3: s.finalTimeSec,
+          iqr: 0,
+          whiskerLow: s.finalTimeSec,
+          whiskerHigh: s.finalTimeSec,
+          outliers: [],
+        }));
+
+        render(<DensityShiftChart solves={manySolves} periodGroups={manyGroups} />);
+
+        const boundaryLines = screen.getAllByTestId('group-boundary-line');
+        // Total raw boundaries would be 49; with step = ceil(49 / 35) = 2, filtered count is 24
+        expect(boundaryLines.length).toBeLessThan(49);
+        expect(boundaryLines.length).toBe(24);
+      });
     });
   });
 });

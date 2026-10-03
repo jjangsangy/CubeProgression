@@ -10,19 +10,27 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import type { GroupingPeriod, Solve } from '../types';
-import { calculateKDEFromSamples, getNormalizedYCeilingWithHysteresis } from '../utils/statsMath';
+import type { GroupingPeriod, PeriodGroup, Solve } from '../types';
+import {
+  calculateKDEFromSamples,
+  getNormalizedYCeilingWithHysteresis,
+  groupSolvesByPeriod,
+} from '../utils/statsMath';
 import { ChartCardWrapper } from './ChartCardWrapper';
 
 interface DensityShiftChartProps {
   solves: Solve[];
   groupingPeriod?: GroupingPeriod;
+  periodGroups?: PeriodGroup[];
+  customBatchSize?: number;
   title?: string;
 }
 
 export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
   solves,
-  groupingPeriod: _groupingPeriod,
+  groupingPeriod = 'daily',
+  periodGroups,
+  customBatchSize = 50,
   title = 'Distribution Density Shift',
 }) => {
   const trackGradientId = useId();
@@ -35,6 +43,58 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
   // Filter valid (non-DNF) solves
   const validSolves = useMemo(() => solves.filter((s) => s.penalty !== 'DNF'), [solves]);
   const totalSolves = validSolves.length;
+
+  // Effective period groups (passed from parent or grouped dynamically)
+  const effectivePeriodGroups = useMemo(() => {
+    if (periodGroups && periodGroups.length > 0) return periodGroups;
+    if (solves.length > 0) {
+      return groupSolvesByPeriod(solves, groupingPeriod, customBatchSize);
+    }
+    return [];
+  }, [periodGroups, solves, groupingPeriod, customBatchSize]);
+
+  // Group boundaries for timeline scrubber background vertical lines
+  const groupBoundaries = useMemo(() => {
+    if (effectivePeriodGroups.length <= 1 || totalSolves === 0) return [];
+
+    const rawBoundaries: Array<{
+      solveIndex: number;
+      x: number;
+      percent: number;
+      periodNumber: number;
+      label: string;
+      nextLabel?: string;
+    }> = [];
+
+    let cumulativeCount = 0;
+    for (let i = 0; i < effectivePeriodGroups.length - 1; i++) {
+      const group = effectivePeriodGroups[i];
+      const count =
+        group.solves && group.solves.length > 0
+          ? group.solves.filter((s) => s.penalty !== 'DNF').length
+          : (group.timesSec?.length ?? 0);
+      cumulativeCount += count;
+
+      if (cumulativeCount > 0 && cumulativeCount < totalSolves) {
+        const percent = (cumulativeCount / totalSolves) * 100;
+        const x = (cumulativeCount / totalSolves) * 1000;
+        rawBoundaries.push({
+          solveIndex: cumulativeCount,
+          x,
+          percent,
+          periodNumber: i + 1,
+          label: group.label,
+          nextLabel: effectivePeriodGroups[i + 1]?.label,
+        });
+      }
+    }
+
+    if (rawBoundaries.length <= 35) {
+      return rawBoundaries;
+    }
+    const step = Math.ceil(rawBoundaries.length / 35);
+    return rawBoundaries.filter((_, idx) => (idx + 1) % step === 0);
+  }, [effectivePeriodGroups, totalSolves]);
 
   // Symmetrical sample count shared by both scrubbers (default 30% of solves)
   const defaultCount = Math.max(3, Math.min(totalSolves, Math.round(totalSolves * 0.3)));
@@ -638,6 +698,27 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
                 strokeWidth="1"
                 opacity={0.6}
               />
+              {/* Grouping Aggregation Boundary Vertical Lines */}
+              {groupBoundaries.map((b) => (
+                <g key={`group-boundary-${b.periodNumber}-${b.solveIndex}`}>
+                  <line
+                    data-testid="group-boundary-line"
+                    x1={b.x}
+                    y1={0}
+                    x2={b.x}
+                    y2={72}
+                    stroke="#94a3b8"
+                    strokeDasharray="3 3"
+                    strokeWidth="1.2"
+                    opacity={0.65}
+                  />
+                  <title>
+                    {b.nextLabel
+                      ? `${b.label} ended · ${b.nextLabel} began (solve ${b.solveIndex})`
+                      : `${b.label} ended (solve ${b.solveIndex})`}
+                  </title>
+                </g>
+              ))}
             </svg>
           )}
 

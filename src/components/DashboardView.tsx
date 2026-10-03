@@ -68,6 +68,7 @@ export function DashboardView({
           <DensityShiftChart
             solves={session.solves}
             groupingPeriod={groupingPeriod}
+            periodGroups={periodGroups}
             title="Time Distribution Shift: Baseline vs. Recent Solves"
           />
         </DeferredChart>

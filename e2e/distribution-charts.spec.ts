@@ -49,6 +49,12 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
     await expect(densityCard.getByText('Sample 1:')).not.toBeVisible();
     await expect(densityCard.getByText('Sample 2:')).not.toBeVisible();
 
+    // Verify grouping aggregation vertical boundary lines are rendered on the scrubber track background
+    const boundaryLines = densityCard.locator('line[data-testid="group-boundary-line"]');
+    await expect(boundaryLines.first()).toBeAttached();
+    const boundaryCount = await boundaryLines.count();
+    expect(boundaryCount).toBeGreaterThan(0);
+
     // Verify scrubber keyboard movement (slide position)
     await scrubber1.focus();
     await page.keyboard.press('ArrowRight');
