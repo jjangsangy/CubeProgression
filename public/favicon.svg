@@ -27,8 +27,8 @@
   <rect width="512" height="512" rx="118" fill="url(#cp-bg)"/>
   <rect width="506" height="506" x="3" y="3" rx="115" fill="none" stroke="#334155" stroke-width="2.5" opacity="0.6"/>
 
-  <!-- Centered Speedcube Stopwatch -->
-  <g transform="translate(256, 275)">
+  <!-- Centered Scaled-Up Speedcube Stopwatch (Optimized to fill canvas) -->
+  <g transform="translate(256, 268) scale(1.24)">
     <!-- Shadow beneath stopwatch body -->
     <ellipse cx="0" cy="180" rx="140" ry="16" fill="#000000" opacity="0.45"/>
 
