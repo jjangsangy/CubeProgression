@@ -9,3 +9,4 @@
     * filtering
     * scramble generator
 * feat(ui): Show dates in session
+* fix(plot): Make ui changes smoother for kde plot
