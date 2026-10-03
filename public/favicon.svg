@@ -61,22 +61,22 @@
       <rect x="110" y="110" width="48" height="48" rx="10" fill="url(#cp-yellow)"/>
 
       <!-- Peripheral Side Indicator Tabs (Western standard: Orange Top, Green Right, Red Bottom, Blue Left) -->
-      <!-- Top edge tabs: Orange -->
-      <rect x="0" y="-12" width="48" height="7" rx="3" fill="#ea580c"/>
-      <rect x="55" y="-12" width="48" height="7" rx="3" fill="#ea580c"/>
-      <rect x="110" y="-12" width="48" height="7" rx="3" fill="#ea580c"/>
-      <!-- Right edge tabs: Green -->
-      <rect x="163" y="0" width="7" height="48" rx="3" fill="#16a34a"/>
-      <rect x="163" y="55" width="7" height="48" rx="3" fill="#16a34a"/>
-      <rect x="163" y="110" width="7" height="48" rx="3" fill="#16a34a"/>
-      <!-- Bottom edge tabs: Red -->
-      <rect x="0" y="163" width="48" height="7" rx="3" fill="#dc2626"/>
-      <rect x="55" y="163" width="48" height="7" rx="3" fill="#dc2626"/>
-      <rect x="110" y="163" width="48" height="7" rx="3" fill="#dc2626"/>
-      <!-- Left edge tabs: Blue -->
-      <rect x="-12" y="0" width="7" height="48" rx="3" fill="#0284c7"/>
-      <rect x="-12" y="55" width="7" height="48" rx="3" fill="#0284c7"/>
-      <rect x="-12" y="110" width="7" height="48" rx="3" fill="#0284c7"/>
+      <!-- Top edge tabs: Blaze Orange (#ff6600) -->
+      <rect x="0" y="-14" width="48" height="9" rx="4" fill="#ff6600"/>
+      <rect x="55" y="-14" width="48" height="9" rx="4" fill="#ff6600"/>
+      <rect x="110" y="-14" width="48" height="9" rx="4" fill="#ff6600"/>
+      <!-- Right edge tabs: Emerald Green (#16a34a) -->
+      <rect x="163" y="0" width="9" height="48" rx="4" fill="#16a34a"/>
+      <rect x="163" y="55" width="9" height="48" rx="4" fill="#16a34a"/>
+      <rect x="163" y="110" width="9" height="48" rx="4" fill="#16a34a"/>
+      <!-- Bottom edge tabs: Pure Vivid Red (#e50914) -->
+      <rect x="0" y="161" width="48" height="9" rx="4" fill="#e50914"/>
+      <rect x="55" y="161" width="48" height="9" rx="4" fill="#e50914"/>
+      <rect x="110" y="161" width="48" height="9" rx="4" fill="#e50914"/>
+      <!-- Left edge tabs: Electric Blue (#0284c7) -->
+      <rect x="-14" y="0" width="9" height="48" rx="4" fill="#0284c7"/>
+      <rect x="-14" y="55" width="9" height="48" rx="4" fill="#0284c7"/>
+      <rect x="-14" y="110" width="9" height="48" rx="4" fill="#0284c7"/>
     </g>
 
     <!-- Center Timer Pivot & Precision Hand Pointing Up-Right (Progressing) -->
