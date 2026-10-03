@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -135,7 +135,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
   }, [validSolves]);
 
   // Active drag state: can move whole body or resize via left/right ribbed ends
-  const [activeDrag, setActiveDrag] = useState<{
+  type DragState = {
     type: 'move' | 'resize-start' | 'resize-end';
     scrubber: 1 | 2;
     startX: number;
@@ -144,7 +144,9 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     initialCount: number;
     trackWidth: number;
     pointerId: number;
-  } | null>(null);
+  };
+  const [activeDrag, setActiveDrag] = useState<DragState | null>(null);
+  const activeDragRef = useRef<DragState | null>(null);
   const { containerRef, tooltipActive, touchHandlers } = useAutoDismissTooltip();
 
   const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() =>
@@ -305,7 +307,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     } catch {
       // Safe fallback
     }
-    setActiveDrag({
+    const dragState: DragState = {
       type: 'move',
       scrubber,
       startX: e.clientX,
@@ -314,7 +316,9 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
       initialCount: sampleCount,
       trackWidth,
       pointerId: e.pointerId,
-    });
+    };
+    activeDragRef.current = dragState;
+    setActiveDrag(dragState);
   };
 
   // Pointer drag handler for resizing via ribbed ends (symmetrical sample size update)
@@ -335,7 +339,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     } catch {
       // Safe fallback
     }
-    setActiveDrag({
+    const dragState: DragState = {
       type: edge === 'start' ? 'resize-start' : 'resize-end',
       scrubber,
       startX: e.clientX,
@@ -344,79 +348,114 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
       initialCount: sampleCount,
       trackWidth,
       pointerId: e.pointerId,
-    });
+    };
+    activeDragRef.current = dragState;
+    setActiveDrag(dragState);
   };
 
-  const applyDragDelta = (deltaSolves: number) => {
-    if (!activeDrag) return;
+  const applyDragDelta = useCallback(
+    (deltaSolves: number, overrideDrag?: DragState) => {
+      const drag = overrideDrag ?? activeDragRef.current ?? activeDrag;
+      if (!drag) return;
 
-    if (activeDrag.type === 'move') {
-      const curMaxStart = Math.max(0, totalSolves - activeDrag.initialCount);
-      if (activeDrag.scrubber === 1) {
-        const newStart1 = Math.max(
-          0,
-          Math.min(curMaxStart, activeDrag.initialStart1 + deltaSolves),
-        );
-        setStart1State(newStart1);
-      } else {
-        const newStart2 = Math.max(
-          0,
-          Math.min(curMaxStart, activeDrag.initialStart2 + deltaSolves),
-        );
-        setStart2State(newStart2);
+      if (drag.type === 'move') {
+        const curMaxStart = Math.max(0, totalSolves - drag.initialCount);
+        if (drag.scrubber === 1) {
+          const newStart1 = Math.max(0, Math.min(curMaxStart, drag.initialStart1 + deltaSolves));
+          setStart1State(newStart1);
+        } else {
+          const newStart2 = Math.max(0, Math.min(curMaxStart, drag.initialStart2 + deltaSolves));
+          setStart2State(newStart2);
+        }
+      } else if (drag.type === 'resize-end') {
+        // Dragging right edge: anchor left edge, expand/contract width symmetrically
+        if (drag.scrubber === 1) {
+          const fixedStart1 = drag.initialStart1;
+          const requestedEnd1 = fixedStart1 + drag.initialCount + deltaSolves;
+          const clampedEnd1 = Math.max(fixedStart1 + 3, Math.min(totalSolves, requestedEnd1));
+          const newCount = clampedEnd1 - fixedStart1;
+
+          setSampleCountState(newCount);
+          setStart1State(fixedStart1);
+          setStart2State((prev) => Math.min(Math.max(0, totalSolves - newCount), prev ?? maxStart));
+        } else {
+          const fixedStart2 = drag.initialStart2;
+          const requestedEnd2 = fixedStart2 + drag.initialCount + deltaSolves;
+          const clampedEnd2 = Math.max(fixedStart2 + 3, Math.min(totalSolves, requestedEnd2));
+          const newCount = clampedEnd2 - fixedStart2;
+
+          setSampleCountState(newCount);
+          setStart2State(fixedStart2);
+          setStart1State((prev) => Math.min(Math.max(0, totalSolves - newCount), prev ?? 0));
+        }
+      } else if (drag.type === 'resize-start') {
+        // Dragging left edge: anchor right edge, expand/contract width symmetrically
+        if (drag.scrubber === 1) {
+          const fixedEnd1 = drag.initialStart1 + drag.initialCount;
+          const requestedStart1 = drag.initialStart1 + deltaSolves;
+          const clampedStart1 = Math.max(0, Math.min(fixedEnd1 - 3, requestedStart1));
+          const newCount = fixedEnd1 - clampedStart1;
+
+          setSampleCountState(newCount);
+          setStart1State(clampedStart1);
+          setStart2State((prev) => Math.min(Math.max(0, totalSolves - newCount), prev ?? maxStart));
+        } else {
+          const fixedEnd2 = drag.initialStart2 + drag.initialCount;
+          const requestedStart2 = drag.initialStart2 + deltaSolves;
+          const clampedStart2 = Math.max(0, Math.min(fixedEnd2 - 3, requestedStart2));
+          const newCount = fixedEnd2 - clampedStart2;
+
+          setSampleCountState(newCount);
+          setStart2State(clampedStart2);
+          setStart1State((prev) => Math.min(Math.max(0, totalSolves - newCount), prev ?? 0));
+        }
       }
-    } else if (activeDrag.type === 'resize-end') {
-      // Dragging right edge: anchor left edge, expand/contract width symmetrically
-      if (activeDrag.scrubber === 1) {
-        const fixedStart1 = activeDrag.initialStart1;
-        const requestedEnd1 = fixedStart1 + activeDrag.initialCount + deltaSolves;
-        const clampedEnd1 = Math.max(fixedStart1 + 3, Math.min(totalSolves, requestedEnd1));
-        const newCount = clampedEnd1 - fixedStart1;
+    },
+    [activeDrag, totalSolves, maxStart],
+  );
 
-        setSampleCountState(newCount);
-        setStart1State(fixedStart1);
-        setStart2State((prev) => Math.min(Math.max(0, totalSolves - newCount), prev ?? maxStart));
-      } else {
-        const fixedStart2 = activeDrag.initialStart2;
-        const requestedEnd2 = fixedStart2 + activeDrag.initialCount + deltaSolves;
-        const clampedEnd2 = Math.max(fixedStart2 + 3, Math.min(totalSolves, requestedEnd2));
-        const newCount = clampedEnd2 - fixedStart2;
-
-        setSampleCountState(newCount);
-        setStart2State(fixedStart2);
-        setStart1State((prev) => Math.min(Math.max(0, totalSolves - newCount), prev ?? 0));
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent<HTMLElement> | PointerEvent) => {
+      const drag = activeDragRef.current ?? activeDrag;
+      if (drag) {
+        activeDragRef.current = null;
+        setActiveDrag(null);
+        if (rafIdRef.current !== null) {
+          cancelAnimationFrame(rafIdRef.current);
+          rafIdRef.current = null;
+        }
+        applyDragDelta(latestDeltaSolvesRef.current, drag);
+        try {
+          const target = (e.currentTarget ?? e.target) as HTMLElement | null;
+          if (target && typeof target.releasePointerCapture === 'function') {
+            target.releasePointerCapture(drag.pointerId);
+          }
+        } catch {
+          // Safe fallback
+        }
+        setTimeout(() => {
+          dragMovedRef.current = false;
+        }, 50);
       }
-    } else if (activeDrag.type === 'resize-start') {
-      // Dragging left edge: anchor right edge, expand/contract width symmetrically
-      if (activeDrag.scrubber === 1) {
-        const fixedEnd1 = activeDrag.initialStart1 + activeDrag.initialCount;
-        const requestedStart1 = activeDrag.initialStart1 + deltaSolves;
-        const clampedStart1 = Math.max(0, Math.min(fixedEnd1 - 3, requestedStart1));
-        const newCount = fixedEnd1 - clampedStart1;
+    },
+    [activeDrag, applyDragDelta],
+  );
 
-        setSampleCountState(newCount);
-        setStart1State(clampedStart1);
-        setStart2State((prev) => Math.min(Math.max(0, totalSolves - newCount), prev ?? maxStart));
-      } else {
-        const fixedEnd2 = activeDrag.initialStart2 + activeDrag.initialCount;
-        const requestedStart2 = activeDrag.initialStart2 + deltaSolves;
-        const clampedStart2 = Math.max(0, Math.min(fixedEnd2 - 3, requestedStart2));
-        const newCount = fixedEnd2 - clampedStart2;
+  const handlePointerMove = (e: React.PointerEvent<HTMLElement> | PointerEvent) => {
+    const drag = activeDragRef.current ?? activeDrag;
+    if (!drag) return;
 
-        setSampleCountState(newCount);
-        setStart2State(clampedStart2);
-        setStart1State((prev) => Math.min(Math.max(0, totalSolves - newCount), prev ?? 0));
-      }
+    // If mouse button was released without a pointerup event, immediately cancel drag
+    if (e.pointerType === 'mouse' && (e.buttons & 1) === 0) {
+      handlePointerUp(e);
+      return;
     }
-  };
 
-  const handlePointerMove = (e: React.PointerEvent<HTMLElement>) => {
-    if (!activeDrag) return;
-    const deltaX = e.clientX - activeDrag.startX;
+    const deltaX = e.clientX - drag.startX;
     if (Math.abs(deltaX) > 2) {
       dragMovedRef.current = true;
     }
-    const deltaSolves = Math.round((deltaX / activeDrag.trackWidth) * totalSolves);
+    const deltaSolves = Math.round((deltaX / drag.trackWidth) * totalSolves);
     latestDeltaSolvesRef.current = deltaSolves;
 
     // Fluid 60fps frame pacing in browser via RAF, synchronous in jsdom
@@ -432,28 +471,37 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
         });
       }
     } else {
-      applyDragDelta(deltaSolves);
+      applyDragDelta(deltaSolves, drag);
     }
   };
 
-  const handlePointerUp = (e: React.PointerEvent<HTMLElement>) => {
-    if (activeDrag) {
-      if (rafIdRef.current !== null) {
-        cancelAnimationFrame(rafIdRef.current);
-        rafIdRef.current = null;
+  // Window-level safety listeners when dragging to prevent mouse getting stuck
+  useEffect(() => {
+    if (!activeDrag) return;
+
+    const onWindowPointerUp = (e: PointerEvent) => {
+      const currentDrag = activeDragRef.current ?? activeDrag;
+      if (currentDrag && (e.pointerId === currentDrag.pointerId || e.pointerType === 'mouse')) {
+        handlePointerUp(e);
       }
-      applyDragDelta(latestDeltaSolvesRef.current);
-      try {
-        (e.currentTarget as HTMLElement).releasePointerCapture(activeDrag.pointerId);
-      } catch {
-        // Safe fallback
+    };
+
+    const onWindowPointerMove = (e: PointerEvent) => {
+      if (e.pointerType === 'mouse' && (e.buttons & 1) === 0) {
+        onWindowPointerUp(e);
       }
-      setActiveDrag(null);
-      setTimeout(() => {
-        dragMovedRef.current = false;
-      }, 50);
-    }
-  };
+    };
+
+    window.addEventListener('pointerup', onWindowPointerUp);
+    window.addEventListener('pointercancel', onWindowPointerUp);
+    window.addEventListener('pointermove', onWindowPointerMove);
+
+    return () => {
+      window.removeEventListener('pointerup', onWindowPointerUp);
+      window.removeEventListener('pointercancel', onWindowPointerUp);
+      window.removeEventListener('pointermove', onWindowPointerMove);
+    };
+  }, [activeDrag, handlePointerUp]);
 
   const handleTrackClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (dragMovedRef.current || activeDrag || totalSolves === 0) return;
@@ -890,6 +938,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
+            onLostPointerCapture={handlePointerUp}
             onKeyDown={(e) => {
               const step = e.shiftKey ? Math.max(1, Math.round(totalSolves * 0.05)) : 1;
               if (e.altKey && e.key === 'ArrowRight') {
@@ -924,6 +973,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
               onPointerCancel={handlePointerUp}
+              onLostPointerCapture={handlePointerUp}
               aria-label="Baseline left resize handle"
               title="Drag to resize sample window"
             >
@@ -940,6 +990,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
               onPointerCancel={handlePointerUp}
+              onLostPointerCapture={handlePointerUp}
               aria-label="Baseline right resize handle"
               title="Drag to resize sample window"
             >
@@ -965,6 +1016,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
+            onLostPointerCapture={handlePointerUp}
             onKeyDown={(e) => {
               const step = e.shiftKey ? Math.max(1, Math.round(totalSolves * 0.05)) : 1;
               if (e.altKey && e.key === 'ArrowRight') {
@@ -999,6 +1051,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
               onPointerCancel={handlePointerUp}
+              onLostPointerCapture={handlePointerUp}
               aria-label="Recent left resize handle"
               title="Drag to resize sample window"
             >
@@ -1015,6 +1068,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
               onPointerCancel={handlePointerUp}
+              onLostPointerCapture={handlePointerUp}
               aria-label="Recent right resize handle"
               title="Drag to resize sample window"
             >

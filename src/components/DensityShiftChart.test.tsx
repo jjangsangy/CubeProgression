@@ -473,6 +473,202 @@ describe('DensityShiftChart component', () => {
   });
 
   describe('Pointer dragging and track interaction', () => {
+    it('does not attach scrubber to mouse when clicking quickly and releasing before next render', () => {
+      render(<DensityShiftChart solves={mockSolves} />);
+      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
+        left: 100,
+        top: 50,
+        right: 600,
+        bottom: 130,
+        width: 500,
+        height: 80,
+        x: 100,
+        y: 50,
+        toJSON: () => {},
+      });
+
+      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+
+      // Dispatch pointerdown and pointerup synchronously in the same act/batch (fast click)
+      act(() => {
+        scrubber1.dispatchEvent(
+          new PointerEvent('pointerdown', { clientX: 100, pointerId: 1, bubbles: true }),
+        );
+        scrubber1.dispatchEvent(
+          new PointerEvent('pointerup', { clientX: 100, pointerId: 1, bubbles: true }),
+        );
+      });
+
+      // Moving the mouse without any buttons pressed does not move scrubber
+      act(() => {
+        scrubber1.dispatchEvent(
+          new PointerEvent('pointermove', { clientX: 300, pointerId: 1, bubbles: true }),
+        );
+      });
+
+      expect(scrubber1).toHaveAttribute('aria-valuenow', '1');
+    });
+
+    it('does not attach recent scrubber to mouse on quick click and release', () => {
+      render(<DensityShiftChart solves={mockSolves} />);
+      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
+        left: 100,
+        top: 50,
+        right: 600,
+        bottom: 130,
+        width: 500,
+        height: 80,
+        x: 100,
+        y: 50,
+        toJSON: () => {},
+      });
+
+      const scrubber2 = screen.getByLabelText('Recent scrubber position');
+      const initialVal = scrubber2.getAttribute('aria-valuenow');
+
+      act(() => {
+        scrubber2.dispatchEvent(
+          new PointerEvent('pointerdown', { clientX: 450, pointerId: 2, bubbles: true }),
+        );
+        scrubber2.dispatchEvent(
+          new PointerEvent('pointerup', { clientX: 450, pointerId: 2, bubbles: true }),
+        );
+      });
+
+      act(() => {
+        scrubber2.dispatchEvent(
+          new PointerEvent('pointermove', { clientX: 200, pointerId: 2, bubbles: true }),
+        );
+      });
+
+      expect(scrubber2).toHaveAttribute('aria-valuenow', initialVal);
+    });
+
+    it('does not resize sample window when clicking resize handle quickly', () => {
+      render(<DensityShiftChart solves={mockSolves} />);
+      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
+        left: 100,
+        top: 50,
+        right: 600,
+        bottom: 130,
+        width: 500,
+        height: 80,
+        x: 100,
+        y: 50,
+        toJSON: () => {},
+      });
+
+      const rightHandle = screen.getByLabelText('Baseline right resize handle');
+      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+      const initialWidth = scrubber1.style.width;
+
+      act(() => {
+        rightHandle.dispatchEvent(
+          new PointerEvent('pointerdown', { clientX: 250, pointerId: 3, bubbles: true }),
+        );
+        rightHandle.dispatchEvent(
+          new PointerEvent('pointerup', { clientX: 250, pointerId: 3, bubbles: true }),
+        );
+      });
+
+      act(() => {
+        rightHandle.dispatchEvent(
+          new PointerEvent('pointermove', { clientX: 400, pointerId: 3, bubbles: true }),
+        );
+      });
+
+      expect(scrubber1.style.width).toBe(initialWidth);
+    });
+
+    it('immediately aborts drag when pointermove occurs with buttons: 0 (mouse button released)', () => {
+      render(<DensityShiftChart solves={mockSolves} />);
+      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
+        left: 100,
+        top: 50,
+        right: 600,
+        bottom: 130,
+        width: 500,
+        height: 80,
+        x: 100,
+        y: 50,
+        toJSON: () => {},
+      });
+
+      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+
+      // Start drag with button pressed (buttons: 1)
+      fireEvent.pointerDown(scrubber1, {
+        clientX: 200,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 1,
+      });
+
+      // Move with buttons: 0 (indicating button was released without pointerup event)
+      fireEvent.pointerMove(scrubber1, {
+        clientX: 300,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 0,
+      });
+
+      // Subsequent moves do not alter position
+      fireEvent.pointerMove(scrubber1, {
+        clientX: 400,
+        pointerId: 1,
+        pointerType: 'mouse',
+        buttons: 0,
+      });
+      expect(scrubber1).toHaveAttribute('aria-valuenow', '1');
+    });
+
+    it('terminates drag when lostpointercapture event fires', () => {
+      render(<DensityShiftChart solves={mockSolves} />);
+      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
+        left: 100,
+        top: 50,
+        right: 600,
+        bottom: 130,
+        width: 500,
+        height: 80,
+        x: 100,
+        y: 50,
+        toJSON: () => {},
+      });
+
+      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+
+      fireEvent.pointerDown(scrubber1, { clientX: 200, pointerId: 1 });
+      fireEvent.lostPointerCapture(scrubber1, { pointerId: 1 });
+
+      // Move after capture lost does not move scrubber
+      fireEvent.pointerMove(scrubber1, { clientX: 350, pointerId: 1 });
+      expect(scrubber1).toHaveAttribute('aria-valuenow', '1');
+    });
+
+    it('terminates drag on window pointerup event when cursor is outside the element', () => {
+      render(<DensityShiftChart solves={mockSolves} />);
+      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+
+      fireEvent.pointerDown(scrubber1, { clientX: 200, pointerId: 1, pointerType: 'mouse' });
+
+      // Window receives pointerup
+      act(() => {
+        window.dispatchEvent(
+          new PointerEvent('pointerup', { clientX: 500, pointerId: 1, pointerType: 'mouse' }),
+        );
+      });
+
+      // Scrubber should not move on subsequent pointer moves
+      fireEvent.pointerMove(scrubber1, { clientX: 400, pointerId: 1 });
+      expect(scrubber1).toHaveAttribute('aria-valuenow', '1');
+    });
+
     it('handles pointer dragging on Scrubber 1 body to shift baseline sample window', () => {
       render(<DensityShiftChart solves={mockSolves} />);
 

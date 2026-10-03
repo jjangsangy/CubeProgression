@@ -11,6 +11,66 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
     });
   });
 
+  test('DensityShiftChart quick clicks do not latch scrubber to mouse when moving cursor afterwards', async ({
+    page,
+  }) => {
+    await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
+
+    const densityCard = page.locator('div.rounded-2xl').filter({
+      has: page.getByRole('heading', { name: /Time Distribution Shift/i }),
+    });
+
+    await expect(densityCard).toBeVisible();
+
+    const scrubber1 = densityCard.getByRole('slider', { name: 'Baseline scrubber position' });
+    const scrubber2 = densityCard.getByRole('slider', { name: 'Recent scrubber position' });
+    const handle1 = densityCard.getByLabel('Baseline right resize handle');
+
+    await expect(scrubber1).toBeVisible();
+    await expect(scrubber2).toBeVisible();
+    await expect(handle1).toBeVisible();
+
+    const initialVal1 = await scrubber1.getAttribute('aria-valuenow');
+    const initialVal2 = await scrubber2.getAttribute('aria-valuenow');
+    const s1BoxBefore = await scrubber1.boundingBox();
+    if (!s1BoxBefore) throw new Error('Missing Scrubber 1 bounding box');
+
+    // 1. Quick click on baseline scrubber body
+    await scrubber1.click();
+    // Move cursor across track without pressing mouse button
+    await page.mouse.move(
+      s1BoxBefore.x + s1BoxBefore.width + 120,
+      s1BoxBefore.y + s1BoxBefore.height / 2,
+      {
+        steps: 5,
+      },
+    );
+    // Scrubber 1 must remain at initial position and not follow the mouse
+    const afterMoveVal1 = await scrubber1.getAttribute('aria-valuenow');
+    expect(afterMoveVal1).toBe(initialVal1);
+
+    // 2. Quick click on recent scrubber body
+    const s2BoxBefore = await scrubber2.boundingBox();
+    if (!s2BoxBefore) throw new Error('Missing Scrubber 2 bounding box');
+
+    await scrubber2.click();
+    await page.mouse.move(s2BoxBefore.x - 100, s2BoxBefore.y + s2BoxBefore.height / 2, {
+      steps: 5,
+    });
+    const afterMoveVal2 = await scrubber2.getAttribute('aria-valuenow');
+    expect(afterMoveVal2).toBe(initialVal2);
+
+    // 3. Quick click on resize handle
+    const handleBox = await handle1.boundingBox();
+    if (!handleBox) throw new Error('Missing handle bounding box');
+
+    await handle1.click();
+    await page.mouse.move(handleBox.x + 80, handleBox.y + handleBox.height / 2, { steps: 5 });
+    const s1BoxAfter = await scrubber1.boundingBox();
+    if (!s1BoxAfter) throw new Error('Missing Scrubber 1 bounding box after handle click');
+    expect(Math.abs(s1BoxAfter.width - s1BoxBefore.width)).toBeLessThan(1);
+  });
+
   test('DensityShiftChart renders centered summary banner, timeline scrubbers, and ribbed resize handles', async ({
     page,
   }) => {
