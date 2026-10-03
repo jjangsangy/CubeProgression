@@ -1,6 +1,10 @@
 name: Deploy to GitHub Pages
 
 on:
+  # Trigger on a *single* workflow. `workflow_run` fires once per listed
+  # workflow, so listing both "Test Runner" and "E2E Tests" starts this
+  # workflow twice and lets an early "Test Runner" run deploy before the
+  # E2E suite has finished. The unit-test jobs are gated below instead.
   workflow_run:
     workflows: ["E2E Tests"]
     branches: [main]
@@ -13,6 +17,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  # Lets wait-on-check-action read the check runs of the other workflow.
   checks: read
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
@@ -27,19 +32,21 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
-
+      # "E2E Tests" reaching a successful conclusion only proves the E2E suite
+      # passed. Wait atomically for the unit-test jobs ("Test Runner") on the
+      # same commit as well before building.
       - name: Wait for unit tests to pass
-        if: github.event_name == 'workflow_run'
+        if: ${{ github.event_name == 'workflow_run' }}
         uses: lewagon/wait-on-check-action@v1.9.1
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
-          check-regexp: 'Test on .*'
+          ref: ${{ github.event.workflow_run.head_sha }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          check-regexp: '^Test on .+'
+          checks-discovery-timeout: 300
           wait-interval: 10
+
+      - name: Checkout repository
+        uses: actions/checkout@v7
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
