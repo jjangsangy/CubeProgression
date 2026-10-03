@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { useAutoDismissTooltip } from '../../hooks/useAutoDismissTooltip';
 import { ProgressionCustomTooltip } from './ProgressionCustomTooltip';
 import type {
   ProgressionDataPoint,
@@ -103,9 +104,15 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
   slopeFormatted,
 }) => {
   const xInterval = Math.max(1, Math.floor(chartData.length / (isMobileScreen ? 6 : 12)));
+  const { containerRef, tooltipActive, touchHandlers } = useAutoDismissTooltip();
 
   return (
-    <div className="h-[420px] w-full pt-1" data-testid="progression-chart-canvas">
+    <div
+      ref={containerRef}
+      className="h-[420px] w-full pt-1"
+      data-testid="progression-chart-canvas"
+      {...touchHandlers}
+    >
       <ResponsiveContainer
         width="100%"
         height="100%"
@@ -150,6 +157,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
             }
           />
           <Tooltip
+            active={tooltipActive}
             content={
               <ProgressionCustomTooltip
                 solveVisibility={solveVisibility}

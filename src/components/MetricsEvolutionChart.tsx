@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { useAutoDismissTooltip } from '../hooks/useAutoDismissTooltip';
 import type { GroupingPeriod, PeriodGroup } from '../types';
 import { getPeriodUnitInfo } from '../utils/statsMath';
 import { ChartCardWrapper } from './ChartCardWrapper';
@@ -40,6 +41,7 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
 
   const unitInfo = getPeriodUnitInfo(groupingPeriod);
   const displayTitle = title || `${unitInfo.adjective} Metrics Evolution: Speed & Consistency`;
+  const { containerRef, tooltipActive, touchHandlers } = useAutoDismissTooltip();
 
   const chartData = useMemo(
     () =>
@@ -207,7 +209,11 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
       filenamePrefix={`${unitInfo.adjective.toLowerCase()}_metrics_evolution`}
     >
       {/* Main Chart Canvas */}
-      <div className={`${isMobileScreen ? 'h-[380px]' : 'h-[400px]'} w-full pt-1`}>
+      <div
+        ref={containerRef}
+        className={`${isMobileScreen ? 'h-[380px]' : 'h-[400px]'} w-full pt-1`}
+        {...touchHandlers}
+      >
         <ResponsiveContainer
           width="100%"
           height="100%"
@@ -294,6 +300,7 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
             />
 
             <Tooltip
+              active={tooltipActive}
               content={<CustomTooltip />}
               allowEscapeViewBox={{ x: false, y: false }}
               wrapperStyle={{ pointerEvents: 'none', zIndex: 50 }}

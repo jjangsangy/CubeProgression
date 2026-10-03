@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { useAutoDismissTooltip } from '../hooks/useAutoDismissTooltip';
 import type { GroupingPeriod, PeriodGroup, Solve } from '../types';
 import {
   calculateKDEFromSamples,
@@ -141,6 +142,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     trackWidth: number;
     pointerId: number;
   } | null>(null);
+  const { containerRef, tooltipActive, touchHandlers } = useAutoDismissTooltip();
 
   const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() =>
     typeof window !== 'undefined' ? window.innerWidth < 640 : false,
@@ -532,11 +534,13 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
 
       {/* Main Area Chart with GPU-composited fluid transitions */}
       <div
+        ref={containerRef}
         className={`${isMobileScreen ? 'h-[340px]' : 'h-[360px]'} w-full pt-2 ${
           activeDrag
             ? ''
             : '[&_.recharts-curve]:transition-[d] [&_.recharts-curve]:duration-200 [&_.recharts-curve]:ease-out'
         }`}
+        {...touchHandlers}
       >
         <ResponsiveContainer
           width="100%"
@@ -606,6 +610,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               }
             />
             <Tooltip
+              active={tooltipActive}
               content={<CustomTooltip />}
               allowEscapeViewBox={{ x: false, y: false }}
               wrapperStyle={{ pointerEvents: 'none', zIndex: 50 }}

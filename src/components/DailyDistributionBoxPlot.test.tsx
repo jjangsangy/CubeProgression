@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { DEFAULT_TOOLTIP_DISMISS_DELAY_MS } from '../hooks/useAutoDismissTooltip';
 import type { PeriodGroup } from '../types';
 import { parseSolvesList } from '../utils/csTimerParser';
 import { groupSolvesByPeriod } from '../utils/statsMath';
@@ -387,5 +388,47 @@ describe('DailyDistributionBoxPlot component', () => {
     // Exactly 1 box rect is rendered (the empty group does not render an off-scale box)
     const boxes = container.querySelectorAll('rect[rx="3"]');
     expect(boxes.length).toBe(1);
+  });
+
+  it('auto-dismisses tooltip after touch release delay', () => {
+    vi.useFakeTimers();
+    try {
+      const { container } = render(
+        <DailyDistributionBoxPlot
+          periodGroups={mockPeriodGroups}
+          groupingPeriod="daily"
+          title="Daily Solve Time Distribution & Variance"
+        />,
+      );
+
+      const chartWrapper = container.querySelector('svg[role="img"]')?.parentElement;
+      expect(chartWrapper).not.toBeNull();
+      if (!chartWrapper) return;
+
+      const solveCircle = Array.from(container.querySelectorAll('circle')).find((c) =>
+        c.getAttribute('class')?.includes('cursor-pointer'),
+      );
+      expect(solveCircle).toBeDefined();
+      if (!solveCircle) return;
+
+      // 1. User touches circle
+      fireEvent.touchStart(solveCircle);
+      expect(container.querySelector('.pointer-events-none')).toHaveTextContent('Solve: 12.00s');
+
+      // 2. User lifts touch and timer elapses -> auto-dismisses
+      fireEvent.touchEnd(chartWrapper);
+      act(() => {
+        vi.advanceTimersByTime(DEFAULT_TOOLTIP_DISMISS_DELAY_MS);
+      });
+      expect(container.querySelector('.pointer-events-none')).toBeNull();
+
+      // 3. Desktop mouse hover still works normally
+      fireEvent.pointerEnter(solveCircle);
+      expect(container.querySelector('.pointer-events-none')).not.toBeNull();
+      fireEvent.pointerLeave(solveCircle);
+      expect(container.querySelector('.pointer-events-none')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -1,11 +1,13 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { verifyChartTooltipAutoDismiss } from '../test/tooltipTestUtils';
 import type { PeriodGroup, Solve } from '../types';
 import { DensityShiftChart } from './DensityShiftChart';
 
 const captured = vi.hoisted(() => ({
   tooltipContent: null as React.ReactElement | null,
+  tooltipActive: undefined as boolean | undefined,
   chartData: null as Array<{ x: number; baselineDensity: number; recentDensity: number }> | null,
   chartProps: null as {
     margin?: { top: number; right: number; left: number; bottom: number };
@@ -63,8 +65,9 @@ vi.mock('recharts', async (importOriginal) => {
     },
     Legend: () => null,
     Area: () => null,
-    Tooltip: (props: { content?: React.ReactElement }) => {
+    Tooltip: (props: { content?: React.ReactElement; active?: boolean }) => {
       captured.tooltipContent = props.content ?? null;
+      captured.tooltipActive = props.active;
       return null;
     },
   };
@@ -1113,6 +1116,23 @@ describe('DensityShiftChart component', () => {
         expect(boundaryLines.length).toBeLessThan(49);
         expect(boundaryLines.length).toBe(24);
       });
+    });
+  });
+
+  describe('Touch interactions and tooltip auto-dismiss', () => {
+    it('wires touch auto-dismiss to chart container and recharts tooltip', () => {
+      vi.useFakeTimers();
+      try {
+        const { container } = render(<DensityShiftChart solves={mockSolves} />);
+        const chartSvg = container.querySelector('svg[aria-label="Mock AreaChart"]');
+        const chartWrapper = chartSvg?.parentElement;
+        expect(chartWrapper).not.toBeNull();
+        if (!chartWrapper) return;
+
+        verifyChartTooltipAutoDismiss(chartWrapper, () => captured.tooltipActive);
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 });

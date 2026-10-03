@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { verifyChartTooltipAutoDismiss } from '../test/tooltipTestUtils';
 import type { Solve } from '../types';
 import { calculatePbProgression } from '../utils/statsMath';
 import { PbProgressionChart } from './PbProgressionChart';
@@ -10,6 +11,7 @@ import { PbProgressionChart } from './PbProgressionChart';
 const captured = vi.hoisted(() => ({
   lines: [] as Array<Record<string, unknown>>,
   tooltipContent: null as React.ReactElement | null,
+  tooltipActive: undefined as boolean | undefined,
   yAxes: [] as Array<{
     width?: number;
     fontSize?: number;
@@ -51,8 +53,9 @@ vi.mock('recharts', async (importOriginal) => {
       return null;
     },
     Legend: () => null,
-    Tooltip: (props: { content?: React.ReactElement }) => {
+    Tooltip: (props: { content?: React.ReactElement; active?: boolean }) => {
       captured.tooltipContent = props.content ?? null;
+      captured.tooltipActive = props.active;
       return null;
     },
     Line: (props: Record<string, unknown>) => {
@@ -495,5 +498,20 @@ describe('PbProgressionChart component', () => {
 
     expect(screen.getByText(/PB Single:/)).toBeInTheDocument();
     expect(screen.queryByText(/\(-2\.00s\)/)).not.toBeInTheDocument();
+  });
+
+  it('wires touch auto-dismiss to chart container and recharts tooltip', () => {
+    vi.useFakeTimers();
+    try {
+      const { container } = render(<PbProgressionChart solves={mockSolves} />);
+      const chartSvg = container.querySelector('svg[aria-label="Mock ComposedChart"]');
+      const chartWrapper = chartSvg?.parentElement;
+      expect(chartWrapper).not.toBeNull();
+      if (!chartWrapper) return;
+
+      verifyChartTooltipAutoDismiss(chartWrapper, () => captured.tooltipActive);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

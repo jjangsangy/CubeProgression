@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { useAutoDismissTooltip } from '../hooks/useAutoDismissTooltip';
 import type { GroupingPeriod, PbDataPoint, Solve } from '../types';
 import { calculatePbProgression, getPeriodUnitInfo } from '../utils/statsMath';
 import { ChartCardWrapper } from './ChartCardWrapper';
@@ -35,6 +36,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
   const [milestoneFilter, setMilestoneFilter] = useState<
     'All' | 'Single' | 'Ao5' | 'Ao12' | 'Ao50' | 'Ao100'
   >('All');
+  const { containerRef, tooltipActive, touchHandlers } = useAutoDismissTooltip();
 
   const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() =>
     typeof window !== 'undefined' ? window.innerWidth < 640 : false,
@@ -420,7 +422,11 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
       </div>
 
       {/* Main Plot */}
-      <div className={`${isMobileScreen ? 'h-[380px]' : 'h-[400px]'} w-full pt-1`}>
+      <div
+        ref={containerRef}
+        className={`${isMobileScreen ? 'h-[380px]' : 'h-[400px]'} w-full pt-1`}
+        {...touchHandlers}
+      >
         <ResponsiveContainer
           width="100%"
           height="100%"
@@ -472,6 +478,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               }
             />
             <Tooltip
+              active={tooltipActive}
               content={<CustomTooltip />}
               allowEscapeViewBox={{ x: false, y: false }}
               wrapperStyle={{ pointerEvents: 'none', zIndex: 50 }}

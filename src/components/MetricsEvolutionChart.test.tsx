@@ -1,11 +1,13 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { verifyChartTooltipAutoDismiss } from '../test/tooltipTestUtils';
 import type { PeriodGroup } from '../types';
 import { MetricsEvolutionChart } from './MetricsEvolutionChart';
 
 const captured = vi.hoisted(() => ({
   tooltipContent: null as React.ReactElement | null,
+  tooltipActive: undefined as boolean | undefined,
   chartProps: null as {
     margin?: { top: number; right: number; left: number; bottom: number };
   } | null,
@@ -57,8 +59,9 @@ vi.mock('recharts', async (importOriginal) => {
     Legend: (props: { content?: React.ReactElement }) => props.content ?? null,
     Area: () => null,
     Line: () => null,
-    Tooltip: (props: { content?: React.ReactElement }) => {
+    Tooltip: (props: { content?: React.ReactElement; active?: boolean }) => {
       captured.tooltipContent = props.content ?? null;
+      captured.tooltipActive = props.active;
       return null;
     },
   };
@@ -258,6 +261,21 @@ describe('MetricsEvolutionChart component', () => {
       window.innerWidth = originalInnerWidth;
       addEventListenerSpy.mockRestore();
       removeEventListenerSpy.mockRestore();
+    }
+  });
+
+  it('wires touch auto-dismiss to chart container and recharts tooltip', () => {
+    vi.useFakeTimers();
+    try {
+      const { container } = render(<MetricsEvolutionChart periodGroups={mockPeriodGroups} />);
+      const chartSvg = container.querySelector('svg[aria-label="Mock ComposedChart"]');
+      const chartWrapper = chartSvg?.parentElement;
+      expect(chartWrapper).not.toBeNull();
+      if (!chartWrapper) return;
+
+      verifyChartTooltipAutoDismiss(chartWrapper, () => captured.tooltipActive);
+    } finally {
+      vi.useRealTimers();
     }
   });
 });

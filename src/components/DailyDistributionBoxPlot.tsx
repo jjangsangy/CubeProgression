@@ -1,5 +1,6 @@
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { useAutoDismissTooltip } from '../hooks/useAutoDismissTooltip';
 import type { GroupingPeriod, PeriodGroup } from '../types';
 import { getPeriodUnitInfo } from '../utils/statsMath';
 import { ChartCardWrapper } from './ChartCardWrapper';
@@ -64,6 +65,11 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
     x: number;
     y: number;
   } | null>(null);
+
+  const { touchHandlers } = useAutoDismissTooltip({
+    containerRef,
+    onDismiss: () => setHoveredPoint(null),
+  });
 
   // Compute SVG dimensions and scale mappings dynamically based on container width
   const width = Math.max(300, containerWidth);
@@ -153,7 +159,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
       }
     >
       {/* SVG Canvas Container */}
-      <div ref={containerRef} className="relative w-full">
+      <div ref={containerRef} className="relative w-full" {...touchHandlers}>
         <svg
           role="img"
           aria-label={displayTitle}
@@ -308,6 +314,14 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                               })
                             }
                             onPointerLeave={() => setHoveredPoint(null)}
+                            onTouchStart={() =>
+                              setHoveredPoint({
+                                periodIdx: idx,
+                                time: solve.finalTimeSec,
+                                x: jX,
+                                y: jY,
+                              })
+                            }
                           />
                         );
                       })}

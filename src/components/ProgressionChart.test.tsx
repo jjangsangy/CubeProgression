@@ -1,11 +1,13 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { verifyChartTooltipAutoDismiss } from '../test/tooltipTestUtils';
 import type { LinearRegression, PeriodGroup, Solve } from '../types';
 import { ProgressionChart } from './ProgressionChart';
 
 const captured = vi.hoisted(() => ({
   tooltipContent: null as React.ReactElement | null,
+  tooltipActive: undefined as boolean | undefined,
   referenceLineLabels: [] as Array<(props: unknown) => React.ReactNode>,
   yAxes: [] as Array<{
     width?: number;
@@ -48,8 +50,9 @@ vi.mock('recharts', async (importOriginal) => {
       return null;
     },
     Legend: (props: { content?: React.ReactElement }) => props.content ?? null,
-    Tooltip: (props: { content?: React.ReactElement }) => {
+    Tooltip: (props: { content?: React.ReactElement; active?: boolean }) => {
       captured.tooltipContent = props.content ?? null;
+      captured.tooltipActive = props.active;
       return null;
     },
     ReferenceLine: (props: { label?: (props: unknown) => React.ReactNode }) => {
@@ -654,6 +657,31 @@ describe('ProgressionChart component', () => {
       expect(yAxis?.label?.value).toBe('Time (seconds)');
     } finally {
       window.innerWidth = originalInnerWidth;
+    }
+  });
+
+  it('wires touch auto-dismiss to chart canvas container and recharts tooltip', () => {
+    vi.useFakeTimers();
+    try {
+      render(
+        <ProgressionChart
+          solves={mockSolves}
+          periodGroups={mockPeriodGroups}
+          regression={mockRegression}
+        />,
+      );
+
+      // Advance timers to mount deferred canvas
+      act(() => {
+        vi.advanceTimersByTime(2000);
+      });
+
+      const canvas = screen.getByTestId('progression-chart-canvas');
+      expect(canvas).toBeInTheDocument();
+
+      verifyChartTooltipAutoDismiss(canvas, () => captured.tooltipActive);
+    } finally {
+      vi.useRealTimers();
     }
   });
 });
