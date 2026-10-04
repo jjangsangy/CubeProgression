@@ -1,5 +1,7 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { getTheme } from '../theme';
+import { ThemeProvider } from '../theme/ThemeContext';
 import type { GlobalStats } from '../types';
 import { MetricsOverviewCards } from './MetricsOverviewCards';
 
@@ -178,5 +180,48 @@ describe('MetricsOverviewCards component', () => {
     expect(findValueNode(getCard(container, 'metric-progression-gain'), '(-8.2%)')).toHaveClass(
       'text-rose-400',
     );
+  });
+
+  it('renders distinct series colors for all five card icon badges without duplicates across themes', () => {
+    const cardIds = [
+      'metric-best-single',
+      'metric-best-averages',
+      'metric-overall-rate',
+      'metric-progression-gain',
+      'metric-session-solves',
+    ];
+
+    const testThemes = ['dark', 'gan-mint', 'cyberpunk', 'light'] as const;
+
+    for (const themeId of testThemes) {
+      const theme = getTheme(themeId);
+      const { container } = render(
+        <ThemeProvider initialTheme={themeId}>
+          <MetricsOverviewCards stats={mockGlobalStats} sessionName="Theme Test" />
+        </ThemeProvider>,
+      );
+
+      const expectedColors = [
+        theme.colors.series.amber,
+        theme.colors.series.blue,
+        theme.colors.series.red,
+        theme.colors.series.green,
+        theme.colors.series.purple,
+      ];
+
+      const colorsFound: string[] = [];
+
+      for (let i = 0; i < cardIds.length; i++) {
+        const card = getCard(container, cardIds[i]);
+        const iconBadge = card.querySelector('svg')?.parentElement;
+        expect(iconBadge).not.toBeNull();
+        expect(iconBadge).toHaveStyle({ color: expectedColors[i] });
+        colorsFound.push(iconBadge?.style.color ?? '');
+      }
+
+      // Ensure every icon badge has a unique color
+      const uniqueColors = new Set(colorsFound);
+      expect(uniqueColors.size).toBe(5);
+    }
   });
 });

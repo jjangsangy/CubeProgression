@@ -135,7 +135,7 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
           </span>
           <div
             className="rounded-xl bg-emerald-500/10 p-2 text-emerald-400"
-            style={{ backgroundColor: `${colors.accent}20`, color: colors.accent }}
+            style={{ backgroundColor: `${colors.series.green}20`, color: colors.series.green }}
           >
             <Target className="h-4 w-4" />
           </div>
@@ -180,7 +180,7 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
           </span>
           <div
             className="rounded-xl bg-purple-500/10 p-2 text-purple-400"
-            style={{ backgroundColor: `${colors.accent}20`, color: colors.accent }}
+            style={{ backgroundColor: `${colors.series.purple}20`, color: colors.series.purple }}
           >
             <Activity className="h-4 w-4" />
           </div>
