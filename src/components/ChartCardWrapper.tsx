@@ -11,6 +11,7 @@ interface ChartCardWrapperProps {
   headerBadge?: React.ReactNode;
   headerControls?: React.ReactNode;
   filenamePrefix?: string;
+  testId?: string;
 }
 
 const triggerBlobDownload = (dataUrl: string, filename: string) => {
@@ -67,6 +68,7 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
   headerBadge,
   headerControls,
   filenamePrefix = 'speedcubing_plot',
+  testId,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isMaximized, setIsMaximized] = useState(false);
@@ -246,6 +248,7 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
   const cardContent = (
     <div
       ref={cardRef}
+      data-testid={testId || `chart-card-${filenamePrefix}`}
       className={`bg-stone-900 border border-stone-800 rounded-2xl p-4 sm:p-6 shadow-xl text-stone-100 flex flex-col gap-4 relative overflow-hidden w-full max-w-full box-border ${
         isMaximized ? 'w-full h-full max-w-7xl mx-auto overflow-y-auto' : ''
       }`}
@@ -298,9 +301,11 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
           {/* Title & Badge */}
           <h2 className="text-base leading-snug font-bold tracking-tight text-stone-100 sm:text-lg">
             {headerBadge && (
-              <span className="mr-2 inline-flex items-center align-middle">{headerBadge}</span>
+              <span className="mb-1.5 block sm:mb-0 sm:mr-2 sm:inline-flex sm:items-center sm:align-middle">
+                {headerBadge}
+              </span>
             )}
-            <span className="align-middle">{title}</span>
+            <span className="block sm:inline sm:align-middle">{title}</span>
           </h2>
 
           {/* Subtitle */}

@@ -24,7 +24,8 @@ describe('SolvesTable component', () => {
   it('renders solve table with pagination and solves count', () => {
     render(<SolvesTable solves={mockSolves} />);
 
-    expect(screen.getByText(/Session Solve Log \(20 Total\)/)).toBeInTheDocument();
+    expect(screen.getByText('Session Solve Log')).toBeInTheDocument();
+    expect(screen.getByText('Complete Solve History')).toBeInTheDocument();
     expect(screen.getByText('Showing 1 to 15 of 20 solves')).toBeInTheDocument();
   });
 

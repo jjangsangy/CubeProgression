@@ -68,9 +68,7 @@ test.describe('PWA & Offline Capability', () => {
     await page.goto('/');
 
     // Wait until demo dataset completes initialization
-    await expect(
-      page.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-    ).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('#session-selector')).toBeVisible({ timeout: 15000 });
 
     // Wait for Service Worker registration to become ready (with timeout protection against dev-mode hangs)
     const isSwRegistered = await page.evaluate(async () => {
@@ -106,9 +104,7 @@ test.describe('PWA & Offline Capability', () => {
     await page.reload();
 
     // App should successfully reload from Service Worker cache and render UI
-    await expect(
-      page.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-    ).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('#session-selector')).toBeVisible({ timeout: 15000 });
     await expect(page.getByText('CubeProgression')).toBeVisible();
     await expect(page.getByRole('status', { name: 'Offline mode' })).toBeVisible();
 

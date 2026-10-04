@@ -3,16 +3,12 @@ import { expect, test } from '@playwright/test';
 test.describe('Progression & Personal Best Progression Charts', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await expect(
-      page.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-    ).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Solve Times & Moving Averages')).toBeVisible({ timeout: 15000 });
   });
 
   test.describe('ProgressionChart', () => {
     test('toggles rolling average lines and reflects in the chart legend', async ({ page }) => {
-      const card = page.locator('div.rounded-2xl').filter({
-        has: page.getByRole('heading', { name: /Progression Over \d+ Solves/i }),
-      });
+      const card = page.getByTestId('chart-card-progression');
 
       // Ensure legends are rendered
       await expect(card.locator('.recharts-legend-item-text', { hasText: /^Ao5$/ })).toBeVisible();
@@ -37,9 +33,7 @@ test.describe('Progression & Personal Best Progression Charts', () => {
     });
 
     test('activates Custom Ao, modifies N window, and updates legend text', async ({ page }) => {
-      const card = page.locator('div.rounded-2xl').filter({
-        has: page.getByRole('heading', { name: /Progression Over \d+ Solves/i }),
-      });
+      const card = page.getByTestId('chart-card-progression');
 
       const customAoBtn = card.getByRole('button', { name: /Custom Ao/i });
       await customAoBtn.click();
@@ -57,9 +51,7 @@ test.describe('Progression & Personal Best Progression Charts', () => {
     });
 
     test('switches solve visibility modes (Muted, Hidden, Unmuted)', async ({ page }) => {
-      const card = page.locator('div.rounded-2xl').filter({
-        has: page.getByRole('heading', { name: /Progression Over \d+ Solves/i }),
-      });
+      const card = page.getByTestId('chart-card-progression');
 
       const mutedBtn = card.getByRole('button', { name: 'Muted', exact: true });
       const hiddenBtn = card.getByRole('button', { name: 'Hidden', exact: true });
@@ -86,9 +78,7 @@ test.describe('Progression & Personal Best Progression Charts', () => {
     test('applies range presets, updates focused range stats, and resets range', async ({
       page,
     }) => {
-      const card = page.locator('div.rounded-2xl').filter({
-        has: page.getByRole('heading', { name: /Progression Over \d+ Solves/i }),
-      });
+      const card = page.getByTestId('chart-card-progression');
 
       // Initial stats banner shows 350 total solves (Range Selector panel is open by default)
       await expect(card.getByText(/350 solves • 100\.0% of total/)).toBeVisible();
@@ -111,9 +101,7 @@ test.describe('Progression & Personal Best Progression Charts', () => {
     });
 
     test('switches range mode to Date Range and renders date picker inputs', async ({ page }) => {
-      const card = page.locator('div.rounded-2xl').filter({
-        has: page.getByRole('heading', { name: /Progression Over \d+ Solves/i }),
-      });
+      const card = page.getByTestId('chart-card-progression');
 
       // Switch to Date Range mode
       const dateRangeBtn = card.getByRole('button', { name: 'Date Range' });
@@ -132,15 +120,13 @@ test.describe('Progression & Personal Best Progression Charts', () => {
   test.describe('PbProgressionChart', () => {
     test.beforeEach(async ({ page }) => {
       await page.getByTestId('deferred-chart-pb-progression').scrollIntoViewIfNeeded();
-      await expect(page.getByRole('heading', { name: /PB Progression Over Time/i })).toBeVisible({
+      await expect(page.getByTestId('chart-card-pb-progression')).toBeVisible({
         timeout: 10000,
       });
     });
 
     test('renders top PB summary stat cards with valid records', async ({ page }) => {
-      const card = page.locator('div.rounded-2xl').filter({
-        has: page.getByRole('heading', { name: /PB Progression Over Time/i }),
-      });
+      const card = page.getByTestId('chart-card-pb-progression');
 
       const summaryGrid = card.locator('.grid.grid-cols-2');
       await expect(summaryGrid.getByText('PB Single', { exact: true })).toBeVisible();
@@ -154,9 +140,7 @@ test.describe('Progression & Personal Best Progression Charts', () => {
     });
 
     test('toggles PB record curves and raw solves overlay in legend', async ({ page }) => {
-      const card = page.locator('div.rounded-2xl').filter({
-        has: page.getByRole('heading', { name: /PB Progression Over Time/i }),
-      });
+      const card = page.getByTestId('chart-card-pb-progression');
 
       // Solves Overlay is off by default
       const overlayBtn = card.getByRole('button', { name: /Solves Overlay/i });
@@ -184,9 +168,7 @@ test.describe('Progression & Personal Best Progression Charts', () => {
     test('expands milestone history drawer, filters by record type, and collapses', async ({
       page,
     }) => {
-      const card = page.locator('div.rounded-2xl').filter({
-        has: page.getByRole('heading', { name: /PB Progression Over Time/i }),
-      });
+      const card = page.getByTestId('chart-card-pb-progression');
 
       const drawerBtn = card.getByRole('button', { name: /Record Milestones History/i });
       await drawerBtn.click();

@@ -1,3 +1,4 @@
+import { TrendingUp } from 'lucide-react';
 import type React from 'react';
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { calculateLinearRegression, getPeriodUnitInfo } from '../../utils/statsMath';
@@ -24,7 +25,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
   periodGroups,
   regression: _regression,
   groupingPeriod = 'daily',
-  title = 'Overall Progression & Moving Averages',
+  title = 'Solve Times & Moving Averages',
 }) => {
   const [solveVisibility, setSolveVisibility] = useState<SolveVisibilityMode>('muted');
   const [showAo5, setShowAo5] = useState(true);
@@ -171,10 +172,16 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
 
   return (
     <ChartCardWrapper
+      testId="chart-card-progression"
       title={title}
       subtitle="Individual solve plot with interactive range selector, toggleable moving averages (Ao5, Ao12, Ao50, Ao100, Custom N), and OLS regression."
       mobileSubtitle="Individual solve plot with range filter and moving averages."
-      headerBadge={<span className="inline-block h-2.5 w-2.5 rounded-full bg-sky-400"></span>}
+      headerBadge={
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 px-2.5 py-0.5 text-xs font-semibold text-sky-300">
+          <TrendingUp className="h-3.5 w-3.5 text-sky-400" />
+          Overall Progression
+        </span>
+      }
       filenamePrefix="progression_moving_averages"
       headerControls={
         <ProgressionMetricToggles

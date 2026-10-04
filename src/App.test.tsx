@@ -18,9 +18,7 @@ describe('App component', () => {
     expect(screen.getByText('browser_storage')).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-      ).toBeInTheDocument();
+      expect(screen.getByText('Solve Times & Moving Averages')).toBeInTheDocument();
     });
 
     await waitFor(() => {
@@ -83,9 +81,7 @@ describe('App component', () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-      ).toBeInTheDocument();
+      expect(screen.getByText('Solve Times & Moving Averages')).toBeInTheDocument();
     });
 
     const weeklyBtn = screen.getByText('Weekly');
@@ -107,25 +103,19 @@ describe('App component', () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-      ).toBeInTheDocument();
+      expect(screen.getByText('Solve Times & Moving Averages')).toBeInTheDocument();
     });
 
     const resetBtn = screen.getByTitle('Reset Data');
     fireEvent.click(resetBtn);
 
-    expect(
-      screen.queryByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Solve Times & Moving Averages')).not.toBeInTheDocument();
 
     const loadDemoBtns = screen.getAllByText(/Load Sample Data/);
     fireEvent.click(loadDemoBtns[0]);
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-      ).toBeInTheDocument();
+      expect(screen.getByText('Solve Times & Moving Averages')).toBeInTheDocument();
     });
   });
 
@@ -224,16 +214,13 @@ describe('App component', () => {
 
   it('falls back to demo data when IndexedDB getSavedDataset fails on initial mount', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.spyOn(dbStorage, 'getSavedDataset').mockRejectedValueOnce(
-      new Error('IndexedDB blocked by browser security'),
-    );
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(dbStorage, 'getSavedDataset').mockRejectedValueOnce(new Error('IndexedDB corrupted'));
 
     render(<App />);
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-      ).toBeInTheDocument();
+      expect(screen.getByText('Solve Times & Moving Averages')).toBeInTheDocument();
     });
 
     expect(consoleErrorSpy).toHaveBeenCalled();
@@ -262,9 +249,7 @@ describe('App component', () => {
 
     await waitFor(() => {
       expect(screen.queryByText('File is empty.')).toBeNull();
-      expect(
-        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-      ).toBeInTheDocument();
+      expect(screen.getByText('Solve Times & Moving Averages')).toBeInTheDocument();
     });
   });
 
@@ -272,9 +257,7 @@ describe('App component', () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-      ).toBeInTheDocument();
+      expect(screen.getByText('Solve Times & Moving Averages')).toBeInTheDocument();
     });
 
     // Reset Data
@@ -290,9 +273,7 @@ describe('App component', () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-      ).toBeInTheDocument();
+      expect(screen.getByText('Solve Times & Moving Averages')).toBeInTheDocument();
     });
 
     // Modal is initially closed

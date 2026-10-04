@@ -1,3 +1,4 @@
+import { BarChart2 } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useAutoDismissTooltip } from '../hooks/useAutoDismissTooltip';
@@ -17,7 +18,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
   title,
 }) => {
   const unitInfo = getPeriodUnitInfo(groupingPeriod);
-  const displayTitle = title || `${unitInfo.adjective} Solve Time Distribution & Variance`;
+  const displayTitle = title || `${unitInfo.adjective} Solve Distribution`;
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number>(1000);
@@ -142,10 +143,16 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
 
   return (
     <ChartCardWrapper
+      testId="chart-card-distribution"
       title={displayTitle}
       subtitle="Box plots (Q1, Median, Q3, Whiskers) overlaid with individual jittered solves and connected Median Trend."
       mobileSubtitle="Box plots with jittered solves and connected Median Trend."
-      headerBadge={<span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-400"></span>}
+      headerBadge={
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
+          <BarChart2 className="h-3.5 w-3.5 text-emerald-400" />
+          Time Distribution
+        </span>
+      }
       filenamePrefix={`${unitInfo.adjective.toLowerCase()}_solve_distribution_boxplot`}
       headerControls={
         <div className="flex items-center gap-2 text-xs text-stone-300">

@@ -64,7 +64,7 @@ async function main() {
 
   await page.goto(URL, { waitUntil: 'networkidle' });
   // Wait for demo dataset and dashboard to load
-  await page.waitForSelector('h2:has-text("Progression Over")', { timeout: 15000 });
+  await page.waitForSelector('h2:has-text("Overall Progression")', { timeout: 15000 });
   await page.waitForSelector('text=Upload cstimer', { timeout: 15000 });
 
   // Scroll through all deferred chart sections to ensure all IntersectionObservers trigger and content loads

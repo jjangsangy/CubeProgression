@@ -9,9 +9,8 @@ test.describe('Data Ingestion & IndexedDB Persistence', () => {
     await page.reload();
 
     // Wait until demo dataset completes initialization
-    await expect(
-      page.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-    ).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('#session-selector')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('#session-selector')).toHaveValue('session1');
     await expect(page.locator('input[aria-label="Upload csTimer file"]')).toBeEnabled({
       timeout: 15000,
     });
@@ -29,10 +28,8 @@ test.describe('Data Ingestion & IndexedDB Persistence', () => {
     // Initial demo file pill is displayed in Navbar
     await expect(page.getByRole('banner').getByText('cstimer_demo_350solves.txt')).toBeVisible();
 
-    // Main Progression Chart displays default session title
-    await expect(
-      page.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-    ).toBeVisible();
+    // Main Progression Chart displays solve times header
+    await expect(page.getByText('Solve Times & Moving Averages')).toBeVisible();
   });
 
   test('switches active session and recalculates charts', async ({ page }) => {
@@ -40,9 +37,7 @@ test.describe('Data Ingestion & IndexedDB Persistence', () => {
 
     // Switch to Session 2 (3x3 General Solves)
     await sessionSelector.selectOption('session2');
-
-    // Chart header updates immediately to reflect session 2's 150 solves
-    await expect(page.getByText(/3x3 General Solves: Progression Over 150 Solves/)).toBeVisible();
+    await expect(sessionSelector).toHaveValue('session2');
 
     // Scroll to SolvesTable deferred container to mount it
     await page
@@ -52,8 +47,8 @@ test.describe('Data Ingestion & IndexedDB Persistence', () => {
       .last()
       .scrollIntoViewIfNeeded();
 
-    // Session solve log table header updates
-    await expect(page.getByText('Session Solve Log (150 Total)')).toBeVisible();
+    // Session solve log pagination updates to reflect session 2's 150 solves
+    await expect(page.getByText('Showing 1 to 15 of 150 solves')).toBeVisible();
   });
 
   test('switches grouping period and configures custom batch size', async ({ page }) => {
@@ -67,7 +62,7 @@ test.describe('Data Ingestion & IndexedDB Persistence', () => {
       )
       .first()
       .scrollIntoViewIfNeeded();
-    await expect(page.getByText('Weekly Solve Time Distribution & Variance')).toBeVisible();
+    await expect(page.getByText('Weekly Solve Distribution')).toBeVisible();
 
     // Switch to By Solve Count (custom batch)
     const batchBtn = page.getByRole('button', { name: /^By Solve Count/i });
@@ -112,8 +107,11 @@ test.describe('Data Ingestion & IndexedDB Persistence', () => {
     await expect(options.nth(0)).toContainText('Main 3x3 CFOP (5 solves)');
     await expect(options.nth(1)).toContainText('One-Handed Practice (2 solves)');
 
-    // Progression chart renders newly uploaded session
-    await expect(page.getByText(/Main 3x3 CFOP: Progression Over 5 Solves/)).toBeVisible();
+    // Progression overview cards render newly uploaded session solves count
+    const overviewGrid = page.locator('.grid.grid-cols-1.gap-4');
+    await expect(
+      overviewGrid.locator('div.rounded-2xl', { hasText: 'Session Solves' }),
+    ).toContainText('5 solves');
   });
 
   test('persists uploaded data, active session, and grouping across hard reload', async ({
@@ -129,7 +127,7 @@ test.describe('Data Ingestion & IndexedDB Persistence', () => {
 
     // 2. Select second session ("One-Handed Practice")
     await page.locator('#session-selector').selectOption('session2');
-    await expect(page.getByText(/One-Handed Practice: Progression Over 2 Solves/)).toBeVisible();
+    await expect(page.locator('#session-selector')).toHaveValue('session2');
 
     // 3. Switch grouping to Monthly
     const monthlyBtn = page.getByRole('button', { name: /^Monthly/i });
@@ -162,7 +160,10 @@ test.describe('Data Ingestion & IndexedDB Persistence', () => {
       { timeout: 15000 },
     );
     await expect(page.locator('#session-selector')).toHaveValue('session2');
-    await expect(page.getByText(/One-Handed Practice: Progression Over 2 Solves/)).toBeVisible();
+    const overviewGrid = page.locator('.grid.grid-cols-1.gap-4');
+    await expect(
+      overviewGrid.locator('div.rounded-2xl', { hasText: 'Session Solves' }),
+    ).toContainText('2 solves');
     await expect(page.getByRole('button', { name: /^Monthly/i })).toHaveClass(/bg-amber-500\/15/);
     await expect(
       page.getByRole('banner').getByText('cstimer-valid-multisession.json'),

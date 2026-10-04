@@ -4,14 +4,12 @@ test.describe('Metrics Overview & Solves Table', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     // Await initial demo dataset load
-    await expect(
-      page.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-    ).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Solve Times & Moving Averages')).toBeVisible({ timeout: 15000 });
   });
 
   const scrollToSolvesTable = async (page: Page) => {
     await page.getByTestId('deferred-chart-solves-table').scrollIntoViewIfNeeded();
-    await expect(page.getByText(/Session Solve Log \(\d+ Total\)/)).toBeVisible({
+    await expect(page.getByRole('heading', { name: /Session Solve Log/i })).toBeVisible({
       timeout: 10000,
     });
   };
@@ -187,7 +185,6 @@ test.describe('Metrics Overview & Solves Table', () => {
 
     // Table header and pagination reflect 150 solves (10 pages)
     await scrollToSolvesTable(page);
-    await expect(page.getByText('Session Solve Log (150 Total)')).toBeVisible();
     await expect(page.getByText('Showing 1 to 15 of 150 solves')).toBeVisible();
     await expect(page.getByText('1 / 10')).toBeVisible();
   });

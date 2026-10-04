@@ -9,9 +9,8 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
   ];
 
   const waitForReady = async (page: Page) => {
-    await expect(
-      page.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-    ).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('#session-selector')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Solve Times & Moving Averages')).toBeVisible({ timeout: 15000 });
     await expect(page.getByText(/Upload cstimer\.txt/)).toBeVisible({ timeout: 15000 });
   };
 
@@ -275,9 +274,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     }) => {
       await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
 
-      const densityCard = page.locator('div.rounded-2xl').filter({
-        has: page.getByRole('heading', { name: /Time Distribution Shift/i }),
-      });
+      const densityCard = page.getByTestId('chart-card-density-shift');
       await expect(densityCard).toBeVisible();
 
       // Verify the 3-metric summary banner stacks vertically in 1 column on mobile portrait (< 640px)
@@ -376,7 +373,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     }) => {
       // 1. ProgressionChart
       const progressionCard = page.locator('div.rounded-2xl').filter({
-        has: page.getByRole('heading', { name: /Progression Over \d+ Solves/i }),
+        has: page.getByRole('heading', { name: /Overall Progression/i }),
       });
       await expect(progressionCard).toBeVisible();
       await expect(progressionCard.getByText('Time (s)', { exact: true })).toBeVisible();
@@ -394,11 +391,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       // 3. DailyDistributionBoxPlot
       const boxPlotContainer = page.getByTestId('deferred-chart-solve-time-distribution');
       await boxPlotContainer.scrollIntoViewIfNeeded();
-      await expect(
-        boxPlotContainer.getByRole('heading', {
-          name: /Solve Time Distribution & Variance/i,
-        }),
-      ).toBeVisible();
+      await expect(boxPlotContainer.getByTestId('chart-card-distribution')).toBeVisible();
       await expect(boxPlotContainer.getByText('Time (s)', { exact: true })).toBeVisible();
       // On mobile portrait, rotated desktop Y-axis label is omitted
       await expect(boxPlotContainer.getByText('Solve Time (seconds)')).toHaveCount(0);
@@ -406,9 +399,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       // 4. DensityShiftChart
       const densityContainer = page.getByTestId('deferred-chart-density-shift');
       await densityContainer.scrollIntoViewIfNeeded();
-      await expect(
-        densityContainer.getByRole('heading', { name: /Time Distribution Shift/i }),
-      ).toBeVisible();
+      await expect(densityContainer.getByTestId('chart-card-density-shift')).toBeVisible();
       await expect(densityContainer.getByText('Density', { exact: true })).toBeVisible();
     });
   });
@@ -483,9 +474,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     test('opens chart in fullscreen mode and exits cleanly via button and Escape key', async ({
       page,
     }) => {
-      const card = page.locator('div.rounded-2xl').filter({
-        has: page.getByRole('heading', { name: /Progression Over 350 Solves/i }),
-      });
+      const card = page.getByTestId('chart-card-progression');
 
       const maximizeBtn = card.getByRole('button', { name: /Maximize/i });
       await maximizeBtn.click();
@@ -558,9 +547,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     }) => {
       await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
 
-      const densityCard = page.locator('div.rounded-2xl').filter({
-        has: page.getByRole('heading', { name: /Time Distribution Shift/i }),
-      });
+      const densityCard = page.getByTestId('chart-card-density-shift');
       await expect(densityCard).toBeVisible();
 
       // In landscape (844px >= 640px sm: breakpoint), summary banner items align in a single row
@@ -660,9 +647,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     test('renders ProgressionChart interval sliders side-by-side on tablet portrait', async ({
       page,
     }) => {
-      const card = page.locator('div.rounded-2xl').filter({
-        has: page.getByRole('heading', { name: /Progression Over 350 Solves/i }),
-      });
+      const card = page.getByTestId('chart-card-progression');
 
       // Switch to interval mode
       const intervalBtn = card.getByRole('button', { name: /Solve # Interval/i });
@@ -686,9 +671,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
         timeout: 10000,
       });
 
-      const pbCard = page.locator('div.rounded-2xl').filter({
-        has: page.getByRole('heading', { name: /PB Progression Over Time/i }),
-      });
+      const pbCard = page.getByTestId('chart-card-pb-progression');
 
       const drawerBtn = pbCard.getByRole('button', { name: /Record Milestones History/i });
       await drawerBtn.click();
@@ -716,9 +699,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     }) => {
       await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
 
-      const densityCard = page.locator('div.rounded-2xl').filter({
-        has: page.getByRole('heading', { name: /Time Distribution Shift/i }),
-      });
+      const densityCard = page.getByTestId('chart-card-density-shift');
       await expect(densityCard).toBeVisible();
 
       // 3-column banner aligns in a single row on tablet portrait (768px >= 640px)
@@ -802,8 +783,8 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     }) => {
       await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
 
-      const densityHeading = page.getByRole('heading', { name: /Time Distribution Shift/i });
-      const metricsHeading = page.getByRole('heading', { name: /Metrics Evolution/i });
+      const densityHeading = page.getByTestId('chart-card-density-shift');
+      const metricsHeading = page.getByTestId('chart-card-metrics-evolution');
 
       await expect(densityHeading).toBeVisible();
       await expect(metricsHeading).toBeVisible();
@@ -818,9 +799,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     });
 
     test('activates Custom Ao moving average on tablet landscape', async ({ page }) => {
-      const card = page.locator('div.rounded-2xl').filter({
-        has: page.getByRole('heading', { name: /Progression Over 350 Solves/i }),
-      });
+      const card = page.getByTestId('chart-card-progression');
 
       const customAoBtn = card.getByRole('button', { name: /Custom Ao/i });
       await customAoBtn.click();
@@ -837,9 +816,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     }) => {
       await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
 
-      const densityCard = page.locator('div.rounded-2xl').filter({
-        has: page.getByRole('heading', { name: /Time Distribution Shift/i }),
-      });
+      const densityCard = page.getByTestId('chart-card-density-shift');
       await expect(densityCard).toBeVisible();
 
       const scrubber1 = densityCard.getByRole('slider', { name: 'Baseline scrubber position' });

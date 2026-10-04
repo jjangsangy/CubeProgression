@@ -33,18 +33,26 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
   );
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-stone-800 bg-stone-900 p-4 sm:p-6 text-stone-100 shadow-xl">
+    <div
+      data-testid="solves-table-card"
+      className="flex flex-col gap-4 rounded-2xl border border-stone-800 bg-stone-900 p-4 sm:p-6 text-stone-100 shadow-xl"
+    >
       {/* Table Header Controls */}
       <div className="flex flex-col justify-between gap-3 border-b border-stone-800/80 pb-4 sm:flex-row sm:items-center">
         <div>
           <h2
             id="session-solve-log-heading"
-            className="flex items-start sm:items-center gap-2 text-base sm:text-lg font-bold tracking-tight text-stone-100"
+            className="text-base leading-snug font-bold tracking-tight text-stone-100 sm:text-lg"
           >
-            <Clock className="h-4 w-4 shrink-0 text-amber-400 mt-0.5 sm:mt-0" />
-            <span>Session Solve Log ({solves.length} Total)</span>
+            <span className="mb-1.5 block sm:mb-0 sm:mr-2 sm:inline-flex sm:items-center sm:align-middle">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-300">
+                <Clock className="h-3.5 w-3.5 text-amber-400" />
+                Session Solve Log
+              </span>
+            </span>
+            <span className="block sm:inline sm:align-middle">Complete Solve History</span>
           </h2>
-          <p className="mt-0.5 text-xs text-stone-400">
+          <p className="mt-1 text-xs leading-relaxed text-stone-400">
             <span className="hidden sm:inline">
               Detailed breakdown of individual solve times, scrambles, and rolling averages.
             </span>

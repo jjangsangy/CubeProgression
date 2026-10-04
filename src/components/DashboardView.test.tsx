@@ -117,10 +117,10 @@ describe('DashboardView', () => {
     expect(screen.getByText('Session Solves')).toBeInTheDocument();
 
     // Chart titles (lazy-loaded inside DeferredChart)
-    expect(await screen.findByText('3x3 Practice: Progression Over 2 Solves')).toBeInTheDocument();
-    expect(await screen.findByText('3x3 Practice: PB Progression Over Time')).toBeInTheDocument();
+    expect(await screen.findByText('Solve Times & Moving Averages')).toBeInTheDocument();
+    expect(await screen.findByText('PB Progression Over Time')).toBeInTheDocument();
     expect(
-      await screen.findByText('Time Distribution Shift: Baseline vs. Recent Solves'),
+      await screen.findByText('Baseline vs Recent Solves'),
     ).toBeInTheDocument();
 
     // Solves Table

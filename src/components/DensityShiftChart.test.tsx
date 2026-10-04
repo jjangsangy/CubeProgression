@@ -159,12 +159,12 @@ describe('DensityShiftChart component', () => {
     render(
       <DensityShiftChart
         solves={mockSolves}
-        title="Time Distribution Shift: Baseline vs. Recent Solves"
+        title="Baseline vs Recent Solves"
       />,
     );
 
     expect(
-      screen.getByText('Time Distribution Shift: Baseline vs. Recent Solves'),
+      screen.getByText('Baseline vs Recent Solves'),
     ).toBeInTheDocument();
     expect(screen.getByText('Baseline Mean:')).toBeInTheDocument();
     expect(screen.getByText('Recent Mean:')).toBeInTheDocument();
@@ -493,7 +493,7 @@ describe('DensityShiftChart component', () => {
 
   it('hides mean shift summary when valid solves are fewer than 10', () => {
     render(<DensityShiftChart solves={mockSolves.slice(0, 6)} />);
-    expect(screen.getByText('Distribution Density Shift')).toBeInTheDocument();
+    expect(screen.getByText('Baseline vs Recent Solves')).toBeInTheDocument();
     expect(screen.queryByText('Baseline Mean:')).toBeNull();
   });
 

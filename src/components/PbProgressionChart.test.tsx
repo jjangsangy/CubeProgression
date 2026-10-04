@@ -219,7 +219,7 @@ describe('PbProgressionChart component', () => {
 
   it('renders gracefully when solves array is empty', () => {
     render(<PbProgressionChart solves={[]} />);
-    expect(screen.getByText('Personal Best (PB) Progression Over Time')).toBeInTheDocument();
+    expect(screen.getByText('PB Progression Over Time')).toBeInTheDocument();
   });
 
   it('renders a highlighted dot only on solves that set a new PB record', () => {

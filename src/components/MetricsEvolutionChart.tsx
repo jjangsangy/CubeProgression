@@ -1,3 +1,4 @@
+import { LineChart as LineChartIcon } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -40,7 +41,7 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
   }, []);
 
   const unitInfo = getPeriodUnitInfo(groupingPeriod);
-  const displayTitle = title || `${unitInfo.adjective} Metrics Evolution: Speed & Consistency`;
+  const displayTitle = title || `${unitInfo.adjective} Speed & Consistency`;
   const { containerRef, tooltipActive, touchHandlers } = useAutoDismissTooltip();
 
   const chartData = useMemo(
@@ -202,10 +203,16 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
 
   return (
     <ChartCardWrapper
+      testId="chart-card-metrics-evolution"
       title={displayTitle}
       subtitle="Progression of central tendencies (Mean, Median), full Min-Max range band, and Standard Deviation on right axis."
       mobileSubtitle="Central tendencies (Mean, Median), Min-Max range band, and Standard Deviation."
-      headerBadge={<span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-400"></span>}
+      headerBadge={
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-xs font-semibold text-violet-300">
+          <LineChartIcon className="h-3.5 w-3.5 text-violet-400" />
+          Metrics Evolution
+        </span>
+      }
       filenamePrefix={`${unitInfo.adjective.toLowerCase()}_metrics_evolution`}
     >
       {/* Main Chart Canvas */}

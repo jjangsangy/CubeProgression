@@ -24,7 +24,7 @@ interface PbProgressionChartProps {
 export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
   solves,
   groupingPeriod = 'daily',
-  title = 'Personal Best (PB) Progression Over Time',
+  title = 'PB Progression Over Time',
 }) => {
   const [showSingle, setShowSingle] = useState(true);
   const [showAo5, setShowAo5] = useState(true);
@@ -232,14 +232,14 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
 
   return (
     <ChartCardWrapper
+      testId="chart-card-pb-progression"
       title={title}
       subtitle="Step-down personal record progression curves tracking step functions of historical best single times and WCA averages."
       mobileSubtitle="Step-down curves tracking PB singles and WCA rolling averages."
       headerBadge={
         <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-300">
           <Trophy className="h-3.5 w-3.5 text-amber-400" />
-          <span className="sm:hidden">PBs</span>
-          <span className="hidden sm:inline">PB Records</span>
+          PB Records
         </span>
       }
       filenamePrefix="pb_progression"

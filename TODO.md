@@ -3,7 +3,8 @@
 - [ ] feat(ui): Increase height of charts on desktop
   - [ ] Desktop mode uses up more of the display
 - [ ] fix(ui): Make headers use a consistent scheme
-- [ ] feat(theme): Introduce a light mode
+- [ ] feat(theme): Introduce themes
+  - [ ] feat(theme): Light mode
 - [ ] feat(log): Make log more interactive
     - [ ] sorting
     - [ ] filtering

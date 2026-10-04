@@ -289,7 +289,7 @@ describe('ProgressionChart component', () => {
 
   it('renders gracefully when solves array is empty', () => {
     render(<ProgressionChart solves={[]} periodGroups={[]} regression={mockRegression} />);
-    expect(screen.getByText('Overall Progression & Moving Averages')).toBeInTheDocument();
+    expect(screen.getByText('Solve Times & Moving Averages')).toBeInTheDocument();
   });
 
   it('renders CustomTooltip correctly across normal, +2, DNF, and inactive states', async () => {

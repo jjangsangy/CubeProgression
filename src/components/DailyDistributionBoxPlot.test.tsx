@@ -83,11 +83,11 @@ describe('DailyDistributionBoxPlot component', () => {
       <DailyDistributionBoxPlot
         periodGroups={mockPeriodGroups}
         groupingPeriod="daily"
-        title="Daily Solve Time Distribution & Variance"
+        title="Daily Solve Distribution"
       />,
     );
 
-    expect(screen.getByText('Daily Solve Time Distribution & Variance')).toBeInTheDocument();
+    expect(screen.getByText('Daily Solve Distribution')).toBeInTheDocument();
     expect(screen.getByText('Solve Time (seconds)')).toBeInTheDocument();
     expect(screen.getByText('Day')).toBeInTheDocument();
     expect(screen.getByText('Median Trend')).toBeInTheDocument();
@@ -123,13 +123,13 @@ describe('DailyDistributionBoxPlot component', () => {
   it('renders box plot chart with weekly axis label when grouping by week', () => {
     render(<DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="weekly" />);
 
-    expect(screen.getByText('Weekly Solve Time Distribution & Variance')).toBeInTheDocument();
+    expect(screen.getByText('Weekly Solve Distribution')).toBeInTheDocument();
     expect(screen.getByText('Week')).toBeInTheDocument();
   });
 
   it('handles empty periodGroups gracefully', () => {
     render(<DailyDistributionBoxPlot periodGroups={[]} groupingPeriod="daily" />);
-    expect(screen.getByText('Daily Solve Time Distribution & Variance')).toBeInTheDocument();
+    expect(screen.getByText('Daily Solve Distribution')).toBeInTheDocument();
   });
 
   it('handles single-solve groups with IQR = 0 and suppresses median polyline', () => {
@@ -366,7 +366,7 @@ describe('DailyDistributionBoxPlot component', () => {
 
     const svg = container.querySelector('svg[role="img"]');
     expect(svg).toBeInTheDocument();
-    expect(svg?.getAttribute('aria-label')).toBe('Daily Solve Time Distribution & Variance');
+    expect(svg?.getAttribute('aria-label')).toBe('Daily Solve Distribution');
   });
 
   it('gracefully handles period groups with 0 valid solves without plotting off-screen elements', () => {
@@ -397,7 +397,7 @@ describe('DailyDistributionBoxPlot component', () => {
         <DailyDistributionBoxPlot
           periodGroups={mockPeriodGroups}
           groupingPeriod="daily"
-          title="Daily Solve Time Distribution & Variance"
+          title="Daily Solve Distribution"
         />,
       );
 

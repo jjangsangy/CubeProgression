@@ -41,20 +41,22 @@ export function DashboardView({
       {/* The 4 Progression Plots & Solves Table */}
       <div className="flex flex-col gap-6 sm:gap-8">
         {/* Plot 1: Overall Progression & Moving Averages (Instant Shell + Idle Recharts Mount) */}
-        <ProgressionChart
-          solves={session.solves}
-          periodGroups={periodGroups}
-          regression={stats.regression}
-          groupingPeriod={groupingPeriod}
-          title={`${session.name}: Progression Over ${session.solves.length} Solves`}
-        />
+        <div data-testid="deferred-chart-progression">
+          <ProgressionChart
+            solves={session.solves}
+            periodGroups={periodGroups}
+            regression={stats.regression}
+            groupingPeriod={groupingPeriod}
+            title="Solve Times & Moving Averages"
+          />
+        </div>
 
         {/* Plot 2: Personal Best Progression Over Time */}
         <DeferredChart minHeight={640} fallbackTitle="PB Progression">
           <PbProgressionChart
             solves={session.solves}
             groupingPeriod={groupingPeriod}
-            title={`${session.name}: PB Progression Over Time`}
+            title="PB Progression Over Time"
           />
         </DeferredChart>
 
@@ -69,7 +71,7 @@ export function DashboardView({
             solves={session.solves}
             groupingPeriod={groupingPeriod}
             periodGroups={periodGroups}
-            title="Time Distribution Shift: Baseline vs. Recent Solves"
+            title="Baseline vs Recent Solves"
           />
         </DeferredChart>
 

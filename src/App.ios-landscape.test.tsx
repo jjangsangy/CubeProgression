@@ -67,9 +67,8 @@ describe('iOS Safari Landscape Mode & Safe Area Support', () => {
     expect(footerElement).toHaveClass('safe-area-bottom');
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/F2L Yellow Cross Progression \(Demo\): Progression Over 350 Solves/),
-      ).toBeInTheDocument();
+      expect(screen.getByText('Solve Times & Moving Averages')).toBeInTheDocument();
+      expect(screen.getByText('Overall Progression')).toBeInTheDocument();
     });
   });
 

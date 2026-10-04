@@ -99,11 +99,11 @@ describe('MetricsEvolutionChart component', () => {
       <MetricsEvolutionChart
         periodGroups={mockPeriodGroups}
         groupingPeriod="daily"
-        title="Daily Metrics Evolution: Speed & Consistency"
+        title="Daily Speed & Consistency"
       />,
     );
 
-    expect(screen.getByText('Daily Metrics Evolution: Speed & Consistency')).toBeInTheDocument();
+    expect(screen.getByText('Daily Speed & Consistency')).toBeInTheDocument();
     expect(container).toBeInTheDocument();
   });
 
@@ -112,19 +112,19 @@ describe('MetricsEvolutionChart component', () => {
       <MetricsEvolutionChart periodGroups={mockPeriodGroups} groupingPeriod="monthly" />,
     );
 
-    expect(screen.getByText('Monthly Metrics Evolution: Speed & Consistency')).toBeInTheDocument();
+    expect(screen.getByText('Monthly Speed & Consistency')).toBeInTheDocument();
     expect(container).toBeInTheDocument();
   });
 
   it('renders default daily title when title and groupingPeriod are omitted', () => {
     render(<MetricsEvolutionChart periodGroups={mockPeriodGroups} />);
-    expect(screen.getByText('Daily Metrics Evolution: Speed & Consistency')).toBeInTheDocument();
+    expect(screen.getByText('Daily Speed & Consistency')).toBeInTheDocument();
   });
 
   it('handles empty periodGroups and fast solve times safely', () => {
     // Empty groups
     render(<MetricsEvolutionChart periodGroups={[]} />);
-    expect(screen.getByText('Daily Metrics Evolution: Speed & Consistency')).toBeInTheDocument();
+    expect(screen.getByText('Daily Speed & Consistency')).toBeInTheDocument();
 
     // Fast solves with min < 2 to exercise Math.max(0, ...)
     const fastGroup: PeriodGroup = {

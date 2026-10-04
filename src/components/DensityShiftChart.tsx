@@ -1,3 +1,4 @@
+import { Activity } from 'lucide-react';
 import type React from 'react';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
@@ -35,7 +36,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
   groupingPeriod = 'daily',
   periodGroups,
   customBatchSize = 50,
-  title = 'Distribution Density Shift',
+  title = 'Baseline vs Recent Solves',
 }) => {
   const trackGradientId = useId();
   const trackRef = useRef<HTMLDivElement>(null);
@@ -608,10 +609,16 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
 
   return (
     <ChartCardWrapper
+      testId="chart-card-density-shift"
       title={title}
       subtitle="Kernel Density Estimation (KDE) comparison showing probability density shift between any two sampled regions across the session distribution."
       mobileSubtitle="KDE curves showing probability density shifts between sampled solve windows."
-      headerBadge={<span className="inline-block h-2.5 w-2.5 rounded-full bg-rose-400"></span>}
+      headerBadge={
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-0.5 text-xs font-semibold text-rose-300">
+          <Activity className="h-3.5 w-3.5 text-rose-400" />
+          Density Shift
+        </span>
+      }
       filenamePrefix="density_shift_distribution"
     >
       {/* Symmetrical, consistently distributed mean shift banner */}
