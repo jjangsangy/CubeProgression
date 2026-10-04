@@ -70,22 +70,22 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
         </div>
         <div className="mt-2 flex items-baseline justify-between gap-2">
           <div>
-            <span className="block font-mono text-[10px] text-stone-400">Ao12</span>
             <span
-              className="font-mono text-xl font-black text-orange-400"
+              className="block font-mono text-xl font-black text-orange-400"
               style={{ color: colors.series.orange }}
             >
               {stats.bestAo12 ? `${stats.bestAo12.toFixed(2)}s` : '—'}
             </span>
+            <span className="mt-1 block font-mono text-[11px] text-stone-400">Ao12</span>
           </div>
           <div className="border-l border-stone-700/80 pl-3">
-            <span className="block font-mono text-[10px] text-stone-400">Ao50</span>
             <span
-              className="font-mono text-xl font-black text-sky-400"
+              className="block font-mono text-xl font-black text-sky-400"
               style={{ color: colors.series.blue }}
             >
               {stats.bestAo50 ? `${stats.bestAo50.toFixed(2)}s` : '—'}
             </span>
+            <span className="mt-1 block font-mono text-[11px] text-stone-400">Ao50</span>
           </div>
         </div>
       </div>
