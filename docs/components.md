@@ -40,13 +40,11 @@ Presentational footer component with safe-area styling (`safe-area-x safe-area-b
 
 ## `Navbar` (`Navbar.tsx`)
 
-Top header. Props: `fileName`, `onReset`, `isSaved`,
-`storageUsageMB`, `onClearStorage`, `canInstall`, `onInstall`, `isOnline`, `onOpenInstructions`.
+Top header. Props: `fileName`, `canInstall`, `onInstall`, `isOnline`, `onOpenInstructions`.
 
 - Brand block with visible title + "csTimer Analytics" badge.
-- Shows a green "Saved locally (N MB)" pill when `isSaved`, and a file-name chip on larger screens.
-- Buttons: **csTimer Guide** (when modal handler provided) and a reset control that becomes a
-  destructive "clear storage" (trash) icon once data is saved.
+- Shows a file-name chip on larger screens.
+- Buttons: Theme selector, **csTimer Guide** (when modal handler provided), and PWA install prompt (when installable).
 
 ## `FileUploader` (`FileUploader.tsx`)
 

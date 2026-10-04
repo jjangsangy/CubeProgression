@@ -113,7 +113,7 @@ describe('App component', () => {
       expect(container.querySelector('#progression-chart')).toBeInTheDocument();
     });
 
-    const resetBtn = container.querySelector('#navbar-reset');
+    const resetBtn = container.querySelector('#clear-saved-storage');
     expect(resetBtn).toBeInTheDocument();
     if (resetBtn) fireEvent.click(resetBtn);
 
@@ -281,7 +281,7 @@ describe('App component', () => {
     });
 
     // Reset Data
-    const resetBtn = container.querySelector('#navbar-reset');
+    const resetBtn = container.querySelector('#clear-saved-storage');
     expect(resetBtn).toBeInTheDocument();
     if (resetBtn) fireEvent.click(resetBtn);
 
@@ -324,7 +324,7 @@ describe('App component', () => {
     expect(document.querySelector('#instruction-modal')).toBeNull();
 
     // 3. Reset dataset to empty state and verify modal is still accessible from both Navbar and FileUploader
-    const resetBtn = container.querySelector('#navbar-reset');
+    const resetBtn = container.querySelector('#clear-saved-storage');
     expect(resetBtn).toBeInTheDocument();
     if (resetBtn) fireEvent.click(resetBtn);
 

@@ -51,12 +51,7 @@ export default function App() {
     <ThemeProvider>
       <div className="flex min-h-screen flex-col bg-stone-950 font-sans text-stone-100 antialiased selection:bg-amber-500/30 selection:text-amber-200">
         {/* Top Navigation Bar */}
-        <Navbar
-          fileName={fileName}
-          onReset={handleClearStorage}
-          onClearStorage={handleClearStorage}
-          onOpenInstructions={() => setIsInstructionModalOpen(true)}
-        />
+        <Navbar fileName={fileName} onOpenInstructions={() => setIsInstructionModalOpen(true)} />
 
         {/* Main Container */}
         <main

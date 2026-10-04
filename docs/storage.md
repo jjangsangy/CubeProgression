@@ -66,11 +66,11 @@ a genuine `Temporal.PlainDate` object. Native JS `Date` is strictly forbidden.
    sessions and the new setting. All calls use `.catch(console.error)`.
 4. **On clear** (`handleClearStorage`): resets React state to empty *and* calls
    `clearSavedDataset()`. The dashboard reverts to the empty shell (the user can reload the
-   demo via the Navbar).
+   demo via `FileUploader`).
 
 ## Storage estimate
 
-`getStorageInfo` powers the "N MB" indicator in the Navbar and `FileUploader`. It is
+`getStorageInfo` powers the "N MB" indicator in `FileUploader`. It is
 optional and returns `null` when `navigator.storage.estimate` is unavailable.
 
 ## Testing notes

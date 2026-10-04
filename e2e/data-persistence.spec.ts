@@ -23,8 +23,8 @@ test.describe('Data Ingestion & IndexedDB Persistence', () => {
   });
 
   test('initializes demo dataset and saves to IndexedDB on first launch', async ({ page }) => {
-    // Navbar indicates persistent local storage
-    await expect(page.locator('#navbar-saved-badge')).toBeVisible();
+    // Persistent local storage is active in FileUploader
+    await expect(page.locator('#clear-saved-storage')).toBeVisible();
 
     // Default session selector is populated with two sessions
     const sessionSelector = page.locator('#session-selector');

@@ -1,17 +1,12 @@
-import { Database, Download, FileText, HelpCircle, RefreshCw, Trash2, WifiOff } from 'lucide-react';
+import { Download, FileText, HelpCircle, WifiOff } from 'lucide-react';
 import type React from 'react';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { usePwaInstall } from '../hooks/usePwaInstall';
-import { useStorageStatus } from '../hooks/useStorageNotice';
 import { useTheme } from '../theme/ThemeContext';
 import { ThemeSelector } from './ThemeSelector';
 
 interface NavbarProps {
   fileName?: string;
-  onReset: () => void;
-  isSaved?: boolean;
-  storageUsageMB?: number;
-  onClearStorage?: () => void;
   canInstall?: boolean;
   onInstall?: () => void;
   isOnline?: boolean;
@@ -23,21 +18,14 @@ const logoSrc = baseUrl.endsWith('/') ? `${baseUrl}favicon.svg` : `${baseUrl}/fa
 
 export const Navbar: React.FC<NavbarProps> = ({
   fileName,
-  onReset,
-  isSaved: propIsSaved,
-  storageUsageMB: propStorageUsageMB,
-  onClearStorage,
   canInstall: propCanInstall,
   onInstall,
   isOnline: propIsOnline,
   onOpenInstructions,
 }) => {
-  const storageStatus = useStorageStatus();
   const hookOnlineStatus = useOnlineStatus();
   const pwaInstall = usePwaInstall();
 
-  const isSaved = propIsSaved ?? storageStatus.isSaved;
-  const storageUsageMB = propStorageUsageMB ?? storageStatus.storageUsageMB;
   const isOnline = propIsOnline ?? hookOnlineStatus;
   const canInstall = propCanInstall ?? pwaInstall.canInstall;
   const handleInstall = onInstall ?? pwaInstall.promptInstall;
@@ -86,25 +74,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right Status & Action Items */}
         <div className="flex items-center justify-end gap-1.5 sm:gap-2 md:gap-2.5 min-w-0">
-          {isSaved && (
-            <div
-              id="navbar-saved-badge"
-              className="hidden items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium lg:flex shrink-0"
-              title="Data is persisted across reloads in browser IndexedDB storage"
-              style={{
-                borderColor: `${colors.accent}40`,
-                backgroundColor: `${colors.accent}18`,
-                color: colors.accentText,
-              }}
-            >
-              <Database className="h-3.5 w-3.5 shrink-0" style={{ color: colors.accent }} />
-              <span>Saved locally</span>
-              {storageUsageMB !== undefined && storageUsageMB > 0 && (
-                <span className="font-mono text-[11px] opacity-80">({storageUsageMB} MB)</span>
-              )}
-            </div>
-          )}
-
           {fileName && (
             <div
               id="navbar-filename"
@@ -174,32 +143,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               />
               <span className="sm:hidden">Guide</span>
               <span className="hidden sm:inline">csTimer Guide</span>
-            </button>
-          )}
-
-          {isSaved && onClearStorage ? (
-            <button
-              id="navbar-reset"
-              type="button"
-              onClick={onClearStorage}
-              aria-label="Reset Data"
-              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800/90 p-2 md:px-3 md:py-1.5 text-xs font-medium whitespace-nowrap text-stone-300 transition-all hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-300 active:scale-95 shadow-sm shrink-0"
-              title="Reset Data"
-            >
-              <Trash2 className="h-3.5 w-3.5 shrink-0 text-stone-400" />
-              <span className="hidden md:inline">Reset</span>
-            </button>
-          ) : (
-            <button
-              id="navbar-reset"
-              type="button"
-              onClick={onReset}
-              aria-label="Reset Data"
-              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800/90 p-2 md:px-3 md:py-1.5 text-xs font-medium whitespace-nowrap text-stone-300 transition-all hover:border-stone-600 hover:bg-stone-700/80 hover:text-stone-100 active:scale-95 shadow-sm shrink-0"
-              title="Reset Data"
-            >
-              <RefreshCw className="h-3.5 w-3.5 shrink-0 text-stone-400" />
-              <span className="hidden md:inline">Reset</span>
             </button>
           )}
         </div>

@@ -120,9 +120,6 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       await expect(guideLabels.nth(0)).toBeVisible();
       await expect(guideLabels.nth(1)).toBeHidden();
 
-      // Storage badge is hidden on mobile screens (has hidden lg:flex)
-      await expect(header.locator('#navbar-saved-badge')).toBeHidden();
-
       // Filename pill is hidden on mobile screens (has hidden md:flex)
       await expect(header.locator('#navbar-filename')).toBeHidden();
     });
@@ -148,10 +145,10 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
 
       // 3. Header items are spaced cleanly throughout, fill the header, and never overlap
       const brandBox = await brandHeading.boundingBox();
+      const themeBtn = header.locator('#theme-selector-btn');
       const guideBtn = header.locator('#navbar-guide');
-      const resetBtn = header.locator('#navbar-reset');
 
-      const buttons = [guideBtn, resetBtn];
+      const buttons = [themeBtn, guideBtn];
       for (const btn of buttons) {
         await expect(btn).toBeVisible();
       }
@@ -602,14 +599,11 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       await waitForReady(page);
     });
 
-    test('renders filename pill in Navbar while hiding storage badge', async ({ page }) => {
+    test('renders filename pill in Navbar on tablet screens', async ({ page }) => {
       const header = page.locator('#navbar');
 
       // Filename is visible on md: screens
       await expect(header.locator('#navbar-filename')).toBeVisible();
-
-      // Storage badge is still hidden below lg:
-      await expect(header.locator('#navbar-saved-badge')).toBeHidden();
     });
 
     test('verifies tablet portrait header layout: stays within bounds, no overlap, title visible, no overflow', async ({
@@ -761,13 +755,13 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       await waitForReady(page);
     });
 
-    test('renders storage badge in Navbar and all 5 overview cards in a single row', async ({
+    test('renders filename pill in Navbar and all 5 overview cards in a single row', async ({
       page,
     }) => {
       const header = page.locator('#navbar');
 
-      // Both filename and storage badge are visible on lg: screens
-      await expect(header.locator('#navbar-saved-badge')).toBeVisible();
+      // Filename is visible on lg: screens
+      await expect(header.locator('#navbar-filename')).toBeVisible();
 
       // All 5 overview cards sit side-by-side on row 1
       const cardsGrid = page.locator('#metrics-overview');
