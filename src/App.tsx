@@ -51,7 +51,7 @@ export default function App() {
     <ThemeProvider>
       <div className="flex min-h-screen flex-col bg-stone-950 font-sans text-stone-100 antialiased selection:bg-amber-500/30 selection:text-amber-200">
         {/* Top Navigation Bar */}
-        <Navbar fileName={fileName} onOpenInstructions={() => setIsInstructionModalOpen(true)} />
+        <Navbar onOpenInstructions={() => setIsInstructionModalOpen(true)} />
 
         {/* Main Container */}
         <main
@@ -60,6 +60,7 @@ export default function App() {
         >
           {/* Upload & Session Configuration Panel */}
           <FileUploader
+            fileName={fileName}
             sessions={sessions}
             selectedSessionId={selectedSessionId}
             onSelectSession={handleSelectSession}

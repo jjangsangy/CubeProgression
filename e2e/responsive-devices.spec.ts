@@ -120,8 +120,9 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       await expect(guideLabels.nth(0)).toBeVisible();
       await expect(guideLabels.nth(1)).toBeHidden();
 
-      // Filename pill is hidden on mobile screens (has hidden md:flex)
-      await expect(header.locator('#navbar-filename')).toBeHidden();
+      // Filename pill is no longer in Navbar, but rendered in persistent storage area
+      await expect(header.locator('#navbar-filename')).toHaveCount(0);
+      await expect(page.locator('#storage-filename')).toBeVisible();
     });
 
     test('verifies mobile portrait header layout: completely filled, no overlap, evenly spaced, no overflow, brand and buttons visible', async ({
@@ -457,7 +458,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       await expect(brandSpan).toBeVisible();
 
       // 3. All visible header elements stay within bounds and do not overlap
-      const visibleElements = await header.locator('button, img, #navbar-filename').all();
+      const visibleElements = await header.locator('button, img').all();
       const boxes = [];
       for (const el of visibleElements) {
         if (await el.isVisible()) {
@@ -599,11 +600,13 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       await waitForReady(page);
     });
 
-    test('renders filename pill in Navbar on tablet screens', async ({ page }) => {
-      const header = page.locator('#navbar');
+    test('renders filename indicator in Persistent Storage area on tablet screens', async ({
+      page,
+    }) => {
+      const storageBar = page.locator('#file-uploader');
 
-      // Filename is visible on md: screens
-      await expect(header.locator('#navbar-filename')).toBeVisible();
+      // Filename is visible in persistent storage area
+      await expect(storageBar.locator('#storage-filename')).toBeVisible();
     });
 
     test('verifies tablet portrait header layout: stays within bounds, no overlap, title visible, no overflow', async ({
@@ -624,7 +627,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       await expect(brandSpan).toBeVisible();
 
       // 3. All visible header elements stay within bounds and do not overlap
-      const visibleElements = await header.locator('button, img, #navbar-filename').all();
+      const visibleElements = await header.locator('button, img').all();
       const boxes = [];
       for (const el of visibleElements) {
         if (await el.isVisible()) {
@@ -755,13 +758,13 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       await waitForReady(page);
     });
 
-    test('renders filename pill in Navbar and all 5 overview cards in a single row', async ({
+    test('renders filename indicator in storage area and all 5 overview cards in a single row', async ({
       page,
     }) => {
-      const header = page.locator('#navbar');
+      const storageBar = page.locator('#file-uploader');
 
-      // Filename is visible on lg: screens
-      await expect(header.locator('#navbar-filename')).toBeVisible();
+      // Filename is visible in persistent storage area
+      await expect(storageBar.locator('#storage-filename')).toBeVisible();
 
       // All 5 overview cards sit side-by-side on row 1
       const cardsGrid = page.locator('#metrics-overview');

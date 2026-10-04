@@ -348,6 +348,7 @@ describe('FileUploader component', () => {
     expect(clearBtn).toBeInTheDocument();
     const storageBar = clearBtn?.parentElement ?? null;
     expect(storageBar?.textContent).toMatch(/\d+\.\d{2}\s*MB/);
+    expect(container.querySelector('#storage-filename')).toBeNull();
 
     if (clearBtn) fireEvent.click(clearBtn);
     expect(onClearStorage).toHaveBeenCalled();
@@ -372,6 +373,28 @@ describe('FileUploader component', () => {
     expect(container.querySelector('#clear-saved-storage')?.parentElement?.textContent).not.toMatch(
       /\d+\.\d{2}\s*MB/,
     );
+  });
+
+  it('renders filename indicator in persistent storage area when fileName and isSaved are provided', () => {
+    const { container } = render(
+      <FileUploader
+        sessions={mockSessions}
+        selectedSessionId="s1"
+        onSelectSession={vi.fn()}
+        groupingPeriod="daily"
+        onChangeGrouping={vi.fn()}
+        customBatchSize={50}
+        onChangeCustomBatchSize={vi.fn()}
+        onFileUpload={vi.fn()}
+        onLoadDemo={vi.fn()}
+        isSaved={true}
+        fileName="cstimer_custom_export.txt"
+      />,
+    );
+
+    const filenameBadge = container.querySelector('#storage-filename');
+    expect(filenameBadge).toBeInTheDocument();
+    expect(filenameBadge?.textContent).toContain('cstimer_custom_export.txt');
   });
 
   it('renders grouping period selector with responsive 2-column mobile and 4-column desktop grid', () => {

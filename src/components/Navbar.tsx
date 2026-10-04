@@ -1,4 +1,4 @@
-import { Download, FileText, HelpCircle, WifiOff } from 'lucide-react';
+import { Download, HelpCircle, WifiOff } from 'lucide-react';
 import type React from 'react';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { usePwaInstall } from '../hooks/usePwaInstall';
@@ -6,7 +6,6 @@ import { useTheme } from '../theme/ThemeContext';
 import { ThemeSelector } from './ThemeSelector';
 
 interface NavbarProps {
-  fileName?: string;
   canInstall?: boolean;
   onInstall?: () => void;
   isOnline?: boolean;
@@ -17,7 +16,6 @@ const baseUrl = import.meta.env.BASE_URL || './';
 const logoSrc = baseUrl.endsWith('/') ? `${baseUrl}favicon.svg` : `${baseUrl}/favicon.svg`;
 
 export const Navbar: React.FC<NavbarProps> = ({
-  fileName,
   canInstall: propCanInstall,
   onInstall,
   isOnline: propIsOnline,
@@ -74,21 +72,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right Status & Action Items */}
         <div className="flex items-center justify-end gap-1.5 sm:gap-2 md:gap-2.5 min-w-0">
-          {fileName && (
-            <div
-              id="navbar-filename"
-              className="hidden items-center gap-1.5 rounded-lg border border-stone-700/60 bg-stone-800/80 px-2.5 py-1 font-mono text-xs text-stone-300 md:flex shrink min-w-0"
-            >
-              <FileText
-                className="h-3.5 w-3.5 shrink-0 text-amber-400"
-                style={{ color: colors.accent }}
-              />
-              <span className="max-w-[100px] sm:max-w-[130px] lg:max-w-[180px] xl:max-w-[260px] truncate">
-                {fileName}
-              </span>
-            </div>
-          )}
-
           {!isOnline && (
             <div
               id="navbar-offline-status"

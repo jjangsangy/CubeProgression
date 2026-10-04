@@ -2,7 +2,7 @@
 - [x] feat(app): Implement app as a PWA
 - [ ] feat(ui): Increase height of charts on desktop
   - [ ] Desktop mode uses up more of the display
-- [ ] fix(ui): Make headers use a consistent scheme
+- [x] fix(ui): Make headers use a consistent scheme
 - [x] feat(theme): Introduce themes
   - [x] feat(theme): Light mode
   - [ ] feat(theme): User Defined Themes
@@ -11,6 +11,8 @@
     - [ ] filtering
     - [ ] scramble generator
 - [ ] feat(ui): Show dates in session
+  - [ ] feat(ui): Plots should be sorted by date
 - [ ] fix(plot): Make ui changes smoother for kde plot
 - [x] feat(app): Make a instruction modal
 - [ ] feat(selector): Range selector should use the same scrober as KDE
+- [ ] feat(ui): Click to browse should be a button and more prominent

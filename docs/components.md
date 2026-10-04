@@ -40,10 +40,9 @@ Presentational footer component with safe-area styling (`safe-area-x safe-area-b
 
 ## `Navbar` (`Navbar.tsx`)
 
-Top header. Props: `fileName`, `canInstall`, `onInstall`, `isOnline`, `onOpenInstructions`.
+Top header. Props: `canInstall`, `onInstall`, `isOnline`, `onOpenInstructions`.
 
 - Brand block with visible title + "csTimer Analytics" badge.
-- Shows a file-name chip on larger screens.
 - Buttons: Theme selector, **csTimer Guide** (when modal handler provided), and PWA install prompt (when installable).
 
 ## `FileUploader` (`FileUploader.tsx`)
@@ -51,7 +50,7 @@ Top header. Props: `fileName`, `canInstall`, `onInstall`, `isOnline`, `onOpenIns
 The upload + configuration panel.
 
 - Drag-and-drop **and** click-to-browse dropzone (`accept=".txt,.json"`). Disabled while loading.
-- Props include `sessions`, `selectedSessionId`, `onSelectSession`, grouping controls
+- Props include `fileName`, `sessions`, `selectedSessionId`, `onSelectSession`, grouping controls
   (`groupingPeriod`, `onChangeGrouping`, `customBatchSize`, `onChangeCustomBatchSize`),
   `onFileUpload`, `onLoadDemo`, `errorMsg`, and the loading/storage props.
 - Renders group-by buttons (Day / Week / Month / Batch-50 / Custom batch) and a session
