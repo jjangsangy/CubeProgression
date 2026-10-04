@@ -16,3 +16,4 @@
 - [x] feat(app): Make a instruction modal
 - [ ] feat(selector): Range selector should use the same scrober as KDE
 - [ ] feat(ui): Click to browse should be a button and more prominent
+- [ ] refactor(component): FilePicker is too large
