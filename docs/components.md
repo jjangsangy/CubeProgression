@@ -144,7 +144,16 @@ Full-width Recharts `AreaChart` of KDE curves with an interactive solve timeline
 - Features dual draggable scrubbers with semi-transparent opacity (`bg-rose-500/25` and `bg-emerald-500/25`) placed on an interactive dataset timeline track below the chart with responsive height scaling across mobile, tablet, and desktop viewports (`h-12 sm:h-14 md:h-16 lg:h-20`).
 - Each scrubber features ribbed resize handles on both ends (`cursor-ew-resize`) allowing users to drag the ends left or right to dynamically increase or decrease the sample window width. Dragging the center body slides the window along the timeline.
 - The scrubber track features an SVG sparkline, mean reference line, and vertical dashed grouping boundary lines showing where aggregation periods (e.g. daily/weekly sessions, batches) begin and end.
-- Computes a centered, evenly distributed summary banner (baseline mean, recent mean, solve index ranges, and "faster/slower by X" shift).
+- Computes a compact metrics banner comparing the two windows: an identity line with each window's solve range (`(n–m)`), plus four tiles — **Overlap** (`calculateOverlapCoefficient`, shared density mass), **Sub-N Chance** (`calculateSubTargetChance`, baseline → recent odds of beating the `selectSpeedcubingMilestone` round goal, labeled with the number, e.g. "Sub-15 Chance"), **Slow Solves** (`calculateTailRisk`, relative change framed as "N% fewer/more" solves above the baseline's slow cutoff, with that cutoff shown beneath), and **Distribution Shift** (`calculateEarthMoverDistance`, subtitled "Earth Mover's Distance"). Each tile's `InfoTooltip` help icon reveals a plain-language explanation (in speedcubing terms) so the banner stays uncluttered.
+
+## `InfoTooltip` (`InfoTooltip.tsx`)
+
+Small help icon that reveals an explanation. Props: `text`, `label` (accessible name), `id?`.
+
+- Opens on mouse hover and on keyboard focus, and **toggles on tap** for touch/pen; dismisses on mouse leave, blur, an outside pointer down, or Escape.
+- Tracks the triggering pointer modality so the `pointerenter` a tap emits with `pointerType: 'touch'` cannot flicker the bubble shut, and a pointer press's own focus event cannot pre-empt the tap toggle; later keyboard focus still opens the bubble.
+- Portals the bubble to `document.body` with fixed, viewport-clamped positioning, so it never escapes the screen or is clipped by an ancestor's `overflow-hidden` on narrow viewports.
+- Places the bubble below the trigger when it fits, otherwise above; once mounted it re-measures the bubble's real height and clamps it on both axes, so long explanations on short (mobile) viewports cannot spill past the edges.
 
 ## `MetricsEvolutionChart` (`MetricsEvolutionChart.tsx`)
 

@@ -62,6 +62,10 @@ A single csTimer export can contain multiple sessions (e.g. `session1`, `session
 - `LinearRegression` — `slope`, `intercept`, `r2`, and a preformatted `slopeFormatted`
   string like `-0.0095s/solve`.
 - `KDEPoint` — one x-sample with `baselineDensity` and `recentDensity`.
+- `TailRiskMetrics` — slow-cutoff `thresholdSec`, `baselineFraction`, `recentFraction`, and
+  `relativeChange` from `calculateTailRisk`.
+- `SubTargetChance` — a milestone `targetSec` with `baselineChance`/`recentChance` from
+  `calculateSubTargetChance`.
 - `GlobalStats` — the dashboard summary (best single/ao5/ao12/ao50, current ao5/ao12,
   mean, median, regression, baseline vs recent average and improvement).
 

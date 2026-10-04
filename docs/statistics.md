@@ -125,6 +125,42 @@ $$W_1 = \int_{-\infty}^{\infty} |F_{\text{baseline}}(x) - F_{\text{recent}}(x)| 
 - Returns `null` when inputs are invalid or density sum is non-positive.
 - Returns `0` when baseline and recent distributions are identical.
 
+## `calculateOverlapCoefficient(points: KDEPoint[]): number | null`
+
+Overlap coefficient (Weitzman's measure, OVL) between the baseline and recent KDE curves — the shared probability mass of the two normalized densities:
+
+$$\text{OVL} = \int_{-\infty}^{\infty} \min\big(f_{\text{baseline}}(x), f_{\text{recent}}(x)\big) \, dx \approx \sum_{k=0}^{M-1} \min\big(\hat{f}_{\text{baseline}}(x_k), \hat{f}_{\text{recent}}(x_k)\big)$$
+
+- Normalizes each discrete curve to sum to `1` before combining, neutralizing Gaussian tail truncation.
+- Evaluates on precomputed KDE bins in $O(M)$ time with zero heap allocations.
+- Returns overlap in `[0, 1]`: `1` means the windows are statistically identical, `0` means disjoint.
+- Returns `null` when inputs are invalid, too short, or either density sum is non-positive/non-finite.
+
+## `SPEEDCUBING_MILESTONES_SEC`
+
+Canonical speedcubing milestone times in seconds, slowest to fastest: `120, 90, 60, 50, 45, 40, 35, 30, 25, 20, 15, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0.5, 0.25`. Spaced the way cubers actually chase goals — 30s steps at the slow end (120/90/60), 5s steps down to 20s, then tighter steps as times get faster, ending below one second for last-layer practice — so framed targets read as "sub-15", "sub-8", etc. rather than arbitrary values.
+
+## `selectSpeedcubingMilestone(times: number[]): number | null`
+
+Picks the single standard milestone a solver is chasing next: the largest canonical goal strictly faster than their typical (median) solve time — a ~12s solver is measured on sub-11, a ~20s solver on sub-15. Falls back to the hardest milestone for world-class medians. Returns `null` for an empty sample.
+
+## `calculateSubTargetChance(sample1: number[], sample2: number[], targetSec: number): SubTargetChance | null`
+
+Probability of beating a fixed sub-x target in each window.
+
+- Counts the fraction of each sample strictly faster than `targetSec` and returns `{ targetSec, baselineChance, recentChance }`.
+- Linear scan in $O(n + m)$ — cheap enough to recompute on every drag frame.
+- Returns `null` when either sample is empty or the target is non-finite.
+
+## `calculateTailRisk(sample1: number[], sample2: number[], quantile = 0.75): TailRiskMetrics | null`
+
+Tracks the change in "bad solve" frequency between two samples, anchored to the baseline sample's upper-quartile slow cutoff.
+
+- Derives `thresholdSec` from the baseline sample's `quantile` (default `0.75`) via linear interpolation, so the baseline bad-solve rate lands near 25%.
+- Counts the fraction of each sample strictly above the threshold and reports `relativeChange = (recent − baseline) / baseline` (negative = fewer slow solves recently, an improvement).
+- Returns `{ thresholdSec, baselineFraction, recentFraction, relativeChange }`; `relativeChange` is `null` when the baseline has no slow solves.
+- Returns `null` when either sample is empty or the threshold is non-finite.
+
 ## `calculateGlobalStats(solves): GlobalStats`
 
 The dashboard summary object:

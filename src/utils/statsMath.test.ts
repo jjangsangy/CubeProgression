@@ -7,14 +7,19 @@ import {
   calculateKDE,
   calculateKDEFromSamples,
   calculateLinearRegression,
+  calculateOverlapCoefficient,
   calculatePbProgression,
   calculatePeakDistance,
+  calculateSubTargetChance,
+  calculateTailRisk,
   computeGroupStats,
   findKDEPeak,
   getNormalizedYCeiling,
   getNormalizedYCeilingWithHysteresis,
   getPeriodUnitInfo,
   groupSolvesByPeriod,
+  SPEEDCUBING_MILESTONES_SEC,
+  selectSpeedcubingMilestone,
 } from './statsMath';
 
 const mockSolves: Solve[] = [
@@ -689,6 +694,163 @@ describe('statsMath utils', () => {
       const emd = calculateEarthMoverDistance(points);
       expect(emd).toBeDefined();
       expect(emd).toBeGreaterThan(0);
+    });
+  });
+
+  describe('calculateOverlapCoefficient', () => {
+    it('returns null when points are too few, zero-summed, or non-finite', () => {
+      expect(calculateOverlapCoefficient([])).toBeNull();
+      expect(
+        calculateOverlapCoefficient([{ x: 10, baselineDensity: 0.5, recentDensity: 0.5 }]),
+      ).toBeNull();
+      const zeroPoints: KDEPoint[] = [
+        { x: 10, baselineDensity: 0, recentDensity: 0 },
+        { x: 11, baselineDensity: 0, recentDensity: 0 },
+      ];
+      expect(calculateOverlapCoefficient(zeroPoints)).toBeNull();
+      const nanPoints: KDEPoint[] = [
+        { x: 10, baselineDensity: Number.NaN, recentDensity: 0.5 },
+        { x: 11, baselineDensity: 0.5, recentDensity: 0.5 },
+      ];
+      expect(calculateOverlapCoefficient(nanPoints)).toBeNull();
+
+      // Invalid recent curve must be rejected too, not just an invalid baseline.
+      const zeroRecentPoints: KDEPoint[] = [
+        { x: 10, baselineDensity: 1, recentDensity: 0 },
+        { x: 11, baselineDensity: 1, recentDensity: 0 },
+      ];
+      expect(calculateOverlapCoefficient(zeroRecentPoints)).toBeNull();
+      const infiniteRecentPoints: KDEPoint[] = [
+        { x: 10, baselineDensity: 0.5, recentDensity: 0.5 },
+        { x: 11, baselineDensity: 0.5, recentDensity: Number.POSITIVE_INFINITY },
+      ];
+      expect(calculateOverlapCoefficient(infiniteRecentPoints)).toBeNull();
+    });
+
+    it('returns 1 when the baseline and recent curves are identical', () => {
+      const identicalPoints: KDEPoint[] = [
+        { x: 10, baselineDensity: 0.2, recentDensity: 0.2 },
+        { x: 11, baselineDensity: 0.6, recentDensity: 0.6 },
+        { x: 12, baselineDensity: 0.2, recentDensity: 0.2 },
+      ];
+      expect(calculateOverlapCoefficient(identicalPoints)).toBeCloseTo(1, 10);
+    });
+
+    it('returns 0 for disjoint distributions and the shared mass otherwise', () => {
+      const disjointPoints: KDEPoint[] = [
+        { x: 10, baselineDensity: 1, recentDensity: 0 },
+        { x: 11, baselineDensity: 0, recentDensity: 1 },
+      ];
+      expect(calculateOverlapCoefficient(disjointPoints)).toBe(0);
+
+      // Normalized baseline = [0.5, 0.5, 0] and recent = [0, 0.5, 0.5] -> shared mass 0.5.
+      const partialPoints: KDEPoint[] = [
+        { x: 10, baselineDensity: 1, recentDensity: 0 },
+        { x: 11, baselineDensity: 1, recentDensity: 1 },
+        { x: 12, baselineDensity: 0, recentDensity: 1 },
+      ];
+      expect(calculateOverlapCoefficient(partialPoints)).toBeCloseTo(0.5, 10);
+    });
+  });
+
+  describe('calculateSubTargetChance', () => {
+    it('returns null when either sample is empty or the target is invalid', () => {
+      expect(calculateSubTargetChance([], [1, 2, 3], 10)).toBeNull();
+      expect(calculateSubTargetChance([1, 2, 3], [], 10)).toBeNull();
+      expect(calculateSubTargetChance([1, 2, 3], [1, 2, 3], Number.NaN)).toBeNull();
+    });
+
+    it('reports the fraction of each sample faster than the target', () => {
+      const result = calculateSubTargetChance([10, 11, 12, 13], [8, 9, 10, 11], 11);
+      expect(result?.targetSec).toBe(11);
+      expect(result?.baselineChance).toBe(0.25);
+      expect(result?.recentChance).toBe(0.75);
+    });
+
+    it('reports zero when neither sample beats the target', () => {
+      const result = calculateSubTargetChance([12, 13, 14, 15], [12, 13, 14, 15], 10);
+      expect(result?.baselineChance).toBe(0);
+      expect(result?.recentChance).toBe(0);
+    });
+
+    it('excludes times exactly at the target', () => {
+      const result = calculateSubTargetChance([10, 11], [10, 9], 10);
+      expect(result?.baselineChance).toBe(0);
+      expect(result?.recentChance).toBe(0.5);
+    });
+  });
+
+  describe('selectSpeedcubingMilestone', () => {
+    it('returns null when there are no times', () => {
+      expect(selectSpeedcubingMilestone([])).toBeNull();
+    });
+
+    it('picks the next standard goal below the solver level', () => {
+      // ~12s solver chases sub-11; ~20s solver chases sub-15; ~7s solver chases sub-6.
+      expect(selectSpeedcubingMilestone([11, 12, 13])).toBe(11);
+      expect(selectSpeedcubingMilestone([19, 20, 21])).toBe(15);
+      expect(selectSpeedcubingMilestone([6.8, 7, 7.2])).toBe(6);
+      expect(selectSpeedcubingMilestone([200, 210])).toBe(120);
+    });
+
+    it('handles a single-sample median', () => {
+      expect(selectSpeedcubingMilestone([12])).toBe(11);
+    });
+
+    it('supports sub-second targets for last-layer practice', () => {
+      expect(selectSpeedcubingMilestone([0.6, 0.7, 0.8])).toBe(0.5);
+      expect(selectSpeedcubingMilestone([0.3, 0.4, 0.45])).toBe(0.25);
+    });
+
+    it('falls back to the hardest goal for world-class medians', () => {
+      expect(SPEEDCUBING_MILESTONES_SEC[SPEEDCUBING_MILESTONES_SEC.length - 1]).toBe(0.25);
+      expect(selectSpeedcubingMilestone([0.1, 0.15, 0.2])).toBe(0.25);
+    });
+  });
+
+  describe('calculateTailRisk', () => {
+    it('returns null when either sample is empty', () => {
+      expect(calculateTailRisk([], [1, 2, 3])).toBeNull();
+      expect(calculateTailRisk([1, 2, 3], [])).toBeNull();
+    });
+
+    it('returns null when the quantile yields a non-finite threshold', () => {
+      expect(calculateTailRisk([10, 11, 12, 13], [10, 11, 12, 13], Number.NaN)).toBeNull();
+      expect(calculateTailRisk([10, 11, 12, 13], [10, 11, 12, 13], 2)).toBeNull();
+    });
+
+    it('reports no change for identical samples', () => {
+      const result = calculateTailRisk([10, 11, 12, 13], [10, 11, 12, 13]);
+      expect(result).not.toBeNull();
+      expect(result?.thresholdSec).toBe(12.25);
+      expect(result?.baselineFraction).toBe(0.25);
+      expect(result?.recentFraction).toBe(0.25);
+      expect(result?.relativeChange).toBe(0);
+    });
+
+    it('reports a relative drop when recent solves avoid the slow tail', () => {
+      const result = calculateTailRisk([10, 11, 12, 13], [8, 9, 10, 11]);
+      expect(result?.thresholdSec).toBe(12.25);
+      expect(result?.baselineFraction).toBe(0.25);
+      expect(result?.recentFraction).toBe(0);
+      expect(result?.relativeChange).toBe(-1);
+    });
+
+    it('reports a relative rise when recent solves fall into the slow tail', () => {
+      const result = calculateTailRisk([10, 11, 12, 13], [12, 13, 14, 15]);
+      expect(result?.recentFraction).toBe(0.75);
+      expect(result?.relativeChange).toBe(2);
+    });
+
+    it('returns a null relative change when the baseline has no slow solves', () => {
+      const result = calculateTailRisk([10, 10, 10, 10], [8, 9, 10, 11]);
+      expect(result?.baselineFraction).toBe(0);
+      expect(result?.relativeChange).toBeNull();
+    });
+
+    it('respects a custom tail quantile', () => {
+      const result = calculateTailRisk([10, 11, 12, 13], [10, 11, 12, 13], 0.5);
+      expect(result?.thresholdSec).toBe(11.5);
     });
   });
 

@@ -1,4 +1,4 @@
-import { Activity, HelpCircle } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import type React from 'react';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
@@ -13,17 +13,22 @@ import {
   YAxis,
 } from 'recharts';
 import { useAutoDismissTooltip } from '../hooks/useAutoDismissTooltip';
-import { useTheme } from '../theme';
+import { type ThemePalette, useTheme } from '../theme';
 import type { GroupingPeriod, PeriodGroup, Solve } from '../types';
 import {
   calculateEarthMoverDistance,
   calculateKDEFromSamples,
+  calculateOverlapCoefficient,
   calculatePeakDistance,
+  calculateSubTargetChance,
+  calculateTailRisk,
   findKDEPeak,
   getNormalizedYCeilingWithHysteresis,
   groupSolvesByPeriod,
+  selectSpeedcubingMilestone,
 } from '../utils/statsMath';
 import { ChartCardWrapper } from './ChartCardWrapper';
+import { InfoTooltip } from './InfoTooltip';
 
 interface DensityShiftChartProps {
   id?: string;
@@ -32,6 +37,93 @@ interface DensityShiftChartProps {
   periodGroups?: PeriodGroup[];
   customBatchSize?: number;
   title?: string;
+}
+
+interface MetricTileProps {
+  id: string;
+  label: string;
+  value: string;
+  valueColor: string;
+  hint: string;
+  sublabel?: string;
+  colors: ThemePalette;
+}
+
+/**
+ * Compact readout for a single distribution comparison metric. The headline value
+ * stays minimal; the adjoining help icon reveals the definition on hover so the
+ * banner never has to explain itself inline.
+ */
+const MetricTile: React.FC<MetricTileProps> = ({
+  id,
+  label,
+  value,
+  valueColor,
+  hint,
+  sublabel,
+  colors,
+}) => (
+  <div
+    id={id}
+    className="relative flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg border p-2.5 text-center"
+    style={{ backgroundColor: colors.bgCard, borderColor: colors.borderSubtle }}
+  >
+    <span
+      className="inline-flex max-w-full items-center gap-1 text-[11px] font-medium"
+      style={{ color: colors.textSecondary }}
+    >
+      <InfoTooltip id={`${id}-info`} label={`${label} explanation`} text={hint} />
+      <span className="truncate">{label}</span>
+    </span>
+    <span
+      id={`${id}-value`}
+      className="font-mono text-base font-bold"
+      style={{ color: valueColor }}
+    >
+      {value}
+    </span>
+    {sublabel && (
+      <span className="text-[10px] leading-tight" style={{ color: colors.textMuted }}>
+        {sublabel}
+      </span>
+    )}
+  </div>
+);
+
+type ReadoutTone = 'good' | 'bad' | 'neutral';
+
+/** Resolves a readout tone to a palette colour, keeping colour choice in one place. */
+function toneColor(tone: ReadoutTone, colors: ThemePalette): string {
+  if (tone === 'good') return colors.series.green;
+  if (tone === 'bad') return colors.series.red;
+  return colors.textSecondary;
+}
+
+/**
+ * Classifies a signed change as good/bad/neutral (neutral within `threshold`). Set
+ * `improveWhenNegative` for metrics where a decrease is the desirable direction.
+ */
+function changeTone(
+  change: number | null,
+  threshold: number,
+  improveWhenNegative = false,
+): ReadoutTone {
+  if (change == null || Math.abs(change) <= threshold) return 'neutral';
+  const improves = improveWhenNegative ? change < 0 : change > 0;
+  return improves ? 'good' : 'bad';
+}
+
+function formatPercent(fraction: number): string {
+  return `${Math.round(fraction * 100)}%`;
+}
+
+/** Frames a slow-solve frequency change as "N% fewer/more" or "no change". */
+function formatTailText(change: number | null): string {
+  if (change == null) return '—';
+  const percent = Math.abs(Math.round(change * 100));
+  if (change > 0.0001) return `${percent}% more`;
+  if (change < -0.0001) return `${percent}% fewer`;
+  return 'no change';
 }
 
 export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
@@ -238,8 +330,8 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     return nextCeiling;
   }, [kdeData]);
 
-  // Symmetrical summary statistics for Sample 1 (Baseline) and Sample 2 (Recent)
-  const statsSummary = useMemo(() => {
+  // Distribution comparison metrics between Sample 1 (Baseline) and Sample 2 (Recent)
+  const metricsSummary = useMemo(() => {
     if (sample1Solves.length === 0 || sample2Solves.length === 0 || validSolves.length < 10) {
       return null;
     }
@@ -249,25 +341,30 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
 
     const bMean = bTimes.reduce((a, b) => a + b, 0) / bTimes.length;
     const rMean = rTimes.reduce((a, b) => a + b, 0) / rTimes.length;
+
+    const overlap = calculateOverlapCoefficient(kdeData);
+    const milestone = selectSpeedcubingMilestone([...bTimes, ...rTimes]);
+    const subTarget =
+      milestone != null ? calculateSubTargetChance(bTimes, rTimes, milestone) : null;
+    const tail = calculateTailRisk(bTimes, rTimes);
     const emd = calculateEarthMoverDistance(kdeData);
 
+    // EMD magnitude is unsigned; derive the direction of travel from the means.
     let shiftText = 'no change';
     if (emd !== null && emd > 0) {
       if (bMean > rMean) {
-        shiftText = `-${emd.toFixed(2)}s faster`;
+        shiftText = `${emd.toFixed(2)}s faster`;
       } else if (rMean > bMean) {
-        shiftText = `+${emd.toFixed(2)}s slower`;
+        shiftText = `${emd.toFixed(2)}s slower`;
       } else {
         shiftText = `${emd.toFixed(2)}s shift`;
       }
     }
 
     return {
-      baselineCount: bTimes.length,
-      recentCount: rTimes.length,
-      baselineMean: bMean.toFixed(2),
-      recentMean: rMean.toFixed(2),
-      emd,
+      overlap,
+      subTarget,
+      tail,
       shiftText,
       start1Index: start1 + 1,
       end1Index: start1 + sampleCount,
@@ -275,6 +372,27 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
       end2Index: start2 + sampleCount,
     };
   }, [sample1Solves, sample2Solves, validSolves.length, start1, start2, sampleCount, kdeData]);
+
+  // Friendly readouts derived from the raw metrics, resolved once per metrics change.
+  const metricsDisplay = useMemo(() => {
+    if (!metricsSummary) return null;
+    const { overlap, subTarget, tail } = metricsSummary;
+
+    return {
+      ...metricsSummary,
+      overlapText: overlap != null ? formatPercent(overlap) : '—',
+      subTargetText: subTarget
+        ? `${formatPercent(subTarget.baselineChance)} to ${formatPercent(subTarget.recentChance)}`
+        : '—',
+      subTargetTone: changeTone(
+        subTarget ? subTarget.recentChance - subTarget.baselineChance : null,
+        0.02,
+      ),
+      tailText: formatTailText(tail?.relativeChange ?? null),
+      tailTone: changeTone(tail?.relativeChange ?? null, 0.0001, true),
+      tailSublabel: tail ? `solves > ${tail.thresholdSec.toFixed(1)}s` : undefined,
+    };
+  }, [metricsSummary]);
 
   // Dataset sparkline path for the scrubber track
   const sparklineData = useMemo(() => {
@@ -644,8 +762,8 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     );
   };
 
-  const baselineSeriesName = `Baseline Solves (#${start1 + 1}–#${start1 + sampleCount})`;
-  const recentSeriesName = `Recent Solves (#${start2 + 1}–#${start2 + sampleCount})`;
+  const baselineSeriesName = `Baseline Solves (${start1 + 1}–${start1 + sampleCount})`;
+  const recentSeriesName = `Recent Solves (${start2 + 1}–${start2 + sampleCount})`;
 
   return (
     <ChartCardWrapper
@@ -668,89 +786,95 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
       }
       filenamePrefix="density_shift_distribution"
     >
-      {/* Symmetrical, consistently distributed mean shift banner */}
-      {statsSummary && (
+      {/* Distribution comparison metrics: shared identity line plus one tile per metric */}
+      {metricsDisplay && (
         <div
-          className="grid grid-cols-1 divide-y divide-stone-800/80 rounded-xl border border-stone-800/70 bg-stone-950/60 text-xs sm:grid-cols-3 sm:divide-x sm:divide-y-0"
+          id="density-distribution-metrics"
+          className="flex flex-col gap-2 rounded-xl border border-stone-800/70 bg-stone-950/60 p-2.5 text-xs sm:p-3"
           style={{
             backgroundColor: colors.bgSubtle,
             borderColor: colors.borderSubtle,
           }}
         >
-          <div className="flex flex-wrap items-center justify-center gap-1.5 p-2.5 sm:p-3 text-center">
-            <span
-              className="h-2.5 w-2.5 shrink-0 rounded-full"
-              style={{ backgroundColor: colors.series.blue }}
-            />
-            <span
-              className="text-stone-400 whitespace-nowrap"
-              style={{ color: colors.textSecondary }}
-            >
-              <span className="hidden sm:inline">Baseline Mean:</span>
-              <span className="sm:hidden">Baseline:</span>
-            </span>
-            <span className="font-mono font-bold" style={{ color: colors.series.blue }}>
-              {statsSummary.baselineMean}s
-            </span>
-            <span
-              className="font-mono text-[11px] text-stone-500 whitespace-nowrap"
-              style={{ color: colors.textMuted }}
-            >
-              (#{statsSummary.start1Index}–#{statsSummary.end1Index})
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-1.5 p-2.5 sm:p-3 text-center">
-            <span
-              className="h-2.5 w-2.5 shrink-0 rounded-full"
-              style={{ backgroundColor: colors.series.green }}
-            />
-            <span
-              className="text-stone-400 whitespace-nowrap"
-              style={{ color: colors.textSecondary }}
-            >
-              <span className="hidden sm:inline">Recent Mean:</span>
-              <span className="sm:hidden">Recent:</span>
-            </span>
-            <span className="font-mono font-bold" style={{ color: colors.series.green }}>
-              {statsSummary.recentMean}s
-            </span>
-            <span
-              className="font-mono text-[11px] text-stone-500 whitespace-nowrap"
-              style={{ color: colors.textMuted }}
-            >
-              (#{statsSummary.start2Index}–#{statsSummary.end2Index})
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-1.5 p-2.5 sm:p-3 text-center">
-            <span
-              className="inline-flex items-center gap-1 text-stone-400 whitespace-nowrap"
-              style={{ color: colors.textSecondary }}
-            >
-              <span className="group/emd-info relative inline-flex cursor-help items-center text-stone-400 transition-colors hover:text-stone-200">
-                <HelpCircle className="h-3.5 w-3.5" aria-hidden="true" />
-                <span
-                  role="tooltip"
-                  className="pointer-events-none absolute top-full left-0 z-50 mt-1.5 hidden w-64 rounded-lg border p-2.5 text-left text-[11px] font-normal leading-relaxed whitespace-normal shadow-2xl backdrop-blur-md group-hover/emd-info:block"
-                  style={{
-                    backgroundColor: colors.bgCard,
-                    borderColor: colors.borderSubtle,
-                    color: colors.textPrimary,
-                  }}
-                >
-                  Measures the overall shift between baseline and recent solve distributions using
-                  Earth Mover&apos;s Distance (Wasserstein metric). Unlike a simple average, it
-                  accounts for consistency, spread, and shape changes.
-                </span>
+          {/* Which solve windows these metrics compare */}
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px]">
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: colors.series.blue }}
+              />
+              <span style={{ color: colors.textSecondary }}>Baseline</span>
+              <span
+                id="density-range-baseline"
+                className="font-mono"
+                style={{ color: colors.textMuted }}
+              >
+                ({metricsDisplay.start1Index}–{metricsDisplay.end1Index})
               </span>
-              <span className="hidden sm:inline">Distribution Shift:</span>
-              <span className="sm:hidden">Shift:</span>
             </span>
-            <span
-              className="font-mono font-bold whitespace-nowrap"
-              style={{ color: colors.accentText }}
-            >
-              {statsSummary.shiftText}
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: colors.series.green }}
+              />
+              <span style={{ color: colors.textSecondary }}>Recent</span>
+              <span
+                id="density-range-recent"
+                className="font-mono"
+                style={{ color: colors.textMuted }}
+              >
+                ({metricsDisplay.start2Index}–{metricsDisplay.end2Index})
+              </span>
             </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <MetricTile
+              id="density-metric-overlap"
+              label="Overlap"
+              value={metricsDisplay.overlapText}
+              valueColor={colors.series.teal}
+              hint="The share of your solve times that the two periods have in common. A score of 100% means both windows follow the same distribution; lower values mean your times sit in different ranges. It describes how much the distribution changed, not whether that change was good."
+              colors={colors}
+            />
+            <MetricTile
+              id="density-metric-sub-target"
+              label={
+                metricsDisplay.subTarget
+                  ? `Sub-${metricsDisplay.subTarget.targetSec} Chance`
+                  : 'Sub-X Chance'
+              }
+              value={metricsDisplay.subTargetText}
+              valueColor={toneColor(metricsDisplay.subTargetTone, colors)}
+              hint={
+                metricsDisplay.subTarget
+                  ? `How often you finished under ${metricsDisplay.subTarget.targetSec} seconds in each window. The first value is your earlier period, the second your current one. A higher second value means you're hitting that goal more consistently now.`
+                  : "How often you finished under your target time, in each window. The first value is your earlier period, the second your current one. A higher second value means you're hitting that goal more consistently now."
+              }
+              colors={colors}
+            />
+            <MetricTile
+              id="density-metric-tail"
+              label="Slow Solves"
+              value={metricsDisplay.tailText}
+              valueColor={toneColor(metricsDisplay.tailTone, colors)}
+              hint={
+                metricsDisplay.tail
+                  ? `Tracks how often you produce unusually slow solves. The cutoff is the slowest quarter of your earlier period, so any time above ${metricsDisplay.tail.thresholdSec.toFixed(1)}s counts. 'Fewer' in green means those slow solves became rarer; 'more' in red means they became more common.`
+                  : "Tracks how often you produce unusually slow solves, measured against the slowest quarter of your earlier period. 'Fewer' in green means those slow solves became rarer; 'more' in red means they became more common."
+              }
+              sublabel={metricsDisplay.tailSublabel}
+              colors={colors}
+            />
+            <MetricTile
+              id="density-metric-shift"
+              label="Distribution Shift"
+              value={metricsDisplay.shiftText}
+              valueColor={colors.accentText}
+              hint="How much your solve times shifted between the two periods, measured in seconds. A result like '4.10s faster' means your times moved toward faster results by roughly 4.10 seconds overall. It captures the shift across your whole range of times, not just the average."
+              sublabel="Earth Mover's Distance"
+              colors={colors}
+            />
           </div>
         </div>
       )}

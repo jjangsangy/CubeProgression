@@ -144,9 +144,6 @@ const getById = (container: HTMLElement, id: string): HTMLElement => {
   return el;
 };
 
-const countOccurrences = (haystack: string, needle: string): number =>
-  haystack.split(needle).length - 1;
-
 const mockSolves: Solve[] = Array.from({ length: 20 }, (_, idx) => ({
   id: idx + 1,
   index: idx + 1,
@@ -174,16 +171,22 @@ describe('DensityShiftChart component', () => {
     captured.referenceLines = [];
   });
 
-  it('renders density shift chart and baseline vs recent summary', () => {
+  it('renders density shift chart with comparison metrics and sampled range labels', () => {
     const { container } = render(
       <DensityShiftChart solves={mockSolves} title="Baseline vs Recent Solves" />,
     );
 
-    const chart = getById(container, 'density-shift-chart');
-    // Baseline (first 30%) mean 11.75s vs recent (last 30%) mean 10.35s -> -1.40s shift.
-    expect(chart.textContent).toContain('11.75s');
-    expect(chart.textContent).toContain('10.35s');
-    expect(chart.textContent).toContain('-1.40s');
+    // Sample windows are shown as solve ranges: baseline 1–6, recent 15–20.
+    expect(getById(container, 'density-range-baseline').textContent).toBe('(1\u20136)');
+    expect(getById(container, 'density-range-recent').textContent).toBe('(15\u201320)');
+    // The decreasing series yields a 1.40s speed-up on the Earth Mover's Distance tile.
+    expect(getById(container, 'density-metric-shift-value').textContent).toBe('1.40s faster');
+    // The ~11.05s median selects sub-11; every recent solve beats it, no baseline solve does.
+    expect(getById(container, 'density-metric-sub-target-value').textContent).toBe('0% to 100%');
+    // The recent window kept nothing above the baseline's slow-solve cutoff.
+    expect(getById(container, 'density-metric-tail-value').textContent).toBe('100% fewer');
+    // Overlap is a single percentage.
+    expect(getById(container, 'density-metric-overlap-value').textContent).toMatch(/^\d+%$/);
   });
 
   it('labels the shift as slower when recent solves are slower than the baseline', () => {
@@ -197,8 +200,7 @@ describe('DensityShiftChart component', () => {
     );
 
     // Baseline (first 30%) mean 10.25s vs recent (last 30%) mean 11.65s -> positive slower EMD shift.
-    const summary = getById(container, 'density-shift-chart').textContent ?? '';
-    expect(summary).toContain('+1.39s');
+    expect(getById(container, 'density-metric-shift-value').textContent).toBe('1.39s slower');
   });
 
   it('renders off-center vertical reference line labels that do not intersect or go through the line', () => {
@@ -339,14 +341,24 @@ describe('DensityShiftChart component', () => {
     expect(captured.referenceLines).toHaveLength(0);
   });
 
-  it('renders mean shift banner with centered symmetrical 3-column classes', () => {
+  it('renders the distribution metrics banner with one tile per metric', () => {
     const { container } = render(
       <DensityShiftChart solves={mockSolves} title="Responsive Banner Test" />,
     );
 
-    const banner = container.querySelector('.grid.grid-cols-1.sm\\:grid-cols-3');
-    expect(banner).toBeInTheDocument();
-    expect(banner).toHaveClass('sm:divide-x');
+    const banner = getById(container, 'density-distribution-metrics');
+    const metricIds = [
+      'density-metric-overlap',
+      'density-metric-sub-target',
+      'density-metric-tail',
+      'density-metric-shift',
+    ];
+
+    // Exactly one tile per metric, each with a populated value readout.
+    expect(banner.querySelectorAll('[id$="-value"]')).toHaveLength(metricIds.length);
+    for (const metricId of metricIds) {
+      expect(getById(container, `${metricId}-value`).textContent).not.toBe('');
+    }
   });
 
   it('renders scrubbers on track with opacity, ribbed resize handles, and dataset sparkline', () => {
@@ -385,7 +397,6 @@ describe('DensityShiftChart component', () => {
 
   it('maintains symmetry: resizing one scrubber updates the other scrubber by the exact same amount', () => {
     const { container } = render(<DensityShiftChart solves={mockSolves} />);
-    const card = getById(container, 'density-shift-chart');
 
     const scrubber1 = getById(container, 'density-scrubber-baseline');
     const scrubber2 = getById(container, 'density-scrubber-recent');
@@ -400,8 +411,8 @@ describe('DensityShiftChart component', () => {
     // Symmetrical: both scrubbers expand to 7 solves -> 35% width
     expect(scrubber1.style.width).toBe('35%');
     expect(scrubber2.style.width).toBe('35%');
-    expect(card.textContent).toContain('(#1\u2013#7)');
-    expect(card.textContent).toContain('(#14\u2013#20)');
+    expect(getById(container, 'density-range-baseline').textContent).toBe('(1\u20137)');
+    expect(getById(container, 'density-range-recent').textContent).toBe('(14\u201320)');
 
     // Resize Scrubber 2 (Alt+ArrowLeft shrinks width by 1 solve)
     fireEvent.keyDown(scrubber2, { key: 'ArrowLeft', altKey: true });
@@ -409,13 +420,12 @@ describe('DensityShiftChart component', () => {
     // Symmetrical: both scrubbers shrink back to 6 solves -> 30% width
     expect(scrubber1.style.width).toBe('30%');
     expect(scrubber2.style.width).toBe('30%');
-    expect(card.textContent).toContain('(#1\u2013#6)');
-    expect(card.textContent).toContain('(#14\u2013#19)');
+    expect(getById(container, 'density-range-baseline').textContent).toBe('(1\u20136)');
+    expect(getById(container, 'density-range-recent').textContent).toBe('(14\u201319)');
   });
 
   it('allows sliding scrubbers across the distribution using keyboard navigation', () => {
     const { container } = render(<DensityShiftChart solves={mockSolves} />);
-    const card = getById(container, 'density-shift-chart');
 
     const scrubber1 = getById(container, 'density-scrubber-baseline');
     // Initial value is 1 (index 0 + 1)
@@ -424,12 +434,12 @@ describe('DensityShiftChart component', () => {
     // Nudge right
     fireEvent.keyDown(scrubber1, { key: 'ArrowRight' });
     expect(scrubber1).toHaveAttribute('aria-valuenow', '2');
-    expect(card.textContent).toContain('(#2\u2013#7)');
+    expect(getById(container, 'density-range-baseline').textContent).toBe('(2\u20137)');
 
     // Nudge left
     fireEvent.keyDown(scrubber1, { key: 'ArrowLeft' });
     expect(scrubber1).toHaveAttribute('aria-valuenow', '1');
-    expect(card.textContent).toContain('(#1\u2013#6)');
+    expect(getById(container, 'density-range-baseline').textContent).toBe('(1\u20136)');
   });
 
   it('keeps X-axis domain completely stable and fluid when scrubbers slide to eliminate jitter', () => {
@@ -484,8 +494,7 @@ describe('DensityShiftChart component', () => {
     expect(newMaxDensity / newCeiling).toBeLessThanOrEqual(0.85);
   });
 
-  it('renders identical baseline and recent means when the distribution does not shift', () => {
-    // Solves with symmetrical times so baseline mean equals recent mean
+  it('reports full overlap and no shift when the baseline and recent distributions are identical', () => {
     const flatSolves: Solve[] = Array.from({ length: 20 }, (_, idx) => ({
       ...mockSolves[0],
       id: idx + 1,
@@ -494,24 +503,17 @@ describe('DensityShiftChart component', () => {
     }));
 
     const { container } = render(<DensityShiftChart solves={flatSolves} />);
-    const card = getById(container, 'density-shift-chart');
 
-    // The banner renders baseline mean, recent mean, then the signed shift value.
-    const readouts = Array.from(card.querySelectorAll('span.font-mono.font-bold')).map(
-      (el) => el.textContent ?? '',
-    );
-    expect(readouts).toHaveLength(3);
-    const [baselineMean, recentMean] = readouts;
-    expect(baselineMean).toBe('10.00s');
-    expect(recentMean).toBe('10.00s');
-    expect(baselineMean).toBe(recentMean);
+    expect(getById(container, 'density-metric-overlap-value').textContent).toBe('100%');
+    // All solves tie the target, so the sub-target chance is zero in both windows.
+    expect(getById(container, 'density-metric-sub-target-value').textContent).toBe('0% to 0%');
+    expect(getById(container, 'density-metric-shift-value').textContent).toBe('no change');
   });
 
-  it('hides mean shift summary when valid solves are fewer than 10', () => {
+  it('hides the distribution metrics banner when valid solves are fewer than 10', () => {
     const { container } = render(<DensityShiftChart solves={mockSolves.slice(0, 6)} />);
     const card = getById(container, 'density-shift-chart');
-    // The chart card renders, but the summary readouts are suppressed -> no sample-range readout
-    expect(card.textContent).not.toMatch(/#\d+\u2013#\d+/);
+    expect(card.querySelector('#density-distribution-metrics')).toBeNull();
   });
 
   it('renders CustomTooltip correctly in active and inactive states', () => {
@@ -884,10 +886,9 @@ describe('DensityShiftChart component', () => {
         toJSON: () => {},
       });
 
-      const card = getById(container, 'density-shift-chart');
       const scrubber1 = getById(container, 'density-scrubber-baseline');
       expect(scrubber1).toHaveAttribute('aria-valuenow', '1');
-      expect(card.textContent).toContain('(#1\u2013#6)');
+      expect(getById(container, 'density-range-baseline').textContent).toBe('(1\u20136)');
 
       // Drag right by 100px (100 / 500 * 20 = 4 solves)
       fireEvent.pointerDown(scrubber1, { clientX: 200, pointerId: 1 });
@@ -895,7 +896,7 @@ describe('DensityShiftChart component', () => {
       fireEvent.pointerUp(scrubber1, { clientX: 300, pointerId: 1 });
 
       expect(scrubber1).toHaveAttribute('aria-valuenow', '5');
-      expect(card.textContent).toContain('(#5\u2013#10)');
+      expect(getById(container, 'density-range-baseline').textContent).toBe('(5\u201310)');
 
       // Drag left past boundary 0 (delta = -200px -> -8 solves)
       fireEvent.pointerDown(scrubber1, { clientX: 300, pointerId: 1 });
@@ -903,7 +904,7 @@ describe('DensityShiftChart component', () => {
       fireEvent.pointerUp(scrubber1, { clientX: 100, pointerId: 1 });
 
       expect(scrubber1).toHaveAttribute('aria-valuenow', '1');
-      expect(card.textContent).toContain('(#1\u2013#6)');
+      expect(getById(container, 'density-range-baseline').textContent).toBe('(1\u20136)');
 
       // Drag right past maximum boundary (maxStart = 20 - 6 = 14)
       fireEvent.pointerDown(scrubber1, { clientX: 100, pointerId: 1 });
@@ -912,7 +913,8 @@ describe('DensityShiftChart component', () => {
 
       expect(scrubber1).toHaveAttribute('aria-valuenow', '15');
       // At the maximum both baseline and recent windows clamp to the same range
-      expect(countOccurrences(card.textContent ?? '', '(#15\u2013#20)')).toBe(2);
+      expect(getById(container, 'density-range-baseline').textContent).toBe('(15\u201320)');
+      expect(getById(container, 'density-range-recent').textContent).toBe('(15\u201320)');
     });
 
     it('handles pointer dragging on Scrubber 2 body to shift recent sample window', () => {
@@ -931,11 +933,10 @@ describe('DensityShiftChart component', () => {
         toJSON: () => {},
       });
 
-      const card = getById(container, 'density-shift-chart');
       const scrubber2 = getById(container, 'density-scrubber-recent');
       // Starts at 20 - 6 = 14 (1-based: 15)
       expect(scrubber2).toHaveAttribute('aria-valuenow', '15');
-      expect(card.textContent).toContain('(#15\u2013#20)');
+      expect(getById(container, 'density-range-recent').textContent).toBe('(15\u201320)');
 
       // Drag left by 100px (-4 solves)
       fireEvent.pointerDown(scrubber2, { clientX: 450, pointerId: 2 });
@@ -943,7 +944,7 @@ describe('DensityShiftChart component', () => {
       fireEvent.pointerUp(scrubber2, { clientX: 350, pointerId: 2 });
 
       expect(scrubber2).toHaveAttribute('aria-valuenow', '11');
-      expect(card.textContent).toContain('(#11\u2013#16)');
+      expect(getById(container, 'density-range-recent').textContent).toBe('(11\u201316)');
     });
 
     it('handles pointer dragging on right resize handle to expand and shrink sample size symmetrically', () => {
@@ -962,7 +963,6 @@ describe('DensityShiftChart component', () => {
         toJSON: () => {},
       });
 
-      const card = getById(container, 'density-shift-chart');
       const scrubber1 = getById(container, 'density-scrubber-baseline');
       const scrubber2 = getById(container, 'density-scrubber-recent');
       const rightHandle1 = getById(container, 'density-handle-baseline-end');
@@ -975,8 +975,8 @@ describe('DensityShiftChart component', () => {
       // Symmetrical expansion: 6 + 2 = 8 solves (40% width)
       expect(scrubber1.style.width).toBe('40%');
       expect(scrubber2.style.width).toBe('40%');
-      expect(card.textContent).toContain('(#1\u2013#8)');
-      expect(card.textContent).toContain('(#13\u2013#20)');
+      expect(getById(container, 'density-range-baseline').textContent).toBe('(1\u20138)');
+      expect(getById(container, 'density-range-recent').textContent).toBe('(13\u201320)');
 
       // Shrink window: drag right handle to the left by 200px (-8 solves, clamped to min 3 solves)
       fireEvent.pointerDown(rightHandle1, { clientX: 300, pointerId: 3 });
@@ -986,8 +986,8 @@ describe('DensityShiftChart component', () => {
       // Clamped to minimum 3 solves: 3 / 20 = 15% width
       expect(scrubber1.style.width).toBe('15%');
       expect(scrubber2.style.width).toBe('15%');
-      expect(card.textContent).toContain('(#1\u2013#3)');
-      expect(card.textContent).toContain('(#13\u2013#15)');
+      expect(getById(container, 'density-range-baseline').textContent).toBe('(1\u20133)');
+      expect(getById(container, 'density-range-recent').textContent).toBe('(13\u201315)');
     });
 
     it('handles pointer dragging on left resize handle of scrubber 1 and scrubber 2', () => {

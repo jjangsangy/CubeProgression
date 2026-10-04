@@ -9,6 +9,8 @@ import type {
   PbProgressionResult,
   PeriodGroup,
   Solve,
+  SubTargetChance,
+  TailRiskMetrics,
 } from '../types';
 
 /**
@@ -655,6 +657,174 @@ export function calculateEarthMoverDistance(points: KDEPoint[]): number | null {
   }
 
   return Number((totalL1 * dx).toFixed(2));
+}
+
+/**
+ * Overlap coefficient (Weitzman's measure, OVL) between the baseline and recent
+ * KDE curves: the shared probability mass of the two normalized densities.
+ *
+ *   OVL = \int min(f_baseline(x), f_recent(x)) dx
+ *
+ * Evaluates on precomputed KDE bins in O(M) time with zero heap allocations,
+ * keeping it cheap enough for 60 FPS scrubber dragging.
+ *
+ * @param points - Precomputed KDE data points
+ * @returns Overlap in [0, 1] (1 = identical distributions), or null when invalid
+ */
+export function calculateOverlapCoefficient(points: KDEPoint[]): number | null {
+  if (!points || points.length < 2) return null;
+
+  let sumBaseline = 0;
+  let sumRecent = 0;
+  for (let i = 0; i < points.length; i++) {
+    sumBaseline += points[i].baselineDensity;
+    sumRecent += points[i].recentDensity;
+  }
+
+  if (
+    sumBaseline <= 0 ||
+    sumRecent <= 0 ||
+    !Number.isFinite(sumBaseline) ||
+    !Number.isFinite(sumRecent)
+  ) {
+    return null;
+  }
+
+  let overlap = 0;
+  for (let i = 0; i < points.length; i++) {
+    const baseline = points[i].baselineDensity / sumBaseline;
+    const recent = points[i].recentDensity / sumRecent;
+    overlap += baseline < recent ? baseline : recent;
+  }
+
+  return Math.min(1, Math.max(0, overlap));
+}
+
+/**
+ * Linear-interpolated quantile for a pre-sorted ascending array (type-7, matching
+ * `computeGroupStats`). Shared by the milestone and tail metrics.
+ */
+function quantileSorted(sorted: number[], q: number): number {
+  const pos = (sorted.length - 1) * q;
+  const base = Math.floor(pos);
+  const rest = pos - base;
+  const upper = sorted[base + 1];
+  return upper !== undefined ? sorted[base] + rest * (upper - sorted[base]) : sorted[base];
+}
+
+/**
+ * Canonical speedcubing milestone times (seconds), slowest to fastest. Goals are
+ * spaced the way cubers actually chase them — 30s steps at the slow end (120/90/60),
+ * 5s steps down to 20s, then tighter steps as times get faster — so "sub-15",
+ * "sub-8", "sub-5" etc. stay recognizable instead of landing on arbitrary values
+ * like "sub-3.3". The ladder keeps going below one second (`0.5`, `0.25`) for
+ * last-layer / algorithm-set practice.
+ */
+export const SPEEDCUBING_MILESTONES_SEC: readonly number[] = [
+  120, 90, 60, 50, 45, 40, 35, 30, 25, 20, 15, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0.5, 0.25,
+];
+
+/**
+ * Picks the single standard milestone a solver is chasing next: the largest
+ * canonical goal strictly faster than their typical (median) solve time, so a
+ * ~12s solver is measured on sub-11 rather than an arbitrary threshold. Falls
+ * back to the fastest milestone when the median is already world-class.
+ *
+ * @param times - Combined solve times used to locate the solver's level
+ * @returns A milestone time in seconds, or null when there are no times
+ */
+export function selectSpeedcubingMilestone(times: number[]): number | null {
+  const ladder = SPEEDCUBING_MILESTONES_SEC;
+  if (times.length === 0) return null;
+
+  const median = quantileSorted(
+    times.slice().sort((a, b) => a - b),
+    0.5,
+  );
+
+  for (let i = 0; i < ladder.length; i++) {
+    if (ladder[i] < median) return ladder[i];
+  }
+
+  // Median is faster than every milestone on the ladder — use the hardest goal.
+  return ladder[ladder.length - 1] ?? null;
+}
+
+/**
+ * Probability of beating a fixed sub-x target in each sample.
+ *
+ * @param sample1 - Baseline solve times in seconds
+ * @param sample2 - Recent solve times in seconds
+ * @param targetSec - Goal time in seconds (e.g. `15` for sub-15)
+ * @returns Both sub-target probabilities, or null when invalid
+ */
+export function calculateSubTargetChance(
+  sample1: number[],
+  sample2: number[],
+  targetSec: number,
+): SubTargetChance | null {
+  if (sample1.length === 0 || sample2.length === 0 || !Number.isFinite(targetSec)) return null;
+
+  let baselineFast = 0;
+  for (let i = 0; i < sample1.length; i++) {
+    if (sample1[i] < targetSec) baselineFast++;
+  }
+
+  let recentFast = 0;
+  for (let i = 0; i < sample2.length; i++) {
+    if (sample2[i] < targetSec) recentFast++;
+  }
+
+  return {
+    targetSec,
+    baselineChance: baselineFast / sample1.length,
+    recentChance: recentFast / sample2.length,
+  };
+}
+
+/**
+ * Quantifies the change in "bad solve" frequency between two samples. The slow
+ * cutoff is the baseline sample's upper quartile (75th percentile), anchoring
+ * the baseline bad-solve rate near 25% so the recent window is measured against
+ * the same bar regardless of how the distributions shift.
+ *
+ * @param sample1 - Baseline solve times in seconds
+ * @param sample2 - Recent solve times in seconds
+ * @param quantile - Tail cutoff quantile applied to the baseline sample
+ * @returns Threshold, both tail fractions, and their relative change
+ */
+export function calculateTailRisk(
+  sample1: number[],
+  sample2: number[],
+  quantile = 0.75,
+): TailRiskMetrics | null {
+  if (sample1.length === 0 || sample2.length === 0) return null;
+
+  const baseline = sample1.slice().sort((a, b) => a - b);
+  const threshold = quantileSorted(baseline, quantile);
+  if (!Number.isFinite(threshold)) return null;
+
+  let baselineSlow = 0;
+  for (let i = 0; i < sample1.length; i++) {
+    if (sample1[i] > threshold) baselineSlow++;
+  }
+
+  let recentSlow = 0;
+  for (let i = 0; i < sample2.length; i++) {
+    if (sample2[i] > threshold) recentSlow++;
+  }
+
+  const baselineFraction = baselineSlow / sample1.length;
+  const recentFraction = recentSlow / sample2.length;
+  const relativeChange =
+    baselineFraction > 0 ? (recentFraction - baselineFraction) / baselineFraction : null;
+
+  return {
+    thresholdSec: Number(threshold.toFixed(2)),
+    baselineFraction,
+    recentFraction,
+    relativeChange: relativeChange === null ? null : Number(relativeChange.toFixed(4)),
+  };
 }
 
 /**

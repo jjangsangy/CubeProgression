@@ -74,6 +74,37 @@ export interface KDEPeak {
   index: number;
 }
 
+/**
+ * Change in "bad solve" frequency between two samples, anchored to the baseline
+ * sample's upper-quartile slow-solve cutoff.
+ */
+export interface TailRiskMetrics {
+  /** Slow-solve cutoff in seconds (the baseline sample's 75th percentile). */
+  thresholdSec: number;
+  /** Fraction of baseline solves slower than the cutoff. */
+  baselineFraction: number;
+  /** Fraction of recent solves slower than the cutoff. */
+  recentFraction: number;
+  /**
+   * Relative change in slow-solve frequency: `(recent - baseline) / baseline`.
+   * Negative means fewer slow solves recently (improvement); `null` when the
+   * baseline has no slow solves to compare against.
+   */
+  relativeChange: number | null;
+}
+
+/**
+ * Probability of beating a single sub-x target time in one comparison window.
+ */
+export interface SubTargetChance {
+  /** Target goal time in seconds, e.g. `15` for "sub-15". */
+  targetSec: number;
+  /** Fraction of baseline solves faster than the target. */
+  baselineChance: number;
+  /** Fraction of recent solves faster than the target. */
+  recentChance: number;
+}
+
 export interface PbDataPoint {
   index: number;
   dateStr: string;

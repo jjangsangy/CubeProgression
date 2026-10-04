@@ -77,8 +77,8 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
 
     await expect(densityCard).toBeVisible();
 
-    // Verify statistical summary banner exists and has centered items
-    await expect(densityCard.locator('.grid > div')).toHaveCount(3);
+    // Verify the distribution metrics banner renders one tile per metric
+    await expect(densityCard.locator('#density-distribution-metrics .grid > div')).toHaveCount(4);
 
     // Verify peak vertical reference lines and horizontal distance bar in real SVG rendering
     const baselineRefLine = densityCard.locator('.recharts-reference-line').filter({
@@ -213,6 +213,7 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
     expect(initialBaselineD).toBeTruthy();
 
     // Direct pointer drag on Scrubber 1 body
+    await scrubber1.scrollIntoViewIfNeeded();
     const s1Box = await scrubber1.boundingBox();
     if (!s1Box) throw new Error('Missing Scrubber 1 bounding box');
 
@@ -450,5 +451,55 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
 
     // Verify downloaded filename format
     expect(download.suggestedFilename()).toMatch(/.*solve_distribution_boxplot.*\.png$/);
+  });
+});
+
+test.describe('Distribution metric tooltips on touch devices', () => {
+  test.use({ hasTouch: true, viewport: { width: 390, height: 844 } });
+
+  test('opens the metric help tooltip on tap, keeps it on screen, and dismisses on outside tap', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await expect(page.locator('#progression-chart')).toBeVisible({ timeout: 15000 });
+    await page.locator('#deferred-density-shift').scrollIntoViewIfNeeded();
+
+    const card = page.locator('#density-shift-chart');
+    await expect(card).toBeVisible();
+
+    const viewport = page.viewportSize();
+    if (!viewport) throw new Error('Missing viewport size');
+    // Matches InfoTooltip's VIEWPORT_MARGIN, so a missing clamp fails this test.
+    const margin = 8;
+
+    const overlapTrigger = card.locator('#density-metric-overlap-info');
+    await overlapTrigger.scrollIntoViewIfNeeded();
+    const overlapTooltip = page.locator('#density-metric-overlap-info-tooltip');
+    await expect(overlapTooltip).toHaveCount(0);
+
+    // Tap reveals the tooltip (no hover on touch)
+    await overlapTrigger.tap();
+    await expect(overlapTooltip).toBeVisible();
+
+    // The bubble must stay fully within the narrow viewport, inside the fixed margin
+    const overlapBox = await overlapTooltip.boundingBox();
+    if (!overlapBox) throw new Error('Missing tooltip bounding box');
+    expect(overlapBox.x).toBeGreaterThanOrEqual(margin);
+    expect(overlapBox.x + overlapBox.width).toBeLessThanOrEqual(viewport.width - margin);
+
+    // The rightmost tile exercises the right-edge clamp instead of the left margin
+    const shiftTrigger = card.locator('#density-metric-shift-info');
+    await shiftTrigger.scrollIntoViewIfNeeded();
+    await shiftTrigger.tap();
+    const shiftTooltip = page.locator('#density-metric-shift-info-tooltip');
+    await expect(shiftTooltip).toBeVisible();
+    const shiftBox = await shiftTooltip.boundingBox();
+    if (!shiftBox) throw new Error('Missing shift tooltip bounding box');
+    expect(shiftBox.x).toBeGreaterThanOrEqual(margin);
+    expect(shiftBox.x + shiftBox.width).toBeLessThanOrEqual(viewport.width - margin);
+
+    // Tapping a different metric tile dismisses the open tooltip
+    await card.locator('#density-metric-shift').tap();
+    await expect(shiftTooltip).toHaveCount(0);
   });
 });

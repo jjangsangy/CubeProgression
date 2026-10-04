@@ -270,7 +270,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
         .toBe('1 / 24');
     });
 
-    test('renders DensityShiftChart with 1-column stacked summary banner, hidden timeline instructions, and mobile touch dragging', async ({
+    test('renders DensityShiftChart with 2-column metric grid, hidden timeline instructions, and mobile touch dragging', async ({
       page,
     }) => {
       await page.locator('#deferred-density-shift').scrollIntoViewIfNeeded();
@@ -278,17 +278,18 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       const densityCard = page.locator('#density-shift-chart');
       await expect(densityCard).toBeVisible();
 
-      // Verify the 3-metric summary banner stacks vertically in 1 column on mobile portrait (< 640px)
-      const summaryItems = densityCard.locator('.grid > div');
-      await expect(summaryItems).toHaveCount(3);
+      // Mobile portrait (< 640px) stacks the four metric tiles in two columns (two rows)
+      const summaryItems = densityCard.locator('#density-distribution-metrics .grid > div');
+      await expect(summaryItems).toHaveCount(4);
       const item0Box = await summaryItems.nth(0).boundingBox();
       const item1Box = await summaryItems.nth(1).boundingBox();
       const item2Box = await summaryItems.nth(2).boundingBox();
       if (!item0Box || !item1Box || !item2Box)
         throw new Error('Missing summary items bounding boxes');
 
-      expect(item1Box.y).toBeGreaterThan(item0Box.y + 20);
-      expect(item2Box.y).toBeGreaterThan(item1Box.y + 20);
+      // Tiles 0 and 1 share the first row; tile 2 wraps onto a second row.
+      expect(Math.abs(item1Box.y - item0Box.y)).toBeLessThan(6);
+      expect(item2Box.y).toBeGreaterThan(item0Box.y + 20);
 
       // Verify the timeline instruction label is hidden on mobile portrait to avoid crowding,
       // while both endpoint solve markers stay visible (the row holds exactly three spans).
@@ -546,7 +547,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       await expect(footer).toHaveClass(/safe-area-x/);
     });
 
-    test('renders DensityShiftChart on Mobile Landscape with 3-column banner, visible timeline instructions, and dragging', async ({
+    test('renders DensityShiftChart on Mobile Landscape with a single-row metric grid, visible timeline instructions, and dragging', async ({
       page,
     }) => {
       await page.locator('#deferred-density-shift').scrollIntoViewIfNeeded();
@@ -554,13 +555,13 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       const densityCard = page.locator('#density-shift-chart');
       await expect(densityCard).toBeVisible();
 
-      // In landscape (844px >= 640px sm: breakpoint), summary banner items align in a single row
-      const summaryItems = densityCard.locator('.grid > div');
-      await expect(summaryItems).toHaveCount(3);
+      // In landscape (844px >= 640px sm: breakpoint), the four metric tiles align in a single row
+      const summaryItems = densityCard.locator('#density-distribution-metrics .grid > div');
+      await expect(summaryItems).toHaveCount(4);
       const item0Box = await summaryItems.nth(0).boundingBox();
-      const item1Box = await summaryItems.nth(1).boundingBox();
-      if (!item0Box || !item1Box) throw new Error('Missing summary items bounding boxes');
-      expect(Math.abs(item0Box.y - item1Box.y)).toBeLessThan(6);
+      const item3Box = await summaryItems.nth(3).boundingBox();
+      if (!item0Box || !item3Box) throw new Error('Missing summary items bounding boxes');
+      expect(Math.abs(item0Box.y - item3Box.y)).toBeLessThan(6);
 
       // Timeline instruction text is visible on landscape (>= 640px)
       const timelineLabels = densityCard.locator('#density-scrubber-track + div > span');
@@ -701,13 +702,13 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       const densityCard = page.locator('#density-shift-chart');
       await expect(densityCard).toBeVisible();
 
-      // 3-column banner aligns in a single row on tablet portrait (768px >= 640px)
-      const summaryItems = densityCard.locator('.grid > div');
-      await expect(summaryItems).toHaveCount(3);
+      // Four metric tiles align in a single row on tablet portrait (768px >= 640px)
+      const summaryItems = densityCard.locator('#density-distribution-metrics .grid > div');
+      await expect(summaryItems).toHaveCount(4);
       const item0Box = await summaryItems.nth(0).boundingBox();
-      const item2Box = await summaryItems.nth(2).boundingBox();
-      if (!item0Box || !item2Box) throw new Error('Missing summary items bounding boxes');
-      expect(Math.abs(item0Box.y - item2Box.y)).toBeLessThan(6);
+      const item3Box = await summaryItems.nth(3).boundingBox();
+      if (!item0Box || !item3Box) throw new Error('Missing summary items bounding boxes');
+      expect(Math.abs(item0Box.y - item3Box.y)).toBeLessThan(6);
 
       const scrubber1 = densityCard.locator('#density-scrubber-baseline');
       const scrubber2 = densityCard.locator('#density-scrubber-recent');
