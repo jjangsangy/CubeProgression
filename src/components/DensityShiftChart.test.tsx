@@ -181,8 +181,8 @@ describe('DensityShiftChart component', () => {
     expect(getById(container, 'density-range-recent').textContent).toBe('(15\u201320)');
     // The decreasing series yields a 1.40s speed-up on the Earth Mover's Distance tile.
     expect(getById(container, 'density-metric-shift-value').textContent).toBe('1.40s faster');
-    // The ~11.05s median selects sub-11; every recent solve beats it, no baseline solve does.
-    expect(getById(container, 'density-metric-sub-target-value').textContent).toBe('0% to 100%');
+    // The ~10.35s recent median selects sub-10; neither window has solves strictly below 10s.
+    expect(getById(container, 'density-metric-sub-target-value').textContent).toBe('0% to 0%');
     // The recent window kept nothing above the baseline's slow-solve cutoff.
     expect(getById(container, 'density-metric-tail-value').textContent).toBe('100% fewer');
     // Overlap is a single percentage.
@@ -201,6 +201,35 @@ describe('DensityShiftChart component', () => {
 
     // Baseline (first 30%) mean 10.25s vs recent (last 30%) mean 11.65s -> positive slower EMD shift.
     expect(getById(container, 'density-metric-shift-value').textContent).toBe('1.39s slower');
+  });
+
+  it('selects the milestone target based on recent solves rather than the pooled baseline-recent sample', () => {
+    // Baseline around 50s, recent around 30s with some solves dipping below 30s.
+    // If pooled, median ~40s would pick Sub-40 (which the recent solves already surpassed).
+    // Based on recent solves alone (median ~30.1s), it picks Sub-30.
+    const progressingSolves: Solve[] = Array.from({ length: 20 }, (_, idx) => {
+      const isBaseline = idx < 6;
+      const isRecent = idx >= 14;
+      const time = isBaseline ? 50 + (idx % 3) : isRecent ? 29.5 + (idx - 14) * 0.25 : 40;
+      return {
+        ...mockSolves[0],
+        id: idx + 1,
+        index: idx + 1,
+        finalTimeSec: time,
+        rawTimeSec: time,
+        timeMs: time * 1000,
+      };
+    });
+
+    const { container } = render(
+      <DensityShiftChart solves={progressingSolves} title="Progressing Distribution Shift" />,
+    );
+
+    // Recent solves: 29.5, 29.75, 30.0, 30.25, 30.5, 30.75 -> median 30.125s -> picks sub-30
+    // Recent has 2/6 (33%) solves under 30s (29.5, 29.75), baseline has 0/6 (0%)
+    const subTargetTile = getById(container, 'density-metric-sub-target');
+    expect(subTargetTile.textContent).toMatch(/Sub-30/);
+    expect(getById(container, 'density-metric-sub-target-value').textContent).toBe('0% to 33%');
   });
 
   it('renders off-center vertical reference line labels that do not intersect or go through the line', () => {

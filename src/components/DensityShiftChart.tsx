@@ -343,7 +343,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     const rMean = rTimes.reduce((a, b) => a + b, 0) / rTimes.length;
 
     const overlap = calculateOverlapCoefficient(kdeData);
-    const milestone = selectSpeedcubingMilestone([...bTimes, ...rTimes]);
+    const milestone = selectSpeedcubingMilestone(rTimes);
     const subTarget =
       milestone != null ? calculateSubTargetChance(bTimes, rTimes, milestone) : null;
     const tail = calculateTailRisk(bTimes, rTimes);

@@ -142,7 +142,7 @@ Canonical speedcubing milestone times in seconds, slowest to fastest: `120, 90, 
 
 ## `selectSpeedcubingMilestone(times: number[]): number | null`
 
-Picks the single standard milestone a solver is chasing next: the largest canonical goal strictly faster than their typical (median) solve time — a ~12s solver is measured on sub-11, a ~20s solver on sub-15. Falls back to the hardest milestone for world-class medians. Returns `null` for an empty sample.
+Picks the single standard milestone a solver is chasing next: the largest canonical goal strictly faster than their typical (median) solve time — a ~12s solver is measured on sub-11, a ~20s solver on sub-15. Evaluated against the recent sample (the solver's current ability level) rather than a pooled baseline-recent sample, ensuring that a solver who has progressed to ~30s is evaluated against their next goal (e.g. sub-30 or sub-25) rather than an already-surpassed milestone like sub-40. Falls back to the hardest milestone for world-class medians. Returns `null` for an empty sample.
 
 ## `calculateSubTargetChance(sample1: number[], sample2: number[], targetSec: number): SubTargetChance | null`
 

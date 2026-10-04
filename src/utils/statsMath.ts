@@ -730,7 +730,7 @@ export const SPEEDCUBING_MILESTONES_SEC: readonly number[] = [
  * ~12s solver is measured on sub-11 rather than an arbitrary threshold. Falls
  * back to the fastest milestone when the median is already world-class.
  *
- * @param times - Combined solve times used to locate the solver's level
+ * @param times - Solve times used to locate the solver's level (typically recent solves)
  * @returns A milestone time in seconds, or null when there are no times
  */
 export function selectSpeedcubingMilestone(times: number[]): number | null {
