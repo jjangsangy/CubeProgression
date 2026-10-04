@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { verifyChartTooltipAutoDismiss } from '../test/tooltipTestUtils';
@@ -33,7 +33,7 @@ vi.mock('recharts', async (importOriginal) => {
       margin?: { top: number; right: number; left: number; bottom: number };
     }) => {
       return (
-        <svg role="img" aria-label="Mock ComposedChart">
+        <svg id="mock-composed-chart" role="img" aria-label="Mock ComposedChart">
           {props.children}
         </svg>
       );
@@ -143,83 +143,114 @@ describe('PbProgressionChart component', () => {
     captured.yAxes = [];
   });
   it('renders PB progression title and stat badges', () => {
-    render(<PbProgressionChart solves={mockSolves} title="Personal Best Progression" />);
+    const { container } = render(
+      <PbProgressionChart solves={mockSolves} title="Personal Best Progression" />,
+    );
 
-    expect(screen.getByText('Personal Best Progression')).toBeInTheDocument();
-    expect(screen.getByText('PB Records')).toBeInTheDocument();
-    // Best single is 9.00s
-    expect(screen.getByText('9.00s')).toBeInTheDocument();
+    const chart = container.querySelector('#pb-progression-chart');
+    expect(chart).toBeInTheDocument();
+    // The card heading reflects the title prop passed in
+    expect(chart?.querySelector('h2')?.textContent).toContain('Personal Best Progression');
+
+    const summaryGrid = chart?.querySelector('.grid');
+    expect(summaryGrid).toBeInTheDocument();
+    // 5 PB summary cards (Single, Ao5, Ao12, Ao50, Ao100)
+    expect(summaryGrid?.children).toHaveLength(5);
+    // The fixture's fastest single (9.0s) is the current PB Single readout
+    expect(summaryGrid?.textContent).toContain('9.00s');
   });
 
   it('allows toggling all line visibility buttons', () => {
-    render(<PbProgressionChart solves={mockSolves} />);
+    const { container } = render(<PbProgressionChart solves={mockSolves} />);
 
-    const toggles = [
-      { name: 'Single', activeClass: 'bg-amber-500/20' },
-      { name: 'Ao5', activeClass: 'bg-orange-500/20' },
-      { name: 'Ao12', activeClass: 'bg-sky-500/20' },
-      { name: 'Ao50', activeClass: 'bg-purple-500/20' },
-      { name: 'Ao100', activeClass: 'bg-emerald-500/20' },
-      { name: 'Solves Overlay', activeClass: 'bg-stone-700' },
+    const controls = container.querySelector('#pb-metric-toggles');
+    expect(controls).toBeInTheDocument();
+    const buttons = controls ? Array.from(controls.querySelectorAll('button')) : [];
+
+    // Single, Ao5, Ao12, Ao50, Ao100 line toggles plus the Solves Overlay toggle
+    const activeClasses = [
+      'bg-amber-500/20',
+      'bg-orange-500/20',
+      'bg-sky-500/20',
+      'bg-purple-500/20',
+      'bg-emerald-500/20',
+      'bg-stone-700',
     ];
+    expect(buttons).toHaveLength(activeClasses.length);
 
-    for (const { name, activeClass } of toggles) {
-      const btn = screen.getByRole('button', { name: new RegExp(`^${name}$`, 'i') });
+    buttons.forEach((btn, index) => {
+      const activeClass = activeClasses[index];
       const startedActive = btn.className.includes(activeClass);
 
       fireEvent.click(btn);
       expect(btn.className.includes(activeClass)).toBe(!startedActive);
+      expect(btn).toHaveAttribute('aria-pressed', String(!startedActive));
 
       fireEvent.click(btn);
       expect(btn.className.includes(activeClass)).toBe(startedActive);
-    }
+      expect(btn).toHaveAttribute('aria-pressed', String(startedActive));
+    });
   });
 
   it('handles expanding record milestone history drawer and filtering record types', () => {
-    render(<PbProgressionChart solves={longSolves} />);
+    const { container } = render(<PbProgressionChart solves={longSolves} />);
 
-    const historyBtn = screen.getByText(/Record Milestones History/i);
+    const historyBtn = container.querySelector('#pb-milestones-history-toggle');
+    expect(historyBtn).toBeInTheDocument();
+    if (!historyBtn) return;
     fireEvent.click(historyBtn);
 
-    const filterDrawer = screen.getByText('Filter Record Type:').parentElement;
+    const filterDrawer = container.querySelector('#pb-milestones-filters');
     expect(filterDrawer).toBeInTheDocument();
 
     if (filterDrawer) {
-      const filters = ['Single', 'Ao5', 'Ao12', 'Ao50', 'Ao100', 'All'] as const;
-      for (const filter of filters) {
-        const filterBtn = within(filterDrawer).getByRole('button', {
-          name: new RegExp(`^${filter}$`, 'i'),
-        });
+      const filterBtns = Array.from(filterDrawer.querySelectorAll('button'));
+      expect(filterBtns).toHaveLength(6);
+      for (const filterBtn of filterBtns) {
         fireEvent.click(filterBtn);
-        expect(filterBtn).toBeInTheDocument();
+        expect(filterBtn).toHaveAttribute('aria-pressed', 'true');
       }
     }
 
     // Collapse drawer
     fireEvent.click(historyBtn);
-    expect(screen.queryByText(/Filter Record Type:/i)).not.toBeInTheDocument();
+    expect(container.querySelector('#pb-milestones-filters')).toBeNull();
   });
 
-  it('shows empty filter message when no milestones match filter category', () => {
-    render(<PbProgressionChart solves={mockSolves} />);
+  it('shows empty state when no milestones match filter category', () => {
+    const { container } = render(<PbProgressionChart solves={mockSolves} />);
 
-    const historyBtn = screen.getByText(/Record Milestones History/i);
+    const historyBtn = container.querySelector('#pb-milestones-history-toggle');
+    expect(historyBtn).toBeInTheDocument();
+    if (!historyBtn) return;
     fireEvent.click(historyBtn);
 
     // mockSolves has only 5 solves, so no Ao100 milestones exist
-    const filterDrawer = screen.getByText('Filter Record Type:').parentElement;
+    const filterDrawer = container.querySelector('#pb-milestones-filters');
     expect(filterDrawer).toBeInTheDocument();
     if (filterDrawer) {
-      const ao100FilterBtn = within(filterDrawer).getByRole('button', { name: /^Ao100$/i });
+      const filterBtns = Array.from(filterDrawer.querySelectorAll('button'));
+      expect(filterBtns).toHaveLength(6);
+      // Ao100 is the sixth filter button; selecting it yields no matching milestones
+      const ao100FilterBtn = filterBtns[5];
       fireEvent.click(ao100FilterBtn);
+      expect(ao100FilterBtn).toHaveAttribute('aria-pressed', 'true');
     }
 
-    expect(screen.getByText('No record milestones for this filter.')).toBeInTheDocument();
+    // No matching milestones renders the empty-state branch with a single <p> and zero rows
+    const scrollContainer = container.querySelector('.max-h-60.overflow-y-auto');
+    expect(scrollContainer).not.toBeNull();
+    if (!scrollContainer) return;
+    expect(scrollContainer.children).toHaveLength(1);
+    expect(scrollContainer.children[0].tagName).toBe('P');
   });
 
   it('renders gracefully when solves array is empty', () => {
-    render(<PbProgressionChart solves={[]} />);
-    expect(screen.getByText('PB Progression Over Time')).toBeInTheDocument();
+    const { container } = render(<PbProgressionChart solves={[]} />);
+
+    const chart = container.querySelector('#pb-progression-chart');
+    expect(chart).toBeInTheDocument();
+    expect(chart?.querySelector('h2')).toBeInTheDocument();
   });
 
   it('renders a highlighted dot only on solves that set a new PB record', () => {
@@ -289,16 +320,18 @@ describe('PbProgressionChart component', () => {
       }),
     );
 
-    const tooltip = within(recordTooltip.container);
-    expect(tooltip.getByText(/New Record Set!/)).toBeInTheDocument();
-    expect(tooltip.getByText(/Single, Ao5, Ao12, Ao50, Ao100/)).toBeInTheDocument();
-    expect(tooltip.getByText('Solve #100')).toBeInTheDocument();
+    const tooltipText = recordTooltip.container.textContent ?? '';
+    expect(tooltipText).toContain('New Record Set!');
+    expect(tooltipText).toContain('Single, Ao5, Ao12, Ao50, Ao100');
+    expect(tooltipText).toContain('Solve #100');
     // The solve time and the PB Single are both 15.05s here (a fresh PB)
-    expect(tooltip.getAllByText('15.05s')).toHaveLength(2);
-    expect(tooltip.getByText('PB Ao100:')).toBeInTheDocument();
+    expect(tooltipText.match(/15\.05s/g) ?? []).toHaveLength(2);
+    // The PB Ao100 readout renders its computed value
+    expect(recordPoint.pbAo100).not.toBeNull();
+    expect(tooltipText).toContain(`${recordPoint.pbAo100?.toFixed(2)}s`);
     // Single, Ao5 and Ao50 each dropped 0.05s, Ao12 dropped 0.06s
-    expect(tooltip.getAllByText('(-0.05s)')).toHaveLength(3);
-    expect(tooltip.getByText('(-0.06s)')).toBeInTheDocument();
+    expect(tooltipText.match(/\(-0\.05s\)/g) ?? []).toHaveLength(3);
+    expect(tooltipText).toContain('(-0.06s)');
     recordTooltip.unmount();
 
     const inactiveTooltip = render(
@@ -330,7 +363,9 @@ describe('PbProgressionChart component', () => {
   it('renders milestone cards with flex-col sm:flex-row for mobile readability and max-h-60 scroll container', () => {
     const { container } = render(<PbProgressionChart solves={longSolves} />);
 
-    const historyBtn = screen.getByText(/Record Milestones History/i);
+    const historyBtn = container.querySelector('#pb-milestones-history-toggle');
+    expect(historyBtn).toBeInTheDocument();
+    if (!historyBtn) return;
     fireEvent.click(historyBtn);
 
     const scrollContainer = container.querySelector('.max-h-60.overflow-y-auto');
@@ -344,10 +379,10 @@ describe('PbProgressionChart component', () => {
     const originalInnerWidth = window.innerWidth;
     try {
       window.innerWidth = 390;
-      render(<PbProgressionChart solves={mockSolves} />);
+      const { container } = render(<PbProgressionChart solves={mockSolves} />);
 
-      // Bottom title is rendered on mobile portrait
-      expect(screen.getByText('Personal Best Time (s)')).toBeInTheDocument();
+      // Bottom axis title region is rendered on mobile portrait
+      expect(container.querySelector('#pb-mobile-axis-title')).toBeInTheDocument();
 
       const yAxis = captured.yAxes[0];
       expect(yAxis?.width).toBeLessThan(40);
@@ -361,9 +396,9 @@ describe('PbProgressionChart component', () => {
     const originalInnerWidth = window.innerWidth;
     try {
       window.innerWidth = 1024;
-      render(<PbProgressionChart solves={mockSolves} />);
+      const { container } = render(<PbProgressionChart solves={mockSolves} />);
 
-      expect(screen.queryByText('Personal Best Time (s)')).not.toBeInTheDocument();
+      expect(container.querySelector('#pb-mobile-axis-title')).toBeNull();
 
       const yAxis = captured.yAxes[0];
       expect(yAxis?.width).toBeGreaterThanOrEqual(40);
@@ -380,24 +415,24 @@ describe('PbProgressionChart component', () => {
 
     try {
       window.innerWidth = 1024;
-      const { unmount } = render(<PbProgressionChart solves={mockSolves} />);
+      const { container, unmount } = render(<PbProgressionChart solves={mockSolves} />);
 
       expect(addEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
-      expect(screen.queryByText('Personal Best Time (s)')).not.toBeInTheDocument();
+      expect(container.querySelector('#pb-mobile-axis-title')).toBeNull();
 
       act(() => {
         window.innerWidth = 375;
         fireEvent(window, new Event('resize'));
       });
 
-      expect(screen.getByText('Personal Best Time (s)')).toBeInTheDocument();
+      expect(container.querySelector('#pb-mobile-axis-title')).toBeInTheDocument();
 
       act(() => {
         window.innerWidth = 1024;
         fireEvent(window, new Event('resize'));
       });
 
-      expect(screen.queryByText('Personal Best Time (s)')).not.toBeInTheDocument();
+      expect(container.querySelector('#pb-mobile-axis-title')).toBeNull();
 
       unmount();
       expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
@@ -409,7 +444,7 @@ describe('PbProgressionChart component', () => {
   });
 
   it('hides PB metrics in tooltip and "New Record Set!" banner when metric toggled off', () => {
-    render(<PbProgressionChart solves={mockSolves} />);
+    const { container: chartContainer } = render(<PbProgressionChart solves={mockSolves} />);
 
     // Initially all metrics are active
     type TooltipProps = {
@@ -433,7 +468,7 @@ describe('PbProgressionChart component', () => {
       scramble: 'R U R',
     };
 
-    const { rerender } = render(
+    const { container: tooltipContainer, rerender } = render(
       React.cloneElement(tooltipEl, {
         active: true,
         payload: [{ payload: pointWithMultiplePbs }],
@@ -441,13 +476,19 @@ describe('PbProgressionChart component', () => {
       }),
     );
 
-    expect(screen.getByText(/PB Single:/)).toBeInTheDocument();
-    expect(screen.getByText(/PB Ao5:/)).toBeInTheDocument();
-    expect(screen.getByText(/New Record Set!/)).toHaveTextContent('Single, Ao5');
+    const beforeText = tooltipContainer.textContent ?? '';
+    expect(beforeText).toContain('12.50s'); // PB Single readout
+    expect(beforeText).toContain('14.20s'); // PB Ao5 readout
+    expect(beforeText).toContain('Single, Ao5');
 
-    // Toggle off Ao5
-    const ao5Btn = screen.getByRole('button', { name: /^Ao5$/i });
+    // Toggle off the Ao5 metric line (second button in the metrics toolbar)
+    const controls = chartContainer.querySelector('#pb-metric-toggles');
+    expect(controls).toBeInTheDocument();
+    const metricButtons = controls ? Array.from(controls.querySelectorAll('button')) : [];
+    expect(metricButtons).toHaveLength(6);
+    const ao5Btn = metricButtons[1];
     fireEvent.click(ao5Btn);
+    expect(ao5Btn).toHaveAttribute('aria-pressed', 'false');
 
     // Re-render tooltip with the updated tooltip component from captured
     const updatedTooltipEl = captured.tooltipContent as React.ReactElement<TooltipProps>;
@@ -460,10 +501,11 @@ describe('PbProgressionChart component', () => {
     );
 
     // Ao5 PB is now hidden and excluded from the record banner
-    expect(screen.queryByText(/PB Ao5:/)).not.toBeInTheDocument();
-    expect(screen.getByText(/PB Single:/)).toBeInTheDocument();
-    expect(screen.getByText(/New Record Set!/)).toHaveTextContent('Single');
-    expect(screen.getByText(/New Record Set!/)).not.toHaveTextContent('Ao5');
+    const afterText = tooltipContainer.textContent ?? '';
+    expect(afterText).toContain('12.50s');
+    expect(afterText).not.toContain('14.20s');
+    expect(afterText).toContain('Single');
+    expect(afterText).not.toMatch(/\bAo5\b/);
   });
 
   it('omits drop badges when a solve does not set a new PB', () => {
@@ -488,7 +530,7 @@ describe('PbProgressionChart component', () => {
       scramble: 'R U R',
     };
 
-    render(
+    const { container: tooltipContainer } = render(
       React.cloneElement(tooltipEl, {
         active: true,
         payload: [{ payload: nonPbPoint }],
@@ -496,15 +538,17 @@ describe('PbProgressionChart component', () => {
       }),
     );
 
-    expect(screen.getByText(/PB Single:/)).toBeInTheDocument();
-    expect(screen.queryByText(/\(-2\.00s\)/)).not.toBeInTheDocument();
+    const tooltipText = tooltipContainer.textContent ?? '';
+    expect(tooltipText).toContain('12.50s'); // PB Single readout is still shown
+    expect(tooltipText).toContain('15.00s'); // Solve time
+    expect(tooltipText).not.toContain('(-2.00s)'); // No drop badge for a non-PB solve
   });
 
   it('wires touch auto-dismiss to chart container and recharts tooltip', () => {
     vi.useFakeTimers();
     try {
       const { container } = render(<PbProgressionChart solves={mockSolves} />);
-      const chartSvg = container.querySelector('svg[aria-label="Mock ComposedChart"]');
+      const chartSvg = container.querySelector('#mock-composed-chart');
       const chartWrapper = chartSvg?.parentElement;
       expect(chartWrapper).not.toBeNull();
       if (!chartWrapper) return;

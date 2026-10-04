@@ -60,7 +60,9 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
           <div className="grid w-full grid-cols-3 gap-1 rounded-lg border border-stone-700/60 bg-stone-900/80 p-0.5 sm:flex sm:w-auto">
             <button
               type="button"
+              id="progression-all-solves"
               aria-label="All Solves"
+              aria-pressed={rangeMode === 'all'}
               title="All Solves"
               onClick={() => {
                 onModeChange('all');
@@ -77,7 +79,9 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
             </button>
             <button
               type="button"
+              id="progression-solve-interval"
               aria-label="Solve # Interval"
+              aria-pressed={rangeMode === 'solveIndex'}
               title="Solve # Interval"
               onClick={() => {
                 onModeChange('solveIndex');
@@ -94,7 +98,9 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
             </button>
             <button
               type="button"
+              id="progression-date-range"
               aria-label="Date Range"
+              aria-pressed={rangeMode === 'dateRange'}
               title="Date Range"
               onClick={() => {
                 onModeChange('dateRange');
@@ -116,6 +122,7 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
         {rangeStats.isFiltered && (
           <button
             type="button"
+            id="progression-reset-range"
             aria-label={`Reset Range (${rangeStats.count} / ${totalCount})`}
             title={`Reset Range (${rangeStats.count} / ${totalCount})`}
             onClick={onResetRange}
@@ -147,6 +154,8 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
             <button
               key={p.key}
               type="button"
+              id={`range-preset-${p.key}`}
+              aria-pressed={preset === p.key}
               onClick={() => onApplyPreset(p.key as RangePreset)}
               className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer ${
                 preset === p.key
@@ -244,6 +253,7 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
               </span>
               <input
                 type="date"
+                id="progression-start-date"
                 aria-label="Start date filter"
                 value={startDate}
                 min={earliestDate}
@@ -258,6 +268,7 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
               </span>
               <input
                 type="date"
+                id="progression-end-date"
                 aria-label="End date filter"
                 value={endDate}
                 min={startDate || earliestDate}
@@ -278,12 +289,12 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
         <div className="flex flex-wrap items-center gap-2 text-stone-300">
           <Sparkles className="h-3.5 w-3.5 shrink-0 text-amber-400" />
           <span className="font-sans text-[11px] font-medium text-stone-400">Focus:</span>
-          <span className="font-bold text-sky-300">
+          <span id="progression-focus-label" className="font-bold text-sky-300">
             {rangeMode === 'dateRange'
               ? `${startDate || earliestDate} – ${endDate || latestDate}`
               : `Solves #${startSolve} – #${endSolve}`}
           </span>
-          <span className="text-[11px] text-stone-500">
+          <span id="range-stats" className="text-[11px] text-stone-500">
             ({rangeStats.count} solves &bull; {rangeStats.pctOfTotal}% of total)
           </span>
         </div>

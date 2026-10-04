@@ -65,6 +65,23 @@ bun run preview        # preview production bundle → http://localhost:3100
 - **Temporal only — JS `Date` is strictly forbidden**: Never use JavaScript `Date` (`new Date()`, `Date.now()`, `Date.UTC()`, or the `Date` type) anywhere in source files, utilities, or test fixtures. All dates, timestamps, durations, and timezones must use ECMAScript standard `Temporal` (e.g. `Temporal.Now.instant().epochMilliseconds`, `Temporal.Instant`, `Temporal.PlainDate`, `Temporal.ZonedDateTime`). Biome enforces this via `noRestrictedGlobals` and `noRestrictedTypes`.
 - **Write tests** for logic changes, colocated as `*.test.ts(x)`. The statistics engine is
   the most-tested surface; don't change math without updating `statsMath.test.ts`.
+- **Test hygiene — pin behavior, not copy**: never select by, or assert on, user-facing
+  strings. Banned: `getByText`/`findByText`/`queryByText`/`getAllByText`,
+  `toHaveTextContent('…')`/`toContainText('…')`/`toHaveText(…)`/`toHaveDisplayValue(…)`,
+  `getByRole(..., { name })`, Playwright `{ hasText }` and `text=`, `getByLabel*`, `getByTitle`,
+  `getByPlaceholderText`, `getByDisplayValue`, `getByAltText`, `getByTestId`,
+  CSS `[aria-label…]`/`[title…]`/`[data-testid…]` (including `*=`), and
+  `data-testid`/`data-test-id`/`testId` — an `aria-label` is just a name lookup in disguise.
+  Anchor on a plain `id`
+  for a **distinct control/region** (don't overuse ids; never on decorative text) and assert on
+  state/attributes/counts/behavior (`aria-pressed`, `toBeDisabled`, `toHaveValue`,
+  `querySelectorAll().length`, `toHaveCount`, or a computed value read off the anchored node).
+  No test-only hooks in production (test-only
+  `className`/`aria-label`/inert props/ids on decorative nodes), no tautological assertions, no tests that only
+  assert Tailwind classes, and guard selectors so a zero-match fails loudly. Enforced at
+  `error` by the
+  GritQL plugins in [`plugins/`](./plugins) via `biome.json`. See
+  [`docs/development.md`](./docs/development.md#test-authoring--selector-hygiene).
 - **Run E2E tests (`bun run test:e2e`)** — all UI, layout, deferral, and persistence changes
   **must** pass the full Playwright E2E test suite. Vitest runs in `jsdom` where
   `IntersectionObserver` and real viewport geometry are absent, so E2E tests are mandatory to
@@ -79,8 +96,9 @@ bun run preview        # preview production bundle → http://localhost:3100
 - `d3`, `@types/d3`, and `@google/genai` are declared in `package.json` but **unused in
   `src`** — the box plot is hand-written SVG and there is no Gemini integration.
 - IndexedDB is non-functional in `jsdom`, so tests always fall back to the **deterministic
-  seeded demo dataset** (`generateSampleData()`), whose session title
-  `F2L Yellow Cross Progression (Demo)` is asserted in `App.test.tsx`.
+  seeded demo dataset** (`generateSampleData()`). Its main session is `session1`
+  (`F2L Yellow Cross Progression (Demo)`), asserted at the **data layer** in
+  `sampleData.test.ts` — UI tests must not assert that title via `getByText`.
 - Dates are computed in the **runtime local timezone** via standard `Temporal`; avoid
   timezone-sensitive test assertions. Native JS `Date` is strictly forbidden across the entire codebase and tests.
 - `ResponsiveContainer` is mocked to a fixed 800×400 box in `src/setupTests.tsx`.

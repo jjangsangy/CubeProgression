@@ -1,0 +1,53 @@
+language js
+
+// Tests must pin observable state, never user-facing copy. These patterns catch the
+// query/assertion APIs whose whole purpose is matching rendered text or accessible names.
+//
+// The method lists use a full-match regex so every `getBy*`/`findBy*`/`queryBy*`/`getAllBy*`/
+// `findAllBy*` variant of each matcher is covered, plus the text-content assertion helpers.
+// See docs/development.md#test-authoring--selector-hygiene.
+or {
+  // 1. Text- and label-based queries / assertions called on a receiver
+  //    (e.g. `screen.getByText(...)`, `expect(el).toHaveTextContent(...)`).
+  `$recv1.$method1($args1)` where {
+    $method1 <: r"(?:get|find|query|getAll|findAll)By(?:Text|Label|LabelText|Title|PlaceholderText|DisplayValue|AltText|TestId)|toHaveTextContent|toContainText|toHaveText|toHaveDisplayValue",
+    register_diagnostic(span=$method1, message="Brittle test query: do not select or assert on user-facing copy. Anchor on a plain `id` for a distinct control/region and assert on state, attributes, or counts. See docs/development.md#test-authoring--selector-hygiene.", severity="error")
+  },
+  // 2. Same, for bare/imported query helpers (e.g. `getByText(...)` returned by `render`).
+  `$method2($args2)` where {
+    $method2 <: r"(?:get|find|query|getAll|findAll)By(?:Text|Label|LabelText|Title|PlaceholderText|DisplayValue|AltText|TestId)|toHaveTextContent|toContainText|toHaveText|toHaveDisplayValue",
+    register_diagnostic(span=$method2, message="Brittle test query: do not select or assert on user-facing copy. Anchor on a plain `id` for a distinct control/region and assert on state, attributes, or counts. See docs/development.md#test-authoring--selector-hygiene.", severity="error")
+  },
+  // 3. `*ByRole(..., { name })` matches the accessible name, which is copy by another route.
+  `$recv3.$method3($role3, $options3)` as $call3 where {
+    $method3 <: r"(?:get|find|query|getAll|findAll)ByRole",
+    $options3 <: contains `name: $_`,
+    register_diagnostic(span=$call3, message="Brittle test query: `*ByRole(..., { name })` matches the accessible name (user-facing copy). Drop `name` and anchor on a plain `id` for a distinct control/region. See docs/development.md#test-authoring--selector-hygiene.", severity="error")
+  },
+  // 4. Same, for the bare `*ByRole(..., { name })` form.
+  `$method4($role4, $options4)` as $call4 where {
+    $method4 <: r"(?:get|find|query|getAll|findAll)ByRole",
+    $options4 <: contains `name: $_`,
+    register_diagnostic(span=$call4, message="Brittle test query: `*ByRole(..., { name })` matches the accessible name (user-facing copy). Drop `name` and anchor on a plain `id` for a distinct control/region. See docs/development.md#test-authoring--selector-hygiene.", severity="error")
+  },
+  // 5. Any locator/call taking a two-argument option bag with `hasText`, a text filter.
+  `$recv5.$method5($sel5, $options5)` as $call5 where {
+    $options5 <: contains `hasText: $_`,
+    register_diagnostic(span=$call5, message="Brittle test locator: a Playwright `{ hasText }` option is a text lookup in disguise. Anchor on a plain `id` and assert on state, attributes, or counts. See docs/development.md#test-authoring--selector-hygiene.", severity="error")
+  },
+  // 6. Same, for single-argument option bags (e.g. `locator.filter({ hasText })`).
+  `$recv6.$method6($options6)` as $call6 where {
+    $options6 <: contains `hasText: $_`,
+    register_diagnostic(span=$call6, message="Brittle test locator: a Playwright `{ hasText }` option is a text lookup in disguise. Anchor on a plain `id` and assert on state, attributes, or counts. See docs/development.md#test-authoring--selector-hygiene.", severity="error")
+  },
+  // 7. Single-quoted CSS locator / Playwright text-engine strings.
+  `'$content7'` as $lit7 where {
+    $content7 <: r".*(?:(?:aria-label|title|data-test-id|data-testid)[*^$|~]?=|\btext=).*",
+    register_diagnostic(span=$lit7, message="Brittle test locator: a CSS `[aria-label=...]`/`[title=...]`/`[data-testid=...]` or Playwright `text=` string is a text/name lookup in disguise. Anchor on a plain `id` for a distinct control/region instead. See docs/development.md#test-authoring--selector-hygiene.", severity="error")
+  },
+  // 8. Same, for double-quoted strings.
+  `"$content8"` as $lit8 where {
+    $content8 <: r".*(?:(?:aria-label|title|data-test-id|data-testid)[*^$|~]?=|\btext=).*",
+    register_diagnostic(span=$lit8, message="Brittle test locator: a CSS `[aria-label=...]`/`[title=...]`/`[data-testid=...]` or Playwright `text=` string is a text/name lookup in disguise. Anchor on a plain `id` for a distinct control/region instead. See docs/development.md#test-authoring--selector-hygiene.", severity="error")
+  }
+}

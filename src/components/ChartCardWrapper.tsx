@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 interface ChartCardWrapperProps {
+  id?: string;
   title: string;
   subtitle?: string;
   mobileSubtitle?: string;
@@ -11,7 +12,6 @@ interface ChartCardWrapperProps {
   headerBadge?: React.ReactNode;
   headerControls?: React.ReactNode;
   filenamePrefix?: string;
-  testId?: string;
 }
 
 const triggerBlobDownload = (dataUrl: string, filename: string) => {
@@ -61,6 +61,7 @@ const triggerBlobDownload = (dataUrl: string, filename: string) => {
 };
 
 export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
+  id,
   title,
   subtitle,
   mobileSubtitle,
@@ -68,7 +69,6 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
   headerBadge,
   headerControls,
   filenamePrefix = 'speedcubing_plot',
-  testId,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isMaximized, setIsMaximized] = useState(false);
@@ -245,10 +245,12 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
     }
   };
 
+  const cardId = id || `chart-card-${filenamePrefix}`;
+
   const cardContent = (
     <div
       ref={cardRef}
-      data-testid={testId || `chart-card-${filenamePrefix}`}
+      id={cardId}
       className={`bg-stone-900 border border-stone-800 rounded-2xl p-4 sm:p-6 shadow-xl text-stone-100 flex flex-col gap-4 relative overflow-hidden w-full max-w-full box-border ${
         isMaximized ? 'w-full h-full max-w-7xl mx-auto overflow-y-auto' : ''
       }`}
@@ -262,6 +264,7 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
             {/* Download Button */}
             <button
               type="button"
+              id={`${cardId}-download`}
               onClick={handleDownloadImage}
               disabled={isDownloading}
               title="Download Plot as PNG Image"
@@ -279,6 +282,7 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
             {/* Maximize / Minimize Button */}
             <button
               type="button"
+              id={`${cardId}-maximize`}
               onClick={() => setIsMaximized(!isMaximized)}
               title={isMaximized ? 'Restore View (Esc)' : 'Maximize to Fullscreen'}
               aria-label={isMaximized ? 'Restore View (Esc)' : 'Maximize to Fullscreen'}
@@ -351,7 +355,10 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
 
         {/* Fullscreen Backdrop Overlay via Portal */}
         {createPortal(
-          <div className="fade-in fixed inset-0 z-[100] flex animate-in flex-col items-center justify-center overflow-y-auto bg-stone-950/95 p-4 backdrop-blur-xl duration-200 sm:p-8 safe-area-modal">
+          <div
+            id="chart-card-fullscreen-backdrop"
+            className="fade-in fixed inset-0 z-[100] flex animate-in flex-col items-center justify-center overflow-y-auto bg-stone-950/95 p-4 backdrop-blur-xl duration-200 sm:p-8 safe-area-modal"
+          >
             <div className="flex h-full max-h-[92vh] w-full max-w-7xl flex-col">{cardContent}</div>
           </div>,
           document.body,

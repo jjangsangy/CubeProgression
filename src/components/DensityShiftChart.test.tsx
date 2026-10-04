@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { verifyChartTooltipAutoDismiss } from '../test/tooltipTestUtils';
@@ -53,7 +53,7 @@ vi.mock('recharts', async (importOriginal) => {
       captured.chartData = props.data ?? null;
       captured.chartProps = props;
       return (
-        <svg role="img" aria-label="Mock AreaChart">
+        <svg id="mock-area-chart" role="img" aria-label="Mock AreaChart">
           {props.children}
         </svg>
       );
@@ -112,13 +112,11 @@ vi.mock('recharts', async (importOriginal) => {
           : null;
       return (
         <g
-          data-testid="mock-reference-line"
           data-x={props.x}
           data-stroke={props.stroke}
           data-segment={isSegment ? JSON.stringify(props.segment) : undefined}
         >
           <line
-            data-testid="reference-line"
             x1={isSegment ? props.segment?.[0]?.x : props.x}
             x2={isSegment ? props.segment?.[1]?.x : props.x}
             y1={isSegment ? props.segment?.[0]?.y : undefined}
@@ -138,6 +136,16 @@ vi.mock('recharts', async (importOriginal) => {
   };
 });
 
+// Anchor on a plain id for a distinct control/region instead of user-facing copy.
+const getById = (container: HTMLElement, id: string): HTMLElement => {
+  const el = container.querySelector<HTMLElement>(`#${id}`);
+  if (!el) throw new Error(`Expected element #${id} to be present`);
+  return el;
+};
+
+const countOccurrences = (haystack: string, needle: string): number =>
+  haystack.split(needle).length - 1;
+
 const mockSolves: Solve[] = Array.from({ length: 20 }, (_, idx) => ({
   id: idx + 1,
   index: idx + 1,
@@ -151,25 +159,30 @@ const mockSolves: Solve[] = Array.from({ length: 20 }, (_, idx) => ({
 }));
 
 describe('DensityShiftChart component', () => {
+  // Grouping-aggregation boundary lines are the only <line> elements rendered inside a <g>
+  // that carries an explanatory <title> on the scrubber track.
+  const getBoundaryLines = (container: HTMLElement) =>
+    Array.from(container.querySelectorAll('#density-shift-chart svg[aria-hidden="true"] g'))
+      .filter((group) =>
+        Array.from(group.children).some((child) => child.tagName.toLowerCase() === 'title'),
+      )
+      .map((group) => group.querySelector('line'))
+      .filter((line): line is SVGLineElement => line !== null);
+
   beforeEach(() => {
     captured.referenceLines = [];
   });
 
   it('renders density shift chart and baseline vs recent summary', () => {
-    render(
-      <DensityShiftChart
-        solves={mockSolves}
-        title="Baseline vs Recent Solves"
-      />,
+    const { container } = render(
+      <DensityShiftChart solves={mockSolves} title="Baseline vs Recent Solves" />,
     );
 
-    expect(
-      screen.getByText('Baseline vs Recent Solves'),
-    ).toBeInTheDocument();
-    expect(screen.getByText('Baseline Mean:')).toBeInTheDocument();
-    expect(screen.getByText('Recent Mean:')).toBeInTheDocument();
-    // Baseline (first 30%) is slower than recent (last 30%) -> distribution shifted faster
-    expect(screen.getByText('-1.40s faster')).toBeInTheDocument();
+    const chart = getById(container, 'density-shift-chart');
+    // Baseline (first 30%) mean 11.75s vs recent (last 30%) mean 10.35s -> -1.40s shift.
+    expect(chart.textContent).toContain('11.75s');
+    expect(chart.textContent).toContain('10.35s');
+    expect(chart.textContent).toContain('-1.40s');
   });
 
   it('labels the shift as slower when recent solves are slower than the baseline', () => {
@@ -178,11 +191,13 @@ describe('DensityShiftChart component', () => {
       finalTimeSec: 10 + idx * 0.1,
     }));
 
-    render(<DensityShiftChart solves={slowingSolves} title="Slower Distribution Shift" />);
+    const { container } = render(
+      <DensityShiftChart solves={slowingSolves} title="Slower Distribution Shift" />,
+    );
 
-    // Baseline (first 30%) mean 10.25s vs recent (last 30%) mean 11.65s -> +1.40s slower
-    expect(screen.getByText('+1.40s slower')).toBeInTheDocument();
-    expect(screen.queryByText(/faster/)).not.toBeInTheDocument();
+    // Baseline (first 30%) mean 10.25s vs recent (last 30%) mean 11.65s -> +1.40s shift.
+    const summary = getById(container, 'density-shift-chart').textContent ?? '';
+    expect(summary).toContain('+1.40s');
   });
 
   it('renders off-center vertical reference line labels that do not intersect or go through the line', () => {
@@ -205,9 +220,7 @@ describe('DensityShiftChart component', () => {
     expect(typeof distanceLine?.label).toBe('function');
 
     // Query vertical reference line groups
-    const verticalGroups = Array.from(
-      container.querySelectorAll('g[data-testid="mock-reference-line"][data-x]'),
-    );
+    const verticalGroups = Array.from(container.querySelectorAll('g[data-x]'));
     expect(verticalGroups.length).toBe(2);
 
     for (const group of verticalGroups) {
@@ -236,9 +249,7 @@ describe('DensityShiftChart component', () => {
     }
 
     // Query horizontal distance bar text label
-    const distanceLabel = container.querySelector(
-      'g[data-testid="mock-reference-line"][data-segment] text',
-    );
+    const distanceLabel = container.querySelector('g[data-segment] text');
     expect(distanceLabel).not.toBeNull();
     expect(distanceLabel?.getAttribute('text-anchor')).toBe('middle');
     expect(distanceLabel?.textContent).toBe('1.40s');
@@ -256,9 +267,7 @@ describe('DensityShiftChart component', () => {
     expect(distanceRefLine?.segment?.[1]?.x).toBe(10.35);
     expect(distanceRefLine?.segment?.[0]?.y).toBeCloseTo(0.4683, 1);
 
-    const distanceText = container.querySelector(
-      'g[data-testid="mock-reference-line"][data-segment] text',
-    );
+    const distanceText = container.querySelector('g[data-segment] text');
     expect(distanceText?.textContent).toBe('1.40s');
   });
 
@@ -269,9 +278,7 @@ describe('DensityShiftChart component', () => {
     }));
 
     const { container } = render(<DensityShiftChart solves={slowingSolves} />);
-    const verticalGroups = Array.from(
-      container.querySelectorAll('g[data-testid="mock-reference-line"][data-x]'),
-    );
+    const verticalGroups = Array.from(container.querySelectorAll('g[data-x]'));
     expect(verticalGroups.length).toBe(2);
 
     // In slowingSolves: baseline (earlier solves) is faster (~10.35s), recent (later solves) is slower (~11.76s)
@@ -295,9 +302,7 @@ describe('DensityShiftChart component', () => {
     expect(Number(recentText?.getAttribute('x'))).toBeGreaterThan(recentLineX);
     expect(recentText?.textContent).toMatch(/^\d+\.\d{2}s$/);
 
-    const distanceText = container.querySelector(
-      'g[data-testid="mock-reference-line"][data-segment] text',
-    );
+    const distanceText = container.querySelector('g[data-segment] text');
     expect(distanceText?.textContent).toBe('1.40s');
     expect(distanceText?.getAttribute('text-anchor')).toBe('middle');
   });
@@ -312,9 +317,7 @@ describe('DensityShiftChart component', () => {
     }));
 
     const { container } = render(<DensityShiftChart solves={identicalSolves} />);
-    const verticalTexts = Array.from(
-      container.querySelectorAll('g[data-testid="mock-reference-line"][data-x] text'),
-    );
+    const verticalTexts = Array.from(container.querySelectorAll('g[data-x] text'));
     expect(verticalTexts).toHaveLength(2);
 
     const yValues = verticalTexts.map((el) => Number(el.getAttribute('y')));
@@ -346,13 +349,13 @@ describe('DensityShiftChart component', () => {
   });
 
   it('renders scrubbers on track with opacity, ribbed resize handles, and dataset sparkline', () => {
-    render(<DensityShiftChart solves={mockSolves} />);
+    const { container } = render(<DensityShiftChart solves={mockSolves} />);
 
-    const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+    const track = getById(container, 'density-scrubber-track');
     expect(track).toBeInTheDocument();
 
-    const scrubber1 = screen.getByLabelText('Baseline scrubber position');
-    const scrubber2 = screen.getByLabelText('Recent scrubber position');
+    const scrubber1 = getById(container, 'density-scrubber-baseline');
+    const scrubber2 = getById(container, 'density-scrubber-recent');
 
     expect(scrubber1).toBeInTheDocument();
     expect(scrubber2).toBeInTheDocument();
@@ -362,14 +365,14 @@ describe('DensityShiftChart component', () => {
     expect(scrubber2).toHaveClass('bg-emerald-500/25');
 
     // Verify ribbed resize handles
-    expect(screen.getByLabelText('Baseline left resize handle')).toBeInTheDocument();
-    expect(screen.getByLabelText('Baseline right resize handle')).toBeInTheDocument();
-    expect(screen.getByLabelText('Recent left resize handle')).toBeInTheDocument();
-    expect(screen.getByLabelText('Recent right resize handle')).toBeInTheDocument();
+    expect(getById(container, 'density-handle-baseline-start')).toBeInTheDocument();
+    expect(getById(container, 'density-handle-baseline-end')).toBeInTheDocument();
+    expect(getById(container, 'density-handle-recent-start')).toBeInTheDocument();
+    expect(getById(container, 'density-handle-recent-end')).toBeInTheDocument();
 
-    // Verify no ugly "Sample 1" or "Sample 2" text labels inside scrubbers
-    expect(screen.queryByText(/Sample 1:/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Sample 2:/)).not.toBeInTheDocument();
+    // Verify scrubbers render no text badges (they are pure drag targets)
+    expect(scrubber1.textContent).toBe('');
+    expect(scrubber2.textContent).toBe('');
 
     // Verify dataset visual representation inside the track
     const sparklineSvg = track.querySelector('svg');
@@ -380,10 +383,11 @@ describe('DensityShiftChart component', () => {
   });
 
   it('maintains symmetry: resizing one scrubber updates the other scrubber by the exact same amount', () => {
-    render(<DensityShiftChart solves={mockSolves} />);
+    const { container } = render(<DensityShiftChart solves={mockSolves} />);
+    const card = getById(container, 'density-shift-chart');
 
-    const scrubber1 = screen.getByLabelText('Baseline scrubber position');
-    const scrubber2 = screen.getByLabelText('Recent scrubber position');
+    const scrubber1 = getById(container, 'density-scrubber-baseline');
+    const scrubber2 = getById(container, 'density-scrubber-recent');
 
     // Both start at default 30% of 20 = 6 solves -> 30% width
     expect(scrubber1.style.width).toBe('30%');
@@ -395,8 +399,8 @@ describe('DensityShiftChart component', () => {
     // Symmetrical: both scrubbers expand to 7 solves -> 35% width
     expect(scrubber1.style.width).toBe('35%');
     expect(scrubber2.style.width).toBe('35%');
-    expect(screen.getByText('(#1–#7)')).toBeInTheDocument();
-    expect(screen.getByText('(#14–#20)')).toBeInTheDocument();
+    expect(card.textContent).toContain('(#1\u2013#7)');
+    expect(card.textContent).toContain('(#14\u2013#20)');
 
     // Resize Scrubber 2 (Alt+ArrowLeft shrinks width by 1 solve)
     fireEvent.keyDown(scrubber2, { key: 'ArrowLeft', altKey: true });
@@ -404,32 +408,33 @@ describe('DensityShiftChart component', () => {
     // Symmetrical: both scrubbers shrink back to 6 solves -> 30% width
     expect(scrubber1.style.width).toBe('30%');
     expect(scrubber2.style.width).toBe('30%');
-    expect(screen.getByText('(#1–#6)')).toBeInTheDocument();
-    expect(screen.getByText('(#14–#19)')).toBeInTheDocument();
+    expect(card.textContent).toContain('(#1\u2013#6)');
+    expect(card.textContent).toContain('(#14\u2013#19)');
   });
 
   it('allows sliding scrubbers across the distribution using keyboard navigation', () => {
-    render(<DensityShiftChart solves={mockSolves} />);
+    const { container } = render(<DensityShiftChart solves={mockSolves} />);
+    const card = getById(container, 'density-shift-chart');
 
-    const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+    const scrubber1 = getById(container, 'density-scrubber-baseline');
     // Initial value is 1 (index 0 + 1)
     expect(scrubber1).toHaveAttribute('aria-valuenow', '1');
 
     // Nudge right
     fireEvent.keyDown(scrubber1, { key: 'ArrowRight' });
     expect(scrubber1).toHaveAttribute('aria-valuenow', '2');
-    expect(screen.getByText('(#2–#7)')).toBeInTheDocument();
+    expect(card.textContent).toContain('(#2\u2013#7)');
 
     // Nudge left
     fireEvent.keyDown(scrubber1, { key: 'ArrowLeft' });
     expect(scrubber1).toHaveAttribute('aria-valuenow', '1');
-    expect(screen.getByText('(#1–#6)')).toBeInTheDocument();
+    expect(card.textContent).toContain('(#1\u2013#6)');
   });
 
   it('keeps X-axis domain completely stable and fluid when scrubbers slide to eliminate jitter', () => {
-    render(<DensityShiftChart solves={mockSolves} />);
+    const { container } = render(<DensityShiftChart solves={mockSolves} />);
 
-    const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+    const scrubber1 = getById(container, 'density-scrubber-baseline');
     expect(captured.chartData).not.toBeNull();
     const initialXPoints = captured.chartData?.map((p) => p.x);
 
@@ -445,7 +450,7 @@ describe('DensityShiftChart component', () => {
   });
 
   it('normalizes Y-axis domain proportionally when scrubber size changes so peaks are neither too small nor too large', () => {
-    render(<DensityShiftChart solves={mockSolves} />);
+    const { container } = render(<DensityShiftChart solves={mockSolves} />);
 
     expect(captured.yAxisProps).not.toBeNull();
     const initialDomain = captured.yAxisProps?.domain;
@@ -461,7 +466,7 @@ describe('DensityShiftChart component', () => {
     expect(maxDensity / initialCeiling).toBeLessThanOrEqual(0.85);
 
     // Expand scrubber window (Alt+ArrowRight 4 times)
-    const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+    const scrubber1 = getById(container, 'density-scrubber-baseline');
     fireEvent.keyDown(scrubber1, { key: 'ArrowRight', altKey: true });
     fireEvent.keyDown(scrubber1, { key: 'ArrowRight', altKey: true });
     fireEvent.keyDown(scrubber1, { key: 'ArrowRight', altKey: true });
@@ -478,7 +483,7 @@ describe('DensityShiftChart component', () => {
     expect(newMaxDensity / newCeiling).toBeLessThanOrEqual(0.85);
   });
 
-  it('labels the shift as "no change" when baseline and recent means are identical', () => {
+  it('renders identical baseline and recent means when the distribution does not shift', () => {
     // Solves with symmetrical times so baseline mean equals recent mean
     const flatSolves: Solve[] = Array.from({ length: 20 }, (_, idx) => ({
       ...mockSolves[0],
@@ -487,14 +492,25 @@ describe('DensityShiftChart component', () => {
       finalTimeSec: 10.0,
     }));
 
-    render(<DensityShiftChart solves={flatSolves} />);
-    expect(screen.getByText('no change')).toBeInTheDocument();
+    const { container } = render(<DensityShiftChart solves={flatSolves} />);
+    const card = getById(container, 'density-shift-chart');
+
+    // The banner renders baseline mean, recent mean, then the signed shift value.
+    const readouts = Array.from(card.querySelectorAll('span.font-mono.font-bold')).map(
+      (el) => el.textContent ?? '',
+    );
+    expect(readouts).toHaveLength(3);
+    const [baselineMean, recentMean] = readouts;
+    expect(baselineMean).toBe('10.00s');
+    expect(recentMean).toBe('10.00s');
+    expect(baselineMean).toBe(recentMean);
   });
 
   it('hides mean shift summary when valid solves are fewer than 10', () => {
-    render(<DensityShiftChart solves={mockSolves.slice(0, 6)} />);
-    expect(screen.getByText('Baseline vs Recent Solves')).toBeInTheDocument();
-    expect(screen.queryByText('Baseline Mean:')).toBeNull();
+    const { container } = render(<DensityShiftChart solves={mockSolves.slice(0, 6)} />);
+    const card = getById(container, 'density-shift-chart');
+    // The chart card renders, but the summary readouts are suppressed -> no sample-range readout
+    expect(card.textContent).not.toMatch(/#\d+\u2013#\d+/);
   });
 
   it('renders CustomTooltip correctly in active and inactive states', () => {
@@ -513,23 +529,23 @@ describe('DensityShiftChart component', () => {
     expect(inactive.container).toBeEmptyDOMElement();
     inactive.unmount();
 
-    // Active tooltip
+    // Active tooltip exposes the label time and both series densities as computed values
     const activePayload = [{ value: 0.12345 }, { value: 0.05432 }];
     const activeTooltip = render(
       React.cloneElement(content, { active: true, payload: activePayload, label: '11.50' }),
     );
-    expect(activeTooltip.getByText('Solve Time: 11.50s')).toBeInTheDocument();
-    expect(activeTooltip.getByText('Baseline Density:')).toBeInTheDocument();
-    expect(activeTooltip.getByText('0.1235')).toBeInTheDocument();
-    expect(activeTooltip.getByText('Recent Density:')).toBeInTheDocument();
-    expect(activeTooltip.getByText('0.0543')).toBeInTheDocument();
+    const tooltipText = activeTooltip.container.textContent ?? '';
+    expect(tooltipText).toContain('11.50s');
+    // Baseline density is rendered before recent density
+    expect(tooltipText.indexOf('0.1235')).toBeGreaterThanOrEqual(0);
+    expect(tooltipText.indexOf('0.0543')).toBeGreaterThan(tooltipText.indexOf('0.1235'));
     activeTooltip.unmount();
   });
 
   describe('Pointer dragging and track interaction', () => {
     it('does not attach scrubber to mouse when clicking quickly and releasing before next render', () => {
-      render(<DensityShiftChart solves={mockSolves} />);
-      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      const { container } = render(<DensityShiftChart solves={mockSolves} />);
+      const track = getById(container, 'density-scrubber-track');
       vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
         left: 100,
         top: 50,
@@ -542,7 +558,7 @@ describe('DensityShiftChart component', () => {
         toJSON: () => {},
       });
 
-      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+      const scrubber1 = getById(container, 'density-scrubber-baseline');
 
       // Dispatch pointerdown and pointerup synchronously in the same act/batch (fast click)
       act(() => {
@@ -579,8 +595,8 @@ describe('DensityShiftChart component', () => {
     });
 
     it('does not attach recent scrubber to mouse on quick click and release', () => {
-      render(<DensityShiftChart solves={mockSolves} />);
-      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      const { container } = render(<DensityShiftChart solves={mockSolves} />);
+      const track = getById(container, 'density-scrubber-track');
       vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
         left: 100,
         top: 50,
@@ -593,7 +609,7 @@ describe('DensityShiftChart component', () => {
         toJSON: () => {},
       });
 
-      const scrubber2 = screen.getByLabelText('Recent scrubber position');
+      const scrubber2 = getById(container, 'density-scrubber-recent');
       const initialVal = scrubber2.getAttribute('aria-valuenow');
 
       act(() => {
@@ -629,8 +645,8 @@ describe('DensityShiftChart component', () => {
     });
 
     it('does not resize sample window when clicking resize handle quickly', () => {
-      render(<DensityShiftChart solves={mockSolves} />);
-      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      const { container } = render(<DensityShiftChart solves={mockSolves} />);
+      const track = getById(container, 'density-scrubber-track');
       vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
         left: 100,
         top: 50,
@@ -643,8 +659,8 @@ describe('DensityShiftChart component', () => {
         toJSON: () => {},
       });
 
-      const rightHandle = screen.getByLabelText('Baseline right resize handle');
-      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+      const rightHandle = getById(container, 'density-handle-baseline-end');
+      const scrubber1 = getById(container, 'density-scrubber-baseline');
       const initialWidth = scrubber1.style.width;
 
       act(() => {
@@ -680,8 +696,8 @@ describe('DensityShiftChart component', () => {
     });
 
     it('immediately aborts drag and freezes position when mouse button is released during movement', () => {
-      render(<DensityShiftChart solves={mockSolves} />);
-      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      const { container } = render(<DensityShiftChart solves={mockSolves} />);
+      const track = getById(container, 'density-scrubber-track');
       vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
         left: 100,
         top: 50,
@@ -694,7 +710,7 @@ describe('DensityShiftChart component', () => {
         toJSON: () => {},
       });
 
-      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+      const scrubber1 = getById(container, 'density-scrubber-baseline');
 
       // Start drag with button pressed (buttons: 1) and move to 300 (100px delta = +4 solves -> position 5)
       fireEvent.pointerDown(scrubber1, {
@@ -731,8 +747,8 @@ describe('DensityShiftChart component', () => {
     });
 
     it('ignores non-primary pointerdown events (e.g. right click) without initiating drag', () => {
-      render(<DensityShiftChart solves={mockSolves} />);
-      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      const { container } = render(<DensityShiftChart solves={mockSolves} />);
+      const track = getById(container, 'density-scrubber-track');
       vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
         left: 100,
         top: 50,
@@ -745,7 +761,7 @@ describe('DensityShiftChart component', () => {
         toJSON: () => {},
       });
 
-      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+      const scrubber1 = getById(container, 'density-scrubber-baseline');
 
       // Right-click pointerdown (button: 2, buttons: 2)
       fireEvent.pointerDown(scrubber1, {
@@ -769,8 +785,8 @@ describe('DensityShiftChart component', () => {
     });
 
     it('terminates active drag when window blur event fires', () => {
-      render(<DensityShiftChart solves={mockSolves} />);
-      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      const { container } = render(<DensityShiftChart solves={mockSolves} />);
+      const track = getById(container, 'density-scrubber-track');
       vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
         left: 100,
         top: 50,
@@ -783,7 +799,7 @@ describe('DensityShiftChart component', () => {
         toJSON: () => {},
       });
 
-      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+      const scrubber1 = getById(container, 'density-scrubber-baseline');
 
       fireEvent.pointerDown(scrubber1, {
         clientX: 200,
@@ -809,8 +825,8 @@ describe('DensityShiftChart component', () => {
     });
 
     it('terminates drag when lostpointercapture event fires', () => {
-      render(<DensityShiftChart solves={mockSolves} />);
-      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      const { container } = render(<DensityShiftChart solves={mockSolves} />);
+      const track = getById(container, 'density-scrubber-track');
       vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
         left: 100,
         top: 50,
@@ -823,7 +839,7 @@ describe('DensityShiftChart component', () => {
         toJSON: () => {},
       });
 
-      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+      const scrubber1 = getById(container, 'density-scrubber-baseline');
 
       fireEvent.pointerDown(scrubber1, { clientX: 200, pointerId: 1 });
       fireEvent.lostPointerCapture(scrubber1, { pointerId: 1 });
@@ -834,8 +850,8 @@ describe('DensityShiftChart component', () => {
     });
 
     it('terminates drag on window pointerup event when cursor is outside the element', () => {
-      render(<DensityShiftChart solves={mockSolves} />);
-      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+      const { container } = render(<DensityShiftChart solves={mockSolves} />);
+      const scrubber1 = getById(container, 'density-scrubber-baseline');
 
       fireEvent.pointerDown(scrubber1, { clientX: 200, pointerId: 1, pointerType: 'mouse' });
 
@@ -852,9 +868,9 @@ describe('DensityShiftChart component', () => {
     });
 
     it('handles pointer dragging on Scrubber 1 body to shift baseline sample window', () => {
-      render(<DensityShiftChart solves={mockSolves} />);
+      const { container } = render(<DensityShiftChart solves={mockSolves} />);
 
-      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      const track = getById(container, 'density-scrubber-track');
       vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
         left: 100,
         top: 50,
@@ -867,9 +883,10 @@ describe('DensityShiftChart component', () => {
         toJSON: () => {},
       });
 
-      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+      const card = getById(container, 'density-shift-chart');
+      const scrubber1 = getById(container, 'density-scrubber-baseline');
       expect(scrubber1).toHaveAttribute('aria-valuenow', '1');
-      expect(screen.getByText('(#1–#6)')).toBeInTheDocument();
+      expect(card.textContent).toContain('(#1\u2013#6)');
 
       // Drag right by 100px (100 / 500 * 20 = 4 solves)
       fireEvent.pointerDown(scrubber1, { clientX: 200, pointerId: 1 });
@@ -877,7 +894,7 @@ describe('DensityShiftChart component', () => {
       fireEvent.pointerUp(scrubber1, { clientX: 300, pointerId: 1 });
 
       expect(scrubber1).toHaveAttribute('aria-valuenow', '5');
-      expect(screen.getByText('(#5–#10)')).toBeInTheDocument();
+      expect(card.textContent).toContain('(#5\u2013#10)');
 
       // Drag left past boundary 0 (delta = -200px -> -8 solves)
       fireEvent.pointerDown(scrubber1, { clientX: 300, pointerId: 1 });
@@ -885,7 +902,7 @@ describe('DensityShiftChart component', () => {
       fireEvent.pointerUp(scrubber1, { clientX: 100, pointerId: 1 });
 
       expect(scrubber1).toHaveAttribute('aria-valuenow', '1');
-      expect(screen.getByText('(#1–#6)')).toBeInTheDocument();
+      expect(card.textContent).toContain('(#1\u2013#6)');
 
       // Drag right past maximum boundary (maxStart = 20 - 6 = 14)
       fireEvent.pointerDown(scrubber1, { clientX: 100, pointerId: 1 });
@@ -893,13 +910,14 @@ describe('DensityShiftChart component', () => {
       fireEvent.pointerUp(scrubber1, { clientX: 600, pointerId: 1 });
 
       expect(scrubber1).toHaveAttribute('aria-valuenow', '15');
-      expect(screen.getAllByText('(#15–#20)')).toHaveLength(2);
+      // At the maximum both baseline and recent windows clamp to the same range
+      expect(countOccurrences(card.textContent ?? '', '(#15\u2013#20)')).toBe(2);
     });
 
     it('handles pointer dragging on Scrubber 2 body to shift recent sample window', () => {
-      render(<DensityShiftChart solves={mockSolves} />);
+      const { container } = render(<DensityShiftChart solves={mockSolves} />);
 
-      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      const track = getById(container, 'density-scrubber-track');
       vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
         left: 100,
         top: 50,
@@ -912,10 +930,11 @@ describe('DensityShiftChart component', () => {
         toJSON: () => {},
       });
 
-      const scrubber2 = screen.getByLabelText('Recent scrubber position');
+      const card = getById(container, 'density-shift-chart');
+      const scrubber2 = getById(container, 'density-scrubber-recent');
       // Starts at 20 - 6 = 14 (1-based: 15)
       expect(scrubber2).toHaveAttribute('aria-valuenow', '15');
-      expect(screen.getByText('(#15–#20)')).toBeInTheDocument();
+      expect(card.textContent).toContain('(#15\u2013#20)');
 
       // Drag left by 100px (-4 solves)
       fireEvent.pointerDown(scrubber2, { clientX: 450, pointerId: 2 });
@@ -923,13 +942,13 @@ describe('DensityShiftChart component', () => {
       fireEvent.pointerUp(scrubber2, { clientX: 350, pointerId: 2 });
 
       expect(scrubber2).toHaveAttribute('aria-valuenow', '11');
-      expect(screen.getByText('(#11–#16)')).toBeInTheDocument();
+      expect(card.textContent).toContain('(#11\u2013#16)');
     });
 
     it('handles pointer dragging on right resize handle to expand and shrink sample size symmetrically', () => {
-      render(<DensityShiftChart solves={mockSolves} />);
+      const { container } = render(<DensityShiftChart solves={mockSolves} />);
 
-      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      const track = getById(container, 'density-scrubber-track');
       vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
         left: 100,
         top: 50,
@@ -942,9 +961,10 @@ describe('DensityShiftChart component', () => {
         toJSON: () => {},
       });
 
-      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
-      const scrubber2 = screen.getByLabelText('Recent scrubber position');
-      const rightHandle1 = screen.getByLabelText('Baseline right resize handle');
+      const card = getById(container, 'density-shift-chart');
+      const scrubber1 = getById(container, 'density-scrubber-baseline');
+      const scrubber2 = getById(container, 'density-scrubber-recent');
+      const rightHandle1 = getById(container, 'density-handle-baseline-end');
 
       // Expand window: drag right handle to the right by 50px (+2 solves)
       fireEvent.pointerDown(rightHandle1, { clientX: 250, pointerId: 3 });
@@ -954,8 +974,8 @@ describe('DensityShiftChart component', () => {
       // Symmetrical expansion: 6 + 2 = 8 solves (40% width)
       expect(scrubber1.style.width).toBe('40%');
       expect(scrubber2.style.width).toBe('40%');
-      expect(screen.getByText('(#1–#8)')).toBeInTheDocument();
-      expect(screen.getByText('(#13–#20)')).toBeInTheDocument();
+      expect(card.textContent).toContain('(#1\u2013#8)');
+      expect(card.textContent).toContain('(#13\u2013#20)');
 
       // Shrink window: drag right handle to the left by 200px (-8 solves, clamped to min 3 solves)
       fireEvent.pointerDown(rightHandle1, { clientX: 300, pointerId: 3 });
@@ -965,14 +985,14 @@ describe('DensityShiftChart component', () => {
       // Clamped to minimum 3 solves: 3 / 20 = 15% width
       expect(scrubber1.style.width).toBe('15%');
       expect(scrubber2.style.width).toBe('15%');
-      expect(screen.getByText('(#1–#3)')).toBeInTheDocument();
-      expect(screen.getByText('(#13–#15)')).toBeInTheDocument();
+      expect(card.textContent).toContain('(#1\u2013#3)');
+      expect(card.textContent).toContain('(#13\u2013#15)');
     });
 
     it('handles pointer dragging on left resize handle of scrubber 1 and scrubber 2', () => {
-      render(<DensityShiftChart solves={mockSolves} />);
+      const { container } = render(<DensityShiftChart solves={mockSolves} />);
 
-      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      const track = getById(container, 'density-scrubber-track');
       vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
         left: 100,
         top: 50,
@@ -985,8 +1005,8 @@ describe('DensityShiftChart component', () => {
         toJSON: () => {},
       });
 
-      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
-      const scrubber2 = screen.getByLabelText('Recent scrubber position');
+      const scrubber1 = getById(container, 'density-scrubber-baseline');
+      const scrubber2 = getById(container, 'density-scrubber-recent');
 
       // Slide scrubber1 to start index 3 (solve #4)
       fireEvent.keyDown(scrubber1, { key: 'ArrowRight' });
@@ -995,7 +1015,7 @@ describe('DensityShiftChart component', () => {
       expect(scrubber1).toHaveAttribute('aria-valuenow', '4');
 
       // Drag left handle of scrubber 1 to the left (expanding from start 3 to start 1)
-      const leftHandle1 = screen.getByLabelText('Baseline left resize handle');
+      const leftHandle1 = getById(container, 'density-handle-baseline-start');
       fireEvent.pointerDown(leftHandle1, { clientX: 200, pointerId: 4 });
       fireEvent.pointerMove(leftHandle1, { clientX: 150, pointerId: 4 });
       fireEvent.pointerUp(leftHandle1, { clientX: 150, pointerId: 4 });
@@ -1005,7 +1025,7 @@ describe('DensityShiftChart component', () => {
       expect(scrubber2.style.width).toBe('40%');
 
       // Now test left handle of scrubber 2
-      const leftHandle2 = screen.getByLabelText('Recent left resize handle');
+      const leftHandle2 = getById(container, 'density-handle-recent-start');
       fireEvent.pointerDown(leftHandle2, { clientX: 400, pointerId: 5 });
       fireEvent.pointerMove(leftHandle2, { clientX: 350, pointerId: 5 });
       fireEvent.pointerUp(leftHandle2, { clientX: 350, pointerId: 5 });
@@ -1020,9 +1040,9 @@ describe('DensityShiftChart component', () => {
     });
 
     it('handles pointer dragging on right resize handle of scrubber 2 to resize sample window symmetrically', () => {
-      render(<DensityShiftChart solves={mockSolves} />);
+      const { container } = render(<DensityShiftChart solves={mockSolves} />);
 
-      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      const track = getById(container, 'density-scrubber-track');
       vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
         left: 100,
         top: 50,
@@ -1035,9 +1055,9 @@ describe('DensityShiftChart component', () => {
         toJSON: () => {},
       });
 
-      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
-      const scrubber2 = screen.getByLabelText('Recent scrubber position');
-      const rightHandle2 = screen.getByLabelText('Recent right resize handle');
+      const scrubber1 = getById(container, 'density-scrubber-baseline');
+      const scrubber2 = getById(container, 'density-scrubber-recent');
+      const rightHandle2 = getById(container, 'density-handle-recent-end');
 
       // Move scrubber 2 left first so it has room to expand right
       fireEvent.keyDown(scrubber2, { key: 'ArrowLeft' });
@@ -1077,8 +1097,8 @@ describe('DensityShiftChart component', () => {
       const cancelSpy = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
 
       try {
-        render(<DensityShiftChart solves={mockSolves} />);
-        const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+        const { container } = render(<DensityShiftChart solves={mockSolves} />);
+        const scrubber1 = getById(container, 'density-scrubber-baseline');
 
         fireEvent.pointerDown(scrubber1, { clientX: 100, pointerId: 10 });
         fireEvent.pointerMove(scrubber1, { clientX: 200, pointerId: 10 });
@@ -1112,9 +1132,9 @@ describe('DensityShiftChart component', () => {
     });
 
     it('stops event propagation when clicking scrubbers and handles directly', () => {
-      render(<DensityShiftChart solves={mockSolves} />);
+      const { container } = render(<DensityShiftChart solves={mockSolves} />);
 
-      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      const track = getById(container, 'density-scrubber-track');
       vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
         left: 0,
         top: 0,
@@ -1127,12 +1147,12 @@ describe('DensityShiftChart component', () => {
         toJSON: () => {},
       });
 
-      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
-      const scrubber2 = screen.getByLabelText('Recent scrubber position');
-      const leftHandle1 = screen.getByLabelText('Baseline left resize handle');
-      const rightHandle1 = screen.getByLabelText('Baseline right resize handle');
-      const leftHandle2 = screen.getByLabelText('Recent left resize handle');
-      const rightHandle2 = screen.getByLabelText('Recent right resize handle');
+      const scrubber1 = getById(container, 'density-scrubber-baseline');
+      const scrubber2 = getById(container, 'density-scrubber-recent');
+      const leftHandle1 = getById(container, 'density-handle-baseline-start');
+      const rightHandle1 = getById(container, 'density-handle-baseline-end');
+      const leftHandle2 = getById(container, 'density-handle-recent-start');
+      const rightHandle2 = getById(container, 'density-handle-recent-end');
 
       const initialStart1 = scrubber1.getAttribute('aria-valuenow');
       const initialStart2 = scrubber2.getAttribute('aria-valuenow');
@@ -1151,8 +1171,8 @@ describe('DensityShiftChart component', () => {
     });
 
     it('prevents default behavior on track when Space or Enter key is pressed', () => {
-      render(<DensityShiftChart solves={mockSolves} />);
-      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      const { container } = render(<DensityShiftChart solves={mockSolves} />);
+      const track = getById(container, 'density-scrubber-track');
 
       const spaceEvent = new KeyboardEvent('keydown', {
         key: ' ',
@@ -1172,9 +1192,9 @@ describe('DensityShiftChart component', () => {
     });
 
     it('handles comprehensive keyboard shortcuts for both scrubbers', () => {
-      render(<DensityShiftChart solves={mockSolves} />);
-      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
-      const scrubber2 = screen.getByLabelText('Recent scrubber position');
+      const { container } = render(<DensityShiftChart solves={mockSolves} />);
+      const scrubber1 = getById(container, 'density-scrubber-baseline');
+      const scrubber2 = getById(container, 'density-scrubber-recent');
 
       // Scrubber 1: Alt+ArrowLeft shrinks sample count
       fireEvent.keyDown(scrubber1, { key: 'ArrowLeft', altKey: true });
@@ -1208,9 +1228,9 @@ describe('DensityShiftChart component', () => {
     });
 
     it('handles pointer cancel gracefully without getting stuck in active drag state', () => {
-      render(<DensityShiftChart solves={mockSolves} />);
+      const { container } = render(<DensityShiftChart solves={mockSolves} />);
 
-      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+      const scrubber1 = getById(container, 'density-scrubber-baseline');
       fireEvent.pointerDown(scrubber1, { clientX: 150, pointerId: 6 });
       fireEvent.pointerCancel(scrubber1, { pointerId: 6 });
 
@@ -1220,9 +1240,9 @@ describe('DensityShiftChart component', () => {
     });
 
     it('repositions closest scrubber when clicking along the timeline track', () => {
-      render(<DensityShiftChart solves={mockSolves} />);
+      const { container } = render(<DensityShiftChart solves={mockSolves} />);
 
-      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      const track = getById(container, 'density-scrubber-track');
       vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
         left: 0,
         top: 0,
@@ -1235,8 +1255,8 @@ describe('DensityShiftChart component', () => {
         toJSON: () => {},
       });
 
-      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
-      const scrubber2 = screen.getByLabelText('Recent scrubber position');
+      const scrubber1 = getById(container, 'density-scrubber-baseline');
+      const scrubber2 = getById(container, 'density-scrubber-recent');
 
       // Click at x = 200 (20% of 1000 = solve 4, closer to scrubber 1 which is around solve 3)
       fireEvent.click(track, { clientX: 200 });
@@ -1250,12 +1270,12 @@ describe('DensityShiftChart component', () => {
     });
 
     it('ignores track click when totalSolves is 0 or rect is missing or drag just ended', () => {
-      const { rerender } = render(<DensityShiftChart solves={[]} />);
-      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      const { container, rerender } = render(<DensityShiftChart solves={[]} />);
+      const track = getById(container, 'density-scrubber-track');
       expect(() => fireEvent.click(track, { clientX: 200 })).not.toThrow();
 
       rerender(<DensityShiftChart solves={mockSolves} />);
-      const scrubber1 = screen.getByLabelText('Baseline scrubber position');
+      const scrubber1 = getById(container, 'density-scrubber-baseline');
       const initialPos = scrubber1.getAttribute('aria-valuenow');
 
       vi.spyOn(track, 'getBoundingClientRect').mockReturnValue(undefined as unknown as DOMRect);
@@ -1310,21 +1330,20 @@ describe('DensityShiftChart component', () => {
 
   describe('Plot generation and edge case resilience', () => {
     it('handles empty dataset gracefully without crashing or invalid domains', () => {
-      render(<DensityShiftChart solves={[]} title="Empty Solves Test" />);
+      const { container } = render(<DensityShiftChart solves={[]} title="Empty Solves Test" />);
 
-      expect(screen.getByText('Empty Solves Test')).toBeInTheDocument();
-      expect(
-        screen.queryByLabelText(/Solve distribution timeline scrubbers track/i),
-      ).toBeInTheDocument();
+      // The chart card and the scrubber track still render for an empty dataset
+      expect(getById(container, 'density-shift-chart')).toBeInTheDocument();
+      expect(getById(container, 'density-scrubber-track')).toBeInTheDocument();
       // No crash, default Y ceiling is set
       expect(captured.yAxisProps?.domain).toEqual([0, 0.25]);
     });
 
     it('handles small datasets with fewer than 3 solves safely', () => {
-      render(<DensityShiftChart solves={mockSolves.slice(0, 2)} />);
+      const { container } = render(<DensityShiftChart solves={mockSolves.slice(0, 2)} />);
 
       // Sparkline is rendered for >= 2 solves
-      const track = screen.getByLabelText(/Solve distribution timeline scrubbers track/i);
+      const track = getById(container, 'density-scrubber-track');
       expect(track.querySelector('svg')).toBeInTheDocument();
       expect(captured.chartData).toBeDefined();
     });
@@ -1373,13 +1392,16 @@ describe('DensityShiftChart component', () => {
     });
 
     it('includes responsive timeline instruction label class for mobile visibility', () => {
-      render(<DensityShiftChart solves={mockSolves} />);
+      const { container } = render(<DensityShiftChart solves={mockSolves} />);
 
-      const instruction = screen.getByText(
-        /Drag scrubbers to move · Drag ribbed ends to resize sample window/,
-      );
-      expect(instruction).toBeInTheDocument();
-      // On mobile portrait, instruction is hidden via Tailwind 'hidden sm:inline'
+      // The timeline labels row directly follows the scrubber track region.
+      const track = getById(container, 'density-scrubber-track');
+      const labelsRow = track.nextElementSibling;
+      expect(labelsRow).not.toBeNull();
+      if (!labelsRow) throw new Error('Expected track timeline labels row after scrubber track');
+      expect(labelsRow.children.length).toBe(3);
+      // The middle label carries the responsive instruction, hidden on mobile portrait
+      const instruction = labelsRow.children[1] as HTMLElement;
       expect(instruction).toHaveClass('hidden');
       expect(instruction).toHaveClass('sm:inline');
     });
@@ -1388,12 +1410,14 @@ describe('DensityShiftChart component', () => {
       const originalInnerWidth = window.innerWidth;
       try {
         window.innerWidth = 390;
-        render(<DensityShiftChart solves={mockSolves} />);
+        const { container } = render(<DensityShiftChart solves={mockSolves} />);
 
-        expect(screen.getByText('Density')).toBeInTheDocument();
-
+        // Mobile portrait: compact Y-axis with the rotated label dropped
         expect(captured.yAxisProps?.width).toBeLessThan(45);
         expect(captured.yAxisProps?.label).toBeUndefined();
+        // The mobile-only bottom axis title region renders its label child
+        const mobileAxisTitle = getById(container, 'density-mobile-axis-title');
+        expect(mobileAxisTitle.querySelector('span')).not.toBeNull();
       } finally {
         window.innerWidth = originalInnerWidth;
       }
@@ -1403,12 +1427,13 @@ describe('DensityShiftChart component', () => {
       const originalInnerWidth = window.innerWidth;
       try {
         window.innerWidth = 1024;
-        render(<DensityShiftChart solves={mockSolves} />);
+        const { container } = render(<DensityShiftChart solves={mockSolves} />);
 
-        // In desktop mode, bottom axis title is omitted (Density only in rotated label)
-        expect(screen.queryByText('Density')).not.toBeInTheDocument();
+        // In desktop mode the rotated Y-axis label carries "Density"
         expect(captured.yAxisProps?.width).toBeGreaterThanOrEqual(45);
         expect(captured.yAxisProps?.label?.value).toBe('Density');
+        // Desktop omits the mobile-only bottom axis title region
+        expect(container.querySelector('#density-mobile-axis-title')).toBeNull();
       } finally {
         window.innerWidth = originalInnerWidth;
       }
@@ -1424,21 +1449,27 @@ describe('DensityShiftChart component', () => {
         const { unmount } = render(<DensityShiftChart solves={mockSolves} />);
 
         expect(addEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
-        expect(screen.queryByText('Density')).not.toBeInTheDocument();
+        // Desktop initially: wide Y-axis with the rotated label present
+        expect(captured.yAxisProps?.width).toBeGreaterThanOrEqual(45);
+        expect(captured.yAxisProps?.label?.value).toBe('Density');
 
         act(() => {
           window.innerWidth = 375;
           fireEvent(window, new Event('resize'));
         });
 
-        expect(screen.getByText('Density')).toBeInTheDocument();
+        // Mobile portrait: compact Y-axis, rotated label dropped
+        expect(captured.yAxisProps?.width).toBeLessThan(45);
+        expect(captured.yAxisProps?.label).toBeUndefined();
 
         act(() => {
           window.innerWidth = 1024;
           fireEvent(window, new Event('resize'));
         });
 
-        expect(screen.queryByText('Density')).not.toBeInTheDocument();
+        // Back to desktop
+        expect(captured.yAxisProps?.width).toBeGreaterThanOrEqual(45);
+        expect(captured.yAxisProps?.label?.value).toBe('Density');
 
         unmount();
         expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
@@ -1490,9 +1521,11 @@ describe('DensityShiftChart component', () => {
           },
         ];
 
-        render(<DensityShiftChart solves={mockSolves} periodGroups={mockGroups} />);
+        const { container } = render(
+          <DensityShiftChart solves={mockSolves} periodGroups={mockGroups} />,
+        );
 
-        const boundaryLines = screen.getAllByTestId('group-boundary-line');
+        const boundaryLines = getBoundaryLines(container);
         expect(boundaryLines).toHaveLength(1);
 
         const line = boundaryLines[0];
@@ -1503,9 +1536,10 @@ describe('DensityShiftChart component', () => {
         expect(line).toHaveAttribute('y2', '72');
         expect(line).toHaveAttribute('stroke-dasharray', '3 3');
 
-        // Accessible title indicates end of Day 1 and start of Day 2
+        // Accessible title records the boundary at the computed solve index
         const titleEl = line.parentElement?.querySelector('title');
-        expect(titleEl).toHaveTextContent('Day 1 ended · Day 2 began (solve 10)');
+        expect(titleEl).toBeTruthy();
+        expect(titleEl?.textContent).toContain('(solve 10)');
       });
 
       it('renders multiple boundary lines proportionally matching group sizes', () => {
@@ -1566,9 +1600,11 @@ describe('DensityShiftChart component', () => {
           },
         ];
 
-        render(<DensityShiftChart solves={mockSolves} periodGroups={mockGroups} />);
+        const { container } = render(
+          <DensityShiftChart solves={mockSolves} periodGroups={mockGroups} />,
+        );
 
-        const boundaryLines = screen.getAllByTestId('group-boundary-line');
+        const boundaryLines = getBoundaryLines(container);
         expect(boundaryLines).toHaveLength(2);
 
         // Boundary 1: solve 5 / 20 -> x = 250
@@ -1602,8 +1638,15 @@ describe('DensityShiftChart component', () => {
           },
         ];
 
-        render(<DensityShiftChart solves={mockSolves} periodGroups={singleGroup} />);
-        expect(screen.queryAllByTestId('group-boundary-line')).toHaveLength(0);
+        const { container } = render(
+          <DensityShiftChart solves={mockSolves} periodGroups={singleGroup} />,
+        );
+        // Positive guard: the aria-hidden dataset sparkline must exist, so a broken
+        // boundary-line selector cannot make the zero-count assertion pass vacuously.
+        expect(
+          container.querySelector('#density-scrubber-track svg[aria-hidden="true"]'),
+        ).not.toBeNull();
+        expect(getBoundaryLines(container)).toHaveLength(0);
       });
 
       it('dynamically computes grouping aggregations from solves and groupingPeriod when periodGroups is omitted', () => {
@@ -1621,9 +1664,11 @@ describe('DensityShiftChart component', () => {
           dateStr: idx < 10 ? '2020-09-13' : '2020-09-14',
         }));
 
-        render(<DensityShiftChart solves={multiDaySolves} groupingPeriod="daily" />);
+        const { container } = render(
+          <DensityShiftChart solves={multiDaySolves} groupingPeriod="daily" />,
+        );
 
-        const boundaryLines = screen.getAllByTestId('group-boundary-line');
+        const boundaryLines = getBoundaryLines(container);
         expect(boundaryLines).toHaveLength(1);
         expect(boundaryLines[0]).toHaveAttribute('x1', '500');
         expect(boundaryLines[0]).toHaveAttribute('x2', '500');
@@ -1655,9 +1700,11 @@ describe('DensityShiftChart component', () => {
           outliers: [],
         }));
 
-        render(<DensityShiftChart solves={manySolves} periodGroups={manyGroups} />);
+        const { container } = render(
+          <DensityShiftChart solves={manySolves} periodGroups={manyGroups} />,
+        );
 
-        const boundaryLines = screen.getAllByTestId('group-boundary-line');
+        const boundaryLines = getBoundaryLines(container);
         // Total raw boundaries would be 49; with step = ceil(49 / 35) = 2, filtered count is 24
         expect(boundaryLines.length).toBeLessThan(49);
         expect(boundaryLines.length).toBe(24);
@@ -1670,7 +1717,7 @@ describe('DensityShiftChart component', () => {
       vi.useFakeTimers();
       try {
         const { container } = render(<DensityShiftChart solves={mockSolves} />);
-        const chartSvg = container.querySelector('svg[aria-label="Mock AreaChart"]');
+        const chartSvg = container.querySelector('#mock-area-chart');
         const chartWrapper = chartSvg?.parentElement;
         expect(chartWrapper).not.toBeNull();
         if (!chartWrapper) return;

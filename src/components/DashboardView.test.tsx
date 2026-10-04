@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { GlobalStats, PeriodGroup, Session } from '../types';
 import { DashboardView } from './DashboardView';
@@ -103,7 +103,7 @@ describe('DashboardView', () => {
   });
 
   it('renders all 4 progression charts, metric cards, and solves table when data is provided', async () => {
-    render(
+    const { container } = render(
       <DashboardView
         session={mockSession}
         stats={mockStats}
@@ -112,18 +112,23 @@ describe('DashboardView', () => {
       />,
     );
 
-    // Metric cards
-    expect(screen.getByText('Best Single')).toBeInTheDocument();
-    expect(screen.getByText('Session Solves')).toBeInTheDocument();
+    const dashboard = container.querySelector('#dashboard-view');
+    expect(dashboard).toBeInTheDocument();
 
-    // Chart titles (lazy-loaded inside DeferredChart)
-    expect(await screen.findByText('Solve Times & Moving Averages')).toBeInTheDocument();
-    expect(await screen.findByText('PB Progression Over Time')).toBeInTheDocument();
-    expect(
-      await screen.findByText('Baseline vs Recent Solves'),
-    ).toBeInTheDocument();
+    // Metric cards render
+    expect(container.querySelector('#metrics-overview')).toBeInTheDocument();
 
-    // Solves Table
-    expect(screen.getByText(/Session Solve Log/)).toBeInTheDocument();
+    // 3 of the 4 progression charts are lazy-loaded behind DeferredChart/Suspense,
+    // so await their mounted cards rather than asserting on display copy.
+    expect(container.querySelector('#progression-chart')).toBeInTheDocument();
+    expect(container.querySelector('#distribution-chart')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(container.querySelector('#pb-progression-chart')).toBeInTheDocument();
+      expect(container.querySelector('#density-shift-chart')).toBeInTheDocument();
+      expect(container.querySelector('#metrics-evolution-chart')).toBeInTheDocument();
+    });
+
+    // Solves table renders
+    expect(container.querySelector('#solves-table')).toBeInTheDocument();
   });
 });

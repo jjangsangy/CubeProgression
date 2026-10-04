@@ -57,7 +57,10 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6 safe-area-x">
+      <main
+        id="main-content"
+        className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6 safe-area-x"
+      >
         {/* Upload & Session Configuration Panel */}
         <FileUploader
           sessions={sessions}
@@ -82,10 +85,7 @@ export default function App() {
         {!isLoading && activeSession && globalStats && (
           <Suspense
             fallback={
-              <div
-                className="flex flex-col gap-8 animate-pulse"
-                data-testid="dashboard-loading-skeleton"
-              >
+              <div className="flex flex-col gap-8 animate-pulse" id="dashboard-loading-skeleton">
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
                   {['m1', 'm2', 'm3', 'm4', 'm5', 'm6'].map((id) => (
                     <div

@@ -18,12 +18,14 @@ import { getPeriodUnitInfo } from '../utils/statsMath';
 import { ChartCardWrapper } from './ChartCardWrapper';
 
 interface MetricsEvolutionChartProps {
+  id?: string;
   periodGroups: PeriodGroup[];
   groupingPeriod?: GroupingPeriod;
   title?: string;
 }
 
 export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
+  id = 'metrics-evolution-chart',
   periodGroups,
   groupingPeriod = 'daily',
   title,
@@ -203,7 +205,7 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
 
   return (
     <ChartCardWrapper
-      testId="chart-card-metrics-evolution"
+      id={id}
       title={displayTitle}
       subtitle="Progression of central tendencies (Mean, Median), full Min-Max range band, and Standard Deviation on right axis."
       mobileSubtitle="Central tendencies (Mean, Median), Min-Max range band, and Standard Deviation."
@@ -378,7 +380,10 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
 
       {/* Mobile-only bottom axis titles aligned with the graph edges, using graph-matching font & color */}
       {isMobileScreen && (
-        <div className="-mt-1.5 flex items-center justify-between px-1 text-[11px] leading-tight select-none">
+        <div
+          id="metrics-mobile-axis-title"
+          className="-mt-1.5 flex items-center justify-between px-1 text-[11px] leading-tight select-none"
+        >
           <span style={{ color: '#94a3b8' }}>Time (s)</span>
           <span style={{ color: '#22c55e' }}>Std Dev (s)</span>
         </div>

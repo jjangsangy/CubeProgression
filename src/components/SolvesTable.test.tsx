@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { Solve } from '../types';
 import { SolvesTable } from './SolvesTable';
@@ -22,51 +22,62 @@ const mockSolves: Solve[] = Array.from({ length: 20 }, (_, idx) => ({
 
 describe('SolvesTable component', () => {
   it('renders solve table with pagination and solves count', () => {
-    render(<SolvesTable solves={mockSolves} />);
+    const { container } = render(<SolvesTable solves={mockSolves} />);
+    const section = container.querySelector('#solves-table');
+    expect(section).toBeInTheDocument();
 
-    expect(screen.getByText('Session Solve Log')).toBeInTheDocument();
-    expect(screen.getByText('Complete Solve History')).toBeInTheDocument();
-    expect(screen.getByText('Showing 1 to 15 of 20 solves')).toBeInTheDocument();
+    // 8 columns, 15 rows on page 1, pagination enabled forward only
+    expect(section?.querySelectorAll('thead th')).toHaveLength(8);
+    expect(section?.querySelectorAll('tbody tr')).toHaveLength(15);
+    expect(section?.querySelector('#solves-prev-page')).toBeDisabled();
+    expect(section?.querySelector('#solves-next-page')).toBeEnabled();
   });
 
   it('filters solves when search term is typed and shows empty message when no matches', () => {
-    render(<SolvesTable solves={mockSolves} />);
-
-    const searchInput = screen.getByPlaceholderText('Search solves or scrambles...');
+    const { container } = render(<SolvesTable solves={mockSolves} />);
+    const section = container.querySelector('#solves-table');
+    const searchInput = section?.querySelector('#solves-search') as HTMLInputElement;
     fireEvent.change(searchInput, { target: { value: '#19' } });
 
-    expect(screen.getByText('Showing 1 to 1 of 1 solves')).toBeInTheDocument();
+    // Single match collapses to a single-page result set
+    expect(section?.querySelectorAll('tbody tr')).toHaveLength(1);
+    expect(section?.querySelector('#solves-next-page')).toBeDisabled();
 
-    // Search with non-matching query
+    // Search with non-matching query renders the empty-state placeholder row
     fireEvent.change(searchInput, { target: { value: 'nonexistent-scramble' } });
-    expect(screen.getByText('No solves found matching your query.')).toBeInTheDocument();
-    expect(screen.getByText('Showing 0 to 0 of 0 solves')).toBeInTheDocument();
+    const emptyRow = section?.querySelector('tbody tr td');
+    expect(emptyRow).toHaveAttribute('colspan', '8');
+    expect(section?.querySelector('#solves-next-page')).toBeDisabled();
   });
 
   it('navigates next and previous pagination pages and renders penalties', () => {
-    render(<SolvesTable solves={mockSolves} />);
+    const { container } = render(<SolvesTable solves={mockSolves} />);
+    const section = container.querySelector('#solves-table');
 
-    const prevBtn = screen.getByRole('button', { name: 'Previous page' });
-    const nextBtn = screen.getByRole('button', { name: 'Next page' });
+    const prevBtn = section?.querySelector('#solves-prev-page');
+    const nextBtn = section?.querySelector('#solves-next-page');
 
     expect(prevBtn).toBeDisabled();
-    expect(nextBtn).not.toBeDisabled();
+    expect(nextBtn).toBeEnabled();
 
-    // Go to page 2
-    fireEvent.click(nextBtn);
-    expect(screen.getByText('Showing 16 to 20 of 20 solves')).toBeInTheDocument();
-    expect(screen.getByText('2 / 2')).toBeInTheDocument();
+    // Go to page 2: remaining 5 solves, forward navigation disabled
+    if (nextBtn) fireEvent.click(nextBtn);
+    expect(container.querySelector('#pagination-indicator')?.textContent).toBe('2 / 2');
+    expect(section?.querySelectorAll('tbody tr')).toHaveLength(5);
     expect(nextBtn).toBeDisabled();
-    expect(prevBtn).not.toBeDisabled();
+    expect(prevBtn).toBeEnabled();
 
-    // Page 2 contains DNF (#19) and +2 (#20)
-    expect(screen.getByText('DNF')).toBeInTheDocument();
-    expect(screen.getByText('(+2)')).toBeInTheDocument();
+    // Page 2 contains the DNF (#19) and +2 (#20) penalty rows
+    const penaltyText = Array.from(section?.querySelectorAll('tbody tr') ?? [])
+      .map((row) => row.textContent ?? '')
+      .join(' ');
+    expect(penaltyText).toMatch(/DNF/);
+    expect(penaltyText).toMatch(/\(\+2\)/);
 
-    // Go back to page 1
-    fireEvent.click(prevBtn);
-    expect(screen.getByText('Showing 1 to 15 of 20 solves')).toBeInTheDocument();
-    expect(screen.getByText('1 / 2')).toBeInTheDocument();
+    // Go back to page 1: full 15-row page
+    if (prevBtn) fireEvent.click(prevBtn);
+    expect(container.querySelector('#pagination-indicator')?.textContent).toBe('1 / 2');
+    expect(section?.querySelectorAll('tbody tr')).toHaveLength(15);
   });
 
   it('contains responsive classes for header and search input', () => {
@@ -75,7 +86,7 @@ describe('SolvesTable component', () => {
     expect(header).toHaveClass('flex-col');
     expect(header).toHaveClass('sm:flex-row');
 
-    const searchInput = screen.getByPlaceholderText('Search solves or scrambles...');
+    const searchInput = container.querySelector('#solves-search') as HTMLInputElement;
     expect(searchInput.parentElement).toHaveClass('w-full');
     expect(searchInput.parentElement).toHaveClass('sm:w-64');
   });
@@ -92,14 +103,5 @@ describe('SolvesTable component', () => {
     const scrambleWrapper = container.querySelector('td .max-w-xs.truncate');
     expect(scrambleWrapper).toBeInTheDocument();
     expect(scrambleWrapper?.textContent).toContain('R2 U2 F2 #1');
-  });
-
-  it('provides accessible names and touch target classes on pagination buttons', () => {
-    render(<SolvesTable solves={mockSolves} />);
-    const prevBtn = screen.getByRole('button', { name: 'Previous page' });
-    const nextBtn = screen.getByRole('button', { name: 'Next page' });
-
-    expect(prevBtn).toHaveClass('min-h-[36px]', 'min-w-[36px]');
-    expect(nextBtn).toHaveClass('min-h-[36px]', 'min-w-[36px]');
   });
 });

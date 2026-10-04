@@ -1,0 +1,10 @@
+language js
+
+// Production code must not ship test hooks. A `data-testid` attribute or a `testId` prop
+// exists only so a test can find an element, which this repo bans. Anchor tests on a plain
+// `id` for a distinct control/region instead.
+// See docs/development.md#test-authoring--selector-hygiene.
+`$node` where {
+  $node <: r"(?:data-test-id|data-testid|testId)",
+  register_diagnostic(span=$node, message="Do not add test hooks (`data-testid` / `data-test-id` / `testId`). Anchor tests on a plain `id` for a distinct control/region instead. See docs/development.md#test-authoring--selector-hygiene.", severity="error")
+}

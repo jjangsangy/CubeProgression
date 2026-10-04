@@ -50,7 +50,10 @@ const ProgressionCustomLegendContent: React.FC<ProgressionCustomLegendContentPro
     <div className="w-full select-none">
       {/* Mobile-only bottom axis title positioned directly below chart axes and above legend keys */}
       {isMobileScreen && (
-        <div className="mb-2 flex items-center justify-between px-1 text-[11px] leading-tight">
+        <div
+          id="progression-mobile-axis-title"
+          className="mb-2 flex items-center justify-between px-1 text-[11px] leading-tight"
+        >
           <span style={{ color: '#94a3b8' }}>Time (s)</span>
         </div>
       )}
@@ -109,8 +112,8 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
   return (
     <div
       ref={containerRef}
+      id="progression-chart-canvas"
       className="h-[420px] w-full pt-1"
-      data-testid="progression-chart-canvas"
       {...touchHandlers}
     >
       <ResponsiveContainer

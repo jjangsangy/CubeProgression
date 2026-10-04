@@ -16,12 +16,14 @@ import { calculatePbProgression, getPeriodUnitInfo } from '../utils/statsMath';
 import { ChartCardWrapper } from './ChartCardWrapper';
 
 interface PbProgressionChartProps {
+  id?: string;
   solves: Solve[];
   groupingPeriod?: GroupingPeriod;
   title?: string;
 }
 
 export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
+  id = 'pb-progression-chart',
   solves,
   groupingPeriod = 'daily',
   title = 'PB Progression Over Time',
@@ -232,7 +234,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
 
   return (
     <ChartCardWrapper
-      testId="chart-card-pb-progression"
+      id={id}
       title={title}
       subtitle="Step-down personal record progression curves tracking step functions of historical best single times and WCA averages."
       mobileSubtitle="Step-down curves tracking PB singles and WCA rolling averages."
@@ -246,12 +248,16 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
       headerControls={
         <div className="flex w-full min-w-0 flex-wrap items-center py-0.5">
           {/* Controls to toggle line visibility */}
-          <div className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-stone-700/60 bg-stone-800/80 p-1 text-xs">
+          <div
+            id="pb-metric-toggles"
+            className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-stone-700/60 bg-stone-800/80 p-1 text-xs"
+          >
             <span className="hidden px-1 text-[11px] font-medium text-stone-400 sm:inline">
               Metrics:
             </span>
             <button
               type="button"
+              id="pb-show-single"
               aria-label="Single"
               aria-pressed={showSingle}
               onClick={() => setShowSingle(!showSingle)}
@@ -266,6 +272,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             </button>
             <button
               type="button"
+              id="pb-show-ao5"
               aria-label="Ao5"
               aria-pressed={showAo5}
               onClick={() => setShowAo5(!showAo5)}
@@ -280,6 +287,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             </button>
             <button
               type="button"
+              id="pb-show-ao12"
               aria-label="Ao12"
               aria-pressed={showAo12}
               onClick={() => setShowAo12(!showAo12)}
@@ -294,6 +302,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             </button>
             <button
               type="button"
+              id="pb-show-ao50"
               aria-label="Ao50"
               aria-pressed={showAo50}
               onClick={() => setShowAo50(!showAo50)}
@@ -308,6 +317,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             </button>
             <button
               type="button"
+              id="pb-show-ao100"
               aria-label="Ao100"
               aria-pressed={showAo100}
               onClick={() => setShowAo100(!showAo100)}
@@ -322,6 +332,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
             </button>
             <button
               type="button"
+              id="pb-show-solves-overlay"
               aria-label="Solves Overlay"
               aria-pressed={showRawSolves}
               onClick={() => setShowRawSolves(!showRawSolves)}
@@ -682,7 +693,10 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
 
       {/* Mobile-only bottom axis title aligned with the graph edges, using graph-matching font & color */}
       {isMobileScreen && (
-        <div className="-mt-1.5 flex items-center justify-between px-1 text-[11px] leading-tight select-none">
+        <div
+          id="pb-mobile-axis-title"
+          className="-mt-1.5 flex items-center justify-between px-1 text-[11px] leading-tight select-none"
+        >
           <span style={{ color: '#94a3b8' }}>Personal Best Time (s)</span>
         </div>
       )}
@@ -691,6 +705,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
       <div className="mt-1 border-t border-stone-800 pt-3">
         <button
           type="button"
+          id="pb-milestones-history-toggle"
           aria-label={`Record Milestones History (${pbMilestones.length} Record Breaks)`}
           onClick={() => setShowMilestoneList(!showMilestoneList)}
           className="flex w-full cursor-pointer items-center justify-between py-1 text-xs font-semibold text-stone-300 transition-colors hover:text-stone-100"
@@ -714,7 +729,10 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
         {showMilestoneList && (
           <div className="fade-in mt-3 flex animate-in flex-col gap-3 duration-200">
             {/* Filter Pills */}
-            <div className="flex flex-wrap items-center gap-1.5 py-1 text-xs">
+            <div
+              id="pb-milestones-filters"
+              className="flex flex-wrap items-center gap-1.5 py-1 text-xs"
+            >
               <span className="mr-1 shrink-0 text-[11px] text-stone-400 sm:hidden">Filter:</span>
               <span className="mr-1 shrink-0 text-[11px] text-stone-400 hidden sm:inline">
                 Filter Record Type:
@@ -730,6 +748,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                 <button
                   key={cat.key}
                   type="button"
+                  id={`pb-milestone-filter-${cat.key}`}
                   aria-label={cat.label}
                   aria-pressed={milestoneFilter === cat.key}
                   onClick={() => setMilestoneFilter(cat.key as typeof milestoneFilter)}

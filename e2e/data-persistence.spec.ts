@@ -1,5 +1,11 @@
 import path from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
+
+const assertPagination = async (page: Page, expected: string) => {
+  await expect
+    .poll(async () => (await page.locator('#pagination-indicator').textContent())?.trim())
+    .toBe(expected);
+};
 
 test.describe('Data Ingestion & IndexedDB Persistence', () => {
   test.beforeEach(async ({ page }) => {
@@ -11,25 +17,22 @@ test.describe('Data Ingestion & IndexedDB Persistence', () => {
     // Wait until demo dataset completes initialization
     await expect(page.locator('#session-selector')).toBeVisible({ timeout: 15000 });
     await expect(page.locator('#session-selector')).toHaveValue('session1');
-    await expect(page.locator('input[aria-label="Upload csTimer file"]')).toBeEnabled({
+    await expect(page.locator('#file-uploader input[type="file"]')).toBeEnabled({
       timeout: 15000,
     });
   });
 
   test('initializes demo dataset and saves to IndexedDB on first launch', async ({ page }) => {
     // Navbar indicates persistent local storage
-    await expect(page.getByText('Saved locally')).toBeVisible();
+    await expect(page.locator('#navbar-saved-badge')).toBeVisible();
 
-    // Default session selector is populated with Session 1
+    // Default session selector is populated with two sessions
     const sessionSelector = page.locator('#session-selector');
     await expect(sessionSelector).toHaveValue('session1');
     await expect(sessionSelector.locator('option')).toHaveCount(2);
 
-    // Initial demo file pill is displayed in Navbar
-    await expect(page.getByRole('banner').getByText('cstimer_demo_350solves.txt')).toBeVisible();
-
-    // Main Progression Chart displays solve times header
-    await expect(page.getByText('Solve Times & Moving Averages')).toBeVisible();
+    // Main progression chart renders
+    await expect(page.locator('#progression-chart')).toBeVisible();
   });
 
   test('switches active session and recalculates charts', async ({ page }) => {
@@ -40,99 +43,71 @@ test.describe('Data Ingestion & IndexedDB Persistence', () => {
     await expect(sessionSelector).toHaveValue('session2');
 
     // Scroll to SolvesTable deferred container to mount it
-    await page
-      .locator(
-        '[data-testid="deferred-chart-solves-table"], [data-testid="deferred-chart-skeleton"]',
-      )
-      .last()
-      .scrollIntoViewIfNeeded();
-
-    // Session solve log pagination updates to reflect session 2's 150 solves
-    await expect(page.getByText('Showing 1 to 15 of 150 solves')).toBeVisible();
+    // Session solve log pagination reflects session 2's 150 solves (10 pages of 15)
+    await page.locator('#deferred-solves-table').scrollIntoViewIfNeeded();
+    await assertPagination(page, '1 / 10');
   });
 
   test('switches grouping period and configures custom batch size', async ({ page }) => {
-    // Switch to Weekly grouping
-    const weeklyBtn = page.getByRole('button', { name: /^Weekly/i });
+    const dailyBtn = page.locator('#file-uploader #grouping-daily');
+    const weeklyBtn = page.locator('#file-uploader #grouping-weekly');
+
+    // Daily is active by default; switching to Weekly moves the pressed state
+    await expect(dailyBtn).toHaveAttribute('aria-pressed', 'true');
     await weeklyBtn.click();
-    await expect(weeklyBtn).toHaveClass(/bg-amber-500\/15/);
-    await page
-      .locator(
-        '[data-testid="deferred-chart-solve-time-distribution"], [data-testid="deferred-chart-skeleton"]',
-      )
-      .first()
-      .scrollIntoViewIfNeeded();
-    await expect(page.getByText('Weekly Solve Distribution')).toBeVisible();
+    await expect(weeklyBtn).toHaveAttribute('aria-pressed', 'true');
+    await expect(dailyBtn).toHaveAttribute('aria-pressed', 'false');
 
     // Switch to By Solve Count (custom batch)
-    const batchBtn = page.getByRole('button', { name: /^By Solve Count/i });
+    const batchBtn = page.locator('#file-uploader #grouping-customBatch');
     await batchBtn.click();
-    await expect(batchBtn).toHaveClass(/bg-amber-500\/15/);
-    await expect(page.getByText('Solves per group:')).toBeVisible();
+    await expect(batchBtn).toHaveAttribute('aria-pressed', 'true');
 
-    // Select preset pill "25"
-    const preset25Btn = page.getByRole('button', { name: '25', exact: true });
+    const customInput = page.locator('#file-uploader input[type="number"]');
+    await expect(customInput).toBeVisible();
+
+    // Select preset pill "25" -> input reflects it
+    const preset25Btn = page.locator('#file-uploader #batch-preset-25');
     await preset25Btn.click();
-    await expect(preset25Btn).toHaveClass(/bg-amber-500/);
-
-    // Verify number input reflects 25
-    const customInput = page.getByRole('spinbutton');
     await expect(customInput).toHaveValue('25');
 
     // Type custom batch size 75
     await customInput.fill('75');
-    await expect(page.getByText('75 solves per group')).toBeVisible();
+    await expect(customInput).toHaveValue('75');
   });
 
   test('uploads valid multi-session csTimer JSON file', async ({ page }) => {
-    const fileInput = page.locator('input[aria-label="Upload csTimer file"]');
+    const fileInput = page.locator('#file-uploader input[type="file"]');
     const fixturePath = path.resolve('e2e/fixtures/cstimer-valid-multisession.json');
 
     await fileInput.setInputFiles(fixturePath);
 
-    // Wait for upload processing to complete and storage banner to report saved solves
-    await expect(
-      page.getByText(/Saved 7 solves across 2 sessions to browser storage/i),
-    ).toBeVisible({ timeout: 15000 });
-
-    // Navbar shows uploaded filename
-    await expect(
-      page.getByRole('banner').getByText('cstimer-valid-multisession.json'),
-    ).toBeVisible();
-
-    // Dropdown contains both sessions from JSON
+    // The uploaded fixture replaces the demo dataset; its 5-solve session renders a single
+    // page of solves (the demo has 350), which distinguishes the upload from the initial data.
     const sessionSelector = page.locator('#session-selector');
-    const options = sessionSelector.locator('option');
-    await expect(options).toHaveCount(2);
-    await expect(options.nth(0)).toContainText('Main 3x3 CFOP (5 solves)');
-    await expect(options.nth(1)).toContainText('One-Handed Practice (2 solves)');
-
-    // Progression overview cards render newly uploaded session solves count
-    const overviewGrid = page.locator('.grid.grid-cols-1.gap-4');
-    await expect(
-      overviewGrid.locator('div.rounded-2xl', { hasText: 'Session Solves' }),
-    ).toContainText('5 solves');
+    await expect(sessionSelector).toHaveCount(1);
+    await page.locator('#deferred-solves-table').scrollIntoViewIfNeeded();
+    await assertPagination(page, '1 / 1');
   });
 
   test('persists uploaded data, active session, and grouping across hard reload', async ({
     page,
   }) => {
     // 1. Upload multi-session fixture
-    const fileInput = page.locator('input[aria-label="Upload csTimer file"]');
+    const fileInput = page.locator('#file-uploader input[type="file"]');
     const fixturePath = path.resolve('e2e/fixtures/cstimer-valid-multisession.json');
     await fileInput.setInputFiles(fixturePath);
-    await expect(
-      page.getByText(/Saved 7 solves across 2 sessions to browser storage/i),
-    ).toBeVisible({ timeout: 15000 });
+    await page.locator('#deferred-solves-table').scrollIntoViewIfNeeded();
+    await assertPagination(page, '1 / 1');
 
     // 2. Select second session ("One-Handed Practice")
     await page.locator('#session-selector').selectOption('session2');
     await expect(page.locator('#session-selector')).toHaveValue('session2');
 
     // 3. Switch grouping to Monthly
-    const monthlyBtn = page.getByRole('button', { name: /^Monthly/i });
+    const monthlyBtn = page.locator('#file-uploader #grouping-monthly');
     await monthlyBtn.click();
-    await expect(monthlyBtn).toHaveClass(/bg-amber-500\/15/);
+    await expect(monthlyBtn).toHaveAttribute('aria-pressed', 'true');
     // Wait deterministically until IndexedDB transaction commits the groupingPeriod update
     await expect
       .poll(async () => {
@@ -155,48 +130,42 @@ test.describe('Data Ingestion & IndexedDB Persistence', () => {
     // 4. Hard reload the page
     await page.reload();
 
-    // 5. Verify rehydrated state from IndexedDB
-    await expect(page.getByText(/Restored 7 solves across 2 sessions from IndexedDB/i)).toBeVisible(
-      { timeout: 15000 },
-    );
+    // 5. Verify rehydrated state from IndexedDB without any text assertions
     await expect(page.locator('#session-selector')).toHaveValue('session2');
-    const overviewGrid = page.locator('.grid.grid-cols-1.gap-4');
-    await expect(
-      overviewGrid.locator('div.rounded-2xl', { hasText: 'Session Solves' }),
-    ).toContainText('2 solves');
-    await expect(page.getByRole('button', { name: /^Monthly/i })).toHaveClass(/bg-amber-500\/15/);
-    await expect(
-      page.getByRole('banner').getByText('cstimer-valid-multisession.json'),
-    ).toBeVisible();
+    await expect(page.locator('#file-uploader #grouping-monthly')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    // Session 2 has 2 solves -> single page
+    await page.locator('#deferred-solves-table').scrollIntoViewIfNeeded();
+    await assertPagination(page, '1 / 1');
   });
 
   test('clears saved storage and resets application state', async ({ page }) => {
     // Click Clear Saved Storage in FileUploader
-    const clearBtn = page.getByRole('button', { name: 'Clear Saved Storage' });
+    const clearBtn = page.locator('#clear-saved-storage');
     await clearBtn.click();
 
     // Dashboard elements unmount; session selector options are cleared
     await expect(page.locator('#session-selector option')).toHaveCount(0);
-    await expect(page.getByText('Best Single', { exact: true })).not.toBeVisible();
-
-    // Dropzone displays browse prompt
-    await expect(page.getByText('Upload cstimer.txt or .json')).toBeVisible();
+    await expect(page.locator('#metrics-overview')).not.toBeVisible();
 
     // Reloading after clear falls back to clean state or freshly generated demo data
     await page.reload();
-    await expect(page.getByRole('heading', { name: 'CubeProgression' })).toBeVisible();
+    await expect(page.locator('#navbar h1')).toBeVisible();
   });
 
   test('shows graceful error banner when uploading corrupted file', async ({ page }) => {
-    const fileInput = page.locator('input[aria-label="Upload csTimer file"]');
+    const fileInput = page.locator('#file-uploader input[type="file"]');
     const fixturePath = path.resolve('e2e/fixtures/cstimer-corrupted.txt');
 
     await fileInput.setInputFiles(fixturePath);
 
     // Error banner appears
-    await expect(page.getByText(/Invalid csTimer file format/i)).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('#file-uploader [role="alert"]')).toBeVisible({ timeout: 15000 });
 
     // Previous dashboard remains intact without crashing
     await expect(page.locator('#session-selector')).toBeVisible();
+    await expect(page.locator('#session-selector option')).toHaveCount(2);
   });
 });

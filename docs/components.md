@@ -178,7 +178,12 @@ A decorative 3×3 animated cube styled with hardware-accelerated CSS keyframe an
 
 ## Test conventions
 
-Every component has a colocated `*.test.tsx` using React Testing Library. Query by visible
-text or `data-testid`; interaction via `@testing-library/user-event` or `fireEvent`.
-`ChartCardWrapper.test.tsx` mocks `html-to-image`. See
-[`development.md`](./development.md) for shared harness details.
+Every component has a colocated `*.test.tsx` using React Testing Library. Interaction uses
+`@testing-library/user-event` or `fireEvent`; `ChartCardWrapper.test.tsx` mocks
+`html-to-image`.
+
+Query the DOM by a plain `id` on a **distinct control or region** (via
+`container.querySelector`) and assert on **state, structure, attributes, or counts** — never
+on visible copy, accessible names, labels/titles, or `data-testid`. See
+[Test authoring & selector hygiene](./development.md#test-authoring--selector-hygiene) for
+the full, non-negotiable rule set.

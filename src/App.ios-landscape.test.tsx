@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import App from './App';
 import { ChartCardWrapper } from './components/ChartCardWrapper';
@@ -56,19 +56,18 @@ describe('iOS Safari Landscape Mode & Safe Area Support', () => {
   it('renders App with safe-area-x padding on Navbar and Main container, and safe-area-bottom on Footer', async () => {
     const { container } = render(<App />);
 
-    const headerContainer = container.querySelector('header > div');
+    const headerContainer = container.querySelector('#navbar > div');
     expect(headerContainer).toHaveClass('safe-area-x');
 
-    const mainElement = container.querySelector('main');
+    const mainElement = container.querySelector('#main-content');
     expect(mainElement).toHaveClass('safe-area-x');
 
-    const footerElement = container.querySelector('footer');
+    const footerElement = container.querySelector('#footer');
     expect(footerElement).toHaveClass('safe-area-x');
     expect(footerElement).toHaveClass('safe-area-bottom');
 
     await waitFor(() => {
-      expect(screen.getByText('Solve Times & Moving Averages')).toBeInTheDocument();
-      expect(screen.getByText('Overall Progression')).toBeInTheDocument();
+      expect(container.querySelector('#progression-chart')).toBeInTheDocument();
     });
   });
 
@@ -79,10 +78,11 @@ describe('iOS Safari Landscape Mode & Safe Area Support', () => {
       </ChartCardWrapper>,
     );
 
-    const maxButton = screen.getByRole('button', { name: 'Maximize to Fullscreen' });
-    fireEvent.click(maxButton);
+    const maxButton = document.querySelector('[id$="-maximize"]');
+    expect(maxButton).toBeInTheDocument();
+    if (maxButton) fireEvent.click(maxButton);
 
-    const backdrop = document.querySelector('.fixed.inset-0.z-\\[100\\]');
+    const backdrop = document.querySelector('#chart-card-fullscreen-backdrop');
     expect(backdrop).toHaveClass('safe-area-modal');
   });
 });

@@ -16,6 +16,16 @@
       "!!**/blob-report"
     ]
   },
+  "plugins": [
+    {
+      "path": "./plugins/no-brittle-test-selectors.grit",
+      "includes": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"]
+    },
+    {
+      "path": "./plugins/no-test-hooks.grit",
+      "includes": ["**/*.ts", "**/*.tsx"]
+    }
+  ],
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,

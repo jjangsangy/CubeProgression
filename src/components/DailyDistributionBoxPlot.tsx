@@ -6,13 +6,15 @@ import type { GroupingPeriod, PeriodGroup } from '../types';
 import { getPeriodUnitInfo } from '../utils/statsMath';
 import { ChartCardWrapper } from './ChartCardWrapper';
 
-interface DailyDistributionBoxPlotProps {
+export interface DailyDistributionBoxPlotProps {
+  id?: string;
   periodGroups: PeriodGroup[];
   groupingPeriod?: GroupingPeriod;
   title?: string;
 }
 
 export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> = ({
+  id = 'distribution-chart',
   periodGroups,
   groupingPeriod = 'daily',
   title,
@@ -143,7 +145,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
 
   return (
     <ChartCardWrapper
-      testId="chart-card-distribution"
+      id={id}
       title={displayTitle}
       subtitle="Box plots (Q1, Median, Q3, Whiskers) overlaid with individual jittered solves and connected Median Trend."
       mobileSubtitle="Box plots with jittered solves and connected Median Trend."
@@ -168,6 +170,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
       {/* SVG Canvas Container */}
       <div ref={containerRef} className="relative w-full" {...touchHandlers}>
         <svg
+          id="boxplot-svg"
           role="img"
           aria-label={displayTitle}
           viewBox={`0 0 ${width} ${height}`}
@@ -495,7 +498,10 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
 
       {/* Mobile-only bottom axis title aligned with the graph edges, using graph-matching font & color */}
       {isMobileScreen && (
-        <div className="-mt-1.5 flex items-center justify-between px-1 text-[11px] leading-tight select-none">
+        <div
+          id="distribution-mobile-axis-title"
+          className="-mt-1.5 flex items-center justify-between px-1 text-[11px] leading-tight select-none"
+        >
           <span style={{ color: '#94a3b8' }}>Time (s)</span>
         </div>
       )}

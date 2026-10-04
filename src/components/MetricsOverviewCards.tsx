@@ -12,9 +12,12 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
   sessionName: _sessionName,
 }) => {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <div id="metrics-overview" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
       {/* 1. Best Single */}
-      <div className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-3.5 sm:p-4 shadow-lg">
+      <div
+        id="metric-best-single"
+        className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-3.5 sm:p-4 shadow-lg"
+      >
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold tracking-wider text-stone-400 uppercase">
             Best Single
@@ -41,7 +44,10 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
       </div>
 
       {/* 2. Best Ao12 & Best Ao50 */}
-      <div className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-3.5 sm:p-4 shadow-lg">
+      <div
+        id="metric-best-averages"
+        className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-3.5 sm:p-4 shadow-lg"
+      >
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold tracking-wider text-stone-400 uppercase">
             Best Averages
@@ -67,7 +73,10 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
       </div>
 
       {/* 3. Regression Slope */}
-      <div className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-3.5 sm:p-4 shadow-lg">
+      <div
+        id="metric-overall-rate"
+        className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-3.5 sm:p-4 shadow-lg"
+      >
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold tracking-wider text-stone-400 uppercase">
             Overall Rate
@@ -92,7 +101,10 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
       </div>
 
       {/* 4. Speed Gain (First vs Last sample) */}
-      <div className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-3.5 sm:p-4 shadow-lg">
+      <div
+        id="metric-progression-gain"
+        className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-3.5 sm:p-4 shadow-lg"
+      >
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold tracking-wider text-stone-400 uppercase">
             Progression Gain
@@ -131,7 +143,10 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
       </div>
 
       {/* 5. Session Solves Summary */}
-      <div className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-3.5 sm:p-4 shadow-lg sm:col-span-2 lg:col-span-1">
+      <div
+        id="metric-session-solves"
+        className="flex flex-col justify-between rounded-2xl border border-stone-800 bg-stone-900 p-3.5 sm:p-4 shadow-lg sm:col-span-2 lg:col-span-1"
+      >
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold tracking-wider text-stone-400 uppercase">
             Session Solves

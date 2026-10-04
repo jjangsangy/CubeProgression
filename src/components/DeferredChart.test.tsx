@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { lazy } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DeferredChart } from './DeferredChart';
@@ -15,13 +15,13 @@ describe('DeferredChart component', () => {
     // @ts-expect-error test environment override
     delete window.IntersectionObserver;
 
-    render(
-      <DeferredChart minHeight={400}>
-        <div data-testid="chart-content">Chart Content</div>
+    const { container } = render(
+      <DeferredChart minHeight={400} fallbackTitle="Test Chart">
+        <div className="chart-content">Chart Content</div>
       </DeferredChart>,
     );
 
-    expect(screen.getByTestId('chart-content')).toBeInTheDocument();
+    expect(container.querySelector('#deferred-test-chart .chart-content')).toBeInTheDocument();
   });
 
   it('renders skeleton fallback and loads chart when intersecting', () => {
@@ -41,28 +41,30 @@ describe('DeferredChart component', () => {
     // @ts-expect-error test mock
     window.IntersectionObserver = MockIntersectionObserver;
 
-    render(
+    const { container } = render(
       <DeferredChart minHeight={500} fallbackTitle="PB Progression">
-        <div data-testid="chart-content">Chart Content</div>
+        <div className="chart-content">Chart Content</div>
       </DeferredChart>,
     );
 
-    // Initial state: skeleton fallback
-    expect(screen.getByText('Loading PB Progression...')).toBeInTheDocument();
-    expect(screen.queryByTestId('chart-content')).not.toBeInTheDocument();
+    // Initial state: skeleton fallback (chart content not mounted yet)
+    expect(
+      container.querySelector('#deferred-pb-progression')?.firstElementChild,
+    ).toBeInTheDocument();
+    expect(container.querySelector('#deferred-pb-progression .chart-content')).toBeNull();
     expect(observeMock).toHaveBeenCalled();
 
     // Trigger intersection
     act(() => {
       observerCallback([{ isIntersecting: false }]);
     });
-    expect(screen.queryByTestId('chart-content')).not.toBeInTheDocument();
+    expect(container.querySelector('#deferred-pb-progression .chart-content')).toBeNull();
 
     act(() => {
       observerCallback([{ isIntersecting: true }]);
     });
 
-    expect(screen.getByTestId('chart-content')).toBeInTheDocument();
+    expect(container.querySelector('#deferred-pb-progression .chart-content')).toBeInTheDocument();
     expect(disconnectMock).toHaveBeenCalled();
   });
 
@@ -79,14 +81,15 @@ describe('DeferredChart component', () => {
     // @ts-expect-error test mock
     window.IntersectionObserver = MockIntersectionObserver;
 
-    const { unmount } = render(
+    const { container, unmount } = render(
       <DeferredChart minHeight="450px" className="custom-chart-wrapper">
         <div>Content</div>
       </DeferredChart>,
     );
 
-    expect(screen.getByTestId('deferred-chart')).toBeInTheDocument();
-    expect(screen.getByTestId('deferred-chart')).toHaveClass('custom-chart-wrapper');
+    const deferredChart = container.querySelector('#deferred-chart');
+    expect(deferredChart).toBeInTheDocument();
+    expect(deferredChart).toHaveClass('custom-chart-wrapper');
     expect(observeMock).toHaveBeenCalled();
 
     unmount();
@@ -97,23 +100,26 @@ describe('DeferredChart component', () => {
     // @ts-expect-error test environment override
     delete window.IntersectionObserver;
 
-    const LazyContent = lazy(
-      () =>
-        new Promise<{ default: React.FC }>((resolve) => {
-          setTimeout(() => {
-            resolve({
-              default: () => <div data-testid="lazy-chart-content">Async Chart Loaded</div>,
-            });
-          }, 10);
-        }),
-    );
+    let resolvePromise: (value: { default: React.FC }) => void = () => {};
+    const lazyPromise = new Promise<{ default: React.FC }>((resolve) => {
+      resolvePromise = resolve;
+    });
+    const LazyContent = lazy(() => lazyPromise);
 
-    render(
+    const { container } = render(
       <DeferredChart minHeight={300} fallbackTitle="Lazy Chart">
         <LazyContent />
       </DeferredChart>,
     );
 
-    expect(await screen.findByTestId('lazy-chart-content')).toBeInTheDocument();
+    expect(container.querySelector('#deferred-lazy-chart .lazy-chart-content')).toBeNull();
+
+    await act(async () => {
+      resolvePromise({
+        default: () => <div className="lazy-chart-content">Async Chart Loaded</div>,
+      });
+    });
+
+    expect(container.querySelector('#deferred-lazy-chart .lazy-chart-content')).toBeInTheDocument();
   });
 });

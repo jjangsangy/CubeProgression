@@ -53,9 +53,95 @@ Run everything via Bun, e.g. `bun run test`, `bun run typecheck`, `bun run check
 - A **Recharts mock** replacing `ResponsiveContainer` with a fixed 800×400 `<div>`, because
   responsive containers render at 0×0 in jsdom.
 
-Test files are colocated with source: `src/**/*.test.ts(x)`. Prefer asserting on visible
-text (RTL) and mocking only external/browser APIs (see `ChartCardWrapper.test.tsx` mocking
-`html-to-image`).
+Test files are colocated with source: `src/**/*.test.ts(x)`; mock only external/browser
+APIs (see `ChartCardWrapper.test.tsx` mocking `html-to-image`).
+
+### Test authoring & selector hygiene
+
+Tests must pin **observable behavior**, never the wording of the UI. Copy and accessible
+names churn constantly, so a test that breaks when a label is reworded is not testing the
+app — it is testing a string. The following are non-negotiable.
+
+**Banned selectors & assertions**
+
+| Never use | Why |
+| --- | --- |
+| `getByText` / `findByText` / `queryByText` / `getAllByText`, Playwright `text=` / `getByText` | asserts on user-facing copy |
+| `toHaveTextContent('literal')` / `toContainText('literal')`, Playwright `toHaveText(…)` | asserts on user-facing copy |
+| `getByRole(..., { name })` | an accessible name is user-facing copy by another route |
+| Playwright `{ hasText: … }` locator/filter options | a text lookup wearing an option-bag disguise |
+| `getByLabelText` / `getByLabel` / `getByTitle` / `getByPlaceholderText` / `getByDisplayValue` / `getByAltText` | label/title/placeholder/alt text is copy |
+| CSS `[aria-label…]` / `[title…]` (including `*=`, `^=`, `$=`) | a label lookup wearing a CSS disguise |
+| `getByTestId` / `findByTestId` / `queryByTestId` / `getAllByTestId`, `data-testid` / `data-test-id` / a `testId` prop | the repo does not ship test ids |
+
+An `aria-label` is *almost the same thing* as selecting by name — never reach for one just to
+give a test a hook. Real accessibility attributes are for users, not tests.
+
+The same applies to `textContent`: reading it is only for a genuine **computed/contract value**
+(e.g. a formatted time, a pagination counter) or a behaviour signal. Re-homing a banned
+`getByText('Some Label')` into `expect(el.textContent).toContain('Some Label')` is the same
+brittle copy assertion in a new disguise — the plugin cannot see it, so it is on the author.
+
+**What to assert instead**
+
+- **State attributes**: `aria-pressed`, `aria-valuenow`, `disabled` / `toBeDisabled`,
+  `value` / `toHaveValue`, `colspan`, `aria-modal`, and similar.
+- **Structure & counts**: `querySelectorAll(...).length`, presence/absence of an anchored
+  control, `expect(...).toHaveCount(n)`.
+- **Behavior**: drive the interaction with `@testing-library/user-event` or `fireEvent`
+  (Vitest) or Playwright, then assert the *resulting state* changed.
+- **Contract values**: values the app genuinely owns — e.g. a download's
+  `suggestedFilename()` prefix, a pagination indicator's `"2 / 24"` — are fair game, because
+  they are behavior, not decorative chrome. Read them off the anchored element
+  (`expect(await el.textContent()).toBe('2 / 24')`) rather than selecting the node by its text.
+- **Membership without text**: to check that a legend/series exists, count its entries or
+  assert the count *delta* after a toggle (`expect.poll(() => entries.count()).toBe(before - 1)`) —
+  do not match on the entry's label string.
+
+**Anchoring**
+
+- The sanctioned anchor is a plain `id` on a **distinct control or region** (e.g.
+  `#file-uploader`, `#grouping-weekly`, `#solves-table`), queried with
+  `container.querySelector('#…')` / `page.locator('#…')`.
+- **Don't overuse ids.** Add one only when no existing stable anchor reaches the element, and
+  never put an id on decorative or display-only text nodes just to make them findable.
+- **No test-only hooks in production code.** Do not add a test-only `className`, an inert
+  `name`/`value` to a button, or an `aria-label` whose only purpose is to be selected.
+- **Beware selectors that can silently match nothing.** A chain like
+  `svg[aria-hidden="true"] g:has(> title) > line` must be paired with a count guard
+  (`expect(count).toBeGreaterThan(0)`) so a broken selector fails loudly instead of vacuously
+  passing. Avoid hard-coded colors (`[stroke="#94a3b8"]`), Tailwind-class regexes tied to
+  styling, and magic pixels.
+
+**Quality bar**
+
+- No **tautological** assertions — e.g. asserting the absence of a `data-testid` that never
+  existed.
+- No testing for testing's sake — a test that only asserts Tailwind classes pins nothing
+  observable; delete it.
+- When migrating a test off a brittle selector, **keep the behavioral assertions**. Do not
+  weaken "value/state X" into a mere existence check, and do not drop coverage.
+
+**Enforcement**
+
+Two GritQL plugins are wired into `biome.json` and run during `bun run check`:
+
+- `plugins/no-brittle-test-selectors.grit` (scope: `*.test.ts(x)` / `*.spec.ts(x)`) errors on
+text/label queries, `*ByRole(..., { name })`, `{ hasText }` options, `toHaveText`/
+`toHaveTextContent`/`toContainText`, and CSS `[aria-label…]`/`[title…]`/`[data-testid…]`
+locator strings. The pre-existing backlog is fully burned down, so it runs at **`error`**.
+- `plugins/no-test-hooks.grit` (scope: every `.ts`/`.tsx`) errors on a shipped `data-testid`
+attribute or `testId` prop.
+
+Notes for maintainers editing the plugins:
+
+- Biome requires the whole rule set in a single root `or { … }` pattern; multiple top-level
+  patterns fail to compile.
+- `register_diagnostic`'s `span` must bind a real AST node, not a string literal's inner
+  content.
+- Grit regexes are **full-match**, so wrap patterns in `.*….*`, and use non-capturing groups
+  (`(?:…)`) — a capturing group is misread as a Grit metavariable.
+- Biome formats the `.grit` files, so run `bun run check:write` after editing them.
 
 - **E2E tests (`bun run test:e2e`)**: **Mandatory for all UI, layout, and deferral changes.**
   Because Vitest runs in `jsdom` where `IntersectionObserver` is absent and elements have 0×0
@@ -136,8 +222,9 @@ Match these rules when hand-writing code; run `bun run check:write` before finis
 - **Conditional Polyfills**: `temporal-polyfill` is loaded conditionally via `src/utils/temporalLoader.ts` (`ensureTemporal()`) only on older browsers that lack standard `Temporal`. Modern engines run native `Temporal` with zero polyfill transfer overhead.
 - **IndexedDB in tests**: `openDB()` returns `null` under jsdom, so persistence is disabled
   and `App.test.tsx` always exercises the demo fallback.
-- **Determinism**: `generateSampleData()` is seeded, so demo output is stable —
-  `App.test.tsx` asserts on the exact session title `F2L Yellow Cross Progression (Demo)`.
+- **Determinism**: `generateSampleData()` is seeded, so demo output is stable. Its main
+  session is `session1` (`F2L Yellow Cross Progression (Demo)`), asserted at the **data
+  layer** in `sampleData.test.ts` — UI tests must not assert that title via `getByText`.
 - **Locale/timezone**: dates use the runtime local timezone via `Temporal`. Native JS `Date` is strictly forbidden. Tests that
   assert on `dateStr` values should avoid timezone-sensitive fixtures.
 - **`DISABLE_HMR`**: setting it to `"true"` disables HMR and file watching (used by AI Studio).

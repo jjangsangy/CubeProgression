@@ -10,8 +10,8 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
 
   const waitForReady = async (page: Page) => {
     await expect(page.locator('#session-selector')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('Solve Times & Moving Averages')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText(/Upload cstimer\.txt/)).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('#progression-chart')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('#file-uploader')).toBeVisible({ timeout: 15000 });
   };
 
   for (const { name, width, height } of deviceProfiles) {
@@ -54,7 +54,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
 
       await page.addInitScript(() => {
         const check = () => {
-          const dropzone = document.querySelector('section[aria-label="File upload dropzone"]');
+          const dropzone = document.querySelector('#file-dropzone');
           if (dropzone) {
             const dropRect = dropzone.getBoundingClientRect();
             const loadingContainer = dropzone.classList.contains('cursor-wait')
@@ -110,26 +110,27 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     });
 
     test('renders compact Navbar and hides desktop badges', async ({ page }) => {
-      const header = page.locator('header');
+      const header = page.locator('#navbar');
 
-      // csTimer Guide label is compact on mobile screens
-      const guideText = header
-        .locator('button[aria-label="csTimer Guide"]')
-        .getByText('Guide', { exact: true });
-      await expect(guideText).toBeVisible();
+      // csTimer Guide shows only its compact label span on mobile screens
+      const guideBtn = header.locator('#navbar-guide');
+      await expect(guideBtn).toBeVisible();
+      const guideLabels = guideBtn.locator('span');
+      await expect(guideLabels).toHaveCount(2);
+      await expect(guideLabels.nth(0)).toBeVisible();
+      await expect(guideLabels.nth(1)).toBeHidden();
 
       // Storage badge is hidden on mobile screens (has hidden lg:flex)
-      await expect(header.getByText('Saved locally')).toBeHidden();
+      await expect(header.locator('#navbar-saved-badge')).toBeHidden();
 
       // Filename pill is hidden on mobile screens (has hidden md:flex)
-      const filenamePill = header.locator('div.font-mono:has-text("cstimer_")');
-      await expect(filenamePill).toBeHidden();
+      await expect(header.locator('#navbar-filename')).toBeHidden();
     });
 
     test('verifies mobile portrait header layout: completely filled, no overlap, evenly spaced, no overflow, brand and buttons visible', async ({
       page,
     }) => {
-      const header = page.locator('header');
+      const header = page.locator('#navbar');
       const headerBox = await header.boundingBox();
       expect(headerBox).not.toBeNull();
       if (!headerBox) return;
@@ -138,16 +139,17 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       expect(headerBox.x).toBeGreaterThanOrEqual(0);
       expect(headerBox.x + headerBox.width).toBeLessThanOrEqual(390 + 1);
 
-      // 2. Brand identity: "CubeProgression" brand text and logo icon are visible
+      // 2. Brand identity: brand heading and logo icon are visible
       const brandHeading = header.getByRole('heading', { level: 1 });
       await expect(brandHeading).toBeVisible();
-      const logoIcon = header.locator('[title="CubeProgression"]');
+      const logoIcon = header.locator('img');
+      await expect(logoIcon).toHaveCount(1);
       await expect(logoIcon).toBeVisible();
 
       // 3. Header items are spaced cleanly throughout, fill the header, and never overlap
       const brandBox = await brandHeading.boundingBox();
-      const guideBtn = header.getByRole('button', { name: 'csTimer Guide' });
-      const resetBtn = header.getByRole('button', { name: 'Reset Data' });
+      const guideBtn = header.locator('#navbar-guide');
+      const resetBtn = header.locator('#navbar-reset');
 
       const buttons = [guideBtn, resetBtn];
       for (const btn of buttons) {
@@ -191,11 +193,9 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     test('stacks FileUploader into single column and renders 2x2 grouping grid', async ({
       page,
     }) => {
-      const uploader = page.locator('div.rounded-2xl').filter({
-        has: page.getByLabel('File upload dropzone'),
-      });
+      const uploader = page.locator('#file-uploader');
 
-      const dropzone = uploader.getByLabel('File upload dropzone');
+      const dropzone = uploader.locator('#file-dropzone');
       const controlsBox = uploader.locator('.bg-stone-950\\/60');
 
       const dropBox = await dropzone.boundingBox();
@@ -206,9 +206,9 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       expect(controlsBoundingBox.y).toBeGreaterThan(dropBox.y + dropBox.height - 10);
 
       // Grouping buttons Daily and Weekly sit on Row 1, Monthly and By Solve Count sit on Row 2
-      const dailyBtn = uploader.getByRole('button', { name: /Daily/i });
-      const weeklyBtn = uploader.getByRole('button', { name: /Weekly/i });
-      const monthlyBtn = uploader.getByRole('button', { name: /Monthly/i });
+      const dailyBtn = uploader.locator('#grouping-daily');
+      const weeklyBtn = uploader.locator('#grouping-weekly');
+      const monthlyBtn = uploader.locator('#grouping-monthly');
 
       const dailyBox = await dailyBtn.boundingBox();
       const weeklyBox = await weeklyBtn.boundingBox();
@@ -222,8 +222,8 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     });
 
     test('stacks all 5 metrics overview cards vertically in single column', async ({ page }) => {
-      const cardsGrid = page.locator('.grid.grid-cols-1.gap-4.sm\\:grid-cols-2.lg\\:grid-cols-5');
-      const cards = cardsGrid.locator('> div.rounded-2xl');
+      const cardsGrid = page.locator('#metrics-overview');
+      const cards = cardsGrid.locator('> div');
       await expect(cards).toHaveCount(5);
 
       const box0 = await cards.nth(0).boundingBox();
@@ -239,17 +239,12 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     test('handles SolvesTable horizontal scroll and mobile pagination touch navigation', async ({
       page,
     }) => {
-      await page.getByTestId('deferred-chart-solves-table').scrollIntoViewIfNeeded();
-      await expect(page.getByRole('heading', { name: /Session Solve Log/i })).toBeVisible({
-        timeout: 10000,
-      });
-
-      const solvesSection = page.locator('div.rounded-2xl').filter({
-        has: page.getByRole('heading', { name: /Session Solve Log/i }),
-      });
+      await page.locator('#deferred-solves-table').scrollIntoViewIfNeeded();
+      const solvesSection = page.locator('#solves-table');
+      await expect(solvesSection).toBeVisible({ timeout: 10000 });
 
       // Search input takes full card width on mobile
-      const searchInput = solvesSection.getByPlaceholder('Search solves or scrambles...');
+      const searchInput = solvesSection.locator('input[type="text"]');
       const searchBox = await searchInput.boundingBox();
       if (!searchBox) throw new Error('Missing search box');
       expect(searchBox.width).toBeGreaterThan(280);
@@ -259,22 +254,30 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       const isScrollable = await scrollContainer.evaluate((el) => el.scrollWidth > el.clientWidth);
       expect(isScrollable).toBe(true);
 
-      // Verify pagination next page navigation
-      const nextBtn = solvesSection.getByRole('button', { name: 'Next page' });
+      // Verify pagination navigation via the pagination contract value
+      const nextBtn = solvesSection.locator('#solves-next-page');
       await nextBtn.click();
-      await expect(solvesSection.getByText('Showing 16 to 30 of 350 solves')).toBeVisible();
+      await expect
+        .poll(async () =>
+          (await solvesSection.locator('#pagination-indicator').textContent())?.trim(),
+        )
+        .toBe('2 / 24');
 
-      const prevBtn = solvesSection.getByRole('button', { name: 'Previous page' });
+      const prevBtn = solvesSection.locator('#solves-prev-page');
       await prevBtn.click();
-      await expect(solvesSection.getByText('Showing 1 to 15 of 350 solves')).toBeVisible();
+      await expect
+        .poll(async () =>
+          (await solvesSection.locator('#pagination-indicator').textContent())?.trim(),
+        )
+        .toBe('1 / 24');
     });
 
     test('renders DensityShiftChart with 1-column stacked summary banner, hidden timeline instructions, and mobile touch dragging', async ({
       page,
     }) => {
-      await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
+      await page.locator('#deferred-density-shift').scrollIntoViewIfNeeded();
 
-      const densityCard = page.getByTestId('chart-card-density-shift');
+      const densityCard = page.locator('#density-shift-chart');
       await expect(densityCard).toBeVisible();
 
       // Verify the 3-metric summary banner stacks vertically in 1 column on mobile portrait (< 640px)
@@ -289,15 +292,13 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       expect(item1Box.y).toBeGreaterThan(item0Box.y + 20);
       expect(item2Box.y).toBeGreaterThan(item1Box.y + 20);
 
-      // Verify the timeline instruction label is hidden on mobile portrait to avoid crowding
-      const timelineInstruction = densityCard.locator('span.hidden.sm\\:inline', {
-        hasText: /Drag scrubbers to move/i,
-      });
-      await expect(timelineInstruction).toBeHidden();
-
-      // Verify endpoint timeline solve markers are clearly visible
-      await expect(densityCard.getByText('Solve #1')).toBeVisible();
-      await expect(densityCard.getByText(/^Solve #\d+$/).nth(1)).toBeVisible();
+      // Verify the timeline instruction label is hidden on mobile portrait to avoid crowding,
+      // while both endpoint solve markers stay visible (the row holds exactly three spans).
+      const timelineLabels = densityCard.locator('#density-scrubber-track + div > span');
+      await expect(timelineLabels).toHaveCount(3);
+      await expect(timelineLabels.nth(0)).toBeVisible();
+      await expect(timelineLabels.nth(1)).toBeHidden();
+      await expect(timelineLabels.nth(2)).toBeVisible();
 
       // Verify Recharts KDE Area paths are generated and visible
       const baselineCurve = densityCard.locator('path[fill="url(#colorBaseline)"]');
@@ -309,13 +310,13 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       expect(initialBaselineD).toBeTruthy();
 
       // Verify interactive touch dragging on mobile scrubber
-      const scrubber1 = densityCard.getByRole('slider', { name: 'Baseline scrubber position' });
+      const scrubber1 = densityCard.locator('#density-scrubber-baseline');
       await scrubber1.scrollIntoViewIfNeeded();
       const s1Box = await scrubber1.boundingBox();
       if (!s1Box) throw new Error('Missing scrubber 1 bounding box');
 
       // Verify scrubber height is shrunk responsively on mobile portrait (track h-12 = 48px, inner scrubber = 46px)
-      const track = densityCard.getByLabel('Solve distribution timeline scrubbers track');
+      const track = densityCard.locator('#density-scrubber-track');
       const trackBox = await track.boundingBox();
       expect(trackBox).not.toBeNull();
       expect(Math.round(trackBox?.height ?? 0)).toBe(48);
@@ -346,16 +347,16 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     test('renders MetricsEvolutionChart with maximized horizontal plot presence and dual-axis labels on mobile portrait', async ({
       page,
     }) => {
-      await page.getByTestId('deferred-chart-metrics-evolution').scrollIntoViewIfNeeded();
+      await page.locator('#deferred-metrics-evolution').scrollIntoViewIfNeeded();
 
-      const metricsCard = page.locator('div.rounded-2xl').filter({
-        has: page.getByRole('heading', { name: /Metrics Evolution/i }),
-      });
+      const metricsCard = page.locator('#metrics-evolution-chart');
       await expect(metricsCard).toBeVisible();
 
-      // Verify dual Y-axis labels remain visible
-      await expect(metricsCard.getByText('Time (s)', { exact: true })).toBeVisible();
-      await expect(metricsCard.getByText('Std Dev (s)', { exact: true })).toBeVisible();
+      // Verify the dual Y-axis structure renders and its mobile bottom axis titles are visible
+      await expect(metricsCard.locator('.recharts-yAxis')).toHaveCount(2);
+      const axisTitles = metricsCard.locator('#metrics-mobile-axis-title');
+      await expect(axisTitles).toHaveCount(1);
+      await expect(axisTitles.locator('span:visible')).toHaveCount(2);
 
       // Verify the Cartesian grid line width (the inner plot area) maximizes horizontal presence (> 250px)
       const gridLine = metricsCard.locator('.recharts-cartesian-grid-horizontal line').first();
@@ -372,35 +373,39 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       page,
     }) => {
       // 1. ProgressionChart
-      const progressionCard = page.locator('div.rounded-2xl').filter({
-        has: page.getByRole('heading', { name: /Overall Progression/i }),
-      });
+      const progressionCard = page.locator('#progression-chart');
       await expect(progressionCard).toBeVisible();
-      await expect(progressionCard.getByText('Time (s)', { exact: true })).toBeVisible();
+      await expect(progressionCard.locator('#progression-mobile-axis-title')).toBeVisible();
 
       // 2. PbProgressionChart
-      const pbContainer = page.getByTestId('deferred-chart-pb-progression');
+      const pbContainer = page.locator('#deferred-pb-progression');
       await pbContainer.scrollIntoViewIfNeeded();
-      await expect(
-        pbContainer.getByRole('heading', { name: /PB Progression Over Time/i }),
-      ).toBeVisible();
-      await expect(pbContainer.getByText('Personal Best Time (s)', { exact: true })).toBeVisible();
-      // On mobile portrait, rotated desktop Y-axis label is omitted
-      await expect(pbContainer.getByText('Personal Best Time (seconds)')).toHaveCount(0);
+      const pbCard = page.locator('#pb-progression-chart');
+      await expect(pbCard).toBeVisible();
+      await expect(pbCard.locator('#pb-mobile-axis-title')).toBeVisible();
+      // On mobile portrait, the rotated desktop Y-axis label node is omitted
+      await expect(pbCard.locator('.recharts-yAxis .recharts-label')).toHaveCount(0);
 
       // 3. DailyDistributionBoxPlot
-      const boxPlotContainer = page.getByTestId('deferred-chart-solve-time-distribution');
+      const boxPlotContainer = page.locator('#deferred-solve-time-distribution');
       await boxPlotContainer.scrollIntoViewIfNeeded();
-      await expect(boxPlotContainer.getByTestId('chart-card-distribution')).toBeVisible();
-      await expect(boxPlotContainer.getByText('Time (s)', { exact: true })).toBeVisible();
-      // On mobile portrait, rotated desktop Y-axis label is omitted
-      await expect(boxPlotContainer.getByText('Solve Time (seconds)')).toHaveCount(0);
+      const boxPlotCard = page.locator('#distribution-chart');
+      await expect(boxPlotCard).toBeVisible();
+      const boxPlotAxisTitle = boxPlotCard.locator('#distribution-mobile-axis-title');
+      await expect(boxPlotAxisTitle).toHaveCount(1);
+      await expect(boxPlotAxisTitle).toBeVisible();
+      // On mobile portrait, the rotated desktop Y-axis label is omitted from the plot svg
+      await expect(page.locator('#boxplot-svg')).toHaveCount(1);
+      await expect(page.locator('#boxplot-svg text[transform]')).toHaveCount(0);
 
       // 4. DensityShiftChart
-      const densityContainer = page.getByTestId('deferred-chart-density-shift');
+      const densityContainer = page.locator('#deferred-density-shift');
       await densityContainer.scrollIntoViewIfNeeded();
-      await expect(densityContainer.getByTestId('chart-card-density-shift')).toBeVisible();
-      await expect(densityContainer.getByText('Density', { exact: true })).toBeVisible();
+      const densityCard = page.locator('#density-shift-chart');
+      await expect(densityCard).toBeVisible();
+      const densityAxisTitle = densityCard.locator('#density-mobile-axis-title');
+      await expect(densityAxisTitle).toHaveCount(1);
+      await expect(densityAxisTitle).toBeVisible();
     });
   });
 
@@ -413,17 +418,19 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     });
 
     test('renders expanded Navbar buttons and 2-column metrics cards layout', async ({ page }) => {
-      const header = page.locator('header');
+      const header = page.locator('#navbar');
 
-      // "csTimer Guide" full text is visible on landscape mode
-      const guideTextSpan = header
-        .locator('button[aria-label="csTimer Guide"]')
-        .getByText('csTimer Guide', { exact: true });
-      await expect(guideTextSpan).toBeVisible();
+      // "csTimer Guide" full label span is visible on landscape mode
+      const guideBtn = header.locator('#navbar-guide');
+      await expect(guideBtn).toBeVisible();
+      const guideLabels = guideBtn.locator('span');
+      await expect(guideLabels).toHaveCount(2);
+      await expect(guideLabels.nth(0)).toBeHidden();
+      await expect(guideLabels.nth(1)).toBeVisible();
 
       // Metrics cards render in 2-columns (Cards 0 and 1 on row 1)
-      const cardsGrid = page.locator('.grid.grid-cols-1.gap-4.sm\\:grid-cols-2.lg\\:grid-cols-5');
-      const cards = cardsGrid.locator('> div.rounded-2xl');
+      const cardsGrid = page.locator('#metrics-overview');
+      const cards = cardsGrid.locator('> div');
       const box0 = await cards.nth(0).boundingBox();
       const box1 = await cards.nth(1).boundingBox();
       const box4 = await cards.nth(4).boundingBox();
@@ -438,7 +445,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     test('verifies mobile landscape header layout: stays within bounds, no overlap, brand title visible', async ({
       page,
     }) => {
-      const header = page.locator('header');
+      const header = page.locator('#navbar');
       const headerBox = await header.boundingBox();
       expect(headerBox).not.toBeNull();
       if (!headerBox) return;
@@ -447,14 +454,13 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       expect(headerBox.x).toBeGreaterThanOrEqual(0);
       expect(headerBox.x + headerBox.width).toBeLessThanOrEqual(844 + 1);
 
-      // 2. Brand title "CubeProgression" is visible on landscape mode
-      const brandSpan = header.locator('h1 span:has-text("CubeProgression")');
+      // 2. Brand title span is visible on landscape mode
+      const brandSpan = header.locator('h1 span');
+      await expect(brandSpan).toHaveCount(1);
       await expect(brandSpan).toBeVisible();
 
       // 3. All visible header elements stay within bounds and do not overlap
-      const visibleElements = await header
-        .locator('button, [title="CubeProgression"], div.font-mono')
-        .all();
+      const visibleElements = await header.locator('button, img, #navbar-filename').all();
       const boxes = [];
       for (const el of visibleElements) {
         if (await el.isVisible()) {
@@ -474,13 +480,13 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     test('opens chart in fullscreen mode and exits cleanly via button and Escape key', async ({
       page,
     }) => {
-      const card = page.getByTestId('chart-card-progression');
+      const card = page.locator('#progression-chart');
 
-      const maximizeBtn = card.getByRole('button', { name: /Maximize/i });
+      const maximizeBtn = card.locator('#progression-chart-maximize');
       await maximizeBtn.click();
 
       // Fullscreen backdrop overlay is visible and includes safe area padding
-      const modal = page.locator('.fixed.inset-0.z-\\[100\\]');
+      const modal = page.locator('#chart-card-fullscreen-backdrop');
       await expect(modal).toBeVisible();
       await expect(modal).toHaveClass(/safe-area-modal/);
 
@@ -545,9 +551,9 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     test('renders DensityShiftChart on Mobile Landscape with 3-column banner, visible timeline instructions, and dragging', async ({
       page,
     }) => {
-      await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
+      await page.locator('#deferred-density-shift').scrollIntoViewIfNeeded();
 
-      const densityCard = page.getByTestId('chart-card-density-shift');
+      const densityCard = page.locator('#density-shift-chart');
       await expect(densityCard).toBeVisible();
 
       // In landscape (844px >= 640px sm: breakpoint), summary banner items align in a single row
@@ -559,13 +565,12 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       expect(Math.abs(item0Box.y - item1Box.y)).toBeLessThan(6);
 
       // Timeline instruction text is visible on landscape (>= 640px)
-      const timelineInstruction = densityCard.locator('span.hidden.sm\\:inline', {
-        hasText: /Drag scrubbers to move/i,
-      });
-      await expect(timelineInstruction).toBeVisible();
+      const timelineLabels = densityCard.locator('#density-scrubber-track + div > span');
+      await expect(timelineLabels).toHaveCount(3);
+      await expect(timelineLabels.nth(1)).toBeVisible();
 
       // Verify dragging scrubber in landscape (ensure scrubber is scrolled into view in 390px viewport)
-      const scrubber1 = densityCard.getByRole('slider', { name: 'Baseline scrubber position' });
+      const scrubber1 = densityCard.locator('#density-scrubber-baseline');
       await scrubber1.scrollIntoViewIfNeeded();
       const s1Box = await scrubber1.boundingBox();
       if (!s1Box) throw new Error('Missing scrubber bounding box');
@@ -598,20 +603,19 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     });
 
     test('renders filename pill in Navbar while hiding storage badge', async ({ page }) => {
-      const header = page.locator('header');
+      const header = page.locator('#navbar');
 
       // Filename is visible on md: screens
-      const filenamePill = header.locator('div.font-mono:has-text("cstimer_")');
-      await expect(filenamePill).toBeVisible();
+      await expect(header.locator('#navbar-filename')).toBeVisible();
 
       // Storage badge is still hidden below lg:
-      await expect(header.getByText('Saved locally')).toBeHidden();
+      await expect(header.locator('#navbar-saved-badge')).toBeHidden();
     });
 
     test('verifies tablet portrait header layout: stays within bounds, no overlap, title visible, no overflow', async ({
       page,
     }) => {
-      const header = page.locator('header');
+      const header = page.locator('#navbar');
       const headerBox = await header.boundingBox();
       expect(headerBox).not.toBeNull();
       if (!headerBox) return;
@@ -620,14 +624,13 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       expect(headerBox.x).toBeGreaterThanOrEqual(0);
       expect(headerBox.x + headerBox.width).toBeLessThanOrEqual(768 + 1);
 
-      // 2. Brand title "CubeProgression" is visible on tablet portrait mode
-      const brandSpan = header.locator('h1 span:has-text("CubeProgression")');
+      // 2. Brand title span is visible on tablet portrait mode
+      const brandSpan = header.locator('h1 span');
+      await expect(brandSpan).toHaveCount(1);
       await expect(brandSpan).toBeVisible();
 
       // 3. All visible header elements stay within bounds and do not overlap
-      const visibleElements = await header
-        .locator('button, [title="CubeProgression"], div.font-mono')
-        .all();
+      const visibleElements = await header.locator('button, img, #navbar-filename').all();
       const boxes = [];
       for (const el of visibleElements) {
         if (await el.isVisible()) {
@@ -647,10 +650,10 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     test('renders ProgressionChart interval sliders side-by-side on tablet portrait', async ({
       page,
     }) => {
-      const card = page.getByTestId('chart-card-progression');
+      const card = page.locator('#progression-chart');
 
       // Switch to interval mode
-      const intervalBtn = card.getByRole('button', { name: /Solve # Interval/i });
+      const intervalBtn = card.locator('#progression-solve-interval');
       await intervalBtn.click();
 
       const sliders = card.locator('input[type="range"]');
@@ -666,40 +669,39 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     });
 
     test('interacts with PB milestone history drawer on tablet', async ({ page }) => {
-      await page.getByTestId('deferred-chart-pb-progression').scrollIntoViewIfNeeded();
-      await expect(page.getByRole('heading', { name: /PB Progression Over Time/i })).toBeVisible({
+      await page.locator('#deferred-pb-progression').scrollIntoViewIfNeeded();
+      const pbCard = page.locator('#pb-progression-chart');
+      await expect(pbCard).toBeVisible({
         timeout: 10000,
       });
 
-      const pbCard = page.getByTestId('chart-card-pb-progression');
-
-      const drawerBtn = pbCard.getByRole('button', { name: /Record Milestones History/i });
+      const drawerBtn = pbCard.locator('#pb-milestones-history-toggle');
       await drawerBtn.click();
 
-      // Scoped to milestone drawer container
-      const drawer = pbCard.locator('.fade-in', { hasText: 'Filter Record Type:' });
+      // Scoped to the drawer that owns the milestone filters region
+      const drawer = pbCard.locator('div:has(> #pb-milestones-filters)');
       await expect(drawer).toBeVisible();
 
       // Filter by Single milestones
-      const singleFilter = drawer.getByRole('button', { name: 'Single', exact: true });
+      const singleFilter = drawer.locator('#pb-milestone-filter-Single');
       await singleFilter.click();
-      await expect(singleFilter).toHaveClass(/bg-amber-500\/20/);
+      await expect(singleFilter).toHaveAttribute('aria-pressed', 'true');
 
-      // Verify milestone cards are rendered
-      const badges = drawer.locator('span:has-text("PB Single")');
-      expect(await badges.count()).toBeGreaterThan(0);
+      // Verify milestone rows are rendered in the list that follows the filters region
+      const milestoneRows = drawer.locator('#pb-milestones-filters + div > div');
+      expect(await milestoneRows.count()).toBeGreaterThan(0);
 
       // Close drawer
       await drawerBtn.click();
-      await expect(pbCard.getByText('Filter Record Type:')).toHaveCount(0);
+      await expect(drawer).toHaveCount(0);
     });
 
     test('interacts with DensityShiftChart on Tablet Portrait: drag scrubber and resize ribbed handle symmetrically', async ({
       page,
     }) => {
-      await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
+      await page.locator('#deferred-density-shift').scrollIntoViewIfNeeded();
 
-      const densityCard = page.getByTestId('chart-card-density-shift');
+      const densityCard = page.locator('#density-shift-chart');
       await expect(densityCard).toBeVisible();
 
       // 3-column banner aligns in a single row on tablet portrait (768px >= 640px)
@@ -710,11 +712,11 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       if (!item0Box || !item2Box) throw new Error('Missing summary items bounding boxes');
       expect(Math.abs(item0Box.y - item2Box.y)).toBeLessThan(6);
 
-      const scrubber1 = densityCard.getByRole('slider', { name: 'Baseline scrubber position' });
-      const scrubber2 = densityCard.getByRole('slider', { name: 'Recent scrubber position' });
+      const scrubber1 = densityCard.locator('#density-scrubber-baseline');
+      const scrubber2 = densityCard.locator('#density-scrubber-recent');
 
       // Drag right ribbed handle on Scrubber 1 to expand sample size symmetrically
-      const rightHandle = densityCard.getByLabel('Baseline right resize handle');
+      const rightHandle = densityCard.locator('#density-handle-baseline-end');
       const handleBox = await rightHandle.boundingBox();
       if (!handleBox) throw new Error('Missing resize handle bounding box');
 
@@ -722,7 +724,7 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       const s2BoxBefore = await scrubber2.boundingBox();
       if (!s1BoxBefore || !s2BoxBefore) throw new Error('Missing scrubber bounding box');
       // Verify scrubber height is shrunk responsively on tablet portrait (track md:h-16 = 64px, inner scrubber = 62px)
-      const track = densityCard.getByLabel('Solve distribution timeline scrubbers track');
+      const track = densityCard.locator('#density-scrubber-track');
       const trackBox = await track.boundingBox();
       expect(trackBox).not.toBeNull();
       expect(Math.round(trackBox?.height ?? 0)).toBe(64);
@@ -762,14 +764,14 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     test('renders storage badge in Navbar and all 5 overview cards in a single row', async ({
       page,
     }) => {
-      const header = page.locator('header');
+      const header = page.locator('#navbar');
 
       // Both filename and storage badge are visible on lg: screens
-      await expect(header.getByText('Saved locally')).toBeVisible();
+      await expect(header.locator('#navbar-saved-badge')).toBeVisible();
 
       // All 5 overview cards sit side-by-side on row 1
-      const cardsGrid = page.locator('.grid.grid-cols-1.gap-4.sm\\:grid-cols-2.lg\\:grid-cols-5');
-      const cards = cardsGrid.locator('> div.rounded-2xl');
+      const cardsGrid = page.locator('#metrics-overview');
+      const cards = cardsGrid.locator('> div');
       await expect(cards).toHaveCount(5);
 
       const box0 = await cards.nth(0).boundingBox();
@@ -781,10 +783,10 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     test('renders DensityShiftChart and MetricsEvolutionChart as full-width stacked charts', async ({
       page,
     }) => {
-      await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
+      await page.locator('#deferred-density-shift').scrollIntoViewIfNeeded();
 
-      const densityHeading = page.getByTestId('chart-card-density-shift');
-      const metricsHeading = page.getByTestId('chart-card-metrics-evolution');
+      const densityHeading = page.locator('#density-shift-chart');
+      const metricsHeading = page.locator('#metrics-evolution-chart');
 
       await expect(densityHeading).toBeVisible();
       await expect(metricsHeading).toBeVisible();
@@ -799,32 +801,39 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     });
 
     test('activates Custom Ao moving average on tablet landscape', async ({ page }) => {
-      const card = page.getByTestId('chart-card-progression');
+      const card = page.locator('#progression-chart');
+      const legendCount = () => card.locator('.recharts-legend-item-text').count();
 
-      const customAoBtn = card.getByRole('button', { name: /Custom Ao/i });
+      await expect.poll(legendCount).toBeGreaterThan(0);
+      const initialCount = await legendCount();
+
+      const customAoBtn = card.locator('#progression-custom-ao');
       await customAoBtn.click();
 
-      const spinInput = card.getByRole('spinbutton');
+      const spinInput = card.locator('#progression-custom-ao-input');
       await expect(spinInput).toBeVisible();
       await spinInput.fill('35');
+      await expect(spinInput).toHaveValue('35');
+      await expect(customAoBtn).toHaveAttribute('aria-pressed', 'true');
 
-      await expect(card.locator('.recharts-legend-item-text', { hasText: 'Ao35' })).toBeVisible();
+      // Enabling the custom window adds exactly one series to the legend.
+      await expect.poll(legendCount).toBe(initialCount + 1);
     });
 
     test('interacts with DensityShiftChart on Tablet Landscape: timeline track clicking and fullscreen modal view', async ({
       page,
     }) => {
-      await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
+      await page.locator('#deferred-density-shift').scrollIntoViewIfNeeded();
 
-      const densityCard = page.getByTestId('chart-card-density-shift');
+      const densityCard = page.locator('#density-shift-chart');
       await expect(densityCard).toBeVisible();
 
-      const scrubber1 = densityCard.getByRole('slider', { name: 'Baseline scrubber position' });
-      const scrubber2 = densityCard.getByRole('slider', { name: 'Recent scrubber position' });
+      const scrubber1 = densityCard.locator('#density-scrubber-baseline');
+      const scrubber2 = densityCard.locator('#density-scrubber-recent');
 
       // Click track in the empty region between scrubbers to reposition closer scrubber
       await page.waitForTimeout(100);
-      const track = densityCard.getByLabel('Solve distribution timeline scrubbers track');
+      const track = densityCard.locator('#density-scrubber-track');
       await track.scrollIntoViewIfNeeded();
       const s1BoxAfter = await scrubber1.boundingBox();
       const s2BoxAfter = await scrubber2.boundingBox();
@@ -843,19 +852,15 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
       }).toPass({ timeout: 3000 });
 
       // Maximize to fullscreen modal and verify layout
-      const maxBtn = densityCard.getByTitle('Maximize to Fullscreen');
+      const maxBtn = densityCard.locator('#density-shift-chart-maximize');
       await maxBtn.click();
 
-      const modalBackdrop = page.locator('.fixed.inset-0.z-\\[100\\]');
+      const modalBackdrop = page.locator('#chart-card-fullscreen-backdrop');
       await expect(modalBackdrop).toBeVisible();
 
       // Ensure chart, banner, and scrubbers are all rendered inside fullscreen modal
-      await expect(
-        modalBackdrop.getByLabel('Solve distribution timeline scrubbers track'),
-      ).toBeVisible();
-      await expect(
-        modalBackdrop.getByRole('slider', { name: 'Baseline scrubber position' }),
-      ).toBeVisible();
+      await expect(modalBackdrop.locator('#density-scrubber-track')).toBeVisible();
+      await expect(modalBackdrop.locator('#density-scrubber-baseline')).toBeVisible();
 
       // Exit fullscreen
       await page.keyboard.press('Escape');

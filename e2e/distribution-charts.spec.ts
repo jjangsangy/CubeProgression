@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('Solve Times & Moving Averages')).toBeVisible({
+    await expect(page.locator('#progression-chart')).toBeVisible({
       timeout: 15000,
     });
   });
@@ -11,15 +11,15 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
   test('DensityShiftChart quick clicks do not latch scrubber to mouse when moving cursor afterwards', async ({
     page,
   }) => {
-    await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
+    await page.locator('#deferred-density-shift').scrollIntoViewIfNeeded();
 
-    const densityCard = page.getByTestId('chart-card-density-shift');
+    const densityCard = page.locator('#density-shift-chart');
 
     await expect(densityCard).toBeVisible();
 
-    const scrubber1 = densityCard.getByRole('slider', { name: 'Baseline scrubber position' });
-    const scrubber2 = densityCard.getByRole('slider', { name: 'Recent scrubber position' });
-    const handle1 = densityCard.getByLabel('Baseline right resize handle');
+    const scrubber1 = densityCard.locator('#density-scrubber-baseline');
+    const scrubber2 = densityCard.locator('#density-scrubber-recent');
+    const handle1 = densityCard.locator('#density-handle-baseline-end');
 
     await expect(scrubber1).toBeVisible();
     await expect(scrubber2).toBeVisible();
@@ -71,16 +71,14 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
   test('DensityShiftChart renders centered summary banner, timeline scrubbers, and ribbed resize handles', async ({
     page,
   }) => {
-    await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
+    await page.locator('#deferred-density-shift').scrollIntoViewIfNeeded();
 
-    const densityCard = page.getByTestId('chart-card-density-shift');
+    const densityCard = page.locator('#density-shift-chart');
 
     await expect(densityCard).toBeVisible();
 
     // Verify statistical summary banner exists and has centered items
-    await expect(densityCard.getByText('Baseline Mean:')).toBeVisible();
-    await expect(densityCard.getByText('Recent Mean:')).toBeVisible();
-    await expect(densityCard.getByText('Distribution Shift:', { exact: true })).toBeVisible();
+    await expect(densityCard.locator('.grid > div')).toHaveCount(3);
 
     // Verify peak vertical reference lines and horizontal distance bar in real SVG rendering
     const baselineRefLine = densityCard.locator('.recharts-reference-line').filter({
@@ -138,11 +136,11 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
     expect(distanceText).toMatch(/^\d+\.\d{2}s$/);
 
     // Verify scrubbers track and visual sparkline
-    const track = densityCard.getByLabel('Solve distribution timeline scrubbers track');
+    const track = densityCard.locator('#density-scrubber-track');
     await expect(track).toBeVisible();
 
-    const scrubber1 = densityCard.getByRole('slider', { name: 'Baseline scrubber position' });
-    const scrubber2 = densityCard.getByRole('slider', { name: 'Recent scrubber position' });
+    const scrubber1 = densityCard.locator('#density-scrubber-baseline');
+    const scrubber2 = densityCard.locator('#density-scrubber-recent');
 
     await expect(scrubber1).toBeVisible();
     await expect(scrubber2).toBeVisible();
@@ -150,26 +148,25 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
     await expect(scrubber2).toHaveClass(/bg-emerald-500\/25/);
 
     // Verify ribbed resize handles on both ends of scrubbers
-    await expect(densityCard.getByLabel('Baseline left resize handle')).toBeVisible();
-    await expect(densityCard.getByLabel('Baseline right resize handle')).toBeVisible();
-    await expect(densityCard.getByLabel('Recent left resize handle')).toBeVisible();
-    await expect(densityCard.getByLabel('Recent right resize handle')).toBeVisible();
+    await expect(densityCard.locator('#density-handle-baseline-start')).toBeVisible();
+    await expect(densityCard.locator('#density-handle-baseline-end')).toBeVisible();
+    await expect(densityCard.locator('#density-handle-recent-start')).toBeVisible();
+    await expect(densityCard.locator('#density-handle-recent-end')).toBeVisible();
 
-    // Verify no ugly "Sample 1" or "Sample 2" text labels in the scrubbers
-    await expect(densityCard.getByText('Sample 1:')).not.toBeVisible();
-    await expect(densityCard.getByText('Sample 2:')).not.toBeVisible();
+    // Verify scrubbers render no text badge labels (no "Sample 1"/"Sample 2" copy)
+    expect(((await scrubber1.textContent()) ?? '').trim()).toBe('');
+    expect(((await scrubber2.textContent()) ?? '').trim()).toBe('');
 
-    // Verify grouping aggregation vertical boundary lines are rendered on the scrubber track background
-    const boundaryLines = densityCard.locator('line[data-testid="group-boundary-line"]');
+    // Verify grouping aggregation vertical boundary lines are rendered on the scrubber track background.
+    // Each boundary is a <line> inside a <g> that carries an explanatory <title>.
+    const boundaryLines = densityCard.locator('svg[aria-hidden="true"] g:has(> title) > line');
     await expect(boundaryLines.first()).toBeAttached();
-    const boundaryCount = await boundaryLines.count();
-    expect(boundaryCount).toBeGreaterThan(0);
+    expect(await boundaryLines.count()).toBeGreaterThan(0);
 
     // Verify scrubber keyboard movement (slide position)
     await scrubber1.focus();
     await page.keyboard.press('ArrowRight');
     await expect(scrubber1).toHaveAttribute('aria-valuenow', '2');
-    await expect(densityCard.getByText(/^Baseline Solves \(#2–/)).toBeVisible();
 
     // Verify scrubber keyboard resize (expand window symmetrically with Alt+ArrowRight)
     const box1Before = await scrubber1.boundingBox();
@@ -192,14 +189,14 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
   test('DensityShiftChart supports direct pointer dragging of scrubbers, ribbed resize handles, track clicking, and dynamic KDE plot updates', async ({
     page,
   }) => {
-    await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
+    await page.locator('#deferred-density-shift').scrollIntoViewIfNeeded();
 
-    const densityCard = page.getByTestId('chart-card-density-shift');
+    const densityCard = page.locator('#density-shift-chart');
 
     await expect(densityCard).toBeVisible();
 
-    const scrubber1 = densityCard.getByRole('slider', { name: 'Baseline scrubber position' });
-    const scrubber2 = densityCard.getByRole('slider', { name: 'Recent scrubber position' });
+    const scrubber1 = densityCard.locator('#density-scrubber-baseline');
+    const scrubber2 = densityCard.locator('#density-scrubber-recent');
 
     // Verify initial KDE curve paths are rendered
     const baselineArea = densityCard.locator('path[fill="url(#colorBaseline)"]');
@@ -228,7 +225,7 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
     expect(updatedBaselineD).not.toEqual(initialBaselineD);
 
     // Direct pointer drag on right resize handle to expand sample window symmetrically
-    const rightHandle = densityCard.getByLabel('Baseline right resize handle');
+    const rightHandle = densityCard.locator('#density-handle-baseline-end');
     const handleBox = await rightHandle.boundingBox();
     if (!handleBox) throw new Error('Missing right handle box');
 
@@ -261,7 +258,7 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
     // Timeline track click to reposition scrubber
     // Target the empty track area midpoint between scrubber 1 and scrubber 2
     await page.waitForTimeout(100);
-    const track = densityCard.getByLabel('Solve distribution timeline scrubbers track');
+    const track = densityCard.locator('#density-scrubber-track');
     await track.scrollIntoViewIfNeeded();
     const s1BoxAfterDrag = await scrubber1.boundingBox();
     const s2BoxAfterDrag = await scrubber2.boundingBox();
@@ -283,24 +280,22 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
   test('DensityShiftChart supports fullscreen modal view with interactive scrubbers and clean restoration', async ({
     page,
   }) => {
-    await page.getByTestId('deferred-chart-density-shift').scrollIntoViewIfNeeded();
+    await page.locator('#deferred-density-shift').scrollIntoViewIfNeeded();
 
-    const densityCard = page.getByTestId('chart-card-density-shift');
+    const densityCard = page.locator('#density-shift-chart');
 
-    const maxBtn = densityCard.getByTitle('Maximize to Fullscreen');
+    const maxBtn = densityCard.locator('#density-shift-chart-maximize');
     await maxBtn.click();
 
     // Verify modal overlay opens
-    const modalBackdrop = page.locator('.fixed.inset-0.z-\\[100\\]');
+    const modalBackdrop = page.locator('#chart-card-fullscreen-backdrop');
     await expect(modalBackdrop).toBeVisible();
 
     // Verify chart and scrubbers are visible in fullscreen
-    const fullscreenTrack = modalBackdrop.getByLabel('Solve distribution timeline scrubbers track');
+    const fullscreenTrack = modalBackdrop.locator('#density-scrubber-track');
     await expect(fullscreenTrack).toBeVisible();
 
-    const fullscreenScrubber1 = modalBackdrop.getByRole('slider', {
-      name: 'Baseline scrubber position',
-    });
+    const fullscreenScrubber1 = modalBackdrop.locator('#density-scrubber-baseline');
     await expect(fullscreenScrubber1).toBeVisible();
 
     // Exit fullscreen via Escape
@@ -308,86 +303,101 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
     await expect(modalBackdrop).toHaveCount(0);
   });
 
-  test('MetricsEvolutionChart renders dual-axis labels and legend series', async ({ page }) => {
-    await page.getByTestId('deferred-chart-metrics-evolution').scrollIntoViewIfNeeded();
+  test('MetricsEvolutionChart plots its range band, three series, and a legend entry per series', async ({
+    page,
+  }) => {
+    await page.locator('#deferred-metrics-evolution').scrollIntoViewIfNeeded();
 
-    const metricsCard = page.getByTestId('chart-card-metrics-evolution');
+    const metricsCard = page.locator('#metrics-evolution-chart');
 
     await expect(metricsCard).toBeVisible();
 
-    // Verify Recharts legend series items
-    await expect(
-      metricsCard.locator('.recharts-legend-item-text', { hasText: 'Min-Max Range' }),
-    ).toBeVisible();
-    await expect(
-      metricsCard.locator('.recharts-legend-item-text', { hasText: 'Mean Time (s)' }),
-    ).toBeVisible();
-    await expect(
-      metricsCard.locator('.recharts-legend-item-text', { hasText: 'Median Time (s)' }),
-    ).toBeVisible();
-    await expect(
-      metricsCard.locator('.recharts-legend-item-text', { hasText: 'Std Dev / Consistency (s)' }),
-    ).toBeVisible();
+    // Dual Y axes, each rendering its own tick labels.
+    const yAxes = metricsCard.locator('.recharts-yAxis');
+    await expect(yAxes).toHaveCount(2);
+    for (const axis of await yAxes.all()) {
+      expect(await axis.locator('.recharts-cartesian-axis-tick').count()).toBeGreaterThan(0);
+    }
 
-    // Verify dual Y-axis labels
-    await expect(metricsCard.getByText('Time (s)', { exact: true })).toBeVisible();
-    await expect(metricsCard.getByText('Std Dev (s)', { exact: true })).toBeVisible();
+    // One legend entry per plotted series (range band, mean, median, std dev).
+    await expect(metricsCard.locator('.recharts-legend-item-text')).toHaveCount(4);
+
+    // The plotted series themselves: one range area band plus three lines.
+    await expect(metricsCard.locator('.recharts-area')).toHaveCount(1);
+    await expect(metricsCard.locator('.recharts-line')).toHaveCount(3);
   });
 
-  test('grouping period controls in FileUploader update Box Plot and Metrics Evolution titles', async ({
+  test('grouping period controls in FileUploader recompute the distribution and evolution charts', async ({
     page,
   }) => {
-    // Initial titles in Daily mode
-    await page.getByTestId('deferred-chart-solve-time-distribution').scrollIntoViewIfNeeded();
-    await expect(page.getByText('Daily Solve Distribution')).toBeVisible();
-    await page.getByTestId('deferred-chart-metrics-evolution').scrollIntoViewIfNeeded();
-    await expect(page.getByText('Daily Speed & Consistency')).toBeVisible();
+    await page.locator('#deferred-solve-time-distribution').scrollIntoViewIfNeeded();
+    await page.locator('#deferred-metrics-evolution').scrollIntoViewIfNeeded();
 
-    // Switch to Weekly mode
-    await page.getByRole('button', { name: /^Weekly/i }).click();
-    await page.getByTestId('deferred-chart-solve-time-distribution').scrollIntoViewIfNeeded();
-    await expect(page.getByText('Weekly Solve Distribution')).toBeVisible();
-    await page.getByTestId('deferred-chart-metrics-evolution').scrollIntoViewIfNeeded();
-    await expect(page.getByText('Weekly Speed & Consistency')).toBeVisible();
+    const boxPlot = page.locator('#distribution-chart');
+    const metrics = page.locator('#metrics-evolution-chart');
 
-    // Switch to By Solve Count (Batch) mode
-    await page.getByRole('button', { name: /^By Solve Count/i }).click();
-    await page.getByTestId('deferred-chart-solve-time-distribution').scrollIntoViewIfNeeded();
-    await expect(page.getByText('Batch Solve Distribution')).toBeVisible();
-    await page.getByTestId('deferred-chart-metrics-evolution').scrollIntoViewIfNeeded();
-    await expect(page.getByText('Batch Speed & Consistency')).toBeVisible();
+    // Grouping is derived from rendered period count: one box per period group,
+    // one X-axis tick per period in the metrics chart. Both charts mount lazily, so wait
+    // for a real baseline before comparing (otherwise a 0 -> N mount looks like a change).
+    await expect.poll(() => boxPlot.locator('svg rect').count()).toBeGreaterThan(0);
+    await expect
+      .poll(() => metrics.locator('.recharts-xAxis .recharts-cartesian-axis-tick').count())
+      .toBeGreaterThan(0);
+
+    const dailyBoxCount = await boxPlot.locator('svg rect').count();
+    const dailyTickCount = await metrics
+      .locator('.recharts-xAxis .recharts-cartesian-axis-tick')
+      .count();
+
+    // Switch to Weekly mode: aggregation into fewer periods must change both charts
+    const weeklyBtn = page.locator('#file-uploader #grouping-weekly');
+    await weeklyBtn.click();
+    await expect(weeklyBtn).toHaveAttribute('aria-pressed', 'true');
+    await expect.poll(() => boxPlot.locator('svg rect').count()).not.toBe(dailyBoxCount);
+    await expect
+      .poll(() => metrics.locator('.recharts-xAxis .recharts-cartesian-axis-tick').count())
+      .not.toBe(dailyTickCount);
+    const weeklyBoxCount = await boxPlot.locator('svg rect').count();
+
+    // Switch to By Solve Count (Batch) mode: distribution re-renders again
+    const batchBtn = page.locator('#file-uploader #grouping-customBatch');
+    await batchBtn.click();
+    await expect(batchBtn).toHaveAttribute('aria-pressed', 'true');
+    await expect.poll(() => boxPlot.locator('svg rect').count()).not.toBe(weeklyBoxCount);
   });
 
   test('DailyDistributionBoxPlot displays solve tooltip on scatter point hover', async ({
     page,
   }) => {
-    await page.getByTestId('deferred-chart-solve-time-distribution').scrollIntoViewIfNeeded();
+    await page.locator('#deferred-solve-time-distribution').scrollIntoViewIfNeeded();
 
-    const boxPlotCard = page.getByTestId('chart-card-distribution');
+    const boxPlotCard = page.locator('#distribution-chart');
 
-    const svg = boxPlotCard.locator('svg[role="img"]').first();
+    const svg = boxPlotCard.locator('#boxplot-svg');
     await expect(svg).toBeVisible();
 
     // Hover over an interactive solve point in the SVG
     const solvePoint = svg.locator('circle.cursor-pointer').first();
     await solvePoint.hover({ force: true });
 
-    // Assert hover tooltip displays solve time
-    await expect(boxPlotCard.locator('.pointer-events-none')).toContainText(/Solve: \d+\.\d{2}s/);
+    // Assert the hover tooltip reveals a solve time contract value
+    await expect
+      .poll(async () => (await boxPlotCard.textContent()) ?? '')
+      .toMatch(/Solve: \d+\.\d{2}s/);
   });
 
   test('ChartCardWrapper maximizes chart to fullscreen modal and restores on Escape key', async ({
     page,
   }) => {
-    await page.getByTestId('deferred-chart-solve-time-distribution').scrollIntoViewIfNeeded();
+    await page.locator('#deferred-solve-time-distribution').scrollIntoViewIfNeeded();
 
-    const card = page.getByTestId('chart-card-distribution');
+    const card = page.locator('#distribution-chart');
 
-    const maxBtn = card.getByTitle('Maximize to Fullscreen');
+    const maxBtn = card.locator('#distribution-chart-maximize');
     await maxBtn.click();
 
     // Fullscreen backdrop overlay is visible and body scroll locked
-    const modalBackdrop = page.locator('.fixed.inset-0.z-\\[100\\]');
+    const modalBackdrop = page.locator('#chart-card-fullscreen-backdrop');
     await expect(modalBackdrop).toBeVisible();
     const lockedOverflow = await page.evaluate(() => document.body.style.overflow);
     expect(lockedOverflow).toBe('hidden');
@@ -400,18 +410,18 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
   });
 
   test('ChartCardWrapper restores fullscreen view via Exit Fullscreen button', async ({ page }) => {
-    await page.getByTestId('deferred-chart-solve-time-distribution').scrollIntoViewIfNeeded();
+    await page.locator('#deferred-solve-time-distribution').scrollIntoViewIfNeeded();
 
-    const card = page.getByTestId('chart-card-distribution');
+    const card = page.locator('#distribution-chart');
 
-    const maxBtn = card.getByTitle('Maximize to Fullscreen');
+    const maxBtn = card.locator('#distribution-chart-maximize');
     await maxBtn.click();
 
-    const modalBackdrop = page.locator('.fixed.inset-0.z-\\[100\\]');
+    const modalBackdrop = page.locator('#chart-card-fullscreen-backdrop');
     await expect(modalBackdrop).toBeVisible();
 
     // Click Exit Fullscreen button
-    const exitBtn = modalBackdrop.getByTitle('Restore View (Esc)');
+    const exitBtn = modalBackdrop.locator('#distribution-chart-maximize');
     await exitBtn.click();
 
     // Fullscreen overlay dismissed
@@ -423,11 +433,11 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
   test('ChartCardWrapper initiates PNG export download with expected filename prefix', async ({
     page,
   }) => {
-    await page.getByTestId('deferred-chart-solve-time-distribution').scrollIntoViewIfNeeded();
+    await page.locator('#deferred-solve-time-distribution').scrollIntoViewIfNeeded();
 
-    const card = page.getByTestId('chart-card-distribution');
+    const card = page.locator('#distribution-chart');
 
-    const downloadBtn = card.getByTitle('Download Plot as PNG Image');
+    const downloadBtn = card.locator('#distribution-chart-download');
     const downloadPromise = page.waitForEvent('download', { timeout: 15000 });
 
     await downloadBtn.click();

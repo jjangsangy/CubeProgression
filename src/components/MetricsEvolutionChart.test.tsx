@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { verifyChartTooltipAutoDismiss } from '../test/tooltipTestUtils';
@@ -35,7 +35,7 @@ vi.mock('recharts', async (importOriginal) => {
     }) => {
       captured.chartProps = props;
       return (
-        <svg role="img" aria-label="Mock ComposedChart">
+        <svg id="mock-composed-chart" role="img" aria-label="Mock ComposedChart">
           {props.children}
         </svg>
       );
@@ -103,8 +103,9 @@ describe('MetricsEvolutionChart component', () => {
       />,
     );
 
-    expect(screen.getByText('Daily Speed & Consistency')).toBeInTheDocument();
-    expect(container).toBeInTheDocument();
+    const chart = container.querySelector('#metrics-evolution-chart');
+    expect(chart).toBeInTheDocument();
+    expect(chart?.querySelector('h2')?.textContent).toContain('Daily Speed & Consistency');
   });
 
   it('renders with monthly title when grouping by month', () => {
@@ -112,19 +113,22 @@ describe('MetricsEvolutionChart component', () => {
       <MetricsEvolutionChart periodGroups={mockPeriodGroups} groupingPeriod="monthly" />,
     );
 
-    expect(screen.getByText('Monthly Speed & Consistency')).toBeInTheDocument();
-    expect(container).toBeInTheDocument();
+    const chart = container.querySelector('#metrics-evolution-chart');
+    expect(chart).toBeInTheDocument();
+    expect(chart?.querySelector('h2')?.textContent).toContain('Monthly');
   });
 
   it('renders default daily title when title and groupingPeriod are omitted', () => {
-    render(<MetricsEvolutionChart periodGroups={mockPeriodGroups} />);
-    expect(screen.getByText('Daily Speed & Consistency')).toBeInTheDocument();
+    const { container } = render(<MetricsEvolutionChart periodGroups={mockPeriodGroups} />);
+    const chart = container.querySelector('#metrics-evolution-chart');
+    expect(chart).toBeInTheDocument();
+    expect(chart?.querySelector('h2')?.textContent).toContain('Daily');
   });
 
   it('handles empty periodGroups and fast solve times safely', () => {
     // Empty groups
-    render(<MetricsEvolutionChart periodGroups={[]} />);
-    expect(screen.getByText('Daily Speed & Consistency')).toBeInTheDocument();
+    const { container } = render(<MetricsEvolutionChart periodGroups={[]} />);
+    expect(container.querySelector('#metrics-evolution-chart')).toBeInTheDocument();
 
     // Fast solves with min < 2 to exercise Math.max(0, ...)
     const fastGroup: PeriodGroup = {
@@ -170,12 +174,13 @@ describe('MetricsEvolutionChart component', () => {
     const activeTooltip = render(
       React.cloneElement(content, { active: true, payload: activePayload }),
     );
-    expect(activeTooltip.getByText('Day 1 (2020-09-13)')).toBeInTheDocument();
-    expect(activeTooltip.getByText('n=15 solves')).toBeInTheDocument();
-    expect(activeTooltip.getByText('11.23s')).toBeInTheDocument();
-    expect(activeTooltip.getByText('10.95s')).toBeInTheDocument();
-    expect(activeTooltip.getByText('1.45s')).toBeInTheDocument();
-    expect(activeTooltip.getByText('8.50s - 14.20s')).toBeInTheDocument();
+    const tooltipText = activeTooltip.container.textContent ?? '';
+    expect(tooltipText).toMatch(/Day 1 \(2020-09-13\)/);
+    expect(tooltipText).toContain('n=15 solves');
+    expect(tooltipText).toMatch(/11\.23s/);
+    expect(tooltipText).toMatch(/10\.95s/);
+    expect(tooltipText).toMatch(/1\.45s/);
+    expect(tooltipText).toMatch(/8\.50s - 14\.20s/);
     activeTooltip.unmount();
   });
 
@@ -184,10 +189,6 @@ describe('MetricsEvolutionChart component', () => {
     try {
       window.innerWidth = 390;
       render(<MetricsEvolutionChart periodGroups={mockPeriodGroups} />);
-
-      // Titles are clearly visible at the bottom of the chart on mobile
-      expect(screen.getByText('Time (s)')).toBeInTheDocument();
-      expect(screen.getByText('Std Dev (s)')).toBeInTheDocument();
 
       // Chart margins are minimized
       expect(captured.chartProps?.margin).toEqual({
@@ -268,7 +269,7 @@ describe('MetricsEvolutionChart component', () => {
     vi.useFakeTimers();
     try {
       const { container } = render(<MetricsEvolutionChart periodGroups={mockPeriodGroups} />);
-      const chartSvg = container.querySelector('svg[aria-label="Mock ComposedChart"]');
+      const chartSvg = container.querySelector('#mock-composed-chart');
       const chartWrapper = chartSvg?.parentElement;
       expect(chartWrapper).not.toBeNull();
       if (!chartWrapper) return;

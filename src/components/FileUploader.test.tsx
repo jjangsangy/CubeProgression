@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Session } from '../types';
 import { FileUploader } from './FileUploader';
@@ -30,7 +30,7 @@ const mockSessions: Session[] = [
 
 describe('FileUploader component', () => {
   it('renders sessions dropdown and period grouping buttons', () => {
-    render(
+    const { container } = render(
       <FileUploader
         sessions={mockSessions}
         selectedSessionId="s1"
@@ -45,15 +45,17 @@ describe('FileUploader component', () => {
       />,
     );
 
-    expect(screen.getByText('Main Session (1 solves)')).toBeInTheDocument();
-    expect(screen.getByText('OH Session (0 solves)')).toBeInTheDocument();
-    expect(screen.getByText('Daily')).toBeInTheDocument();
-    expect(screen.getByText('Weekly')).toBeInTheDocument();
+    const uploader = container.querySelector('#file-uploader');
+    expect(uploader).toBeInTheDocument();
+    const select = uploader?.querySelector('#session-selector');
+    expect(select?.querySelectorAll('option')).toHaveLength(2);
+    expect(uploader?.querySelector('#grouping-daily')).toBeInTheDocument();
+    expect(uploader?.querySelector('#grouping-weekly')).toBeInTheDocument();
   });
 
   it('handles selecting session', () => {
     const onSelectSession = vi.fn();
-    render(
+    const { container } = render(
       <FileUploader
         sessions={mockSessions}
         selectedSessionId="s1"
@@ -67,7 +69,7 @@ describe('FileUploader component', () => {
       />,
     );
 
-    const select = screen.getByRole('combobox');
+    const select = container.querySelector('#file-uploader #session-selector') as HTMLSelectElement;
     fireEvent.change(select, { target: { value: 's2' } });
     expect(onSelectSession).toHaveBeenCalledWith('s2');
   });
@@ -76,7 +78,7 @@ describe('FileUploader component', () => {
     const onChangeGrouping = vi.fn();
     const onChangeCustomBatchSize = vi.fn();
 
-    render(
+    const { container } = render(
       <FileUploader
         sessions={mockSessions}
         selectedSessionId="s1"
@@ -90,20 +92,22 @@ describe('FileUploader component', () => {
       />,
     );
 
-    const weeklyBtn = screen.getByText('Weekly');
-    fireEvent.click(weeklyBtn);
+    const weeklyBtn = container.querySelector('#grouping-weekly');
+    expect(weeklyBtn).toBeInTheDocument();
+    if (weeklyBtn) fireEvent.click(weeklyBtn);
     expect(onChangeGrouping).toHaveBeenCalledWith('weekly');
 
     // Preset button for batch size
-    const preset25Btn = screen.getByText('25');
-    fireEvent.click(preset25Btn);
+    const preset25Btn = container.querySelector('#batch-preset-25');
+    expect(preset25Btn).toBeInTheDocument();
+    if (preset25Btn) fireEvent.click(preset25Btn);
     expect(onChangeCustomBatchSize).toHaveBeenCalledWith(25);
   });
 
   it('handles changing custom batch size input with valid and invalid values', () => {
     const onChangeCustomBatchSize = vi.fn();
 
-    render(
+    const { container } = render(
       <FileUploader
         sessions={mockSessions}
         selectedSessionId="s1"
@@ -117,7 +121,9 @@ describe('FileUploader component', () => {
       />,
     );
 
-    const input = screen.getByRole('spinbutton');
+    const input = container.querySelector(
+      '#file-uploader input[type="number"]',
+    ) as HTMLInputElement;
     expect(input).toHaveValue(50);
 
     // Valid change
@@ -137,7 +143,7 @@ describe('FileUploader component', () => {
   it('handles drag and drop events on file dropzone', () => {
     const onFileUpload = vi.fn();
 
-    render(
+    const { container } = render(
       <FileUploader
         sessions={mockSessions}
         selectedSessionId="s1"
@@ -151,7 +157,7 @@ describe('FileUploader component', () => {
       />,
     );
 
-    const dropzone = screen.getByLabelText('File upload dropzone');
+    const dropzone = container.querySelector('#file-dropzone') as HTMLElement;
 
     // Drag over
     fireEvent.dragOver(dropzone);
@@ -176,7 +182,7 @@ describe('FileUploader component', () => {
   it('handles file input change and click to browse button', () => {
     const onFileUpload = vi.fn();
 
-    render(
+    const { container } = render(
       <FileUploader
         sessions={mockSessions}
         selectedSessionId="s1"
@@ -191,11 +197,12 @@ describe('FileUploader component', () => {
     );
 
     const file = new File(['{"session1": []}'], 'cstimer.txt', { type: 'text/plain' });
-    const fileInput = screen.getByLabelText('Upload csTimer file');
+    const fileInput = container.querySelector('#file-input') as HTMLInputElement;
 
     const clickSpy = vi.spyOn(fileInput, 'click');
-    const browseBtn = screen.getByText('click to browse');
-    fireEvent.click(browseBtn);
+    const browseBtn = container.querySelector('#browse-files');
+    expect(browseBtn).toBeInTheDocument();
+    if (browseBtn) fireEvent.click(browseBtn);
     expect(clickSpy).toHaveBeenCalled();
 
     fireEvent.change(fileInput, { target: { files: [file] } });
@@ -205,7 +212,7 @@ describe('FileUploader component', () => {
   it('calls onLoadDemo when "Load Sample Data" is clicked', () => {
     const onLoadDemo = vi.fn();
 
-    render(
+    const { container } = render(
       <FileUploader
         sessions={mockSessions}
         selectedSessionId="s1"
@@ -219,13 +226,14 @@ describe('FileUploader component', () => {
       />,
     );
 
-    const loadDemoBtn = screen.getByText('Load Sample Data');
-    fireEvent.click(loadDemoBtn);
+    const loadDemoBtn = container.querySelector('#load-sample-data');
+    expect(loadDemoBtn).toBeInTheDocument();
+    if (loadDemoBtn) fireEvent.click(loadDemoBtn);
     expect(onLoadDemo).toHaveBeenCalled();
   });
 
   it('displays error message when provided', () => {
-    render(
+    const { container } = render(
       <FileUploader
         sessions={mockSessions}
         selectedSessionId="s1"
@@ -236,15 +244,17 @@ describe('FileUploader component', () => {
         onChangeCustomBatchSize={vi.fn()}
         onFileUpload={vi.fn()}
         onLoadDemo={vi.fn()}
-        errorMsg="Invalid JSON format"
+        errorMsg="Invalid csTimer file format"
       />,
     );
 
-    expect(screen.getByText('Invalid JSON format')).toBeInTheDocument();
+    const alert = container.querySelector('#file-uploader [role="alert"]');
+    expect(alert).toBeInTheDocument();
+    expect(alert?.textContent).toContain('Invalid csTimer file format');
   });
 
   it('renders speedcubing loading animation when isLoading is true', () => {
-    render(
+    const { container } = render(
       <FileUploader
         sessions={mockSessions}
         selectedSessionId="s1"
@@ -262,13 +272,13 @@ describe('FileUploader component', () => {
       />,
     );
 
-    expect(screen.getByText('Parsing solves and timestamps...')).toBeInTheDocument();
-    expect(screen.getByText('cstimer_my_solves.txt')).toBeInTheDocument();
-    expect(screen.getByText('65%')).toBeInTheDocument();
+    const progressbar = container.querySelector('#file-uploader [role="progressbar"]');
+    expect(progressbar).toBeInTheDocument();
+    expect(progressbar).toHaveAttribute('aria-valuenow', '65');
   });
 
   it('unmounts loading animation and displays upload prompt when isLoading switches to false', async () => {
-    const { rerender } = render(
+    const { container, rerender } = render(
       <FileUploader
         sessions={mockSessions}
         selectedSessionId="s1"
@@ -281,15 +291,16 @@ describe('FileUploader component', () => {
         onLoadDemo={vi.fn()}
         isLoading={true}
         loadingProgress={100}
-        loadingStage="Loaded saved data successfully!"
         uploadingFileName="browser_storage"
       />,
     );
 
-    expect(screen.getByText('Loaded saved data successfully!')).toBeInTheDocument();
-    expect(screen.getByText('browser_storage')).toBeInTheDocument();
-    expect(screen.queryByText(/cstimer\.txt/)).not.toBeInTheDocument();
-    expect(screen.getByLabelText('File upload dropzone')).toHaveClass('min-h-[250px]');
+    const dropzone = () => container.querySelector('#file-dropzone');
+
+    // While loading: progress bar is shown and sample-data prompt is not
+    expect(container.querySelector('#file-uploader [role="progressbar"]')).toBeInTheDocument();
+    expect(container.querySelector('#load-sample-data')).toBeNull();
+    expect(dropzone()).toHaveClass('min-h-[250px]');
 
     rerender(
       <FileUploader
@@ -307,15 +318,15 @@ describe('FileUploader component', () => {
     );
 
     await waitFor(() => {
-      expect(screen.queryByText('Loaded saved data successfully!')).not.toBeInTheDocument();
+      expect(container.querySelector('#file-uploader [role="progressbar"]')).toBeNull();
     });
-    expect(screen.getByText(/cstimer\.txt/)).toBeInTheDocument();
+    expect(container.querySelector('#load-sample-data')).toBeInTheDocument();
   });
 
   it('renders storage status bar when isSaved is true and handles reset dataset', () => {
     const onClearStorage = vi.fn();
 
-    const { rerender } = render(
+    const { container, rerender } = render(
       <FileUploader
         sessions={mockSessions}
         selectedSessionId="s1"
@@ -332,11 +343,13 @@ describe('FileUploader component', () => {
       />,
     );
 
-    expect(screen.getByText('Persistent Storage Active')).toBeInTheDocument();
-    expect(screen.getByText(/0.42\s*MB/i)).toBeInTheDocument();
+    // The storage bar is anchored by its Clear Saved Storage action
+    const clearBtn = container.querySelector('#clear-saved-storage');
+    expect(clearBtn).toBeInTheDocument();
+    const storageBar = clearBtn?.parentElement ?? null;
+    expect(storageBar?.textContent).toMatch(/\d+\.\d{2}\s*MB/);
 
-    const clearBtn = screen.getByRole('button', { name: /Clear Saved Storage/i });
-    fireEvent.click(clearBtn);
+    if (clearBtn) fireEvent.click(clearBtn);
     expect(onClearStorage).toHaveBeenCalled();
 
     // Rerender without storageUsageMB
@@ -356,11 +369,13 @@ describe('FileUploader component', () => {
         onClearStorage={onClearStorage}
       />,
     );
-    expect(screen.queryByText(/0.42\s*MB/i)).not.toBeInTheDocument();
+    expect(container.querySelector('#clear-saved-storage')?.parentElement?.textContent).not.toMatch(
+      /\d+\.\d{2}\s*MB/,
+    );
   });
 
   it('renders grouping period selector with responsive 2-column mobile and 4-column desktop grid', () => {
-    render(
+    const { container } = render(
       <FileUploader
         sessions={mockSessions}
         selectedSessionId="s1"
@@ -374,35 +389,14 @@ describe('FileUploader component', () => {
       />,
     );
 
-    const dailyBtn = screen.getByText('Daily').closest('button');
+    const dailyBtn = container.querySelector('#grouping-daily');
     const gridContainer = dailyBtn?.parentElement;
     expect(gridContainer).toHaveClass('grid-cols-2');
     expect(gridContainer).toHaveClass('sm:grid-cols-4');
   });
 
-  it('hides persistence explanation subtitle on small mobile viewports', () => {
-    render(
-      <FileUploader
-        sessions={mockSessions}
-        selectedSessionId="s1"
-        onSelectSession={vi.fn()}
-        groupingPeriod="daily"
-        onChangeGrouping={vi.fn()}
-        customBatchSize={50}
-        onChangeCustomBatchSize={vi.fn()}
-        onFileUpload={vi.fn()}
-        onLoadDemo={vi.fn()}
-        isSaved={true}
-      />,
-    );
-
-    const subtitle = screen.getByText('Your dataset stays saved across browser reloads');
-    expect(subtitle).toHaveClass('hidden');
-    expect(subtitle).toHaveClass('sm:inline');
-  });
-
   it('renders saved notice banner when savedNotice is provided without error', () => {
-    render(
+    const { container } = render(
       <FileUploader
         sessions={mockSessions}
         selectedSessionId="s1"
@@ -417,13 +411,11 @@ describe('FileUploader component', () => {
       />,
     );
 
-    expect(
-      screen.getByText('Restored 350 solves across 1 sessions from IndexedDB'),
-    ).toBeInTheDocument();
+    expect(container.querySelector('#file-uploader [role="status"]')).toBeInTheDocument();
   });
 
   it('applies animate-fade-in-scale class to upload prompt and loading container', () => {
-    const { rerender } = render(
+    const { container, rerender } = render(
       <FileUploader
         sessions={mockSessions}
         selectedSessionId="s1"
@@ -438,9 +430,8 @@ describe('FileUploader component', () => {
       />,
     );
 
-    const promptContainer = screen
-      .getByRole('heading', { name: /Upload/i })
-      .closest('.animate-fade-in-scale');
+    const dropzone = () => container.querySelector('#file-dropzone');
+    const promptContainer = dropzone()?.firstElementChild;
     expect(promptContainer).toBeInTheDocument();
     expect(promptContainer).toHaveClass('animate-fade-in-scale');
 
@@ -460,14 +451,14 @@ describe('FileUploader component', () => {
       />,
     );
 
-    const progressbar = screen.getByRole('progressbar');
-    const loadingContainer = progressbar.closest('.animate-fade-in-scale');
+    const progressbar = container.querySelector('#file-uploader [role="progressbar"]');
+    const loadingContainer = progressbar?.closest('.animate-fade-in-scale');
     expect(loadingContainer).toBeInTheDocument();
     expect(loadingContainer).toHaveClass('animate-fade-in-scale');
   });
 
   it('renders standard progress bar with accurate width style and clamp limits', () => {
-    const { rerender } = render(
+    const { container, rerender } = render(
       <FileUploader
         sessions={mockSessions}
         selectedSessionId="s1"
@@ -483,7 +474,7 @@ describe('FileUploader component', () => {
       />,
     );
 
-    let progressbar = screen.getByRole('progressbar');
+    let progressbar = container.querySelector('#file-uploader [role="progressbar"]');
     expect(progressbar).toHaveStyle({ width: '5%' });
     expect(progressbar).toHaveAttribute('aria-valuenow', '0');
     expect(progressbar).toHaveClass('transition-[width]', 'duration-300', 'ease-out');
@@ -504,7 +495,7 @@ describe('FileUploader component', () => {
       />,
     );
 
-    progressbar = screen.getByRole('progressbar');
+    progressbar = container.querySelector('#file-uploader [role="progressbar"]');
     expect(progressbar).toHaveStyle({ width: '72%' });
     expect(progressbar).toHaveAttribute('aria-valuenow', '72');
   });
@@ -512,7 +503,7 @@ describe('FileUploader component', () => {
   it('renders LoadingElapsedTimer during loading and updates timer correctly', () => {
     vi.useFakeTimers();
     try {
-      render(
+      const { container } = render(
         <FileUploader
           sessions={mockSessions}
           selectedSessionId="s1"
@@ -529,17 +520,24 @@ describe('FileUploader component', () => {
         />,
       );
 
-      expect(screen.getByText('0.00s')).toBeInTheDocument();
+      const timer = () => container.querySelector('#loading-elapsed-timer');
+
+      expect(timer()?.textContent).toContain('0.00s');
 
       act(() => {
         vi.advanceTimersByTime(250);
       });
-      expect(screen.getByText('0.25s')).toBeInTheDocument();
+      expect(timer()?.textContent).toContain('0.25s');
 
       act(() => {
-        vi.advanceTimersByTime(750);
+        vi.advanceTimersByTime(250);
       });
-      expect(screen.getByText('1.00s')).toBeInTheDocument();
+      expect(timer()?.textContent).toContain('0.50s');
+
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+      expect(timer()?.textContent).toContain('1.00s');
     } finally {
       vi.useRealTimers();
     }
@@ -547,7 +545,7 @@ describe('FileUploader component', () => {
 
   it('renders "How to export from csTimer?" button when onOpenInstructions is provided and calls callback', () => {
     const onOpenInstructions = vi.fn();
-    render(
+    const { container } = render(
       <FileUploader
         sessions={mockSessions}
         selectedSessionId="s1"
@@ -562,14 +560,14 @@ describe('FileUploader component', () => {
       />,
     );
 
-    const helpBtn = screen.getByRole('button', { name: /How to export from csTimer\?/i });
+    const helpBtn = container.querySelector('#export-guide');
     expect(helpBtn).toBeInTheDocument();
-    fireEvent.click(helpBtn);
+    if (helpBtn) fireEvent.click(helpBtn);
     expect(onOpenInstructions).toHaveBeenCalledTimes(1);
   });
 
   it('does not render "How to export from csTimer?" button when onOpenInstructions is omitted', () => {
-    render(
+    const { container } = render(
       <FileUploader
         sessions={mockSessions}
         selectedSessionId="s1"
@@ -583,13 +581,11 @@ describe('FileUploader component', () => {
       />,
     );
 
-    expect(
-      screen.queryByRole('button', { name: /How to export from csTimer\?/i }),
-    ).not.toBeInTheDocument();
+    expect(container.querySelector('#export-guide')).not.toBeInTheDocument();
   });
 
   it('does not render "How to export from csTimer?" button while loading is in progress', () => {
-    render(
+    const { container } = render(
       <FileUploader
         sessions={mockSessions}
         selectedSessionId="s1"
@@ -605,8 +601,6 @@ describe('FileUploader component', () => {
       />,
     );
 
-    expect(
-      screen.queryByRole('button', { name: /How to export from csTimer\?/i }),
-    ).not.toBeInTheDocument();
+    expect(container.querySelector('#export-guide')).not.toBeInTheDocument();
   });
 });

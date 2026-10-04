@@ -53,9 +53,13 @@ export const InstructionModal: React.FC<InstructionModalProps> = ({ isOpen, onCl
   }
 
   const modalContent = (
-    <div className="fade-in fixed inset-0 z-[100] flex animate-in flex-col items-center justify-center overflow-y-auto p-3 sm:p-6 duration-200 safe-area-modal">
+    <div
+      id="instruction-modal"
+      className="fade-in fixed inset-0 z-[100] flex animate-in flex-col items-center justify-center overflow-y-auto p-3 sm:p-6 duration-200 safe-area-modal"
+    >
       {/* Backdrop overlay button */}
       <button
+        id="instruction-modal-overlay"
         type="button"
         aria-label="Close modal overlay"
         tabIndex={-1}
@@ -90,6 +94,7 @@ export const InstructionModal: React.FC<InstructionModalProps> = ({ isOpen, onCl
           </div>
 
           <button
+            id="instruction-modal-close"
             ref={closeButtonRef}
             type="button"
             onClick={onClose}
@@ -263,6 +268,7 @@ export const InstructionModal: React.FC<InstructionModalProps> = ({ isOpen, onCl
           </a>
 
           <button
+            id="instruction-modal-confirm"
             type="button"
             onClick={onClose}
             className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2 text-xs font-semibold text-stone-950 shadow-md shadow-amber-500/10 transition-all hover:from-amber-400 hover:to-orange-400 active:scale-95"

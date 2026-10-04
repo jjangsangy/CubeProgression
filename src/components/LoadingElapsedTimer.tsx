@@ -32,7 +32,10 @@ export const LoadingElapsedTimer: React.FC<LoadingElapsedTimerProps> = memo(
     }, [intervalMs, initialStartTime]);
 
     return (
-      <span className="flex items-center gap-1 font-semibold text-amber-400">
+      <span
+        id="loading-elapsed-timer"
+        className="flex items-center gap-1 font-semibold text-amber-400"
+      >
         <Timer className="h-3 w-3 animate-spin text-amber-400" />
         {elapsed.toFixed(2)}s
       </span>

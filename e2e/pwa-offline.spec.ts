@@ -98,24 +98,24 @@ test.describe('PWA & Offline Capability', () => {
 
     // Trigger offline window event to verify UI badge
     await page.evaluate(() => window.dispatchEvent(new Event('offline')));
-    await expect(page.getByRole('status', { name: 'Offline mode' })).toBeVisible();
+    await expect(page.locator('#navbar-offline-status')).toBeVisible();
 
     // Reload the page while completely offline
     await page.reload();
 
     // App should successfully reload from Service Worker cache and render UI
     await expect(page.locator('#session-selector')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('CubeProgression')).toBeVisible();
-    await expect(page.getByRole('status', { name: 'Offline mode' })).toBeVisible();
+    await expect(page.locator('#navbar h1')).toBeVisible();
+    await expect(page.locator('#navbar-offline-status')).toBeVisible();
 
     // Verify charts and data table successfully render from offline cache
     await expect(page.locator('.recharts-surface').first()).toBeVisible({ timeout: 10000 });
-    await page.getByTestId('deferred-chart-solves-table').scrollIntoViewIfNeeded();
-    await expect(page.locator('table tbody tr').first()).toBeVisible({ timeout: 10000 });
+    await page.locator('#deferred-solves-table').scrollIntoViewIfNeeded();
+    await expect(page.locator('#solves-table tbody tr').first()).toBeVisible({ timeout: 10000 });
 
     // Restore online
     await context.setOffline(false);
     await page.evaluate(() => window.dispatchEvent(new Event('online')));
-    await expect(page.getByRole('status', { name: 'Offline mode' })).not.toBeVisible();
+    await expect(page.locator('#navbar-offline-status')).not.toBeVisible();
   });
 });

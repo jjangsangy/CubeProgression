@@ -24,6 +24,7 @@ import {
 import { ChartCardWrapper } from './ChartCardWrapper';
 
 interface DensityShiftChartProps {
+  id?: string;
   solves: Solve[];
   groupingPeriod?: GroupingPeriod;
   periodGroups?: PeriodGroup[];
@@ -32,6 +33,7 @@ interface DensityShiftChartProps {
 }
 
 export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
+  id = 'density-shift-chart',
   solves,
   groupingPeriod = 'daily',
   periodGroups,
@@ -609,7 +611,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
 
   return (
     <ChartCardWrapper
-      testId="chart-card-density-shift"
+      id={id}
       title={title}
       subtitle="Kernel Density Estimation (KDE) comparison showing probability density shift between any two sampled regions across the session distribution."
       mobileSubtitle="KDE curves showing probability density shifts between sampled solve windows."
@@ -884,7 +886,10 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
 
       {/* Mobile-only bottom axis title aligned with the graph edges, using graph-matching font & color */}
       {isMobileScreen && (
-        <div className="-mt-1.5 flex items-center justify-between px-1 text-[11px] leading-tight select-none">
+        <div
+          id="density-mobile-axis-title"
+          className="-mt-1.5 flex items-center justify-between px-1 text-[11px] leading-tight select-none"
+        >
           <span style={{ color: '#94a3b8' }}>Density</span>
         </div>
       )}
@@ -899,6 +904,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               e.preventDefault();
             }
           }}
+          id="density-scrubber-track"
           className="relative h-12 sm:h-14 md:h-16 lg:h-20 w-full cursor-pointer select-none rounded-xl border border-stone-800 bg-stone-950/90 shadow-inner"
           aria-label="Solve distribution timeline scrubbers track"
         >
@@ -938,7 +944,6 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               {groupBoundaries.map((b) => (
                 <g key={`group-boundary-${b.periodNumber}-${b.solveIndex}`}>
                   <line
-                    data-testid="group-boundary-line"
                     x1={b.x}
                     y1={0}
                     x2={b.x}
@@ -960,6 +965,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
 
           {/* Scrubber 1 (Baseline - Rose with opacity, no text badge) */}
           <div
+            id="density-scrubber-baseline"
             tabIndex={0}
             role="slider"
             aria-label="Baseline scrubber position"
@@ -1003,6 +1009,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
           >
             {/* Left Ribbed Resize Handle */}
             <button
+              id="density-handle-baseline-start"
               type="button"
               className="group/handle flex h-full w-3.5 cursor-ew-resize touch-none items-center justify-center gap-[2px] rounded-l bg-rose-500/10 transition-colors hover:bg-rose-400/30"
               onClick={(e) => e.stopPropagation()}
@@ -1020,6 +1027,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
 
             {/* Right Ribbed Resize Handle */}
             <button
+              id="density-handle-baseline-end"
               type="button"
               className="group/handle flex h-full w-3.5 cursor-ew-resize touch-none items-center justify-center gap-[2px] rounded-r bg-rose-500/10 transition-colors hover:bg-rose-400/30"
               onClick={(e) => e.stopPropagation()}
@@ -1038,6 +1046,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
 
           {/* Scrubber 2 (Recent - Emerald with opacity, no text badge) */}
           <div
+            id="density-scrubber-recent"
             tabIndex={0}
             role="slider"
             aria-label="Recent scrubber position"
@@ -1081,6 +1090,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
           >
             {/* Left Ribbed Resize Handle */}
             <button
+              id="density-handle-recent-start"
               type="button"
               className="group/handle flex h-full w-3.5 cursor-ew-resize touch-none items-center justify-center gap-[2px] rounded-l bg-emerald-500/10 transition-colors hover:bg-emerald-400/30"
               onClick={(e) => e.stopPropagation()}
@@ -1098,6 +1108,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
 
             {/* Right Ribbed Resize Handle */}
             <button
+              id="density-handle-recent-end"
               type="button"
               className="group/handle flex h-full w-3.5 cursor-ew-resize touch-none items-center justify-center gap-[2px] rounded-r bg-emerald-500/10 transition-colors hover:bg-emerald-400/30"
               onClick={(e) => e.stopPropagation()}

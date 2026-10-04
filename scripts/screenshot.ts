@@ -64,8 +64,9 @@ async function main() {
 
   await page.goto(URL, { waitUntil: 'networkidle' });
   // Wait for demo dataset and dashboard to load
-  await page.waitForSelector('h2:has-text("Overall Progression")', { timeout: 15000 });
-  await page.waitForSelector('text=Upload cstimer', { timeout: 15000 });
+  await page.waitForSelector('#dashboard-view', { timeout: 15000 });
+  await page.waitForSelector('#progression-chart', { timeout: 15000 });
+  await page.waitForSelector('#file-uploader', { timeout: 15000 });
 
   // Scroll through all deferred chart sections to ensure all IntersectionObservers trigger and content loads
   const deferredTitles = [
@@ -77,15 +78,12 @@ async function main() {
   ];
 
   for (const name of deferredTitles) {
-    const el = await page.$(`[data-testid="deferred-chart-${name}"]`);
+    const el = await page.$(`#deferred-${name}`);
     if (el) {
       await el.scrollIntoViewIfNeeded();
       await page.waitForTimeout(600);
       await page
-        .waitForSelector(
-          `[data-testid="deferred-chart-${name}"] > :not([data-testid="deferred-chart-skeleton"])`,
-          { timeout: 8000 },
-        )
+        .waitForSelector(`#deferred-${name} > :not(.animate-pulse)`, { timeout: 8000 })
         .catch(() => {});
       await page.waitForTimeout(300);
     }

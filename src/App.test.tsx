@@ -1,28 +1,28 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 import * as dbStorage from './utils/dbStorage';
+
+const getFileInput = () => document.querySelector('#file-input') as HTMLInputElement;
 
 describe('App component', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('renders app title, Navbar, and loads sample data on mount', async () => {
-    render(<App />);
+  it('renders the Navbar and loads the sample dataset on mount', async () => {
+    const { container } = render(<App />);
 
-    expect(screen.getByText('CubeProgression')).toBeInTheDocument();
-    expect(
-      screen.getByText('Checking IndexedDB storage for saved csTimer data...'),
-    ).toBeInTheDocument();
-    expect(screen.getByText('browser_storage')).toBeInTheDocument();
+    expect(container.querySelector('#navbar h1')).toBeInTheDocument();
+    expect(container.querySelector('#file-uploader')).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByText('Solve Times & Moving Averages')).toBeInTheDocument();
+      expect(container.querySelector('#progression-chart')).toBeInTheDocument();
     });
 
+    // The dashboard replaces the loading placeholder once the session resolves
     await waitFor(() => {
-      expect(screen.queryByText('Complete!')).not.toBeInTheDocument();
+      expect(container.querySelector('#dashboard-loading-skeleton')).toBeNull();
     });
   });
 
@@ -66,64 +66,73 @@ describe('App component', () => {
       ],
     });
 
-    render(<App />);
+    const { container } = render(<App />);
 
     await waitFor(() => {
-      expect(screen.getAllByText(/Restored Session/).length).toBeGreaterThan(0);
+      const select = container.querySelector('#session-selector') as HTMLSelectElement;
+      expect(select).toBeInTheDocument();
+      expect(select.value).toBe('session1');
+      expect(select.querySelectorAll('option')).toHaveLength(1);
     });
 
-    await waitFor(() => {
-      expect(screen.queryByText('Loaded saved data successfully!')).not.toBeInTheDocument();
-    });
+    expect(container.querySelector('#file-uploader [role="alert"]')).toBeNull();
   });
 
   it('allows changing session and grouping period', async () => {
-    render(<App />);
+    const { container } = render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByText('Solve Times & Moving Averages')).toBeInTheDocument();
+      expect(container.querySelector('#progression-chart')).toBeInTheDocument();
     });
 
-    const weeklyBtn = screen.getByText('Weekly');
-    fireEvent.click(weeklyBtn);
-
-    expect(weeklyBtn.closest('button')).toHaveClass('bg-amber-500/15');
+    const weeklyBtn = container.querySelector('#grouping-weekly');
+    expect(weeklyBtn).toBeInTheDocument();
+    expect(weeklyBtn).toHaveAttribute('aria-pressed', 'false');
+    if (weeklyBtn) fireEvent.click(weeklyBtn);
+    expect(weeklyBtn).toHaveAttribute('aria-pressed', 'true');
 
     // Switch to By Solve Count (customBatch)
-    const batchBtn = screen.getByText('By Solve Count');
-    fireEvent.click(batchBtn);
+    const batchBtn = container.querySelector('#grouping-customBatch');
+    expect(batchBtn).toBeInTheDocument();
+    if (batchBtn) fireEvent.click(batchBtn);
+    expect(batchBtn).toHaveAttribute('aria-pressed', 'true');
 
     // Change batch size input
-    const batchInput = screen.getByRole('spinbutton');
+    const batchInput = container.querySelector(
+      '#file-uploader input[type="number"]',
+    ) as HTMLInputElement;
+    expect(batchInput).toBeInTheDocument();
     fireEvent.change(batchInput, { target: { value: '75' } });
     expect(batchInput).toHaveValue(75);
   });
 
   it('allows resetting dataset and re-loading demo data', async () => {
-    render(<App />);
+    const { container } = render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByText('Solve Times & Moving Averages')).toBeInTheDocument();
+      expect(container.querySelector('#progression-chart')).toBeInTheDocument();
     });
 
-    const resetBtn = screen.getByTitle('Reset Data');
-    fireEvent.click(resetBtn);
+    const resetBtn = container.querySelector('#navbar-reset');
+    expect(resetBtn).toBeInTheDocument();
+    if (resetBtn) fireEvent.click(resetBtn);
 
-    expect(screen.queryByText('Solve Times & Moving Averages')).not.toBeInTheDocument();
+    expect(container.querySelector('#progression-chart')).toBeNull();
 
-    const loadDemoBtns = screen.getAllByText(/Load Sample Data/);
-    fireEvent.click(loadDemoBtns[0]);
+    const loadDemoBtn = container.querySelector('#load-sample-data');
+    expect(loadDemoBtn).toBeInTheDocument();
+    if (loadDemoBtn) fireEvent.click(loadDemoBtn);
 
     await waitFor(() => {
-      expect(screen.getByText('Solve Times & Moving Averages')).toBeInTheDocument();
+      expect(container.querySelector('#progression-chart')).toBeInTheDocument();
     });
   });
 
   it('handles file upload error handling for invalid files', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    render(<App />);
+    const { container } = render(<App />);
 
-    const fileInput = screen.getByLabelText('Upload csTimer file');
+    const fileInput = getFileInput();
     await waitFor(() => {
       expect(fileInput).not.toBeDisabled();
     });
@@ -135,15 +144,17 @@ describe('App component', () => {
     fireEvent.change(fileInput, { target: { files: [invalidFile] } });
 
     await waitFor(() => {
-      expect(screen.getByText(/Invalid csTimer file format/i)).toBeInTheDocument();
+      expect(container.querySelector('#file-uploader [role="alert"]')).toBeInTheDocument();
     });
+    const alert = container.querySelector('#file-uploader [role="alert"]');
+    expect(alert?.textContent).toContain('Invalid csTimer file format');
     expect(consoleErrorSpy).toHaveBeenCalled();
   });
 
   it('handles valid csTimer file upload', async () => {
-    render(<App />);
+    const { container } = render(<App />);
 
-    const fileInput = screen.getByLabelText('Upload csTimer file');
+    const fileInput = getFileInput();
     await waitFor(() => {
       expect(fileInput).not.toBeDisabled();
     });
@@ -162,29 +173,33 @@ describe('App component', () => {
     fireEvent.change(fileInput, { target: { files: [validFile] } });
 
     await waitFor(() => {
-      expect(screen.getAllByText(/Uploaded 3x3 Session/).length).toBeGreaterThan(0);
+      const select = container.querySelector('#session-selector') as HTMLSelectElement;
+      expect(select.querySelectorAll('option')).toHaveLength(1);
+      expect(select.value).toBe('session1');
     });
   });
 
   it('handles clearing storage via FileUploader and selecting sessions', async () => {
-    render(<App />);
+    const { container } = render(<App />);
 
-    const fileInput = screen.getByLabelText('Upload csTimer file');
+    const fileInput = getFileInput();
     await waitFor(() => {
       expect(fileInput).not.toBeDisabled();
     });
 
-    // Change session selector if available
-    const sessionSelector = screen.getByRole('combobox');
-    fireEvent.change(sessionSelector, { target: { value: 'session_demo_1' } });
+    // Select a non-default session before clearing
+    const sessionSelector = container.querySelector('#session-selector') as HTMLSelectElement;
+    fireEvent.change(sessionSelector, { target: { value: 'session2' } });
+    expect(sessionSelector.value).toBe('session2');
 
     // Clear saved storage
-    const clearStorageBtn = screen.getByTitle('Clear saved data from browser storage');
-    fireEvent.click(clearStorageBtn);
+    const clearStorageBtn = container.querySelector('#clear-saved-storage');
+    expect(clearStorageBtn).toBeInTheDocument();
+    if (clearStorageBtn) fireEvent.click(clearStorageBtn);
 
     await waitFor(() => {
-      expect(screen.queryByText(/F2L Yellow Cross Progression/)).not.toBeInTheDocument();
-      expect(screen.getByLabelText('File upload dropzone')).toBeInTheDocument();
+      expect(container.querySelector('#progression-chart')).toBeNull();
+      expect(container.querySelector('#file-dropzone')).toBeInTheDocument();
     });
   });
 
@@ -196,9 +211,9 @@ describe('App component', () => {
       this.onerror?.(new ProgressEvent('error') as ProgressEvent<FileReader>);
     });
 
-    render(<App />);
+    const { container } = render(<App />);
 
-    const fileInput = screen.getByLabelText('Upload csTimer file');
+    const fileInput = getFileInput();
     await waitFor(() => {
       expect(fileInput).not.toBeDisabled();
     });
@@ -207,8 +222,10 @@ describe('App component', () => {
     fireEvent.change(fileInput, { target: { files: [file] } });
 
     await waitFor(() => {
-      expect(screen.getByText('Error reading uploaded file.')).toBeInTheDocument();
+      expect(container.querySelector('#file-uploader [role="alert"]')).toBeInTheDocument();
     });
+    const alert = container.querySelector('#file-uploader [role="alert"]');
+    expect(alert?.textContent).toContain('Error reading uploaded file.');
     consoleErrorSpy.mockRestore();
   });
 
@@ -217,10 +234,10 @@ describe('App component', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(dbStorage, 'getSavedDataset').mockRejectedValueOnce(new Error('IndexedDB corrupted'));
 
-    render(<App />);
+    const { container } = render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByText('Solve Times & Moving Averages')).toBeInTheDocument();
+      expect(container.querySelector('#progression-chart')).toBeInTheDocument();
     });
 
     expect(consoleErrorSpy).toHaveBeenCalled();
@@ -229,9 +246,9 @@ describe('App component', () => {
 
   it('displays error message when an empty (0-byte) file is uploaded and recovers when loading sample data', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    render(<App />);
+    const { container } = render(<App />);
 
-    const fileInput = screen.getByLabelText('Upload csTimer file');
+    const fileInput = getFileInput();
     await waitFor(() => {
       expect(fileInput).not.toBeDisabled();
     });
@@ -240,79 +257,85 @@ describe('App component', () => {
     fireEvent.change(fileInput, { target: { files: [emptyFile] } });
 
     await waitFor(() => {
-      expect(screen.getByText('File is empty.')).toBeInTheDocument();
+      expect(container.querySelector('#file-uploader [role="alert"]')).toBeInTheDocument();
     });
+    const alert = container.querySelector('#file-uploader [role="alert"]');
+    expect(alert?.textContent).toContain('File is empty.');
 
     // Recover by clicking Load Sample Data
-    const loadSampleBtns = screen.getAllByRole('button', { name: /Load Sample Data/i });
-    fireEvent.click(loadSampleBtns[0]);
+    const loadSampleBtn = container.querySelector('#load-sample-data');
+    expect(loadSampleBtn).toBeInTheDocument();
+    if (loadSampleBtn) fireEvent.click(loadSampleBtn);
 
     await waitFor(() => {
-      expect(screen.queryByText('File is empty.')).toBeNull();
-      expect(screen.getByText('Solve Times & Moving Averages')).toBeInTheDocument();
+      expect(container.querySelector('#file-uploader [role="alert"]')).toBeNull();
+      expect(container.querySelector('#progression-chart')).toBeInTheDocument();
     });
   });
 
   it('safely handles user interactions when dataset is cleared/empty', async () => {
-    render(<App />);
+    const { container } = render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByText('Solve Times & Moving Averages')).toBeInTheDocument();
+      expect(container.querySelector('#progression-chart')).toBeInTheDocument();
     });
 
     // Reset Data
-    const resetBtn = screen.getByTitle('Reset Data');
-    fireEvent.click(resetBtn);
+    const resetBtn = container.querySelector('#navbar-reset');
+    expect(resetBtn).toBeInTheDocument();
+    if (resetBtn) fireEvent.click(resetBtn);
 
     // Grouping change should not throw
-    const weeklyBtn = screen.getByText('Weekly');
-    fireEvent.click(weeklyBtn);
+    const weeklyBtn = container.querySelector('#grouping-weekly');
+    expect(weeklyBtn).toBeInTheDocument();
+    if (weeklyBtn) fireEvent.click(weeklyBtn);
   });
 
   it('opens and closes the csTimer instruction modal from Navbar and FileUploader across loaded and empty states', async () => {
-    render(<App />);
+    const { container } = render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByText('Solve Times & Moving Averages')).toBeInTheDocument();
+      expect(container.querySelector('#progression-chart')).toBeInTheDocument();
     });
 
     // Modal is initially closed
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(document.querySelector('#instruction-modal')).toBeNull();
 
     // 1. Open from Navbar "csTimer Guide" button and close via Escape key
-    const exportGuideBtn = screen.getByRole('button', { name: 'csTimer Guide' });
-    fireEvent.click(exportGuideBtn);
+    const exportGuideBtn = container.querySelector('#navbar-guide');
+    expect(exportGuideBtn).toBeInTheDocument();
+    if (exportGuideBtn) fireEvent.click(exportGuideBtn);
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText('How to Export from csTimer')).toBeInTheDocument();
+    expect(document.querySelector('#instruction-modal [role="dialog"]')).toBeInTheDocument();
 
     fireEvent.keyDown(window, { key: 'Escape' });
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(document.querySelector('#instruction-modal')).toBeNull();
 
-    // 2. Open from FileUploader button and close via "Got it" button
-    const fileUploaderHelpBtn = screen.getByRole('button', {
-      name: /How to export from csTimer\?/i,
-    });
-    fireEvent.click(fileUploaderHelpBtn);
+    // 2. Open from FileUploader button and close via the confirm button
+    const fileUploaderHelpBtn = container.querySelector('#export-guide');
+    expect(fileUploaderHelpBtn).toBeInTheDocument();
+    if (fileUploaderHelpBtn) fireEvent.click(fileUploaderHelpBtn);
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(document.querySelector('#instruction-modal [role="dialog"]')).toBeInTheDocument();
 
-    const gotItBtn = screen.getByRole('button', { name: 'Got it' });
-    fireEvent.click(gotItBtn);
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    const gotItBtn = document.querySelector('#instruction-modal-confirm');
+    expect(gotItBtn).toBeInTheDocument();
+    if (gotItBtn) fireEvent.click(gotItBtn);
+    expect(document.querySelector('#instruction-modal')).toBeNull();
 
     // 3. Reset dataset to empty state and verify modal is still accessible from both Navbar and FileUploader
-    const resetBtn = screen.getByTitle('Reset Data');
-    fireEvent.click(resetBtn);
+    const resetBtn = container.querySelector('#navbar-reset');
+    expect(resetBtn).toBeInTheDocument();
+    if (resetBtn) fireEvent.click(resetBtn);
 
-    const emptyHelpBtn = screen.getByRole('button', {
-      name: /How to export from csTimer\?/i,
-    });
-    fireEvent.click(emptyHelpBtn);
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    const emptyHelpBtn = container.querySelector('#export-guide');
+    expect(emptyHelpBtn).toBeInTheDocument();
+    if (emptyHelpBtn) fireEvent.click(emptyHelpBtn);
+    expect(document.querySelector('#instruction-modal [role="dialog"]')).toBeInTheDocument();
 
-    const closeBtn = screen.getByRole('button', { name: 'Close instructions modal' });
-    fireEvent.click(closeBtn);
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    const closeBtn = document.querySelector('#instruction-modal-close');
+    expect(closeBtn).toBeInTheDocument();
+    if (closeBtn) fireEvent.click(closeBtn);
+    expect(document.querySelector('#instruction-modal')).toBeNull();
   });
 });

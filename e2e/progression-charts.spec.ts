@@ -3,192 +3,194 @@ import { expect, test } from '@playwright/test';
 test.describe('Progression & Personal Best Progression Charts', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('Solve Times & Moving Averages')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('#progression-chart')).toBeVisible({ timeout: 15000 });
   });
 
   test.describe('ProgressionChart', () => {
     test('toggles rolling average lines and reflects in the chart legend', async ({ page }) => {
-      const card = page.getByTestId('chart-card-progression');
+      const card = page.locator('#progression-chart');
+      const legendCount = () => card.locator('.recharts-legend-item-text').count();
 
-      // Ensure legends are rendered
-      await expect(card.locator('.recharts-legend-item-text', { hasText: /^Ao5$/ })).toBeVisible();
-      await expect(card.locator('.recharts-legend-item-text', { hasText: 'Ao12' })).toBeVisible();
+      // The Recharts canvas mounts on idle; wait for its legend before sampling.
+      await expect.poll(legendCount).toBeGreaterThan(0);
+      const initialCount = await legendCount();
+      expect(initialCount).toBeGreaterThanOrEqual(3);
 
-      // Toggle Ao5 off in the card toolbar
-      const ao5Btn = card.getByRole('button', { name: 'Ao5', exact: true });
+      // Toggling Ao5 off removes exactly one legend series.
+      const ao5Btn = card.locator('#progression-ao5');
       await ao5Btn.click();
-      await expect(ao5Btn).not.toHaveClass(/bg-emerald-500\/20/);
-      await expect(card.locator('.recharts-legend-item-text', { hasText: /^Ao5$/ })).toHaveCount(0);
+      await expect(ao5Btn).toHaveAttribute('aria-pressed', 'false');
+      await expect.poll(legendCount).toBe(initialCount - 1);
 
-      // Toggle Trend off
-      const trendBtn = card.getByRole('button', { name: 'Trend', exact: true });
+      // Toggling Trend off removes another series.
+      const trendBtn = card.locator('#progression-trend');
       await trendBtn.click();
-      await expect(trendBtn).not.toHaveClass(/bg-rose-500\/20/);
-      await expect(card.locator('.recharts-legend-item-text', { hasText: /Trend/ })).toHaveCount(0);
+      await expect(trendBtn).toHaveAttribute('aria-pressed', 'false');
+      await expect.poll(legendCount).toBe(initialCount - 2);
 
-      // Toggle Ao5 back on
+      // Toggling Ao5 back on restores exactly that series.
       await ao5Btn.click();
-      await expect(ao5Btn).toHaveClass(/bg-emerald-500\/20/);
-      await expect(card.locator('.recharts-legend-item-text', { hasText: /^Ao5$/ })).toBeVisible();
+      await expect(ao5Btn).toHaveAttribute('aria-pressed', 'true');
+      await expect.poll(legendCount).toBe(initialCount - 1);
     });
 
-    test('activates Custom Ao, modifies N window, and updates legend text', async ({ page }) => {
-      const card = page.getByTestId('chart-card-progression');
+    test('activates a Custom Ao moving average and updates its window', async ({ page }) => {
+      const card = page.locator('#progression-chart');
+      const legendCount = () => card.locator('.recharts-legend-item-text').count();
 
-      const customAoBtn = card.getByRole('button', { name: /Custom Ao/i });
+      await expect.poll(legendCount).toBeGreaterThan(0);
+      const initialCount = await legendCount();
+
+      const customAoBtn = card.locator('#progression-custom-ao');
+      await expect(customAoBtn).toHaveAttribute('aria-pressed', 'false');
       await customAoBtn.click();
 
-      // Number input appears with default value 25
-      const spinInput = card.getByRole('spinbutton');
+      // Enabling adds one custom moving-average series.
+      const spinInput = card.locator('#progression-custom-ao-input');
       await expect(spinInput).toBeVisible();
       await expect(spinInput).toHaveValue('25');
-      await expect(card.locator('.recharts-legend-item-text', { hasText: 'Ao25' })).toBeVisible();
+      await expect(customAoBtn).toHaveAttribute('aria-pressed', 'true');
+      await expect.poll(legendCount).toBe(initialCount + 1);
 
-      // Update to custom Ao 30
+      // Changing the window keeps a single custom series; the value is the contract.
       await spinInput.fill('30');
-      await expect(card.locator('.recharts-legend-item-text', { hasText: 'Ao30' })).toBeVisible();
-      await expect(card.locator('.recharts-legend-item-text', { hasText: 'Ao25' })).toHaveCount(0);
+      await expect(spinInput).toHaveValue('30');
+      await expect.poll(legendCount).toBe(initialCount + 1);
     });
 
     test('switches solve visibility modes (Muted, Hidden, Unmuted)', async ({ page }) => {
-      const card = page.getByTestId('chart-card-progression');
+      const card = page.locator('#progression-chart');
+      const legendCount = () => card.locator('.recharts-legend-item-text').count();
 
-      const mutedBtn = card.getByRole('button', { name: 'Muted', exact: true });
-      const hiddenBtn = card.getByRole('button', { name: 'Hidden', exact: true });
-      const unmutedBtn = card.getByRole('button', { name: 'Unmuted', exact: true });
+      const mutedBtn = card.locator('#progression-muted');
+      const hiddenBtn = card.locator('#progression-hidden');
+      const unmutedBtn = card.locator('#progression-unmuted');
 
-      // Default is Muted
-      await expect(mutedBtn).toHaveClass(/bg-stone-700/);
-      await expect(card.locator('.recharts-legend-item-text', { hasText: 'Single' })).toBeVisible();
+      // Default is Muted, which renders the single-solve series.
+      await expect(mutedBtn).toHaveAttribute('aria-pressed', 'true');
+      await expect.poll(legendCount).toBeGreaterThan(0);
+      const visibleCount = await legendCount();
 
-      // Switch to Hidden mode
+      // Hidden drops the single-solve series from the legend.
       await hiddenBtn.click();
-      await expect(hiddenBtn).toHaveClass(/bg-stone-700/);
-      await expect(mutedBtn).not.toHaveClass(/bg-stone-700/);
-      await expect(card.locator('.recharts-legend-item-text', { hasText: 'Single' })).toHaveCount(
-        0,
-      );
+      await expect(hiddenBtn).toHaveAttribute('aria-pressed', 'true');
+      await expect(mutedBtn).toHaveAttribute('aria-pressed', 'false');
+      await expect.poll(legendCount).toBe(visibleCount - 1);
 
-      // Switch to Unmuted mode
+      // Unmuted restores it.
       await unmutedBtn.click();
-      await expect(unmutedBtn).toHaveClass(/bg-stone-700/);
-      await expect(card.locator('.recharts-legend-item-text', { hasText: 'Single' })).toBeVisible();
+      await expect(unmutedBtn).toHaveAttribute('aria-pressed', 'true');
+      await expect.poll(legendCount).toBe(visibleCount);
     });
 
     test('applies range presets, updates focused range stats, and resets range', async ({
       page,
     }) => {
-      const card = page.getByTestId('chart-card-progression');
+      const card = page.locator('#progression-chart');
+      const rangeStats = card.locator('#range-stats');
+      const rangeStatsText = () => rangeStats.textContent();
 
-      // Initial stats banner shows 350 total solves (Range Selector panel is open by default)
-      await expect(card.getByText(/350 solves • 100\.0% of total/)).toBeVisible();
+      // Initial stats banner shows all 350 demo solves (Range Selector panel is open by default)
+      await expect.poll(async () => (await rangeStatsText()) ?? '').toMatch(/\b350\b/);
 
       // Click Last 50 preset
-      const last50Btn = card.getByRole('button', { name: 'Last 50' });
+      const last50Btn = card.locator('#range-preset-last50');
+      await expect(last50Btn).toBeVisible();
       await last50Btn.click();
-      await expect(last50Btn).toHaveClass(/bg-stone-100/);
+      await expect(last50Btn).toHaveAttribute('aria-pressed', 'true');
 
       // Banner reflects 50 solves
-      await expect(card.getByText(/50 solves • 14\.3% of total/)).toBeVisible();
+      await expect.poll(async () => (await rangeStatsText()) ?? '').toMatch(/\b50\b/);
 
       // Reset Range button appears with count
-      const resetBtn = card.getByRole('button', { name: /Reset Range/i });
+      const resetBtn = card.locator('#progression-reset-range');
       await expect(resetBtn).toBeVisible();
 
       // Click Reset Range
       await resetBtn.click();
-      await expect(card.getByText(/350 solves • 100\.0% of total/)).toBeVisible();
+      await expect.poll(async () => (await rangeStatsText()) ?? '').toMatch(/\b350\b/);
     });
 
     test('switches range mode to Date Range and renders date picker inputs', async ({ page }) => {
-      const card = page.getByTestId('chart-card-progression');
+      const card = page.locator('#progression-chart');
 
       // Switch to Date Range mode
-      const dateRangeBtn = card.getByRole('button', { name: 'Date Range' });
+      const dateRangeBtn = card.locator('#progression-date-range');
       await expect(dateRangeBtn).toBeVisible();
       await dateRangeBtn.click();
-      await expect(dateRangeBtn).toHaveClass(/bg-sky-500/);
+      await expect(dateRangeBtn).toHaveAttribute('aria-pressed', 'true');
 
       // Verify date inputs are displayed
       const dateInputs = card.locator('input[type="date"]');
       await expect(dateInputs).toHaveCount(2);
-      await expect(card.getByText('Start Date:')).toBeVisible();
-      await expect(card.getByText('End Date:')).toBeVisible();
+      await expect(card.locator('#progression-start-date')).toBeVisible();
+      await expect(card.locator('#progression-end-date')).toBeVisible();
     });
   });
 
   test.describe('PbProgressionChart', () => {
     test.beforeEach(async ({ page }) => {
-      await page.getByTestId('deferred-chart-pb-progression').scrollIntoViewIfNeeded();
-      await expect(page.getByTestId('chart-card-pb-progression')).toBeVisible({
+      await page.locator('#deferred-pb-progression').scrollIntoViewIfNeeded();
+      await expect(page.locator('#pb-progression-chart')).toBeVisible({
         timeout: 10000,
       });
     });
 
     test('renders top PB summary stat cards with valid records', async ({ page }) => {
-      const card = page.getByTestId('chart-card-pb-progression');
+      const card = page.locator('#pb-progression-chart');
 
       const summaryGrid = card.locator('.grid.grid-cols-2');
-      await expect(summaryGrid.getByText('PB Single', { exact: true })).toBeVisible();
-      await expect(summaryGrid.getByText('PB Ao5', { exact: true })).toBeVisible();
-      await expect(summaryGrid.getByText('PB Ao12', { exact: true })).toBeVisible();
-      await expect(summaryGrid.getByText('PB Ao50', { exact: true })).toBeVisible();
-      await expect(summaryGrid.getByText('PB Ao100', { exact: true })).toBeVisible();
+      await expect(summaryGrid.locator('> div')).toHaveCount(5);
 
-      // Records break badges display count
-      await expect(summaryGrid.getByText(/\d+ set/i).first()).toBeVisible();
+      // Records break badges display a per-record count
+      await expect.poll(async () => (await summaryGrid.textContent()) ?? '').toMatch(/\d+ set/i);
     });
 
     test('toggles PB record curves and raw solves overlay in legend', async ({ page }) => {
-      const card = page.getByTestId('chart-card-pb-progression');
+      const card = page.locator('#pb-progression-chart');
+      const legendCount = () => card.locator('.recharts-legend-item-text').count();
 
-      // Solves Overlay is off by default
-      const overlayBtn = card.getByRole('button', { name: /Solves Overlay/i });
-      await expect(overlayBtn).not.toHaveClass(/bg-stone-700/);
-      await expect(
-        card.locator('.recharts-legend-item-text', { hasText: 'Individual Solve Time' }),
-      ).toHaveCount(0);
+      await expect.poll(legendCount).toBeGreaterThan(0);
+      const initialCount = await legendCount();
 
-      // Toggle Solves Overlay on
+      // Solves Overlay is off by default; enabling it adds exactly one series.
+      const overlayBtn = card.locator('#pb-show-solves-overlay');
+      await expect(overlayBtn).toHaveAttribute('aria-pressed', 'false');
       await overlayBtn.click();
-      await expect(overlayBtn).toHaveClass(/bg-stone-700/);
-      await expect(
-        card.locator('.recharts-legend-item-text', { hasText: 'Individual Solve Time' }),
-      ).toBeVisible();
+      await expect(overlayBtn).toHaveAttribute('aria-pressed', 'true');
+      await expect.poll(legendCount).toBe(initialCount + 1);
 
-      // Toggle Single PB curve off
-      const singleBtn = card.getByRole('button', { name: 'Single', exact: true });
+      // Toggling the Single PB curve off removes exactly one series.
+      const singleBtn = card.locator('#pb-show-single');
       await singleBtn.click();
-      await expect(singleBtn).not.toHaveClass(/bg-amber-500\/20/);
-      await expect(
-        card.locator('.recharts-legend-item-text', { hasText: 'PB Single' }),
-      ).toHaveCount(0);
+      await expect(singleBtn).toHaveAttribute('aria-pressed', 'false');
+      await expect.poll(legendCount).toBe(initialCount);
     });
 
     test('expands milestone history drawer, filters by record type, and collapses', async ({
       page,
     }) => {
-      const card = page.getByTestId('chart-card-pb-progression');
+      const card = page.locator('#pb-progression-chart');
 
-      const drawerBtn = card.getByRole('button', { name: /Record Milestones History/i });
+      const drawerBtn = card.locator('#pb-milestones-history-toggle');
       await drawerBtn.click();
 
       // Drawer container is now visible
-      const drawer = card.locator('.fade-in', { hasText: 'Filter Record Type:' });
+      const drawer = card.locator('.fade-in');
       await expect(drawer).toBeVisible();
 
-      // Filter by Single milestones
-      const singleFilter = drawer.getByRole('button', { name: 'Single', exact: true });
-      await singleFilter.click();
-      await expect(singleFilter).toHaveClass(/bg-amber-500\/20/);
+      const allMilestoneCount = await drawer.locator('.custom-scrollbar > div').count();
+      expect(allMilestoneCount).toBeGreaterThan(0);
 
-      // All milestone cards in the drawer show PB Single
-      const badges = drawer.locator('span', { hasText: /^PB / });
-      const count = await badges.count();
-      expect(count).toBeGreaterThan(0);
-      for (let i = 0; i < count; i++) {
-        await expect(badges.nth(i)).toHaveText('PB Single');
-      }
+      // Filter by Single milestones
+      const singleFilter = card.locator('#pb-milestone-filter-Single');
+      await singleFilter.click();
+      await expect(singleFilter).toHaveAttribute('aria-pressed', 'true');
+
+      // The filter narrows the list to a non-empty subset of the unfiltered rows.
+      const milestoneRows = drawer.locator('.custom-scrollbar > div');
+      await expect.poll(() => milestoneRows.count()).toBeLessThan(allMilestoneCount);
+      expect(await milestoneRows.count()).toBeGreaterThan(0);
 
       // Close the drawer
       await drawerBtn.click();

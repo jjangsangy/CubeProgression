@@ -33,8 +33,9 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
   );
 
   return (
-    <div
-      data-testid="solves-table-card"
+    <section
+      id="solves-table"
+      aria-labelledby="session-solve-log-heading"
       className="flex flex-col gap-4 rounded-2xl border border-stone-800 bg-stone-900 p-4 sm:p-6 text-stone-100 shadow-xl"
     >
       {/* Table Header Controls */}
@@ -65,6 +66,7 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
           <Search className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-stone-500" />
           <input
             type="text"
+            id="solves-search"
             aria-label="Search solves or scrambles"
             value={searchTerm}
             onChange={(e) => {
@@ -160,6 +162,7 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
 
         <div className="flex items-center justify-center sm:justify-end gap-2">
           <button
+            id="solves-prev-page"
             type="button"
             aria-label="Previous page"
             disabled={currentPage === 1}
@@ -168,10 +171,11 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="font-mono text-stone-200 px-1">
+          <span id="pagination-indicator" className="font-mono text-stone-200 px-1">
             {currentPage} / {totalPages}
           </span>
           <button
+            id="solves-next-page"
             type="button"
             aria-label="Next page"
             disabled={currentPage === totalPages}
@@ -182,6 +186,6 @@ export const SolvesTable: React.FC<SolvesTableProps> = ({ solves }) => {
           </button>
         </div>
       </div>
-    </div>
+    </section>
   );
 };

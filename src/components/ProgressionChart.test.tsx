@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { verifyChartTooltipAutoDismiss } from '../test/tooltipTestUtils';
@@ -136,7 +136,7 @@ describe('ProgressionChart component', () => {
     captured.tooltipContent = null;
   });
   it('renders chart title, slope info, and solve visibility controls', () => {
-    render(
+    const { container } = render(
       <ProgressionChart
         solves={mockSolves}
         periodGroups={mockPeriodGroups}
@@ -146,18 +146,15 @@ describe('ProgressionChart component', () => {
       />,
     );
 
-    expect(screen.getByText('Progression Over Solves')).toBeInTheDocument();
-    expect(screen.getByText('Range Selector')).toBeInTheDocument();
-    expect(screen.getAllByText('All Solves')[0]).toBeInTheDocument();
-
-    expect(screen.getByText('Muted')).toBeInTheDocument();
-    expect(screen.getByText('Unmuted')).toBeInTheDocument();
-    expect(screen.getByText('With Dots')).toBeInTheDocument();
-    expect(screen.getByText('Hidden')).toBeInTheDocument();
+    const chart = container.querySelector('#progression-chart');
+    expect(chart).toBeInTheDocument();
+    expect(chart?.querySelector('#progression-range-selector')).toBeInTheDocument();
+    expect(chart?.querySelector('#progression-muted')).toHaveAttribute('aria-pressed', 'true');
+    expect(chart?.querySelector('#progression-unmuted')).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('allows switching solve visibility modes', () => {
-    render(
+    const { container } = render(
       <ProgressionChart
         solves={mockSolves}
         periodGroups={mockPeriodGroups}
@@ -165,22 +162,30 @@ describe('ProgressionChart component', () => {
       />,
     );
 
-    const modes = ['Unmuted', 'With Dots', 'Hidden', 'Muted'];
-    for (const mode of modes) {
-      const modeBtn = screen.getByRole('button', { name: mode });
-      fireEvent.click(modeBtn);
-      expect(modeBtn.className).toContain('bg-stone-700');
+    const chart = container.querySelector('#progression-chart');
+    const modes = [
+      { mode: 'unmuted', selector: '#progression-unmuted' },
+      { mode: 'dots', selector: '#progression-dots' },
+      { mode: 'hidden', selector: '#progression-hidden' },
+      { mode: 'muted', selector: '#progression-muted' },
+    ];
+
+    for (const { mode, selector } of modes) {
+      const modeBtn = chart?.querySelector(selector);
+      expect(modeBtn).toBeInTheDocument();
+      fireEvent.click(modeBtn as HTMLElement);
+      expect(modeBtn).toHaveAttribute('aria-pressed', 'true');
 
       // Exactly one visibility mode is highlighted at a time
-      const activeModes = modes.filter((m) =>
-        screen.getByRole('button', { name: m }).className.includes('bg-stone-700'),
+      const activeModes = modes.filter(
+        (m) => chart?.querySelector(m.selector)?.getAttribute('aria-pressed') === 'true',
       );
-      expect(activeModes).toEqual([mode]);
+      expect(activeModes.map((m) => m.mode)).toEqual([mode]);
     }
   });
 
   it('allows toggling average lines, trend line, and custom Ao', () => {
-    render(
+    const { container } = render(
       <ProgressionChart
         solves={mockSolves}
         periodGroups={mockPeriodGroups}
@@ -188,42 +193,45 @@ describe('ProgressionChart component', () => {
       />,
     );
 
+    const chart = container.querySelector('#progression-chart');
     const toggles = [
-      { name: 'Ao5', activeClass: 'bg-emerald-500/20' },
-      { name: 'Ao12', activeClass: 'bg-orange-500/20' },
-      { name: 'Ao50', activeClass: 'bg-sky-500/20' },
-      { name: 'Ao100', activeClass: 'bg-purple-500/20' },
-      { name: 'Trend', activeClass: 'bg-rose-500/20' },
+      { selector: '#progression-ao5' },
+      { selector: '#progression-ao12' },
+      { selector: '#progression-ao50' },
+      { selector: '#progression-ao100' },
+      { selector: '#progression-trend' },
     ];
 
-    for (const { name, activeClass } of toggles) {
-      const btn = screen.getByRole('button', { name: new RegExp(`^${name}$`, 'i') });
-      expect(btn.className).toContain(activeClass);
+    for (const { selector } of toggles) {
+      const btn = chart?.querySelector(selector);
+      expect(btn).toBeInTheDocument();
+      expect(btn).toHaveAttribute('aria-pressed', 'true');
 
-      fireEvent.click(btn);
-      expect(btn.className).not.toContain(activeClass);
+      fireEvent.click(btn as HTMLElement);
+      expect(btn).toHaveAttribute('aria-pressed', 'false');
 
-      fireEvent.click(btn);
-      expect(btn.className).toContain(activeClass);
+      fireEvent.click(btn as HTMLElement);
+      expect(btn).toHaveAttribute('aria-pressed', 'true');
     }
 
     // Toggle Custom Ao button
-    const customAoBtn = screen.getByRole('button', { name: /Custom Ao/i });
-    expect(customAoBtn.className).not.toContain('bg-yellow-500/20');
-    fireEvent.click(customAoBtn);
-    expect(customAoBtn.className).toContain('bg-yellow-500/20');
+    const customAoBtn = chart?.querySelector('#progression-custom-ao');
+    expect(customAoBtn).toBeInTheDocument();
+    expect(customAoBtn).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(customAoBtn as HTMLElement);
+    expect(customAoBtn).toHaveAttribute('aria-pressed', 'true');
 
-    const customAoInput = screen.getByRole('spinbutton');
+    const customAoInput = chart?.querySelector('#progression-custom-ao-input');
     expect(customAoInput).toHaveValue(25);
-    fireEvent.change(customAoInput, { target: { value: '15' } });
+    fireEvent.change(customAoInput as HTMLElement, { target: { value: '15' } });
     expect(customAoInput).toHaveValue(15);
     // Invalid/negative clamps to 3
-    fireEvent.change(customAoInput, { target: { value: '1' } });
+    fireEvent.change(customAoInput as HTMLElement, { target: { value: '1' } });
     expect(customAoInput).toHaveValue(3);
   });
 
   it('handles range presets and interval mode changes', () => {
-    render(
+    const { container } = render(
       <ProgressionChart
         solves={mockSolves}
         periodGroups={mockPeriodGroups}
@@ -231,42 +239,38 @@ describe('ProgressionChart component', () => {
       />,
     );
 
+    const chart = container.querySelector('#progression-chart');
+
     // Apply presets and confirm the clicked preset becomes the active one
-    const presets = [
-      'Last 50',
-      'Last 100',
-      'Last 200',
-      'First 100',
-      'Last 7 Days',
-      'Last 30 Days',
-      'All Solves',
-    ];
-    for (const p of presets) {
-      // "All Solves" also names the mode-switcher button; the preset pill renders later in the DOM
-      const matches = screen.getAllByRole('button', { name: new RegExp(`^${p}$`, 'i') });
-      const presetBtn = matches[matches.length - 1];
-      fireEvent.click(presetBtn);
-      expect(presetBtn.className).toContain('bg-stone-100');
+    const presetKeys = ['last50', 'last100', 'last200', 'first100', 'last7d', 'last30d', 'all'];
+    for (const key of presetKeys) {
+      const presetBtn = chart?.querySelector(`#range-preset-${key}`);
+      expect(presetBtn).toBeInTheDocument();
+      fireEvent.click(presetBtn as HTMLElement);
+      expect(presetBtn).toHaveAttribute('aria-pressed', 'true');
     }
 
     // Switch to Date Range mode
-    const dateRangeBtn = screen.getByRole('button', { name: /Date Range/i });
-    fireEvent.click(dateRangeBtn);
-    expect(dateRangeBtn.className).toContain('bg-sky-500');
+    const dateRangeBtn = chart?.querySelector('#progression-date-range');
+    expect(dateRangeBtn).toBeInTheDocument();
+    fireEvent.click(dateRangeBtn as HTMLElement);
+    expect(dateRangeBtn).toHaveAttribute('aria-pressed', 'true');
 
     // Switch to Solve # Interval mode
-    const solveIntervalBtn = screen.getByRole('button', { name: /Solve # Interval/i });
-    fireEvent.click(solveIntervalBtn);
-    expect(solveIntervalBtn.className).toContain('bg-sky-500');
+    const solveIntervalBtn = chart?.querySelector('#progression-solve-interval');
+    expect(solveIntervalBtn).toBeInTheDocument();
+    fireEvent.click(solveIntervalBtn as HTMLElement);
+    expect(solveIntervalBtn).toHaveAttribute('aria-pressed', 'true');
 
     // Switch back to All Solves mode button
-    const allSolvesModeBtn = screen.getAllByRole('button', { name: /All Solves/i })[0];
-    fireEvent.click(allSolvesModeBtn);
-    expect(allSolvesModeBtn.className).toContain('bg-sky-500');
+    const allSolvesModeBtn = chart?.querySelector('#progression-all-solves');
+    expect(allSolvesModeBtn).toBeInTheDocument();
+    fireEvent.click(allSolvesModeBtn as HTMLElement);
+    expect(allSolvesModeBtn).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('renders correctly with weekly and monthly groupingPeriod', () => {
-    const { rerender } = render(
+    const { container, rerender } = render(
       <ProgressionChart
         solves={mockSolves}
         periodGroups={mockPeriodGroups}
@@ -274,7 +278,7 @@ describe('ProgressionChart component', () => {
         groupingPeriod="weekly"
       />,
     );
-    expect(screen.getByText('Range Selector')).toBeInTheDocument();
+    expect(container.querySelector('#progression-range-selector')).toBeInTheDocument();
 
     rerender(
       <ProgressionChart
@@ -284,12 +288,14 @@ describe('ProgressionChart component', () => {
         groupingPeriod="monthly"
       />,
     );
-    expect(screen.getByText('Range Selector')).toBeInTheDocument();
+    expect(container.querySelector('#progression-range-selector')).toBeInTheDocument();
   });
 
   it('renders gracefully when solves array is empty', () => {
-    render(<ProgressionChart solves={[]} periodGroups={[]} regression={mockRegression} />);
-    expect(screen.getByText('Solve Times & Moving Averages')).toBeInTheDocument();
+    const { container } = render(
+      <ProgressionChart solves={[]} periodGroups={[]} regression={mockRegression} />,
+    );
+    expect(container.querySelector('#progression-chart')).toBeInTheDocument();
   });
 
   it('renders CustomTooltip correctly across normal, +2, DNF, and inactive states', async () => {
@@ -301,7 +307,9 @@ describe('ProgressionChart component', () => {
       />,
     );
 
-    await screen.findByTestId('progression-chart-canvas');
+    await waitFor(() =>
+      expect(document.querySelector('#progression-chart-canvas')).toBeInTheDocument(),
+    );
 
     const content = captured.tooltipContent as React.ReactElement<{
       active?: boolean;
@@ -335,12 +343,11 @@ describe('ProgressionChart component', () => {
     const normalTooltip = render(
       React.cloneElement(content, { active: true, payload: normalPayload, label: 1 }),
     );
-    expect(normalTooltip.getByText('Solve #1')).toBeInTheDocument();
-    expect(normalTooltip.getByText('(Period 1)')).toBeInTheDocument();
-    expect(normalTooltip.getAllByText(/12\.00/)[0]).toBeInTheDocument();
-    expect(normalTooltip.getByText('11.50s')).toBeInTheDocument();
-    expect(normalTooltip.getByText('11.80s')).toBeInTheDocument();
-    expect(normalTooltip.getByText(/Scramble: R2 U2 F2/)).toBeInTheDocument();
+    const normalText = normalTooltip.container.textContent ?? '';
+    expect(normalText).toContain('12.00');
+    expect(normalText).toContain('11.50s');
+    expect(normalText).toContain('11.80s');
+    expect(normalText).toContain('R2 U2 F2');
     normalTooltip.unmount();
 
     // +2 solve point
@@ -357,8 +364,9 @@ describe('ProgressionChart component', () => {
     const plusTwoTooltip = render(
       React.cloneElement(content, { active: true, payload: plusTwoPayload, label: 10 }),
     );
-    expect(plusTwoTooltip.getByText('14.00s')).toBeInTheDocument();
-    expect(plusTwoTooltip.getByText('(+2)')).toBeInTheDocument();
+    const plusTwoText = plusTwoTooltip.container.textContent ?? '';
+    expect(plusTwoText).toContain('14.00s');
+    expect(plusTwoText).toContain('(+2)');
     plusTwoTooltip.unmount();
 
     // DNF solve point (verifying single time DNF is displayed)
@@ -375,7 +383,8 @@ describe('ProgressionChart component', () => {
     const dnfTooltip = render(
       React.cloneElement(content, { active: true, payload: dnfPayload, label: 6 }),
     );
-    expect(dnfTooltip.getByText('DNF')).toBeInTheDocument();
+    const dnfText = dnfTooltip.container.textContent ?? '';
+    expect(dnfText).toContain('DNF');
     dnfTooltip.unmount();
   });
 
@@ -389,8 +398,10 @@ describe('ProgressionChart component', () => {
     );
 
     // Switch to Solve # Interval mode
-    const solveIntervalBtn = screen.getByRole('button', { name: /Solve # Interval/i });
-    fireEvent.click(solveIntervalBtn);
+    const solveIntervalBtn = container.querySelector('#progression-solve-interval');
+    expect(solveIntervalBtn).toBeInTheDocument();
+    fireEvent.click(solveIntervalBtn as HTMLElement);
+    expect(solveIntervalBtn).toHaveAttribute('aria-pressed', 'true');
 
     // Find "From Solve #" and "To Solve #" number inputs
     const numberInputs = Array.from(container.querySelectorAll('input[type="number"]'));
@@ -406,8 +417,11 @@ describe('ProgressionChart component', () => {
     fireEvent.change(toInput, { target: { value: '90' } });
     expect(toInput).toHaveValue(90);
 
-    // Range stats banner should update
-    expect(screen.getByText(/Solves #30/)).toBeInTheDocument();
+    // Range label should reflect the computed focused interval bounds
+    const focusLabel = container.querySelector('#progression-focus-label');
+    expect(focusLabel).toBeInTheDocument();
+    expect(focusLabel?.textContent).toContain('#30');
+    expect(focusLabel?.textContent).toContain('#90');
 
     // Find sliders (type="range")
     const sliders = screen.getAllByRole('slider');
@@ -418,11 +432,12 @@ describe('ProgressionChart component', () => {
     expect(toInput).toHaveValue(85);
 
     // Toggle Range Selector panel collapse and expand
-    const rangeToggleBtn = screen.getByRole('button', { name: /Range Selector/i });
-    fireEvent.click(rangeToggleBtn);
+    const rangeToggleBtn = container.querySelector('#progression-range-selector');
+    expect(rangeToggleBtn).toBeInTheDocument();
+    fireEvent.click(rangeToggleBtn as HTMLElement);
     // After collapsing, the interval controls should not be visible
     expect(container.querySelector('input[type="range"]')).toBeNull();
-    fireEvent.click(rangeToggleBtn);
+    fireEvent.click(rangeToggleBtn as HTMLElement);
     expect(container.querySelector('input[type="range"]')).not.toBeNull();
   });
 
@@ -436,8 +451,10 @@ describe('ProgressionChart component', () => {
     );
 
     // Switch to Date Range mode
-    const dateRangeBtn = screen.getByRole('button', { name: /Date Range/i });
-    fireEvent.click(dateRangeBtn);
+    const dateRangeBtn = container.querySelector('#progression-date-range');
+    expect(dateRangeBtn).toBeInTheDocument();
+    fireEvent.click(dateRangeBtn as HTMLElement);
+    expect(dateRangeBtn).toHaveAttribute('aria-pressed', 'true');
 
     // Date inputs
     const dateInputs = container.querySelectorAll('input[type="date"]');
@@ -447,12 +464,12 @@ describe('ProgressionChart component', () => {
     fireEvent.change(dateInputs[1], { target: { value: '2020-10-20' } });
 
     // Reset button should now be visible since range is filtered
-    const resetBtn = screen.getByRole('button', { name: /Reset Range/i });
+    const resetBtn = container.querySelector('#progression-reset-range');
     expect(resetBtn).toBeInTheDocument();
 
     // Click Reset button to return to all solves
-    fireEvent.click(resetBtn);
-    expect(screen.queryByRole('button', { name: /Reset Range/i })).toBeNull();
+    fireEvent.click(resetBtn as HTMLElement);
+    expect(container.querySelector('#progression-reset-range')).toBeNull();
   });
 
   it('renders period boundary reference line label callback', async () => {
@@ -464,7 +481,9 @@ describe('ProgressionChart component', () => {
       />,
     );
 
-    await screen.findByTestId('progression-chart-canvas');
+    await waitFor(() =>
+      expect(document.querySelector('#progression-chart-canvas')).toBeInTheDocument(),
+    );
 
     expect(captured.referenceLineLabels.length).toBeGreaterThan(0);
     const labelFn = captured.referenceLineLabels[0];
@@ -483,7 +502,7 @@ describe('ProgressionChart component', () => {
   });
 
   it('applies touchAction pan-x to solve range sliders for mobile gesture compatibility', () => {
-    render(
+    const { container } = render(
       <ProgressionChart
         solves={mockSolves}
         periodGroups={mockPeriodGroups}
@@ -491,8 +510,9 @@ describe('ProgressionChart component', () => {
       />,
     );
 
-    const solveIntervalBtn = screen.getByRole('button', { name: /Solve # Interval/i });
-    fireEvent.click(solveIntervalBtn);
+    const solveIntervalBtn = container.querySelector('#progression-solve-interval');
+    expect(solveIntervalBtn).toBeInTheDocument();
+    fireEvent.click(solveIntervalBtn as HTMLElement);
 
     const sliders = screen.getAllByRole('slider');
     expect(sliders[0]).toHaveStyle({ touchAction: 'pan-x' });
@@ -508,8 +528,9 @@ describe('ProgressionChart component', () => {
       />,
     );
 
-    const solveIntervalBtn = screen.getByRole('button', { name: /Solve # Interval/i });
-    fireEvent.click(solveIntervalBtn);
+    const solveIntervalBtn = container.querySelector('#progression-solve-interval');
+    expect(solveIntervalBtn).toBeInTheDocument();
+    fireEvent.click(solveIntervalBtn as HTMLElement);
 
     const sliderGroup = container.querySelector('.flex-col.md\\:flex-row');
     expect(sliderGroup).toBeInTheDocument();
@@ -524,8 +545,9 @@ describe('ProgressionChart component', () => {
       />,
     );
 
-    const dateRangeBtn = screen.getByRole('button', { name: /Date Range/i });
-    fireEvent.click(dateRangeBtn);
+    const dateRangeBtn = container.querySelector('#progression-date-range');
+    expect(dateRangeBtn).toBeInTheDocument();
+    fireEvent.click(dateRangeBtn as HTMLElement);
 
     const dateInputs = container.querySelectorAll('input[type="date"]');
     expect(dateInputs[0]).toHaveAttribute('min', mockSolves[0].dateStr);
@@ -543,8 +565,10 @@ describe('ProgressionChart component', () => {
           regression={mockRegression}
         />,
       );
-      expect(await screen.findByTestId('progression-chart-canvas')).toBeInTheDocument();
-      expect(screen.getByText('Time (s)')).toBeInTheDocument();
+      await waitFor(() =>
+        expect(document.querySelector('#progression-chart-canvas')).toBeInTheDocument(),
+      );
+      expect(document.querySelector('#progression-mobile-axis-title')).toBeInTheDocument();
     } finally {
       window.innerWidth = originalInnerWidth;
     }
@@ -571,7 +595,8 @@ describe('ProgressionChart component', () => {
       );
 
       expect(requestMock).toHaveBeenCalledWith(expect.any(Function), { timeout: 1200 });
-      expect(screen.getByTestId('progression-canvas-skeleton')).toBeInTheDocument();
+      // Canvas is not mounted while the idle callback is pending
+      expect(document.querySelector('#progression-chart-canvas')).toBeNull();
 
       unmount();
       expect(cancelMock).toHaveBeenCalledWith(42);
@@ -624,9 +649,9 @@ describe('ProgressionChart component', () => {
         />,
       );
 
-      await screen.findByTestId('progression-chart-canvas');
-
-      expect(screen.getByText('Time (s)')).toBeInTheDocument();
+      await waitFor(() =>
+        expect(document.querySelector('#progression-chart-canvas')).toBeInTheDocument(),
+      );
 
       const yAxis = captured.yAxes[0];
       expect(yAxis?.width).toBeLessThan(40);
@@ -648,9 +673,11 @@ describe('ProgressionChart component', () => {
         />,
       );
 
-      await screen.findByTestId('progression-chart-canvas');
+      await waitFor(() =>
+        expect(document.querySelector('#progression-chart-canvas')).toBeInTheDocument(),
+      );
 
-      expect(screen.queryByText('Time (s)')).not.toBeInTheDocument();
+      expect(document.querySelector('#progression-mobile-axis-title')).toBeNull();
 
       const yAxis = captured.yAxes[0];
       expect(yAxis?.width).toBeGreaterThanOrEqual(40);
@@ -663,7 +690,7 @@ describe('ProgressionChart component', () => {
   it('wires touch auto-dismiss to chart canvas container and recharts tooltip', () => {
     vi.useFakeTimers();
     try {
-      render(
+      const { container } = render(
         <ProgressionChart
           solves={mockSolves}
           periodGroups={mockPeriodGroups}
@@ -676,7 +703,7 @@ describe('ProgressionChart component', () => {
         vi.advanceTimersByTime(2000);
       });
 
-      const canvas = screen.getByTestId('progression-chart-canvas');
+      const canvas = container.querySelector('#progression-chart-canvas') as HTMLElement;
       expect(canvas).toBeInTheDocument();
 
       verifyChartTooltipAutoDismiss(canvas, () => captured.tooltipActive);

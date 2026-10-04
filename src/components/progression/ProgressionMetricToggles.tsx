@@ -55,6 +55,7 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
         </span>
         <button
           type="button"
+          id="progression-ao5"
           aria-label="Ao5"
           aria-pressed={showAo5}
           onClick={onToggleAo5}
@@ -69,6 +70,7 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
         </button>
         <button
           type="button"
+          id="progression-ao12"
           aria-label="Ao12"
           aria-pressed={showAo12}
           onClick={onToggleAo12}
@@ -83,6 +85,7 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
         </button>
         <button
           type="button"
+          id="progression-ao50"
           aria-label="Ao50"
           aria-pressed={showAo50}
           onClick={onToggleAo50}
@@ -97,6 +100,7 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
         </button>
         <button
           type="button"
+          id="progression-ao100"
           aria-label="Ao100"
           aria-pressed={showAo100}
           onClick={onToggleAo100}
@@ -111,6 +115,7 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
         </button>
         <button
           type="button"
+          id="progression-trend"
           aria-label="Trend"
           aria-pressed={showTrend}
           onClick={onToggleTrend}
@@ -127,6 +132,7 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
         <div className="ml-0.5 inline-flex items-center gap-1 sm:border-l sm:border-stone-700/80 sm:pl-1.5">
           <button
             type="button"
+            id="progression-custom-ao"
             aria-label="Custom Ao"
             aria-pressed={showCustomAo}
             onClick={onToggleCustomAo}
@@ -144,6 +150,7 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
               <span className="font-mono text-[10px] text-stone-400">Ao</span>
               <input
                 type="number"
+                id="progression-custom-ao-input"
                 aria-label="Custom Ao solve count"
                 min="3"
                 max="1000"
@@ -161,6 +168,7 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
         <span className="px-1.5 text-[11px] font-medium text-stone-400">Solves:</span>
         <button
           type="button"
+          id="progression-muted"
           aria-label="Muted"
           aria-pressed={solveVisibility === 'muted'}
           title="Muted: Show subtle line without dots (default clean view)"
@@ -176,6 +184,7 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
         </button>
         <button
           type="button"
+          id="progression-unmuted"
           aria-label="Unmuted"
           aria-pressed={solveVisibility === 'unmuted' || solveVisibility === 'visible'}
           title="Unmuted: Show original white line and dots"
@@ -191,6 +200,7 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
         </button>
         <button
           type="button"
+          id="progression-dots"
           aria-label="With Dots"
           aria-pressed={solveVisibility === 'dots'}
           title="With Dots: Show subtle line with small dots"
@@ -206,6 +216,7 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
         </button>
         <button
           type="button"
+          id="progression-hidden"
           aria-label="Hidden"
           aria-pressed={solveVisibility === 'hidden'}
           title="Hidden: Hide single solve line entirely"
@@ -224,6 +235,7 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
       {/* Toggle Range Panel Visibility Button */}
       <button
         type="button"
+        id="progression-range-selector"
         aria-label="Range Selector"
         title="Toggle Range Selector Panel"
         onClick={onToggleRangePanel}

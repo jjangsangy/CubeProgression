@@ -21,6 +21,7 @@ const ProgressionChartCanvas = lazy(() =>
 );
 
 export const ProgressionChart: React.FC<ProgressionChartProps> = ({
+  id = 'progression-chart',
   solves,
   periodGroups,
   regression: _regression,
@@ -154,10 +155,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
   const singleLineStyle = getSingleLineStyle(solveVisibility);
 
   const canvasSkeleton = (
-    <div
-      className="flex h-[420px] w-full flex-col justify-between rounded-xl border border-stone-800/60 bg-stone-900/40 p-6 animate-pulse"
-      data-testid="progression-canvas-skeleton"
-    >
+    <div className="flex h-[420px] w-full flex-col justify-between rounded-xl border border-stone-800/60 bg-stone-900/40 p-6 animate-pulse">
       <div className="flex items-center justify-between opacity-50">
         <div className="h-4 w-32 rounded bg-stone-800" />
         <div className="h-4 w-24 rounded bg-stone-800" />
@@ -172,7 +170,7 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
 
   return (
     <ChartCardWrapper
-      testId="chart-card-progression"
+      id={id}
       title={title}
       subtitle="Individual solve plot with interactive range selector, toggleable moving averages (Ao5, Ao12, Ao50, Ao100, Custom N), and OLS regression."
       mobileSubtitle="Individual solve plot with range filter and moving averages."

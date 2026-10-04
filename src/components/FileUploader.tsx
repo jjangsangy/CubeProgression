@@ -91,11 +91,15 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-6 rounded-2xl border border-stone-800 bg-stone-900 p-4 sm:p-6 text-stone-100 shadow-xl">
+    <section
+      id="file-uploader"
+      className="flex flex-col gap-6 rounded-2xl border border-stone-800 bg-stone-900 p-4 sm:p-6 text-stone-100 shadow-xl"
+    >
       {/* File Dropzone & Session Controls Grid */}
       <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-12">
         {/* Hidden File Input */}
         <input
+          id="file-input"
           type="file"
           ref={fileInputRef}
           onChange={handleFileChange}
@@ -107,6 +111,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
         {/* Drag & Drop Box / Loading State (5 columns on large screens) */}
         <section
+          id="file-dropzone"
           aria-label="File upload dropzone"
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -176,6 +181,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                 Drag and drop your csTimer export file here, or{' '}
                 <button
                   type="button"
+                  id="browse-files"
                   onClick={() => {
                     if (!isLoading) fileInputRef.current?.click();
                   }}
@@ -193,6 +199,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                 <span className="text-xs text-stone-500">or</span>
                 <button
                   type="button"
+                  id="load-sample-data"
                   onClick={(e) => {
                     e.stopPropagation();
                     onLoadDemo();
@@ -206,6 +213,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
               {onOpenInstructions && (
                 <button
+                  id="export-guide"
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -284,6 +292,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                 return (
                   <button
                     type="button"
+                    id={`grouping-${item.id}`}
                     key={item.id}
                     aria-pressed={isActive}
                     onClick={() => onChangeGrouping(item.id as GroupingPeriod)}
@@ -315,6 +324,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                       <button
                         type="button"
                         key={preset}
+                        id={`batch-preset-${preset}`}
                         onClick={() => onChangeCustomBatchSize(preset)}
                         className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-all cursor-pointer ${
                           customBatchSize === preset
@@ -376,6 +386,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
           {onClearStorage && (
             <button
+              id="clear-saved-storage"
               type="button"
               onClick={onClearStorage}
               aria-label="Clear Saved Storage"
@@ -392,7 +403,10 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
       {/* Notice string if provided */}
       {savedNotice && !errorMsg && (
-        <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-800/60 bg-emerald-950/40 px-3.5 py-2 text-xs text-emerald-300">
+        <div
+          role="status"
+          className="flex items-center justify-between gap-2 rounded-xl border border-emerald-800/60 bg-emerald-950/40 px-3.5 py-2 text-xs text-emerald-300"
+        >
           <div className="flex items-center gap-2">
             <Database className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
             <span>{savedNotice}</span>
@@ -402,11 +416,14 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
       {/* Error Message if any */}
       {errorMsg && (
-        <div className="flex items-center gap-2 rounded-xl border border-rose-800/80 bg-rose-950/60 p-3 text-xs text-rose-300">
+        <div
+          role="alert"
+          className="flex items-center gap-2 rounded-xl border border-rose-800/80 bg-rose-950/60 p-3 text-xs text-rose-300"
+        >
           <span className="font-bold tracking-wider uppercase">Error:</span>
           <span>{errorMsg}</span>
         </div>
       )}
-    </div>
+    </section>
   );
 };

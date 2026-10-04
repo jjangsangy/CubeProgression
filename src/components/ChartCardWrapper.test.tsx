@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 import { toCanvas, toPng } from 'html-to-image';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChartCardWrapper } from './ChartCardWrapper';
@@ -8,6 +8,15 @@ vi.mock('html-to-image', () => ({
   toPng: vi.fn(),
   toCanvas: vi.fn(),
 }));
+
+const ACTION_ID_SUFFIX: Record<string, string> = {
+  'Download Plot as PNG Image': 'download',
+  'Maximize to Fullscreen': 'maximize',
+  'Restore View (Esc)': 'maximize',
+};
+
+const getButton = (label: string) =>
+  document.querySelector(`[id$="-${ACTION_ID_SUFFIX[label]}"]`) as HTMLButtonElement;
 
 describe('ChartCardWrapper component', () => {
   const sampleDataUrl =
@@ -32,42 +41,52 @@ describe('ChartCardWrapper component', () => {
   });
 
   it('renders title, subtitle, badge, controls, and children', () => {
-    render(
+    const { container } = render(
       <ChartCardWrapper
+        id="test-chart-card"
         title="Test Chart Title"
         subtitle="Test Chart Subtitle"
-        headerBadge={<span data-testid="badge">Badge</span>}
+        headerBadge={<span id="test-badge">Badge</span>}
         headerControls={
-          <button type="button" data-testid="ctrl">
+          <button type="button" id="test-ctrl">
             Ctrl
           </button>
         }
       >
-        <div data-testid="chart-content">Chart Content</div>
+        <div id="test-chart-content">Chart Content</div>
       </ChartCardWrapper>,
     );
 
-    expect(screen.getByText('Test Chart Title')).toBeInTheDocument();
-    expect(screen.getByText('Test Chart Subtitle')).toBeInTheDocument();
-    expect(screen.getByTestId('badge')).toBeInTheDocument();
-    expect(screen.getByTestId('ctrl')).toBeInTheDocument();
-    expect(screen.getByTestId('chart-content')).toBeInTheDocument();
+    const card = container.querySelector('#test-chart-card');
+    expect(card).toBeInTheDocument();
+    // Title renders as a heading, subtitle as a paragraph
+    expect(card?.querySelector('h2')).toBeInTheDocument();
+    expect(card?.querySelector('p')).toBeInTheDocument();
+    // Badge, controls and children slots are rendered
+    expect(card?.querySelector('#test-badge')).toBeInTheDocument();
+    expect(card?.querySelector('#test-ctrl')).toBeInTheDocument();
+    expect(card?.querySelector('#test-chart-content')).toBeInTheDocument();
   });
 
   it('renders correctly without subtitle or header controls', () => {
-    render(
-      <ChartCardWrapper title="Minimal Chart">
-        <div>Content</div>
+    const { container } = render(
+      <ChartCardWrapper id="minimal-chart" title="Minimal Chart">
+        <div id="minimal-content">Content</div>
       </ChartCardWrapper>,
     );
 
-    expect(screen.getByText('Minimal Chart')).toBeInTheDocument();
-    expect(screen.queryByTestId('ctrl')).not.toBeInTheDocument();
+    const card = container.querySelector('#minimal-chart');
+    expect(card).toBeInTheDocument();
+    expect(card?.querySelector('h2')).toBeInTheDocument();
+    // No subtitle paragraph and no secondary controls toolbar
+    expect(card?.querySelector('p')).toBeNull();
+    expect(card?.querySelector('#minimal-content')).toBeInTheDocument();
   });
 
   it('renders responsive mobile and desktop subtitle spans when mobileSubtitle is provided', () => {
-    render(
+    const { container } = render(
       <ChartCardWrapper
+        id="subtitle-chart"
         title="Test Title"
         subtitle="Desktop Subtitle"
         mobileSubtitle="Mobile Subtitle"
@@ -76,21 +95,26 @@ describe('ChartCardWrapper component', () => {
       </ChartCardWrapper>,
     );
 
-    const mobileSpan = screen.getByText('Mobile Subtitle');
-    const desktopSpan = screen.getByText('Desktop Subtitle');
-
-    expect(mobileSpan).toHaveClass('sm:hidden');
-    expect(desktopSpan).toHaveClass('hidden', 'sm:inline');
+    const subtitleSpans = container.querySelectorAll('#subtitle-chart p > span');
+    expect(subtitleSpans).toHaveLength(2);
+    expect(subtitleSpans[0]).toHaveClass('sm:hidden');
+    expect(subtitleSpans[1]).toHaveClass('hidden', 'sm:inline');
   });
 
   it('renders mobileSubtitle alone when subtitle is omitted', () => {
-    render(
-      <ChartCardWrapper title="Test Title" mobileSubtitle="Mobile Only Subtitle">
+    const { container } = render(
+      <ChartCardWrapper
+        id="mobile-only-chart"
+        title="Test Title"
+        mobileSubtitle="Mobile Only Subtitle"
+      >
         <div>Content</div>
       </ChartCardWrapper>,
     );
 
-    expect(screen.getByText('Mobile Only Subtitle')).toBeInTheDocument();
+    const subtitleSpans = container.querySelectorAll('#mobile-only-chart p > span');
+    expect(subtitleSpans).toHaveLength(1);
+    expect(subtitleSpans[0]).toHaveClass('sm:hidden');
   });
 
   it('toggles maximize/fullscreen mode and manages body overflow and escape key', () => {
@@ -101,20 +125,20 @@ describe('ChartCardWrapper component', () => {
     );
 
     expect(document.body.style.overflow).toBe('');
-    const maxBtn = screen.getByTitle('Maximize to Fullscreen');
+    const maxBtn = getButton('Maximize to Fullscreen');
     expect(maxBtn).toBeInTheDocument();
 
     fireEvent.click(maxBtn);
     expect(document.body.style.overflow).toBe('hidden');
-    expect(screen.getByTitle('Restore View (Esc)')).toBeInTheDocument();
+    expect(getButton('Restore View (Esc)')).toBeInTheDocument();
 
     // Clicking minimize button restores view
-    const restoreBtn = screen.getByTitle('Restore View (Esc)');
+    const restoreBtn = getButton('Restore View (Esc)');
     fireEvent.click(restoreBtn);
     expect(document.body.style.overflow).toBe('');
 
     // Maximizing again and pressing Escape
-    fireEvent.click(screen.getByTitle('Maximize to Fullscreen'));
+    fireEvent.click(getButton('Maximize to Fullscreen'));
     expect(document.body.style.overflow).toBe('hidden');
     // Non-escape key does not restore view
     fireEvent.keyDown(window, { key: 'Enter' });
@@ -122,7 +146,7 @@ describe('ChartCardWrapper component', () => {
 
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(document.body.style.overflow).toBe('');
-    expect(screen.getByTitle('Maximize to Fullscreen')).toBeInTheDocument();
+    expect(getButton('Maximize to Fullscreen')).toBeInTheDocument();
 
     // Pressing Escape while already not maximized does nothing
     fireEvent.keyDown(window, { key: 'Escape' });
@@ -142,7 +166,7 @@ describe('ChartCardWrapper component', () => {
       </ChartCardWrapper>,
     );
 
-    const pngBtn = screen.getByTitle('Download Plot as PNG Image');
+    const pngBtn = getButton('Download Plot as PNG Image');
     fireEvent.click(pngBtn);
 
     // Clicking again immediately while downloading is ignored
@@ -154,7 +178,7 @@ describe('ChartCardWrapper component', () => {
 
     resolvePng(sampleDataUrl);
     await waitFor(() => {
-      expect(screen.getByTitle('Download Plot as PNG Image')).not.toBeDisabled();
+      expect(getButton('Download Plot as PNG Image')).not.toBeDisabled();
     });
   });
 
@@ -183,7 +207,7 @@ describe('ChartCardWrapper component', () => {
       </ChartCardWrapper>,
     );
 
-    const pngBtn = screen.getByTitle('Download Plot as PNG Image');
+    const pngBtn = getButton('Download Plot as PNG Image');
     fireEvent.click(pngBtn);
 
     await waitFor(() => {
@@ -250,7 +274,7 @@ describe('ChartCardWrapper component', () => {
       </ChartCardWrapper>,
     );
 
-    const pngBtn = screen.getByTitle('Download Plot as PNG Image');
+    const pngBtn = getButton('Download Plot as PNG Image');
     fireEvent.click(pngBtn);
 
     await waitFor(() => {
@@ -272,7 +296,7 @@ describe('ChartCardWrapper component', () => {
       </ChartCardWrapper>,
     );
 
-    const pngBtn = screen.getByTitle('Download Plot as PNG Image');
+    const pngBtn = getButton('Download Plot as PNG Image');
     fireEvent.click(pngBtn);
 
     await waitFor(() => {
@@ -300,7 +324,7 @@ describe('ChartCardWrapper component', () => {
       </ChartCardWrapper>,
     );
 
-    const pngBtn = screen.getByTitle('Download Plot as PNG Image');
+    const pngBtn = getButton('Download Plot as PNG Image');
     fireEvent.click(pngBtn);
 
     await waitFor(() => {
@@ -334,7 +358,7 @@ describe('ChartCardWrapper component', () => {
       </ChartCardWrapper>,
     );
 
-    const pngBtn = screen.getByTitle('Download Plot as PNG Image');
+    const pngBtn = getButton('Download Plot as PNG Image');
     fireEvent.click(pngBtn);
 
     await waitFor(() => {
@@ -366,7 +390,7 @@ describe('ChartCardWrapper component', () => {
       </ChartCardWrapper>,
     );
 
-    const pngBtn = screen.getByTitle('Download Plot as PNG Image');
+    const pngBtn = getButton('Download Plot as PNG Image');
     fireEvent.click(pngBtn);
 
     await waitFor(() => {
@@ -382,20 +406,22 @@ describe('ChartCardWrapper component', () => {
     });
 
     const { container } = render(
-      <ChartCardWrapper title="Scrollable Chart">
-        <div data-testid="scrollable-inner" style={{ width: 100, height: 100 }}>
+      <ChartCardWrapper id="scrollable-chart-card" title="Scrollable Chart">
+        <div className="scrollable-inner" style={{ width: 100, height: 100 }}>
           Scrollable Content
         </div>
       </ChartCardWrapper>,
     );
 
-    const inner = container.querySelector('[data-testid="scrollable-inner"]') as HTMLElement;
+    const inner = container.querySelector(
+      '#scrollable-chart-card .scrollable-inner',
+    ) as HTMLElement;
     Object.defineProperty(inner, 'scrollWidth', { value: 300, configurable: true });
     Object.defineProperty(inner, 'clientWidth', { value: 100, configurable: true });
     Object.defineProperty(inner, 'scrollHeight', { value: 300, configurable: true });
     Object.defineProperty(inner, 'clientHeight', { value: 100, configurable: true });
 
-    const pngBtn = screen.getByTitle('Download Plot as PNG Image');
+    const pngBtn = getButton('Download Plot as PNG Image');
     fireEvent.click(pngBtn);
 
     await waitFor(() => {
@@ -419,7 +445,7 @@ describe('ChartCardWrapper component', () => {
       </ChartCardWrapper>,
     );
 
-    const pngBtn = screen.getByTitle('Download Plot as PNG Image');
+    const pngBtn = getButton('Download Plot as PNG Image');
     fireEvent.click(pngBtn);
 
     await waitFor(() => {
@@ -428,41 +454,41 @@ describe('ChartCardWrapper component', () => {
   });
 
   it('hides button text labels on mobile screens using hidden sm:inline and sets accessible aria-labels', () => {
-    render(
-      <ChartCardWrapper title="Responsive Header Chart">
+    const { container } = render(
+      <ChartCardWrapper id="responsive-header-chart" title="Responsive Header Chart">
         <div>Chart Content</div>
       </ChartCardWrapper>,
     );
 
-    const pngLabel = screen.getByText('PNG');
+    const downloadBtn = container.querySelector('[id$="-download"]');
+    const pngLabel = downloadBtn?.querySelector('span');
     expect(pngLabel).toHaveClass('hidden');
     expect(pngLabel).toHaveClass('sm:inline');
 
-    const maxLabel = screen.getByText('Maximize');
+    const maxBtn = container.querySelector('[id$="-maximize"]');
+    const maxLabel = maxBtn?.querySelector('span');
     expect(maxLabel).toHaveClass('hidden');
     expect(maxLabel).toHaveClass('sm:inline');
 
-    const downloadButton = screen.getByRole('button', { name: 'Download Plot as PNG Image' });
-    expect(downloadButton).toBeInTheDocument();
-
-    const maxButton = screen.getByRole('button', { name: 'Maximize to Fullscreen' });
-    expect(maxButton).toBeInTheDocument();
+    // Both action buttons expose an accessible name (for icon-only mobile view)
+    expect(downloadBtn).toHaveAttribute('aria-label');
+    expect(maxBtn).toHaveAttribute('aria-label');
   });
 
   it('applies responsive padding classes to the card and fullscreen backdrop', () => {
     const { container } = render(
-      <ChartCardWrapper title="Padding Test Chart">
+      <ChartCardWrapper id="padding-test-chart" title="Padding Test Chart">
         <div>Chart Content</div>
       </ChartCardWrapper>,
     );
 
-    const card = container.firstElementChild as HTMLElement;
+    const card = container.querySelector('#padding-test-chart') as HTMLElement;
     expect(card).toHaveClass('p-4');
     expect(card).toHaveClass('sm:p-6');
 
     // Maximize to check fullscreen backdrop padding
-    fireEvent.click(screen.getByRole('button', { name: 'Maximize to Fullscreen' }));
-    const backdrop = document.querySelector('.fixed.inset-0.z-\\[100\\]');
+    fireEvent.click(getButton('Maximize to Fullscreen'));
+    const backdrop = document.querySelector('#chart-card-fullscreen-backdrop');
     expect(backdrop).toHaveClass('p-4');
     expect(backdrop).toHaveClass('sm:p-8');
   });
@@ -514,7 +540,7 @@ describe('ChartCardWrapper component', () => {
       toJSON: () => {},
     });
 
-    const pngBtn = screen.getByTitle('Download Plot as PNG Image');
+    const pngBtn = getButton('Download Plot as PNG Image');
     fireEvent.click(pngBtn);
 
     await waitFor(() => {

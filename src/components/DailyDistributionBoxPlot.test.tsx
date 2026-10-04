@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_TOOLTIP_DISMISS_DELAY_MS } from '../hooks/useAutoDismissTooltip';
 import type { PeriodGroup } from '../types';
@@ -68,6 +68,13 @@ const mockPeriodGroups: PeriodGroup[] = [
   },
 ];
 
+// Anchor the chart canvas region on its stable id so a missing SVG fails loudly.
+const getBoxPlotSvg = (container: HTMLElement): SVGElement => {
+  const svg = container.querySelector('#boxplot-svg');
+  expect(svg).not.toBeNull();
+  return svg as SVGElement;
+};
+
 describe('DailyDistributionBoxPlot component', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -87,10 +94,8 @@ describe('DailyDistributionBoxPlot component', () => {
       />,
     );
 
-    expect(screen.getByText('Daily Solve Distribution')).toBeInTheDocument();
-    expect(screen.getByText('Solve Time (seconds)')).toBeInTheDocument();
-    expect(screen.getByText('Day')).toBeInTheDocument();
-    expect(screen.getByText('Median Trend')).toBeInTheDocument();
+    const chart = container.querySelector('#distribution-chart');
+    expect(chart).toBeInTheDocument();
 
     // The hover tooltip is not rendered until a solve point is hovered
     expect(container.querySelector('.pointer-events-none')).toBeNull();
@@ -107,8 +112,8 @@ describe('DailyDistributionBoxPlot component', () => {
     fireEvent.pointerEnter(solveCircle);
     const tooltip = container.querySelector('.pointer-events-none');
     expect(tooltip).not.toBeNull();
-    expect(tooltip).toHaveTextContent('Day 1 (2020-09-13)');
-    expect(tooltip).toHaveTextContent('Solve: 12.00s');
+    expect(tooltip?.textContent).toContain('Day 1 (2020-09-13)');
+    expect(tooltip?.textContent).toContain('Solve: 12.00s');
     expect(tooltip?.getAttribute('style')).toContain('calc(');
 
     fireEvent.pointerLeave(solveCircle);
@@ -120,16 +125,33 @@ describe('DailyDistributionBoxPlot component', () => {
     expect(polygons[0].getAttribute('fill')).toBe('#ef4444');
   });
 
-  it('renders box plot chart with weekly axis label when grouping by week', () => {
-    render(<DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="weekly" />);
+  it('renders a weekly box plot chart region with plotted boxes when grouping by week', () => {
+    const { container } = render(
+      <DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="weekly" />,
+    );
 
-    expect(screen.getByText('Weekly Solve Distribution')).toBeInTheDocument();
-    expect(screen.getByText('Week')).toBeInTheDocument();
+    expect(container.querySelector('#distribution-chart')).toBeInTheDocument();
+    const svg = getBoxPlotSvg(container);
+
+    // Both period groups carry valid times, so two box rectangles are plotted
+    expect(container.querySelectorAll('rect[rx="3"]')).toHaveLength(2);
+
+    // The X-axis title is derived from the grouping period rather than the daily default
+    const texts = Array.from(svg.querySelectorAll('text')).map((t) => t.textContent);
+    expect(texts).toContain('Week');
+    expect(texts).not.toContain('Day');
   });
 
   it('handles empty periodGroups gracefully', () => {
-    render(<DailyDistributionBoxPlot periodGroups={[]} groupingPeriod="daily" />);
-    expect(screen.getByText('Daily Solve Distribution')).toBeInTheDocument();
+    const { container } = render(
+      <DailyDistributionBoxPlot periodGroups={[]} groupingPeriod="daily" />,
+    );
+
+    expect(container.querySelector('#distribution-chart')).toBeInTheDocument();
+    expect(getBoxPlotSvg(container)).toBeInTheDocument();
+
+    // No period groups -> no box rectangles rendered
+    expect(container.querySelectorAll('rect[rx="3"]')).toHaveLength(0);
   });
 
   it('handles single-solve groups with IQR = 0 and suppresses median polyline', () => {
@@ -176,7 +198,9 @@ describe('DailyDistributionBoxPlot component', () => {
     );
 
     // With 40 groups, step = 5, so idx=0 (1), idx=4 (5), and idx=39 (40) render X-axis labels
-    const texts = Array.from(container.querySelectorAll('text')).map((t) => t.textContent);
+    const texts = Array.from(getBoxPlotSvg(container).querySelectorAll('text')).map(
+      (t) => t.textContent,
+    );
     expect(texts).toContain('1');
     expect(texts).not.toContain('2');
     expect(texts).toContain('5');
@@ -204,7 +228,7 @@ describe('DailyDistributionBoxPlot component', () => {
     expect(capturedCallback).toBeDefined();
 
     // Default state width is 1000 until the observer reports a size
-    const chartSvg = () => container.querySelector('svg[preserveAspectRatio="none"]');
+    const chartSvg = () => container.querySelector('#boxplot-svg');
     expect(chartSvg()?.getAttribute('viewBox')).toBe('0 0 1000 400');
 
     act(() => {
@@ -252,8 +276,7 @@ describe('DailyDistributionBoxPlot component', () => {
       );
     });
 
-    const svg = container.querySelector('svg[preserveAspectRatio="none"]');
-    expect(svg?.getAttribute('viewBox')).toBe('0 0 300 400');
+    expect(getBoxPlotSvg(container).getAttribute('viewBox')).toBe('0 0 300 400');
   });
 
   it('includes mobile and tablet/desktop responsive height classes on the SVG element', () => {
@@ -261,8 +284,8 @@ describe('DailyDistributionBoxPlot component', () => {
       <DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="daily" />,
     );
 
-    const svg = container.querySelector('svg[preserveAspectRatio="none"]');
-    const classes = svg?.getAttribute('class') || '';
+    const svg = getBoxPlotSvg(container);
+    const classes = svg.getAttribute('class') || '';
     expect(classes).toContain('h-[380px]');
     expect(classes).toContain('sm:h-[400px]');
   });
@@ -277,43 +300,52 @@ describe('DailyDistributionBoxPlot component', () => {
       const { container } = render(
         <DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="daily" />,
       );
-      const svg = container.querySelector('svg[preserveAspectRatio="none"]');
-      expect(svg?.getAttribute('viewBox')).toBe('0 0 750 400');
+      expect(getBoxPlotSvg(container).getAttribute('viewBox')).toBe('0 0 750 400');
     } finally {
       clientWidthSpy.mockRestore();
     }
   });
 
-  it('renders bottom axis title and maximizes chart width with compact Y-axis on mobile portrait', () => {
+  it('renders compact mobile portrait layout with the rotated axis label omitted', () => {
     const originalInnerWidth = window.innerWidth;
     try {
       window.innerWidth = 390;
-      render(<DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="daily" />);
+      const { container } = render(
+        <DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="daily" />,
+      );
 
-      // Bottom title is rendered on mobile portrait
-      expect(screen.getByText('Time (s)')).toBeInTheDocument();
+      const svg = getBoxPlotSvg(container);
+      // Mobile portrait uses the shorter viewBox height
+      expect(svg.getAttribute('viewBox')).toBe('0 0 1000 380');
 
-      // Rotated axis label inside SVG is omitted
-      expect(screen.queryByText('Solve Time (seconds)')).toBeNull();
+      // Rotated desktop-only Y-axis label is omitted on mobile
+      expect(svg.querySelector('text[transform]')).toBeNull();
 
       // Numeric Y-axis ticks are rendered
-      expect(screen.getByText('10')).toBeInTheDocument();
+      const texts = Array.from(svg.querySelectorAll('text')).map((t) => t.textContent);
+      expect(texts).toContain('10');
     } finally {
       window.innerWidth = originalInnerWidth;
     }
   });
 
-  it('renders standard rotated Y-axis label on desktop without bottom text', () => {
+  it('renders the rotated Y-axis label on desktop and no mobile-only layout', () => {
     const originalInnerWidth = window.innerWidth;
     try {
       window.innerWidth = 1024;
-      render(<DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="daily" />);
+      const { container } = render(
+        <DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="daily" />,
+      );
 
-      expect(screen.getByText('Solve Time (seconds)')).toBeInTheDocument();
-      expect(screen.queryByText('Time (s)')).not.toBeInTheDocument();
+      const svg = getBoxPlotSvg(container);
+      expect(svg.getAttribute('viewBox')).toBe('0 0 1000 400');
+
+      // Standard rotated Y-axis label is present on desktop
+      expect(svg.querySelector('text[transform]')).not.toBeNull();
 
       // Numeric Y-axis ticks are rendered
-      expect(screen.getByText('10')).toBeInTheDocument();
+      const texts = Array.from(svg.querySelectorAll('text')).map((t) => t.textContent);
+      expect(texts).toContain('10');
     } finally {
       window.innerWidth = originalInnerWidth;
     }
@@ -326,29 +358,26 @@ describe('DailyDistributionBoxPlot component', () => {
 
     try {
       window.innerWidth = 1024;
-      const { unmount } = render(
+      const { container, unmount } = render(
         <DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="daily" />,
       );
 
       expect(addEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
-      expect(screen.getByText('Solve Time (seconds)')).toBeInTheDocument();
-      expect(screen.queryByText('Time (s)')).not.toBeInTheDocument();
+      expect(getBoxPlotSvg(container).getAttribute('viewBox')).toBe('0 0 1000 400');
 
       act(() => {
         window.innerWidth = 375;
         fireEvent(window, new Event('resize'));
       });
 
-      expect(screen.getByText('Time (s)')).toBeInTheDocument();
-      expect(screen.queryByText('Solve Time (seconds)')).not.toBeInTheDocument();
+      expect(getBoxPlotSvg(container).getAttribute('viewBox')).toBe('0 0 1000 380');
 
       act(() => {
         window.innerWidth = 1024;
         fireEvent(window, new Event('resize'));
       });
 
-      expect(screen.getByText('Solve Time (seconds)')).toBeInTheDocument();
-      expect(screen.queryByText('Time (s)')).not.toBeInTheDocument();
+      expect(getBoxPlotSvg(container).getAttribute('viewBox')).toBe('0 0 1000 400');
 
       unmount();
       expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
@@ -359,14 +388,18 @@ describe('DailyDistributionBoxPlot component', () => {
     }
   });
 
-  it('provides accessible aria-label when title prop is omitted', () => {
+  it('provides an accessible image region labeled by the title prop', () => {
     const { container } = render(
-      <DailyDistributionBoxPlot periodGroups={mockPeriodGroups} groupingPeriod="daily" />,
+      <DailyDistributionBoxPlot
+        periodGroups={mockPeriodGroups}
+        groupingPeriod="daily"
+        title="Custom Distribution"
+      />,
     );
 
-    const svg = container.querySelector('svg[role="img"]');
-    expect(svg).toBeInTheDocument();
-    expect(svg?.getAttribute('aria-label')).toBe('Daily Solve Distribution');
+    const svg = getBoxPlotSvg(container);
+    expect(svg.getAttribute('role')).toBe('img');
+    expect(svg.getAttribute('aria-label')).toBe('Custom Distribution');
   });
 
   it('gracefully handles period groups with 0 valid solves without plotting off-screen elements', () => {
@@ -380,10 +413,12 @@ describe('DailyDistributionBoxPlot component', () => {
       <DailyDistributionBoxPlot periodGroups={groupsWithEmptyGroup} groupingPeriod="daily" />,
     );
 
-    // Period tick indices and axis label are both rendered on X-axis
-    expect(screen.getByText('1')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
-    expect(screen.getByText('Day')).toBeInTheDocument();
+    const svg = getBoxPlotSvg(container);
+
+    // Period tick indices are both rendered on the X-axis
+    const texts = Array.from(svg.querySelectorAll('text')).map((t) => t.textContent);
+    expect(texts).toContain('1');
+    expect(texts).toContain('2');
 
     // Exactly 1 box rect is rendered (the empty group does not render an off-scale box)
     const boxes = container.querySelectorAll('rect[rx="3"]');
@@ -401,7 +436,7 @@ describe('DailyDistributionBoxPlot component', () => {
         />,
       );
 
-      const chartWrapper = container.querySelector('svg[role="img"]')?.parentElement;
+      const chartWrapper = getBoxPlotSvg(container).parentElement;
       expect(chartWrapper).not.toBeNull();
       if (!chartWrapper) return;
 
@@ -413,7 +448,9 @@ describe('DailyDistributionBoxPlot component', () => {
 
       // 1. User touches circle
       fireEvent.touchStart(solveCircle);
-      expect(container.querySelector('.pointer-events-none')).toHaveTextContent('Solve: 12.00s');
+      expect(container.querySelector('.pointer-events-none')?.textContent).toContain(
+        'Solve: 12.00s',
+      );
 
       // 2. User lifts touch and timer elapses -> auto-dismisses
       fireEvent.touchEnd(chartWrapper);

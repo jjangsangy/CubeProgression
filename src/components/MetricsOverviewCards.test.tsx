@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { GlobalStats } from '../types';
 import { MetricsOverviewCards } from './MetricsOverviewCards';
@@ -37,18 +37,40 @@ const mockGlobalStats: GlobalStats = {
   improvementPct: 22.8,
 };
 
+// Anchor on the card region id; fails loudly if the region is missing.
+const getCard = (container: HTMLElement, id: string): HTMLElement => {
+  const card = container.querySelector(`#${id}`);
+  expect(card).not.toBeNull();
+  return card as HTMLElement;
+};
+
+// Locate a leaf node that displays an app-computed value (never decorative copy).
+const findValueNode = (root: HTMLElement, value: string): Element | null =>
+  Array.from(root.querySelectorAll('div, span')).find(
+    (el) => el.children.length === 0 && el.textContent === value,
+  ) ?? null;
+
 describe('MetricsOverviewCards component', () => {
   it('renders summary cards with formatted metrics', () => {
-    render(<MetricsOverviewCards stats={mockGlobalStats} sessionName="3x3 Session" />);
+    const { container } = render(
+      <MetricsOverviewCards stats={mockGlobalStats} sessionName="3x3 Session" />,
+    );
 
-    expect(screen.getByText('Best Single')).toBeInTheDocument();
-    expect(screen.getByText('8.50s')).toBeInTheDocument();
-    expect(screen.getByText('11.40s')).toBeInTheDocument(); // Ao12
-    expect(screen.getByText('12.10s')).toBeInTheDocument(); // Ao50
-    expect(screen.getByText('-0.0150s/solve')).toBeInTheDocument();
-    expect(screen.getByText('-3.3s')).toBeInTheDocument();
-    expect(screen.getByText('100')).toBeInTheDocument();
-    expect(screen.getByText(/2 DNFs/)).toBeInTheDocument();
+    expect(getCard(container, 'metric-best-single').textContent).toContain('8.50s');
+
+    const averages = getCard(container, 'metric-best-averages');
+    expect(averages.textContent).toContain('11.40s'); // Ao12
+    expect(averages.textContent).toContain('12.10s'); // Ao50
+
+    expect(getCard(container, 'metric-overall-rate').textContent).toContain('-0.0150s/solve');
+    expect(getCard(container, 'metric-progression-gain').textContent).toContain('-3.3s');
+
+    const solves = getCard(container, 'metric-session-solves');
+    // Assert the specific count node so a value like 1000 cannot satisfy it
+    const solvesCount = solves.querySelector('div.font-mono');
+    expect(solvesCount).not.toBeNull();
+    expect(solvesCount?.textContent).toBe('100 solves');
+    expect(solves.textContent).toContain('2 DNFs');
   });
 
   it('renders fallback placeholders when metrics are absent or negative', () => {
@@ -76,28 +98,37 @@ describe('MetricsOverviewCards component', () => {
       improvementPct: -14.3,
     };
 
-    render(<MetricsOverviewCards stats={minimalStats} sessionName="Empty Session" />);
+    const { container } = render(
+      <MetricsOverviewCards stats={minimalStats} sessionName="Empty Session" />,
+    );
 
-    expect(screen.getByText('N/A')).toBeInTheDocument();
-    expect(screen.getByText('No valid solves')).toBeInTheDocument();
-    expect(screen.getAllByText('—').length).toBe(2); // Ao12 & Ao50
+    const bestSingle = getCard(container, 'metric-best-single');
+    expect(bestSingle.textContent).toContain('N/A');
+    expect(bestSingle.textContent).toContain('No valid solves');
+
+    const averages = getCard(container, 'metric-best-averages');
+    expect((averages.textContent?.match(/—/g) ?? []).length).toBe(2); // Ao12 & Ao50
+
     // Slower recent average (improvementSec < 0) must read as a positive time increase
-    expect(screen.getByText('+2s')).toBeInTheDocument();
-    expect(screen.queryByText('-2s')).not.toBeInTheDocument();
-    expect(screen.getByText('(-14.3%)')).toBeInTheDocument();
-    expect(screen.getByText(/0 DNFs/)).toBeInTheDocument();
+    const gain = getCard(container, 'metric-progression-gain');
+    expect(gain.textContent).toContain('+2s');
+    expect(gain.textContent).not.toContain('-2s');
+    expect(gain.textContent).toContain('(-14.3%)');
+
+    expect(getCard(container, 'metric-session-solves').textContent).toContain('0 DNFs');
   });
 
   it('renders a zero progression change without a misleading sign', () => {
-    render(
+    const { container } = render(
       <MetricsOverviewCards
         stats={{ ...mockGlobalStats, improvementSec: 0, improvementPct: 0 }}
         sessionName="Flat Session"
       />,
     );
 
-    expect(screen.getByText('0s')).toBeInTheDocument();
-    expect(screen.getByText('(0%)')).toBeInTheDocument();
+    const gain = getCard(container, 'metric-progression-gain');
+    expect(gain.textContent).toContain('0s');
+    expect(gain.textContent).toContain('(0%)');
   });
 
   it('renders with responsive grid classes and symmetrical 5th card span on 2-column viewports', () => {
@@ -105,7 +136,8 @@ describe('MetricsOverviewCards component', () => {
       <MetricsOverviewCards stats={mockGlobalStats} sessionName="Grid Test" />,
     );
 
-    const grid = container.firstElementChild as HTMLElement;
+    const grid = container.querySelector('#metrics-overview') as HTMLElement;
+    expect(grid).toBeInTheDocument();
     expect(grid).toHaveClass('grid-cols-1');
     expect(grid).toHaveClass('sm:grid-cols-2');
     expect(grid).toHaveClass('lg:grid-cols-5');
@@ -123,9 +155,15 @@ describe('MetricsOverviewCards component', () => {
       regression: { ...mockGlobalStats.regression, slope: -0.02, slopeFormatted: '-0.0200s/solve' },
       improvementPct: 15.5,
     };
-    const { rerender } = render(<MetricsOverviewCards stats={improvingStats} sessionName="Fast" />);
-    expect(screen.getByText('-0.0200s/solve')).toHaveClass('text-emerald-400');
-    expect(screen.getByText('(+15.5%)')).toHaveClass('text-emerald-400');
+    const { container, rerender } = render(
+      <MetricsOverviewCards stats={improvingStats} sessionName="Fast" />,
+    );
+    expect(findValueNode(getCard(container, 'metric-overall-rate'), '-0.0200s/solve')).toHaveClass(
+      'text-emerald-400',
+    );
+    expect(findValueNode(getCard(container, 'metric-progression-gain'), '(+15.5%)')).toHaveClass(
+      'text-emerald-400',
+    );
 
     const degradingStats = {
       ...mockGlobalStats,
@@ -134,7 +172,11 @@ describe('MetricsOverviewCards component', () => {
       improvementPct: -8.2,
     };
     rerender(<MetricsOverviewCards stats={degradingStats} sessionName="Slow" />);
-    expect(screen.getByText('+0.0300s/solve')).toHaveClass('text-rose-400');
-    expect(screen.getByText('(-8.2%)')).toHaveClass('text-rose-400');
+    expect(findValueNode(getCard(container, 'metric-overall-rate'), '+0.0300s/solve')).toHaveClass(
+      'text-rose-400',
+    );
+    expect(findValueNode(getCard(container, 'metric-progression-gain'), '(-8.2%)')).toHaveClass(
+      'text-rose-400',
+    );
   });
 });

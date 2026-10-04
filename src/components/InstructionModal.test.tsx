@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { InstructionModal } from './InstructionModal';
 
@@ -15,44 +15,45 @@ describe('InstructionModal component', () => {
     it('does not render when isOpen is false', () => {
       render(<InstructionModal isOpen={false} onClose={vi.fn()} />);
 
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(document.querySelector('#instruction-modal')).toBeNull();
     });
 
     it('renders modal dialog with complete accessibility semantics', () => {
       render(<InstructionModal isOpen={true} onClose={vi.fn()} />);
 
-      const dialog = screen.getByRole('dialog');
+      const modal = document.querySelector('#instruction-modal');
+      const dialog = modal?.querySelector('[role="dialog"]');
       expect(dialog).toBeInTheDocument();
       expect(dialog).toHaveAttribute('aria-modal', 'true');
       expect(dialog).toHaveAttribute('aria-labelledby', 'instruction-modal-title');
       expect(dialog).toHaveAttribute('aria-describedby', 'instruction-modal-description');
 
       const title = document.getElementById('instruction-modal-title');
-      expect(title).toHaveTextContent('How to Export from csTimer');
+      expect(title?.tagName).toBe('H2');
+      expect(title?.textContent?.trim().length).toBeGreaterThan(0);
 
       const description = document.getElementById('instruction-modal-description');
-      expect(description).toHaveTextContent(
-        'Follow these simple steps to export your solve history to CubeProgression.',
-      );
+      expect(description?.tagName).toBe('P');
+      expect(description?.textContent?.trim().length).toBeGreaterThan(0);
     });
 
     it('renders the visual walkthrough image with lazy loading and correct alt text', () => {
       render(<InstructionModal isOpen={true} onClose={vi.fn()} />);
 
-      const img = screen.getByRole('img');
+      const img = document.querySelector('#instruction-modal img');
       expect(img).toBeInTheDocument();
       expect(img).toHaveAttribute(
         'alt',
         'csTimer export walkthrough showing the export toolbar button and Export to file button',
       );
-      expect(img.getAttribute('src')).toContain('instruction.webp');
+      expect(img?.getAttribute('src')).toContain('instruction.webp');
       expect(img).toHaveAttribute('loading', 'lazy');
     });
 
     it('renders all external links with rel="noopener noreferrer" and target="_blank"', () => {
       render(<InstructionModal isOpen={true} onClose={vi.fn()} />);
 
-      const links = screen.getAllByRole('link', { name: /cstimer/i });
+      const links = document.querySelectorAll('#instruction-modal a[href*="cstimer.net"]');
       expect(links.length).toBe(2);
 
       for (const link of links) {
@@ -67,7 +68,7 @@ describe('InstructionModal component', () => {
     it('moves initial focus to the close button when opened', () => {
       render(<InstructionModal isOpen={true} onClose={vi.fn()} />);
 
-      const closeBtn = screen.getByRole('button', { name: 'Close instructions modal' });
+      const closeBtn = document.querySelector('#instruction-modal-close');
       expect(closeBtn).toHaveFocus();
     });
   });
@@ -77,8 +78,9 @@ describe('InstructionModal component', () => {
       const onClose = vi.fn();
       render(<InstructionModal isOpen={true} onClose={onClose} />);
 
-      const closeBtn = screen.getByRole('button', { name: 'Close instructions modal' });
-      fireEvent.click(closeBtn);
+      const closeBtn = document.querySelector('#instruction-modal-close');
+      expect(closeBtn).toBeInTheDocument();
+      if (closeBtn) fireEvent.click(closeBtn);
       expect(onClose).toHaveBeenCalledTimes(1);
     });
 
@@ -86,8 +88,9 @@ describe('InstructionModal component', () => {
       const onClose = vi.fn();
       render(<InstructionModal isOpen={true} onClose={onClose} />);
 
-      const gotItBtn = screen.getByRole('button', { name: 'Got it' });
-      fireEvent.click(gotItBtn);
+      const gotItBtn = document.querySelector('#instruction-modal-confirm');
+      expect(gotItBtn).toBeInTheDocument();
+      if (gotItBtn) fireEvent.click(gotItBtn);
       expect(onClose).toHaveBeenCalledTimes(1);
     });
 
@@ -95,8 +98,9 @@ describe('InstructionModal component', () => {
       const onClose = vi.fn();
       render(<InstructionModal isOpen={true} onClose={onClose} />);
 
-      const backdropBtn = screen.getByRole('button', { name: 'Close modal overlay' });
-      fireEvent.click(backdropBtn);
+      const backdropBtn = document.querySelector('#instruction-modal-overlay');
+      expect(backdropBtn).toBeInTheDocument();
+      if (backdropBtn) fireEvent.click(backdropBtn);
       expect(onClose).toHaveBeenCalledTimes(1);
     });
 
@@ -104,10 +108,12 @@ describe('InstructionModal component', () => {
       const onClose = vi.fn();
       render(<InstructionModal isOpen={true} onClose={onClose} />);
 
-      const dialog = screen.getByRole('dialog');
-      fireEvent.click(dialog);
-      fireEvent.click(screen.getByText('Step-by-Step Instructions'));
-      fireEvent.click(screen.getByRole('img'));
+      const dialog = document.querySelector('#instruction-modal [role="dialog"]');
+      expect(dialog).toBeInTheDocument();
+      if (dialog) fireEvent.click(dialog);
+      const img = document.querySelector('#instruction-modal img');
+      expect(img).toBeInTheDocument();
+      if (img) fireEvent.click(img);
       expect(onClose).not.toHaveBeenCalled();
     });
   });

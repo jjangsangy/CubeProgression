@@ -13,6 +13,7 @@ export type RangePreset =
   | 'custom';
 
 export interface ProgressionChartProps {
+  id?: string;
   solves: Solve[];
   periodGroups: PeriodGroup[];
   regression: LinearRegression;

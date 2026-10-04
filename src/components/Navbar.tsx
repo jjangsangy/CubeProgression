@@ -41,7 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const handleInstall = onInstall ?? pwaInstall.promptInstall;
 
   return (
-    <header className="relative border-b border-stone-800 bg-stone-950 w-full">
+    <header id="navbar" className="relative border-b border-stone-800 bg-stone-950 w-full">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 safe-area-x w-full gap-2 sm:gap-4">
         {/* Brand Logo & Title */}
         <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
@@ -75,6 +75,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center justify-end gap-1.5 sm:gap-2 md:gap-2.5 min-w-0">
           {isSaved && (
             <div
+              id="navbar-saved-badge"
               className="hidden items-center gap-1.5 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-400 lg:flex shrink-0"
               title="Data is persisted across reloads in browser IndexedDB storage"
             >
@@ -89,7 +90,10 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
 
           {fileName && (
-            <div className="hidden items-center gap-1.5 rounded-lg border border-stone-700/60 bg-stone-800/80 px-2.5 py-1 font-mono text-xs text-stone-300 md:flex shrink min-w-0">
+            <div
+              id="navbar-filename"
+              className="hidden items-center gap-1.5 rounded-lg border border-stone-700/60 bg-stone-800/80 px-2.5 py-1 font-mono text-xs text-stone-300 md:flex shrink min-w-0"
+            >
               <FileText className="h-3.5 w-3.5 shrink-0 text-amber-400" />
               <span className="max-w-[100px] sm:max-w-[130px] lg:max-w-[180px] xl:max-w-[260px] truncate">
                 {fileName}
@@ -99,6 +103,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {!isOnline && (
             <div
+              id="navbar-offline-status"
               role="status"
               aria-label="Offline mode"
               className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-2 lg:px-2.5 lg:py-1 text-xs font-medium text-amber-400 shrink-0"
@@ -112,6 +117,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {canInstall && (
             <button
+              id="navbar-install"
               type="button"
               onClick={handleInstall}
               aria-label="Install App"
@@ -125,6 +131,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {onOpenInstructions && (
             <button
+              id="navbar-guide"
               type="button"
               onClick={onOpenInstructions}
               aria-label="csTimer Guide"
@@ -139,6 +146,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {isSaved && onClearStorage ? (
             <button
+              id="navbar-reset"
               type="button"
               onClick={onClearStorage}
               aria-label="Reset Data"
@@ -150,6 +158,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           ) : (
             <button
+              id="navbar-reset"
               type="button"
               onClick={onReset}
               aria-label="Reset Data"

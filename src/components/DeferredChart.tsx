@@ -2,6 +2,7 @@ import type React from 'react';
 import { Suspense, useEffect, useRef, useState } from 'react';
 
 export interface DeferredChartProps {
+  id?: string;
   children: React.ReactNode;
   minHeight: number | string;
   rootMargin?: string;
@@ -10,6 +11,7 @@ export interface DeferredChartProps {
 }
 
 export const DeferredChart: React.FC<DeferredChartProps> = ({
+  id,
   children,
   minHeight,
   rootMargin = '250px',
@@ -49,11 +51,16 @@ export const DeferredChart: React.FC<DeferredChartProps> = ({
 
   const styleMinHeight = typeof minHeight === 'number' ? `${minHeight}px` : minHeight;
 
+  const containerId =
+    id ||
+    (fallbackTitle
+      ? `deferred-${fallbackTitle.toLowerCase().replace(/\s+/g, '-')}`
+      : 'deferred-chart');
+
   const skeleton = (
     <div
       style={{ minHeight: styleMinHeight }}
       className="flex w-full flex-col justify-between rounded-2xl border border-stone-800/80 bg-stone-900/60 p-4 sm:p-6 animate-pulse"
-      data-testid="deferred-chart-skeleton"
     >
       <div className="flex items-center justify-between">
         <div className="h-5 w-48 rounded-md bg-stone-800" />
@@ -73,11 +80,7 @@ export const DeferredChart: React.FC<DeferredChartProps> = ({
     <div
       ref={containerRef}
       style={{ minHeight: styleMinHeight, containIntrinsicSize: `auto ${styleMinHeight}` }}
-      data-testid={
-        fallbackTitle
-          ? `deferred-chart-${fallbackTitle.toLowerCase().replace(/\s+/g, '-')}`
-          : 'deferred-chart'
-      }
+      id={containerId}
       className={`w-full transition-opacity duration-300 chart-content-visibility ${className}`}
     >
       {isVisible ? <Suspense fallback={skeleton}>{children}</Suspense> : skeleton}
