@@ -25,7 +25,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const pwaInstall = usePwaInstall();
 
   const isOnline = propIsOnline ?? hookOnlineStatus;
-  const canInstall = propCanInstall ?? pwaInstall.canInstall;
+  const canInstall = propCanInstall !== undefined ? propCanInstall : !pwaInstall.isInstalled;
   const handleInstall = onInstall ?? pwaInstall.promptInstall;
   const { colors } = useTheme();
 
@@ -104,7 +104,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="h-3.5 w-3.5 shrink-0 text-amber-400"
                 style={{ color: colors.accent }}
               />
-              <span className="hidden lg:inline">Install App</span>
+              <span className="hidden sm:inline">Install App</span>
             </button>
           )}
 

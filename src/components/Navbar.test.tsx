@@ -33,6 +33,13 @@ describe('Navbar component', () => {
     expect(container.querySelector('#navbar-guide')).toBeNull();
   });
 
+  it('renders Install App button by default when running in non-standalone browser mode', () => {
+    const { container } = render(<Navbar />);
+
+    const installBtn = container.querySelector('#navbar-install');
+    expect(installBtn).toBeInTheDocument();
+  });
+
   it('renders Install App button when canInstall is true and calls onInstall', () => {
     const onInstall = vi.fn();
     const { container } = render(<Navbar canInstall={true} onInstall={onInstall} />);
