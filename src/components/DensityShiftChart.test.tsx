@@ -196,9 +196,9 @@ describe('DensityShiftChart component', () => {
       <DensityShiftChart solves={slowingSolves} title="Slower Distribution Shift" />,
     );
 
-    // Baseline (first 30%) mean 10.25s vs recent (last 30%) mean 11.65s -> +1.40s shift.
+    // Baseline (first 30%) mean 10.25s vs recent (last 30%) mean 11.65s -> positive slower EMD shift.
     const summary = getById(container, 'density-shift-chart').textContent ?? '';
-    expect(summary).toContain('+1.40s');
+    expect(summary).toContain('+1.39s');
   });
 
   it('renders off-center vertical reference line labels that do not intersect or go through the line', () => {

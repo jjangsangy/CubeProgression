@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { KDEPeak, KDEPoint, Solve } from '../types';
 import {
   calculateAoN,
+  calculateEarthMoverDistance,
   calculateGlobalStats,
   calculateKDE,
   calculateKDEFromSamples,
@@ -623,6 +624,71 @@ describe('statsMath utils', () => {
       const peakA: KDEPeak = { x: 11, interpolatedTime: 11.2, density: 0.5, index: 15 };
       const peakB: KDEPeak = { x: 11, interpolatedTime: 11.2, density: 0.45, index: 15 };
       expect(calculatePeakDistance(peakA, peakB)).toBe(0);
+    });
+  });
+
+  describe('calculateEarthMoverDistance', () => {
+    it('returns null when points array has fewer than 2 elements or invalid dx', () => {
+      expect(calculateEarthMoverDistance([])).toBeNull();
+      expect(
+        calculateEarthMoverDistance([{ x: 10, baselineDensity: 0.5, recentDensity: 0.5 }]),
+      ).toBeNull();
+      expect(
+        calculateEarthMoverDistance([
+          { x: 10, baselineDensity: 0.5, recentDensity: 0.5 },
+          { x: 10, baselineDensity: 0.5, recentDensity: 0.5 },
+        ]),
+      ).toBeNull();
+    });
+
+    it('returns null when density sum is zero or non-finite', () => {
+      const zeroPoints: KDEPoint[] = [
+        { x: 10, baselineDensity: 0, recentDensity: 0 },
+        { x: 11, baselineDensity: 0, recentDensity: 0 },
+      ];
+      expect(calculateEarthMoverDistance(zeroPoints)).toBeNull();
+
+      const nanPoints: KDEPoint[] = [
+        { x: 10, baselineDensity: Number.NaN, recentDensity: 0.5 },
+        { x: 11, baselineDensity: 0.5, recentDensity: 0.5 },
+      ];
+      expect(calculateEarthMoverDistance(nanPoints)).toBeNull();
+    });
+
+    it('returns 0 when baseline and recent distributions are identical', () => {
+      const identicalPoints: KDEPoint[] = [
+        { x: 10, baselineDensity: 0.2, recentDensity: 0.2 },
+        { x: 11, baselineDensity: 0.6, recentDensity: 0.6 },
+        { x: 12, baselineDensity: 0.2, recentDensity: 0.2 },
+      ];
+      expect(calculateEarthMoverDistance(identicalPoints)).toBe(0);
+    });
+
+    it('calculates accurate distance between shifted distributions', () => {
+      // 1-second shift: baseline centered at 10, recent centered at 11
+      const points: KDEPoint[] = [
+        { x: 9, baselineDensity: 0.1, recentDensity: 0.0 },
+        { x: 10, baselineDensity: 0.8, recentDensity: 0.1 },
+        { x: 11, baselineDensity: 0.1, recentDensity: 0.8 },
+        { x: 12, baselineDensity: 0.0, recentDensity: 0.1 },
+      ];
+      const emd = calculateEarthMoverDistance(points);
+      expect(emd).toBeDefined();
+      expect(emd).toBe(1.0);
+    });
+
+    it('detects variance and shape shift when distribution spreads out around the same center', () => {
+      // Center at 10: baseline is narrow, recent is wide
+      const points: KDEPoint[] = [
+        { x: 8, baselineDensity: 0.0, recentDensity: 0.2 },
+        { x: 9, baselineDensity: 0.1, recentDensity: 0.2 },
+        { x: 10, baselineDensity: 0.8, recentDensity: 0.2 },
+        { x: 11, baselineDensity: 0.1, recentDensity: 0.2 },
+        { x: 12, baselineDensity: 0.0, recentDensity: 0.2 },
+      ];
+      const emd = calculateEarthMoverDistance(points);
+      expect(emd).toBeDefined();
+      expect(emd).toBeGreaterThan(0);
     });
   });
 

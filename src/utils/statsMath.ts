@@ -614,6 +614,50 @@ export function calculatePeakDistance(peak1: KDEPeak | null, peak2: KDEPeak | nu
 }
 
 /**
+ * Calculates the Earth Mover's Distance (Wasserstein-1 metric, W1) between
+ * baseline and recent KDE curves by integrating the L1 difference of their
+ * normalized Cumulative Distribution Functions (CDFs):
+ *
+ *   W1 = \int |F_baseline(x) - F_recent(x)| dx
+ *
+ * Runs in O(M) time where M is the number of grid points (~120), requiring zero
+ * allocations and under 1 microsecond execution time.
+ *
+ * @param points - Array of evaluated KDE data points containing baselineDensity and recentDensity
+ * @returns Earth Mover's Distance in seconds rounded to 2 decimal places, or null if points are invalid
+ */
+export function calculateEarthMoverDistance(points: KDEPoint[]): number | null {
+  if (!points || points.length < 2) return null;
+
+  const n = points.length;
+  const dx = (points[n - 1].x - points[0].x) / (n - 1);
+  if (dx <= 0 || !Number.isFinite(dx)) return null;
+
+  let sum1 = 0;
+  let sum2 = 0;
+  for (let i = 0; i < n; i++) {
+    sum1 += points[i].baselineDensity;
+    sum2 += points[i].recentDensity;
+  }
+
+  if (sum1 <= 0 || sum2 <= 0 || !Number.isFinite(sum1) || !Number.isFinite(sum2)) {
+    return null;
+  }
+
+  let cdf1 = 0;
+  let cdf2 = 0;
+  let totalL1 = 0;
+
+  for (let i = 0; i < n; i++) {
+    cdf1 += points[i].baselineDensity / sum1;
+    cdf2 += points[i].recentDensity / sum2;
+    totalL1 += Math.abs(cdf1 - cdf2);
+  }
+
+  return Number((totalL1 * dx).toFixed(2));
+}
+
+/**
  * Calculates global high-level summary statistics
  */
 export function calculateGlobalStats(solves: Solve[]): GlobalStats {

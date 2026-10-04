@@ -1,4 +1,4 @@
-import { Activity } from 'lucide-react';
+import { Activity, HelpCircle } from 'lucide-react';
 import type React from 'react';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
@@ -16,6 +16,7 @@ import { useAutoDismissTooltip } from '../hooks/useAutoDismissTooltip';
 import { useTheme } from '../theme';
 import type { GroupingPeriod, PeriodGroup, Solve } from '../types';
 import {
+  calculateEarthMoverDistance,
   calculateKDEFromSamples,
   calculatePeakDistance,
   findKDEPeak,
@@ -248,19 +249,32 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
 
     const bMean = bTimes.reduce((a, b) => a + b, 0) / bTimes.length;
     const rMean = rTimes.reduce((a, b) => a + b, 0) / rTimes.length;
+    const emd = calculateEarthMoverDistance(kdeData);
+
+    let shiftText = 'no change';
+    if (emd !== null && emd > 0) {
+      if (bMean > rMean) {
+        shiftText = `-${emd.toFixed(2)}s faster`;
+      } else if (rMean > bMean) {
+        shiftText = `+${emd.toFixed(2)}s slower`;
+      } else {
+        shiftText = `${emd.toFixed(2)}s shift`;
+      }
+    }
 
     return {
       baselineCount: bTimes.length,
       recentCount: rTimes.length,
       baselineMean: bMean.toFixed(2),
       recentMean: rMean.toFixed(2),
-      diff: (bMean - rMean).toFixed(2),
+      emd,
+      shiftText,
       start1Index: start1 + 1,
       end1Index: start1 + sampleCount,
       start2Index: start2 + 1,
       end2Index: start2 + sampleCount,
     };
-  }, [sample1Solves, sample2Solves, validSolves.length, start1, start2, sampleCount]);
+  }, [sample1Solves, sample2Solves, validSolves.length, start1, start2, sampleCount, kdeData]);
 
   // Dataset sparkline path for the scrubber track
   const sparklineData = useMemo(() => {
@@ -709,9 +723,25 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
           </div>
           <div className="flex flex-wrap items-center justify-center gap-1.5 p-2.5 sm:p-3 text-center">
             <span
-              className="text-stone-400 whitespace-nowrap"
+              className="inline-flex items-center gap-1 text-stone-400 whitespace-nowrap"
               style={{ color: colors.textSecondary }}
             >
+              <span className="group/emd-info relative inline-flex cursor-help items-center text-stone-400 transition-colors hover:text-stone-200">
+                <HelpCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                <span
+                  role="tooltip"
+                  className="pointer-events-none absolute top-full left-0 z-50 mt-1.5 hidden w-64 rounded-lg border p-2.5 text-left text-[11px] font-normal leading-relaxed whitespace-normal shadow-2xl backdrop-blur-md group-hover/emd-info:block"
+                  style={{
+                    backgroundColor: colors.bgCard,
+                    borderColor: colors.borderSubtle,
+                    color: colors.textPrimary,
+                  }}
+                >
+                  Measures the overall shift between baseline and recent solve distributions using
+                  Earth Mover&apos;s Distance (Wasserstein metric). Unlike a simple average, it
+                  accounts for consistency, spread, and shape changes.
+                </span>
+              </span>
               <span className="hidden sm:inline">Distribution Shift:</span>
               <span className="sm:hidden">Shift:</span>
             </span>
@@ -719,11 +749,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               className="font-mono font-bold whitespace-nowrap"
               style={{ color: colors.accentText }}
             >
-              {Number(statsSummary.diff) > 0
-                ? `-${statsSummary.diff}s faster`
-                : Number(statsSummary.diff) < 0
-                  ? `+${Math.abs(Number(statsSummary.diff)).toFixed(2)}s slower`
-                  : 'no change'}
+              {statsSummary.shiftText}
             </span>
           </div>
         </div>

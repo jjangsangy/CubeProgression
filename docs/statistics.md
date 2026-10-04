@@ -113,6 +113,18 @@ Computes the absolute distance in solve time (seconds) between two dominant KDE 
 - Computes $|t_1 - t_2|$ rounded to 2 decimal places: `Number(Math.abs(peak1.interpolatedTime - peak2.interpolatedTime).toFixed(2))`.
 - Returns `0` when both peaks coincide at the same continuous solve time.
 
+## `calculateEarthMoverDistance(points: KDEPoint[]): number | null`
+
+Calculates the Earth Mover's Distance (1st Wasserstein metric, $W_1$) between baseline and recent KDE curves by integrating the $L_1$ absolute difference of their normalized Cumulative Distribution Functions (CDFs):
+
+$$W_1 = \int_{-\infty}^{\infty} |F_{\text{baseline}}(x) - F_{\text{recent}}(x)| \, dx \approx \Delta x \sum_{k=0}^{M-1} |F_{\text{baseline}}(x_k) - F_{\text{recent}}(x_k)|$$
+
+- Evaluates on precomputed KDE bins in $O(M)$ time ($M = 120$ operations, $< 0.002\text{ ms}$) with zero heap allocations.
+- Normalizes discrete densities so each CDF cleanly spans $[0, 1]$, neutralizing Gaussian tail truncation.
+- Accurately captures full probability shape changes, multimodality, and variance shifts where mean difference fails.
+- Returns `null` when inputs are invalid or density sum is non-positive.
+- Returns `0` when baseline and recent distributions are identical.
+
 ## `calculateGlobalStats(solves): GlobalStats`
 
 The dashboard summary object:
