@@ -210,7 +210,14 @@ export function calculateProgressionYDomain(
   return { minY, maxY };
 }
 
-export function getSingleLineStyle(solveVisibility: SolveVisibilityMode): SingleLineStyle {
+export function getSingleLineStyle(
+  solveVisibility: SolveVisibilityMode,
+  customColors?: { stroke?: string; dotFill?: string; dotStroke?: string },
+): SingleLineStyle {
+  const strokeUnmuted = customColors?.stroke ?? '#94a3b8';
+  const dotFillUnmuted = customColors?.dotFill ?? '#cbd5e1';
+  const dotStrokeUnmuted = customColors?.dotStroke ?? '#64748b';
+
   switch (solveVisibility) {
     case 'hidden':
       return {
@@ -222,23 +229,23 @@ export function getSingleLineStyle(solveVisibility: SolveVisibilityMode): Single
     case 'unmuted':
     case 'visible':
       return {
-        stroke: '#94a3b8',
+        stroke: strokeUnmuted,
         strokeWidth: 1,
         strokeOpacity: 0.6,
-        dot: { r: 2.5, fill: '#cbd5e1', stroke: '#64748b', strokeWidth: 0.5 },
+        dot: { r: 2.5, fill: dotFillUnmuted, stroke: dotStrokeUnmuted, strokeWidth: 0.5 },
       };
     case 'dots':
       return {
-        stroke: '#64748b',
+        stroke: dotStrokeUnmuted,
         strokeWidth: 0.75,
         strokeOpacity: 0.25,
-        dot: { r: 1.2, fill: '#94a3b8', fillOpacity: 0.35, stroke: 'none' },
+        dot: { r: 1.2, fill: strokeUnmuted, fillOpacity: 0.35, stroke: 'none' },
       };
     default:
       return {
-        stroke: '#64748b',
+        stroke: dotStrokeUnmuted,
         strokeWidth: 0.75,
-        strokeOpacity: 0.2,
+        strokeOpacity: 0.35,
         dot: false,
       };
   }

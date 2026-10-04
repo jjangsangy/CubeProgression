@@ -3,6 +3,8 @@ import type React from 'react';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { usePwaInstall } from '../hooks/usePwaInstall';
 import { useStorageStatus } from '../hooks/useStorageNotice';
+import { useTheme } from '../theme/ThemeContext';
+import { ThemeSelector } from './ThemeSelector';
 
 interface NavbarProps {
   fileName?: string;
@@ -39,6 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const isOnline = propIsOnline ?? hookOnlineStatus;
   const canInstall = propCanInstall ?? pwaInstall.canInstall;
   const handleInstall = onInstall ?? pwaInstall.promptInstall;
+  const { colors } = useTheme();
 
   return (
     <header id="navbar" className="relative border-b border-stone-800 bg-stone-950 w-full">
@@ -58,11 +61,21 @@ export const Navbar: React.FC<NavbarProps> = ({
               <h1 className="text-[15px] sm:text-base md:text-lg leading-tight font-bold tracking-tight text-stone-100 whitespace-nowrap">
                 <span>CubeProgression</span>
               </h1>
-              <span className="hidden sm:inline-block rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-amber-400 uppercase">
+              <span
+                className="hidden sm:inline-block rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-amber-400 uppercase"
+                style={{
+                  borderColor: `${colors.accent}40`,
+                  backgroundColor: `${colors.accent}15`,
+                  color: colors.accent,
+                }}
+              >
                 csTimer Analytics
               </span>
             </div>
-            <p className="text-[10px] text-amber-400/90 font-medium tracking-wide sm:hidden leading-none mt-0.5">
+            <p
+              className="text-[10px] text-amber-400/90 font-medium tracking-wide sm:hidden leading-none mt-0.5"
+              style={{ color: colors.accent }}
+            >
               csTimer Progression
             </p>
             <p className="text-xs text-stone-400 truncate max-w-xs xl:max-w-md hidden xl:block">
@@ -76,15 +89,18 @@ export const Navbar: React.FC<NavbarProps> = ({
           {isSaved && (
             <div
               id="navbar-saved-badge"
-              className="hidden items-center gap-1.5 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-400 lg:flex shrink-0"
+              className="hidden items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium lg:flex shrink-0"
               title="Data is persisted across reloads in browser IndexedDB storage"
+              style={{
+                borderColor: `${colors.accent}40`,
+                backgroundColor: `${colors.accent}18`,
+                color: colors.accentText,
+              }}
             >
-              <Database className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+              <Database className="h-3.5 w-3.5 shrink-0" style={{ color: colors.accent }} />
               <span>Saved locally</span>
               {storageUsageMB !== undefined && storageUsageMB > 0 && (
-                <span className="font-mono text-[11px] text-emerald-500/80">
-                  ({storageUsageMB} MB)
-                </span>
+                <span className="font-mono text-[11px] opacity-80">({storageUsageMB} MB)</span>
               )}
             </div>
           )}
@@ -94,7 +110,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               id="navbar-filename"
               className="hidden items-center gap-1.5 rounded-lg border border-stone-700/60 bg-stone-800/80 px-2.5 py-1 font-mono text-xs text-stone-300 md:flex shrink min-w-0"
             >
-              <FileText className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+              <FileText
+                className="h-3.5 w-3.5 shrink-0 text-amber-400"
+                style={{ color: colors.accent }}
+              />
               <span className="max-w-[100px] sm:max-w-[130px] lg:max-w-[180px] xl:max-w-[260px] truncate">
                 {fileName}
               </span>
@@ -122,12 +141,23 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={handleInstall}
               aria-label="Install App"
               className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-2 lg:px-3 lg:py-1.5 text-xs font-medium whitespace-nowrap text-amber-300 shadow-sm transition-all hover:bg-amber-500/20 active:scale-95 shrink-0"
+              style={{
+                borderColor: `${colors.accent}40`,
+                backgroundColor: `${colors.accent}15`,
+                color: colors.accentText,
+              }}
               title="Install CubeProgression as a Progressive Web App"
             >
-              <Download className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+              <Download
+                className="h-3.5 w-3.5 shrink-0 text-amber-400"
+                style={{ color: colors.accent }}
+              />
               <span className="hidden lg:inline">Install App</span>
             </button>
           )}
+
+          {/* Theme Selector */}
+          <ThemeSelector />
 
           {onOpenInstructions && (
             <button
@@ -138,7 +168,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800/90 px-2.5 py-1.5 sm:px-3 text-xs font-medium whitespace-nowrap text-stone-200 transition-all hover:border-amber-500/40 hover:bg-stone-700/80 active:scale-95 shadow-sm shrink-0"
               title="How to export solves from csTimer"
             >
-              <HelpCircle className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+              <HelpCircle
+                className="h-3.5 w-3.5 shrink-0 text-amber-400"
+                style={{ color: colors.accent }}
+              />
               <span className="sm:hidden">Guide</span>
               <span className="hidden sm:inline">csTimer Guide</span>
             </button>

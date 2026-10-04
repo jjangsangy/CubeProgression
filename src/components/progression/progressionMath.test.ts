@@ -182,6 +182,17 @@ describe('progressionMath pure helpers', () => {
     it('returns default muted style for muted mode', () => {
       const muted = getSingleLineStyle('muted');
       expect(muted.dot).toBe(false);
+      expect(muted.strokeOpacity).toBe(0.35);
+    });
+
+    it('applies custom single-line colors when provided', () => {
+      const style = getSingleLineStyle('visible', {
+        stroke: '#111111',
+        dotFill: '#222222',
+        dotStroke: '#333333',
+      });
+      expect(style.stroke).toBe('#111111');
+      expect(style.dot).toMatchObject({ fill: '#222222', stroke: '#333333' });
     });
   });
 

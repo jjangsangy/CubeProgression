@@ -3,8 +3,9 @@
 - [ ] feat(ui): Increase height of charts on desktop
   - [ ] Desktop mode uses up more of the display
 - [ ] fix(ui): Make headers use a consistent scheme
-- [ ] feat(theme): Introduce themes
-  - [ ] feat(theme): Light mode
+- [x] feat(theme): Introduce themes
+  - [x] feat(theme): Light mode
+  - [ ] feat(theme): User Defined Themes
 - [ ] feat(log): Make log more interactive
     - [ ] sorting
     - [ ] filtering
@@ -12,3 +13,4 @@
 - [ ] feat(ui): Show dates in session
 - [ ] fix(plot): Make ui changes smoother for kde plot
 - [x] feat(app): Make a instruction modal
+- [ ] feat(selector): Range selector should use the same scrober as KDE

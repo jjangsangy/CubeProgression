@@ -16,6 +16,7 @@ entrypoint, then drill into the pages below.
 | [`statistics.md`](./statistics.md) | Every function in `src/utils/statsMath.ts` and the math behind it |
 | [`components.md`](./components.md) | The `App` shell and every React component in `src/components` |
 | [`storage.md`](./storage.md) | IndexedDB persistence (`dbStorage.ts`) and browser storage estimates |
+| [`theme.md`](./theme.md) | Color audit, centralized theme tokens, 15 themes, light mode & customization |
 | [`development.md`](./development.md) | Setup, scripts, testing, lint/format conventions, and gotchas |
 
 ## One-paragraph summary

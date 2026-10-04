@@ -47,7 +47,7 @@ export const CubeLoadingSpinner: React.FC<CubeLoadingSpinnerProps> = ({ size = '
       {/* 3x3 Cube Grid Visual with animated face tile shifts */}
       <div
         id="cube-spinner-grid"
-        className={`relative grid grid-cols-3 gap-1 bg-stone-950/90 border border-stone-700/80 rounded-xl shadow-2xl ${sizeClasses[size]}`}
+        className={`relative grid grid-cols-3 gap-1 bg-stone-900 border border-stone-800 rounded-xl shadow-2xl ${sizeClasses[size]}`}
       >
         {cubeTiles.map((tile) => (
           <div

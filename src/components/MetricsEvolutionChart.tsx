@@ -13,6 +13,7 @@ import {
   YAxis,
 } from 'recharts';
 import { useAutoDismissTooltip } from '../hooks/useAutoDismissTooltip';
+import { useTheme } from '../theme';
 import type { GroupingPeriod, PeriodGroup } from '../types';
 import { getPeriodUnitInfo } from '../utils/statsMath';
 import { ChartCardWrapper } from './ChartCardWrapper';
@@ -30,6 +31,8 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
   groupingPeriod = 'daily',
   title,
 }) => {
+  const { colors } = useTheme();
+  const unitInfo = getPeriodUnitInfo(groupingPeriod);
   const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() =>
     typeof window !== 'undefined' ? window.innerWidth < 640 : false,
   );
@@ -42,7 +45,6 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const unitInfo = getPeriodUnitInfo(groupingPeriod);
   const displayTitle = title || `${unitInfo.adjective} Speed & Consistency`;
   const { containerRef, tooltipActive, touchHandlers } = useAutoDismissTooltip();
 
@@ -83,47 +85,86 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
   const CustomLegend = () => {
     return (
       <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-3 gap-y-1.5 pb-2 text-[11px] select-none sm:gap-x-4 sm:text-xs">
-        <div className="flex items-center gap-1.5 text-teal-400">
-          <span className="inline-block h-2.5 w-4 rounded-xs border border-teal-400/80 bg-teal-500/25" />
-          <span className="recharts-legend-item-text font-medium text-teal-400">
+        <div className="flex items-center gap-1.5">
+          <span
+            className="inline-block h-2.5 w-4 rounded-xs border"
+            style={{
+              borderColor: colors.series.teal,
+              backgroundColor: `${colors.series.teal}40`,
+            }}
+          />
+          <span
+            className="recharts-legend-item-text font-medium"
+            style={{ color: colors.textSecondary }}
+          >
             <span className="sm:hidden">Range</span>
             <span className="hidden sm:inline">Min-Max Range</span>
           </span>
         </div>
-        <div className="flex items-center gap-1.5 text-sky-400">
+        <div className="flex items-center gap-1.5">
           <svg className="h-3 w-4" viewBox="0 0 16 10" aria-hidden="true">
-            <line x1="0" y1="5" x2="16" y2="5" stroke="#0284c7" strokeWidth="2.5" />
-            <circle cx="8" cy="5" r="3" fill="#0284c7" stroke="#ffffff" strokeWidth="1.2" />
+            <line x1="0" y1="5" x2="16" y2="5" stroke={colors.series.blue} strokeWidth="2.5" />
+            <circle
+              cx="8"
+              cy="5"
+              r="3"
+              fill={colors.series.blue}
+              stroke={colors.bgCard}
+              strokeWidth="1.2"
+            />
           </svg>
-          <span className="recharts-legend-item-text font-medium text-sky-400">
+          <span
+            className="recharts-legend-item-text font-medium"
+            style={{ color: colors.series.blue }}
+          >
             <span className="sm:hidden">Mean</span>
             <span className="hidden sm:inline">Mean Time (s)</span>
           </span>
         </div>
-        <div className="flex items-center gap-1.5 text-orange-400">
+        <div className="flex items-center gap-1.5">
           <svg className="h-3 w-4" viewBox="0 0 16 10" aria-hidden="true">
-            <line x1="0" y1="5" x2="16" y2="5" stroke="#f97316" strokeWidth="2.5" />
-            <circle cx="8" cy="5" r="3" fill="#f97316" stroke="#ffffff" strokeWidth="1.2" />
+            <line x1="0" y1="5" x2="16" y2="5" stroke={colors.series.orange} strokeWidth="2.5" />
+            <circle
+              cx="8"
+              cy="5"
+              r="3"
+              fill={colors.series.orange}
+              stroke={colors.bgCard}
+              strokeWidth="1.2"
+            />
           </svg>
-          <span className="recharts-legend-item-text font-medium text-orange-400">
+          <span
+            className="recharts-legend-item-text font-medium"
+            style={{ color: colors.series.orange }}
+          >
             <span className="sm:hidden">Median</span>
             <span className="hidden sm:inline">Median Time (s)</span>
           </span>
         </div>
-        <div className="flex items-center gap-1.5 text-emerald-400">
+        <div className="flex items-center gap-1.5">
           <svg className="h-3 w-4" viewBox="0 0 16 10" aria-hidden="true">
             <line
               x1="0"
               y1="5"
               x2="16"
               y2="5"
-              stroke="#22c55e"
+              stroke={colors.series.green}
               strokeWidth="2"
               strokeDasharray="2.5 2"
             />
-            <circle cx="8" cy="5" r="3" fill="#15803d" stroke="#4ade80" strokeWidth="1.2" />
+            <circle
+              cx="8"
+              cy="5"
+              r="3"
+              fill={colors.series.green}
+              stroke={colors.series.green}
+              strokeWidth="1.2"
+            />
           </svg>
-          <span className="recharts-legend-item-text font-medium text-emerald-400">
+          <span
+            className="recharts-legend-item-text font-medium"
+            style={{ color: colors.series.green }}
+          >
             <span className="sm:hidden">Std Dev</span>
             <span className="hidden sm:inline">Std Dev / Consistency (s)</span>
           </span>
@@ -154,46 +195,76 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
     const data = payload[0].payload;
 
     return (
-      <div className="max-w-[260px] rounded-xl border border-stone-700/80 bg-stone-900/95 p-2.5 text-xs text-stone-200 shadow-2xl backdrop-blur-md sm:max-w-xs sm:p-3">
-        <div className="mb-2 flex items-center justify-between gap-2 border-b border-stone-800 pb-1.5 font-semibold text-stone-100">
+      <div
+        className="max-w-[260px] rounded-xl border p-2.5 text-xs shadow-2xl backdrop-blur-md sm:max-w-xs sm:p-3"
+        style={{
+          backgroundColor: colors.bgCard,
+          borderColor: colors.borderSubtle,
+          color: colors.textPrimary,
+        }}
+      >
+        <div
+          className="mb-2 flex items-center justify-between gap-2 border-b pb-1.5 font-semibold"
+          style={{ borderColor: colors.borderSubtle }}
+        >
           <span className="truncate">{data.label}</span>
-          <span className="shrink-0 text-[11px] font-normal text-stone-400">
+          <span className="shrink-0 text-[11px] font-normal" style={{ color: colors.textMuted }}>
             n={data.solveCount} solves
           </span>
         </div>
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
-            <span className="flex items-center gap-1.5 text-stone-400">
-              <span className="h-2 w-2 shrink-0 rounded-full bg-sky-400" />
+            <span className="flex items-center gap-1.5" style={{ color: colors.textSecondary }}>
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: colors.series.blue }}
+              />
               <span>Mean:</span>
             </span>
-            <span className="font-mono font-semibold text-sky-300">{data.mean?.toFixed(2)}s</span>
+            <span className="font-mono font-semibold" style={{ color: colors.series.blue }}>
+              {data.mean?.toFixed(2)}s
+            </span>
           </div>
           <div className="flex items-center justify-between gap-2 sm:gap-4">
-            <span className="flex items-center gap-1.5 text-stone-400">
-              <span className="h-2 w-2 shrink-0 rounded-full bg-orange-400" />
+            <span className="flex items-center gap-1.5" style={{ color: colors.textSecondary }}>
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: colors.series.orange }}
+              />
               <span>Median:</span>
             </span>
-            <span className="font-mono font-semibold text-orange-300">
+            <span className="font-mono font-semibold" style={{ color: colors.series.orange }}>
               {data.median?.toFixed(2)}s
             </span>
           </div>
           <div className="flex items-center justify-between gap-2 sm:gap-4">
-            <span className="flex items-center gap-1.5 text-stone-400">
-              <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
+            <span className="flex items-center gap-1.5" style={{ color: colors.textSecondary }}>
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: colors.series.green }}
+              />
               <span>Std Dev:</span>
             </span>
-            <span className="font-mono font-semibold text-emerald-300">
+            <span className="font-mono font-semibold" style={{ color: colors.series.green }}>
               {data.stdDev?.toFixed(2)}s
             </span>
           </div>
           {data.min != null && data.max != null && (
-            <div className="mt-1 flex items-center justify-between gap-2 border-t border-stone-800 pt-1 text-[11px] sm:gap-4">
-              <span className="flex items-center gap-1.5 text-stone-400">
-                <span className="h-1.5 w-2 shrink-0 rounded-xs border border-teal-400/80 bg-teal-500/30" />
+            <div
+              className="mt-1 flex items-center justify-between gap-2 border-t pt-1 text-[11px] sm:gap-4"
+              style={{ borderColor: colors.borderSubtle }}
+            >
+              <span className="flex items-center gap-1.5" style={{ color: colors.textSecondary }}>
+                <span
+                  className="h-1.5 w-2 shrink-0 rounded-xs border"
+                  style={{
+                    borderColor: colors.series.teal,
+                    backgroundColor: `${colors.series.teal}40`,
+                  }}
+                />
                 <span>Range:</span>
               </span>
-              <span className="font-mono text-teal-300">
+              <span className="font-mono" style={{ color: colors.textPrimary }}>
                 {data.min.toFixed(2)}s - {data.max.toFixed(2)}s
               </span>
             </div>
@@ -210,8 +281,15 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
       subtitle="Progression of central tendencies (Mean, Median), full Min-Max range band, and Standard Deviation on right axis."
       mobileSubtitle="Central tendencies (Mean, Median), Min-Max range band, and Standard Deviation."
       headerBadge={
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-xs font-semibold text-violet-300">
-          <LineChartIcon className="h-3.5 w-3.5 text-violet-400" />
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+          style={{
+            borderColor: `${colors.accent}40`,
+            backgroundColor: `${colors.accent}18`,
+            color: colors.accentText,
+          }}
+        >
+          <LineChartIcon className="h-3.5 w-3.5" style={{ color: colors.accent }} />
           Metrics Evolution
         </span>
       }
@@ -239,24 +317,29 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
           >
             <defs>
               <linearGradient id="colorRange" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#0d9488" stopOpacity={0.06} />
+                <stop offset="5%" stopColor={colors.series.teal} stopOpacity={0.25} />
+                <stop offset="95%" stopColor={colors.series.teal} stopOpacity={0.06} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke={colors.borderSubtle}
+              opacity={0.4}
+              vertical={false}
+            />
 
             <XAxis
               dataKey="index"
               interval={Math.max(1, Math.floor(chartData.length / (isMobileScreen ? 6 : 8)))}
-              stroke="#94a3b8"
+              stroke={colors.textMuted}
               fontSize={isMobileScreen ? 10 : 11}
               tickLine={false}
-              axisLine={{ stroke: '#475569' }}
+              axisLine={{ stroke: colors.borderSubtle }}
               label={{
                 value: unitInfo.axisLabel,
                 position: 'insideBottom',
                 offset: isMobileScreen ? -12 : -15,
-                fill: '#94a3b8',
+                fill: colors.textMuted,
                 fontSize: isMobileScreen ? 11 : 12,
               }}
             />
@@ -265,11 +348,11 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
             <YAxis
               yAxisId="left"
               width={isMobileScreen ? 26 : 42}
-              stroke="#94a3b8"
+              stroke={colors.textMuted}
               fontSize={isMobileScreen ? 10 : 11}
               domain={[minTime, maxTime]}
               tickLine={false}
-              axisLine={{ stroke: '#475569' }}
+              axisLine={{ stroke: colors.borderSubtle }}
               label={
                 isMobileScreen
                   ? undefined
@@ -278,7 +361,7 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
                       angle: -90,
                       position: 'insideLeft',
                       offset: 4,
-                      fill: '#94a3b8',
+                      fill: colors.textMuted,
                       fontSize: 12,
                     }
               }
@@ -289,11 +372,11 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
               yAxisId="right"
               orientation="right"
               width={isMobileScreen ? 20 : 42}
-              stroke="#22c55e"
+              stroke={colors.series.green}
               fontSize={isMobileScreen ? 10 : 11}
               domain={[0, maxStdDev]}
               tickLine={false}
-              axisLine={{ stroke: '#15803d' }}
+              axisLine={{ stroke: colors.series.green }}
               label={
                 isMobileScreen
                   ? undefined
@@ -302,7 +385,7 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
                       angle: 90,
                       position: 'insideRight',
                       offset: 4,
-                      fill: '#22c55e',
+                      fill: colors.series.green,
                       fontSize: 12,
                     }
               }
@@ -335,44 +418,74 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
               fill="url(#colorRange)"
             />
 
-            {/* Mean Time (Blue line with circular dots) */}
+            {/* Mean Time */}
             <Line
               isAnimationActive={false}
               yAxisId="left"
               type="monotone"
               dataKey="mean"
               name="Mean Time (s)"
-              stroke="#0284c7"
+              stroke={colors.series.blue}
               strokeWidth={3}
-              dot={{ r: 4.5, fill: '#0284c7', stroke: '#ffffff', strokeWidth: 1.5 }}
-              activeDot={{ r: 7 }}
+              dot={{
+                r: 4.5,
+                fill: colors.series.blue,
+                stroke: colors.bgCard,
+                strokeWidth: 1.5,
+              }}
+              activeDot={{
+                r: 7,
+                fill: colors.series.blue,
+                stroke: colors.bgCard,
+                strokeWidth: 2,
+              }}
             />
 
-            {/* Median Time (Orange line with square markers) */}
+            {/* Median Time */}
             <Line
               isAnimationActive={false}
               yAxisId="left"
               type="monotone"
               dataKey="median"
               name="Median Time (s)"
-              stroke="#f97316"
+              stroke={colors.series.orange}
               strokeWidth={3}
-              dot={{ r: 4.5, fill: '#f97316', stroke: '#ffffff', strokeWidth: 1.5 }}
-              activeDot={{ r: 7 }}
+              dot={{
+                r: 4.5,
+                fill: colors.series.orange,
+                stroke: colors.bgCard,
+                strokeWidth: 1.5,
+              }}
+              activeDot={{
+                r: 7,
+                fill: colors.series.orange,
+                stroke: colors.bgCard,
+                strokeWidth: 2,
+              }}
             />
 
-            {/* Standard Deviation (Green dotted line on right axis) */}
+            {/* Standard Deviation */}
             <Line
               isAnimationActive={false}
               yAxisId="right"
               type="monotone"
               dataKey="stdDev"
               name="Std Dev / Consistency (s)"
-              stroke="#22c55e"
+              stroke={colors.series.green}
               strokeWidth={2.2}
               strokeDasharray="3 3"
-              dot={{ r: 4.5, fill: '#15803d', stroke: '#4ade80', strokeWidth: 1.5 }}
-              activeDot={{ r: 7 }}
+              dot={{
+                r: 4.5,
+                fill: colors.series.green,
+                stroke: colors.series.green,
+                strokeWidth: 1.5,
+              }}
+              activeDot={{
+                r: 7,
+                fill: colors.series.green,
+                stroke: colors.bgCard,
+                strokeWidth: 2,
+              }}
             />
           </ComposedChart>
         </ResponsiveContainer>
@@ -384,8 +497,8 @@ export const MetricsEvolutionChart: React.FC<MetricsEvolutionChartProps> = ({
           id="metrics-mobile-axis-title"
           className="-mt-1.5 flex items-center justify-between px-1 text-[11px] leading-tight select-none"
         >
-          <span style={{ color: '#94a3b8' }}>Time (s)</span>
-          <span style={{ color: '#22c55e' }}>Std Dev (s)</span>
+          <span style={{ color: colors.textMuted }}>Time (s)</span>
+          <span style={{ color: colors.series.green }}>Std Dev (s)</span>
         </div>
       )}
     </ChartCardWrapper>

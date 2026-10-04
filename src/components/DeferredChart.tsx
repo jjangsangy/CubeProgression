@@ -60,19 +60,19 @@ export const DeferredChart: React.FC<DeferredChartProps> = ({
   const skeleton = (
     <div
       style={{ minHeight: styleMinHeight }}
-      className="flex w-full flex-col justify-between rounded-2xl border border-stone-800/80 bg-stone-900/60 p-4 sm:p-6 animate-pulse"
+      className="flex w-full flex-col justify-between rounded-2xl border border-stone-700/80 bg-stone-900/60 p-4 sm:p-6 animate-pulse"
     >
       <div className="flex items-center justify-between">
-        <div className="h-5 w-48 rounded-md bg-stone-800" />
-        <div className="h-8 w-24 rounded-lg bg-stone-800" />
+        <div className="h-5 w-48 rounded-md bg-stone-700/70" />
+        <div className="h-8 w-24 rounded-lg bg-stone-700/70" />
       </div>
       <div className="my-auto flex flex-col items-center justify-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-stone-800" />
+        <div className="h-10 w-10 rounded-xl bg-stone-700/70" />
         {fallbackTitle && (
           <span className="text-xs text-stone-500 font-medium">Loading {fallbackTitle}...</span>
         )}
       </div>
-      <div className="h-4 w-32 rounded bg-stone-800/60" />
+      <div className="h-4 w-32 rounded bg-stone-700/50" />
     </div>
   );
 

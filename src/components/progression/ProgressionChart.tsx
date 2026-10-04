@@ -1,6 +1,7 @@
 import { TrendingUp } from 'lucide-react';
 import type React from 'react';
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { useTheme } from '../../theme';
 import { calculateLinearRegression, getPeriodUnitInfo } from '../../utils/statsMath';
 import { ChartCardWrapper } from '../ChartCardWrapper';
 import { ProgressionMetricToggles } from './ProgressionMetricToggles';
@@ -152,7 +153,13 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
     [chartData, solveVisibility, showAo5, showAo12, showAo50, showAo100, showCustomAo, showTrend],
   );
 
-  const singleLineStyle = getSingleLineStyle(solveVisibility);
+  const { colors } = useTheme();
+
+  const singleLineStyle = getSingleLineStyle(solveVisibility, {
+    stroke: colors.series.neutral,
+    dotFill: colors.textSecondary,
+    dotStroke: colors.textMuted,
+  });
 
   const canvasSkeleton = (
     <div className="flex h-[420px] w-full flex-col justify-between rounded-xl border border-stone-800/60 bg-stone-900/40 p-6 animate-pulse">
@@ -161,7 +168,10 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
         <div className="h-4 w-24 rounded bg-stone-800" />
       </div>
       <div className="my-auto flex flex-col items-center justify-center gap-2">
-        <div className="h-2 w-2 rounded-full bg-sky-400 animate-ping" />
+        <div
+          className="h-2 w-2 rounded-full bg-sky-400 animate-ping"
+          style={{ backgroundColor: colors.accent }}
+        />
         <span className="text-xs text-stone-500 font-medium">Preparing progression plot...</span>
       </div>
       <div className="h-3 w-48 rounded bg-stone-800/40 opacity-40" />
@@ -175,8 +185,15 @@ export const ProgressionChart: React.FC<ProgressionChartProps> = ({
       subtitle="Individual solve plot with interactive range selector, toggleable moving averages (Ao5, Ao12, Ao50, Ao100, Custom N), and OLS regression."
       mobileSubtitle="Individual solve plot with range filter and moving averages."
       headerBadge={
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 px-2.5 py-0.5 text-xs font-semibold text-sky-300">
-          <TrendingUp className="h-3.5 w-3.5 text-sky-400" />
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 px-2.5 py-0.5 text-xs font-semibold text-sky-300"
+          style={{
+            borderColor: `${colors.accent}40`,
+            backgroundColor: `${colors.accent}15`,
+            color: colors.accentText,
+          }}
+        >
+          <TrendingUp className="h-3.5 w-3.5 text-sky-400" style={{ color: colors.accent }} />
           Overall Progression
         </span>
       }

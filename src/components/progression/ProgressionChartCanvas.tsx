@@ -11,6 +11,7 @@ import {
   YAxis,
 } from 'recharts';
 import { useAutoDismissTooltip } from '../../hooks/useAutoDismissTooltip';
+import { useTheme } from '../../theme';
 import { ProgressionCustomTooltip } from './ProgressionCustomTooltip';
 import type {
   ProgressionDataPoint,
@@ -46,6 +47,7 @@ const ProgressionCustomLegendContent: React.FC<ProgressionCustomLegendContentPro
   payload,
   isMobileScreen,
 }) => {
+  const { colors } = useTheme();
   return (
     <div className="w-full select-none">
       {/* Mobile-only bottom axis title positioned directly below chart axes and above legend keys */}
@@ -54,7 +56,7 @@ const ProgressionCustomLegendContent: React.FC<ProgressionCustomLegendContentPro
           id="progression-mobile-axis-title"
           className="mb-2 flex items-center justify-between px-1 text-[11px] leading-tight"
         >
-          <span style={{ color: '#94a3b8' }}>Time (s)</span>
+          <span style={{ color: colors.textMuted }}>Time (s)</span>
         </div>
       )}
 
@@ -76,10 +78,20 @@ const ProgressionCustomLegendContent: React.FC<ProgressionCustomLegendContentPro
                 strokeDasharray={entry.dataKey === 'trend' ? '4 3' : undefined}
               />
               {entry.dataKey !== 'trend' && (
-                <circle cx="8" cy="5" r="2.5" fill={entry.color} stroke="#ffffff" strokeWidth="1" />
+                <circle
+                  cx="8"
+                  cy="5"
+                  r="2.5"
+                  fill={entry.color}
+                  stroke={colors.bgCard}
+                  strokeWidth="1"
+                />
               )}
             </svg>
-            <span className="recharts-legend-item-text font-medium text-stone-300">
+            <span
+              className="recharts-legend-item-text font-medium"
+              style={{ color: colors.textSecondary }}
+            >
               {entry.value}
             </span>
           </div>
@@ -106,6 +118,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
   showTrend,
   slopeFormatted,
 }) => {
+  const { colors } = useTheme();
   const xInterval = Math.max(1, Math.floor(chartData.length / (isMobileScreen ? 6 : 12)));
   const { containerRef, tooltipActive, touchHandlers } = useAutoDismissTooltip();
 
@@ -130,22 +143,22 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
             bottom: isMobileScreen ? 12 : 10,
           }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke={colors.borderSubtle} vertical={false} />
           <XAxis
             dataKey="index"
             interval={xInterval}
-            stroke="#94a3b8"
+            stroke={colors.textMuted}
             fontSize={isMobileScreen ? 10 : 11}
             tickLine={false}
-            axisLine={{ stroke: '#475569' }}
+            axisLine={{ stroke: colors.borderSubtle }}
           />
           <YAxis
             width={isMobileScreen ? 26 : 42}
-            stroke="#94a3b8"
+            stroke={colors.textMuted}
             fontSize={isMobileScreen ? 10 : 11}
             domain={[minY, maxY]}
             tickLine={false}
-            axisLine={{ stroke: '#475569' }}
+            axisLine={{ stroke: colors.borderSubtle }}
             label={
               isMobileScreen
                 ? undefined
@@ -154,13 +167,14 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
                     angle: -90,
                     position: 'insideLeft',
                     offset: 5,
-                    fill: '#94a3b8',
+                    fill: colors.textMuted,
                     fontSize: 12,
                   }
             }
           />
           <Tooltip
             active={tooltipActive}
+            cursor={{ stroke: colors.borderSubtle, strokeDasharray: '4 4' }}
             content={
               <ProgressionCustomTooltip
                 solveVisibility={solveVisibility}
@@ -190,7 +204,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
             <ReferenceLine
               key={`period-boundary-${b.periodNumber}-${b.index}`}
               x={b.index}
-              stroke="#64748b"
+              stroke={colors.textMuted}
               strokeDasharray="3 3"
               strokeWidth={1.2}
               label={(props: { viewBox?: { x?: number; y?: number } }) => {
@@ -204,7 +218,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
                   <text
                     x={tx}
                     y={ty}
-                    fill="#cbd5e1"
+                    fill={colors.textSecondary}
                     fontSize={10}
                     fontWeight={600}
                     textAnchor="start"
@@ -228,7 +242,12 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
               strokeWidth={singleLineStyle.strokeWidth}
               strokeOpacity={singleLineStyle.strokeOpacity}
               dot={singleLineStyle.dot}
-              activeDot={{ r: 5, fill: '#38bdf8', stroke: '#ffffff', strokeWidth: 1.5 }}
+              activeDot={{
+                r: 5,
+                fill: colors.accent,
+                stroke: colors.bgCard,
+                strokeWidth: 1.5,
+              }}
               connectNulls={false}
             />
           )}
@@ -240,10 +259,15 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
               type="monotone"
               dataKey="ao5"
               name="Ao5"
-              stroke="#22c55e"
+              stroke={colors.series.green}
               strokeWidth={1.5}
               dot={false}
-              activeDot={{ r: 4.5, fill: '#22c55e' }}
+              activeDot={{
+                r: 4.5,
+                fill: colors.series.green,
+                stroke: colors.bgCard,
+                strokeWidth: 1.5,
+              }}
             />
           )}
 
@@ -254,10 +278,15 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
               type="monotone"
               dataKey="ao12"
               name="Ao12"
-              stroke="#f97316"
+              stroke={colors.series.orange}
               strokeWidth={2}
               dot={false}
-              activeDot={{ r: 5, fill: '#f97316' }}
+              activeDot={{
+                r: 5,
+                fill: colors.series.orange,
+                stroke: colors.bgCard,
+                strokeWidth: 1.5,
+              }}
             />
           )}
 
@@ -268,10 +297,15 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
               type="monotone"
               dataKey="ao50"
               name="Ao50"
-              stroke="#0284c7"
+              stroke={colors.series.blue}
               strokeWidth={2.5}
               dot={false}
-              activeDot={{ r: 5.5, fill: '#0284c7' }}
+              activeDot={{
+                r: 5.5,
+                fill: colors.series.blue,
+                stroke: colors.bgCard,
+                strokeWidth: 1.5,
+              }}
             />
           )}
 
@@ -282,10 +316,15 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
               type="monotone"
               dataKey="ao100"
               name="Ao100"
-              stroke="#a855f7"
+              stroke={colors.series.purple}
               strokeWidth={3}
               dot={false}
-              activeDot={{ r: 6, fill: '#a855f7' }}
+              activeDot={{
+                r: 6,
+                fill: colors.series.purple,
+                stroke: colors.bgCard,
+                strokeWidth: 1.5,
+              }}
             />
           )}
 
@@ -296,10 +335,15 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
               type="monotone"
               dataKey="customAo"
               name={`Ao${customAoN}`}
-              stroke="#eab308"
+              stroke={colors.series.amber}
               strokeWidth={2}
               dot={false}
-              activeDot={{ r: 5, fill: '#eab308' }}
+              activeDot={{
+                r: 5,
+                fill: colors.series.amber,
+                stroke: colors.bgCard,
+                strokeWidth: 1.5,
+              }}
             />
           )}
 
@@ -310,7 +354,7 @@ export const ProgressionChartCanvas: React.FC<ProgressionChartCanvasProps> = ({
               type="linear"
               dataKey="trend"
               name={`Trend (${slopeFormatted})`}
-              stroke="#e11d48"
+              stroke={colors.series.red}
               strokeWidth={2}
               strokeDasharray="6 4"
               dot={false}

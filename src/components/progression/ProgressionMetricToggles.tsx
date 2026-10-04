@@ -1,5 +1,6 @@
 import { CircleDot, EyeOff, Minus, MoreHorizontal, SlidersHorizontal } from 'lucide-react';
 import type React from 'react';
+import { useTheme } from '../../theme';
 import type { SolveVisibilityMode } from './types';
 
 export interface ProgressionMetricTogglesProps {
@@ -45,6 +46,8 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
   isFiltered,
   onToggleRangePanel,
 }) => {
+  const { colors } = useTheme();
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       {/* Controls to toggle average metrics */}
@@ -59,10 +62,17 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
           aria-label="Ao5"
           aria-pressed={showAo5}
           onClick={onToggleAo5}
-          className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+          style={
             showAo5
-              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
-              : 'text-stone-400 hover:text-stone-200 border border-transparent'
+              ? {
+                  backgroundColor: `${colors.series.green}26`,
+                  borderColor: `${colors.series.green}66`,
+                  color: colors.series.green,
+                }
+              : undefined
+          }
+          className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer border ${
+            showAo5 ? 'shadow-sm' : 'text-stone-400 hover:text-stone-200 border-transparent'
           }`}
         >
           <span className="hidden sm:inline">Ao5</span>
@@ -74,10 +84,17 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
           aria-label="Ao12"
           aria-pressed={showAo12}
           onClick={onToggleAo12}
-          className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+          style={
             showAo12
-              ? 'bg-orange-500/20 text-orange-300 border border-orange-500/40 shadow-sm'
-              : 'text-stone-400 hover:text-stone-200 border border-transparent'
+              ? {
+                  backgroundColor: `${colors.series.orange}26`,
+                  borderColor: `${colors.series.orange}66`,
+                  color: colors.series.orange,
+                }
+              : undefined
+          }
+          className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer border ${
+            showAo12 ? 'shadow-sm' : 'text-stone-400 hover:text-stone-200 border-transparent'
           }`}
         >
           <span className="hidden sm:inline">Ao12</span>
@@ -89,10 +106,17 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
           aria-label="Ao50"
           aria-pressed={showAo50}
           onClick={onToggleAo50}
-          className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+          style={
             showAo50
-              ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40 shadow-sm'
-              : 'text-stone-400 hover:text-stone-200 border border-transparent'
+              ? {
+                  backgroundColor: `${colors.series.blue}26`,
+                  borderColor: `${colors.series.blue}66`,
+                  color: colors.series.blue,
+                }
+              : undefined
+          }
+          className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer border ${
+            showAo50 ? 'shadow-sm' : 'text-stone-400 hover:text-stone-200 border-transparent'
           }`}
         >
           <span className="hidden sm:inline">Ao50</span>
@@ -104,10 +128,17 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
           aria-label="Ao100"
           aria-pressed={showAo100}
           onClick={onToggleAo100}
-          className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+          style={
             showAo100
-              ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm'
-              : 'text-stone-400 hover:text-stone-200 border border-transparent'
+              ? {
+                  backgroundColor: `${colors.series.purple}26`,
+                  borderColor: `${colors.series.purple}66`,
+                  color: colors.series.purple,
+                }
+              : undefined
+          }
+          className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer border ${
+            showAo100 ? 'shadow-sm' : 'text-stone-400 hover:text-stone-200 border-transparent'
           }`}
         >
           <span className="hidden sm:inline">Ao100</span>
@@ -119,10 +150,17 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
           aria-label="Trend"
           aria-pressed={showTrend}
           onClick={onToggleTrend}
-          className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+          style={
             showTrend
-              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-sm'
-              : 'text-stone-400 hover:text-stone-200 border border-transparent'
+              ? {
+                  backgroundColor: `${colors.series.red}26`,
+                  borderColor: `${colors.series.red}66`,
+                  color: colors.series.red,
+                }
+              : undefined
+          }
+          className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer border ${
+            showTrend ? 'shadow-sm' : 'text-stone-400 hover:text-stone-200 border-transparent'
           }`}
         >
           Trend
@@ -136,17 +174,27 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
             aria-label="Custom Ao"
             aria-pressed={showCustomAo}
             onClick={onToggleCustomAo}
-            className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+            style={
               showCustomAo
-                ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 shadow-sm'
-                : 'text-stone-400 hover:text-stone-200 border border-transparent'
+                ? {
+                    backgroundColor: `${colors.series.amber}26`,
+                    borderColor: `${colors.series.amber}66`,
+                    color: colors.series.amber,
+                  }
+                : undefined
+            }
+            className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer border ${
+              showCustomAo ? 'shadow-sm' : 'text-stone-400 hover:text-stone-200 border-transparent'
             }`}
           >
             <span className="hidden sm:inline">Custom Ao</span>
             <span className="sm:hidden">Custom</span>
           </button>
           {showCustomAo && (
-            <div className="flex items-center gap-1 rounded border border-yellow-500/30 bg-stone-900 px-1.5 py-0.5">
+            <div
+              className="flex items-center gap-1 rounded border border-yellow-500/30 bg-stone-900 px-1.5 py-0.5"
+              style={{ borderColor: `${colors.series.amber}50` }}
+            >
               <span className="font-mono text-[10px] text-stone-400">Ao</span>
               <input
                 type="number"
@@ -157,6 +205,7 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
                 value={customAoN}
                 onChange={(e) => onChangeCustomAoN(Math.max(3, parseInt(e.target.value, 10) || 3))}
                 className="w-10 border-b border-stone-600 bg-transparent text-center font-mono text-xs font-bold text-yellow-200 focus:border-yellow-400 focus:outline-none"
+                style={{ color: colors.series.amber }}
               />
             </div>
           )}
@@ -239,16 +288,33 @@ export const ProgressionMetricToggles: React.FC<ProgressionMetricTogglesProps> =
         aria-label="Range Selector"
         title="Toggle Range Selector Panel"
         onClick={onToggleRangePanel}
+        style={
+          isRangePanelOpen || isFiltered
+            ? {
+                backgroundColor: `${colors.accent}26`,
+                borderColor: `${colors.accent}66`,
+                color: colors.accentText,
+              }
+            : undefined
+        }
         className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
           isRangePanelOpen || isFiltered
-            ? 'bg-sky-500/20 text-sky-300 border-sky-500/40 shadow-sm'
+            ? 'shadow-sm'
             : 'bg-stone-800/80 text-stone-300 hover:text-stone-100 border-stone-700/60'
         }`}
       >
-        <SlidersHorizontal className="h-3.5 w-3.5 text-sky-400 shrink-0" />
+        <SlidersHorizontal
+          className="h-3.5 w-3.5 shrink-0"
+          style={{ color: isRangePanelOpen || isFiltered ? colors.accent : undefined }}
+        />
         <span className="hidden sm:inline">Range Selector</span>
         <span className="sm:hidden">Range</span>
-        {isFiltered && <span className="h-2 w-2 animate-pulse rounded-full bg-amber-400"></span>}
+        {isFiltered && (
+          <span
+            className="h-2 w-2 animate-pulse rounded-full bg-amber-400"
+            style={{ backgroundColor: colors.accent }}
+          ></span>
+        )}
       </button>
     </div>
   );

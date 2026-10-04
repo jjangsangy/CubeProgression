@@ -82,13 +82,13 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
 
     // Verify peak vertical reference lines and horizontal distance bar in real SVG rendering
     const baselineRefLine = densityCard.locator('.recharts-reference-line').filter({
-      has: page.locator('line[stroke="#ef4444"]'),
+      has: page.locator('line[stroke="#0284c7"]'),
     });
     const recentRefLine = densityCard.locator('.recharts-reference-line').filter({
       has: page.locator('line[stroke="#22c55e"]'),
     });
     const distanceRefLine = densityCard.locator('.recharts-reference-line').filter({
-      has: page.locator('line[stroke="#f59e0b"]'),
+      has: page.locator('line[stroke="#eab308"]'),
     });
 
     await expect(baselineRefLine).toBeVisible();
@@ -144,8 +144,13 @@ test.describe('Distribution Charts, Evolution & Chart Card Controls', () => {
 
     await expect(scrubber1).toBeVisible();
     await expect(scrubber2).toBeVisible();
-    await expect(scrubber1).toHaveClass(/bg-rose-500\/25/);
-    await expect(scrubber2).toHaveClass(/bg-emerald-500\/25/);
+    // Scrubber fills are applied inline from the active theme's data-series palette.
+    const baselineScrubberBg = await scrubber1.evaluate(
+      (el) => getComputedStyle(el).backgroundColor,
+    );
+    const recentScrubberBg = await scrubber2.evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(baselineScrubberBg).toContain('2, 132, 199');
+    expect(recentScrubberBg).toContain('34, 197, 94');
 
     // Verify ribbed resize handles on both ends of scrubbers
     await expect(densityCard.locator('#density-handle-baseline-start')).toBeVisible();

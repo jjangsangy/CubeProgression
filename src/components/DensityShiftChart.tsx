@@ -13,6 +13,7 @@ import {
   YAxis,
 } from 'recharts';
 import { useAutoDismissTooltip } from '../hooks/useAutoDismissTooltip';
+import { useTheme } from '../theme';
 import type { GroupingPeriod, PeriodGroup, Solve } from '../types';
 import {
   calculateKDEFromSamples,
@@ -38,8 +39,9 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
   groupingPeriod = 'daily',
   periodGroups,
   customBatchSize = 50,
-  title = 'Baseline vs Recent Solves',
+  title = 'Solve Time Distribution Shift',
 }) => {
+  const { colors } = useTheme();
   const trackGradientId = useId();
   const trackRef = useRef<HTMLDivElement>(null);
   const dragMovedRef = useRef<boolean>(false);
@@ -578,26 +580,48 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     if (!active || !payload?.length) return null;
 
     return (
-      <div className="max-w-[240px] rounded-xl border border-stone-700/80 bg-stone-900/95 p-2.5 text-xs text-stone-200 shadow-2xl backdrop-blur-md sm:max-w-xs sm:p-3">
-        <div className="mb-2 flex items-center justify-between gap-2 border-b border-stone-800 pb-1.5 font-semibold text-stone-100">
+      <div
+        className="max-w-[240px] rounded-xl border p-2.5 text-xs shadow-2xl backdrop-blur-md sm:max-w-xs sm:p-3"
+        style={{
+          backgroundColor: colors.bgCard,
+          borderColor: colors.borderSubtle,
+          color: colors.textPrimary,
+        }}
+      >
+        <div
+          className="mb-2 flex items-center justify-between gap-2 border-b pb-1.5 font-semibold"
+          style={{ borderColor: colors.borderSubtle }}
+        >
           <span>Solve Time: {label}s</span>
         </div>
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
-            <span className="flex items-center gap-1.5 text-stone-400">
-              <span className="h-2 w-2 shrink-0 rounded-full border border-rose-400 bg-rose-500/80" />
+            <span className="flex items-center gap-1.5" style={{ color: colors.textSecondary }}>
+              <span
+                className="h-2 w-2 shrink-0 rounded-full border"
+                style={{
+                  borderColor: colors.series.blue,
+                  backgroundColor: colors.series.blue,
+                }}
+              />
               <span>Baseline Density:</span>
             </span>
-            <span className="font-mono font-semibold text-rose-300">
+            <span className="font-mono font-semibold" style={{ color: colors.series.blue }}>
               {payload[0]?.value?.toFixed(4)}
             </span>
           </div>
           <div className="flex items-center justify-between gap-2 sm:gap-4">
-            <span className="flex items-center gap-1.5 text-stone-400">
-              <span className="h-2 w-2 shrink-0 rounded-full border border-emerald-400 bg-emerald-500/80" />
+            <span className="flex items-center gap-1.5" style={{ color: colors.textSecondary }}>
+              <span
+                className="h-2 w-2 shrink-0 rounded-full border"
+                style={{
+                  borderColor: colors.series.green,
+                  backgroundColor: colors.series.green,
+                }}
+              />
               <span>Recent Density:</span>
             </span>
-            <span className="font-mono font-semibold text-emerald-300">
+            <span className="font-mono font-semibold" style={{ color: colors.series.green }}>
               {payload[1]?.value?.toFixed(4)}
             </span>
           </div>
@@ -616,8 +640,15 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
       subtitle="Kernel Density Estimation (KDE) comparison showing probability density shift between any two sampled regions across the session distribution."
       mobileSubtitle="KDE curves showing probability density shifts between sampled solve windows."
       headerBadge={
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-0.5 text-xs font-semibold text-rose-300">
-          <Activity className="h-3.5 w-3.5 text-rose-400" />
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+          style={{
+            borderColor: `${colors.accent}40`,
+            backgroundColor: `${colors.accent}15`,
+            color: colors.accentText,
+          }}
+        >
+          <Activity className="h-3.5 w-3.5" style={{ color: colors.accent }} />
           Density Shift
         </span>
       }
@@ -625,35 +656,69 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     >
       {/* Symmetrical, consistently distributed mean shift banner */}
       {statsSummary && (
-        <div className="grid grid-cols-1 divide-y divide-stone-800/80 rounded-xl border border-stone-800/70 bg-stone-950/60 text-xs sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        <div
+          className="grid grid-cols-1 divide-y divide-stone-800/80 rounded-xl border border-stone-800/70 bg-stone-950/60 text-xs sm:grid-cols-3 sm:divide-x sm:divide-y-0"
+          style={{
+            backgroundColor: colors.bgSubtle,
+            borderColor: colors.borderSubtle,
+          }}
+        >
           <div className="flex flex-wrap items-center justify-center gap-1.5 p-2.5 sm:p-3 text-center">
-            <span className="h-2.5 w-2.5 shrink-0 rounded-full border border-rose-400 bg-rose-500/80"></span>
-            <span className="text-stone-400 whitespace-nowrap">
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: colors.series.blue }}
+            />
+            <span
+              className="text-stone-400 whitespace-nowrap"
+              style={{ color: colors.textSecondary }}
+            >
               <span className="hidden sm:inline">Baseline Mean:</span>
               <span className="sm:hidden">Baseline:</span>
             </span>
-            <span className="font-mono font-bold text-rose-300">{statsSummary.baselineMean}s</span>
-            <span className="font-mono text-[11px] text-stone-500 whitespace-nowrap">
+            <span className="font-mono font-bold" style={{ color: colors.series.blue }}>
+              {statsSummary.baselineMean}s
+            </span>
+            <span
+              className="font-mono text-[11px] text-stone-500 whitespace-nowrap"
+              style={{ color: colors.textMuted }}
+            >
               (#{statsSummary.start1Index}–#{statsSummary.end1Index})
             </span>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-1.5 p-2.5 sm:p-3 text-center">
-            <span className="h-2.5 w-2.5 shrink-0 rounded-full border border-emerald-400 bg-emerald-500/80"></span>
-            <span className="text-stone-400 whitespace-nowrap">
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: colors.series.green }}
+            />
+            <span
+              className="text-stone-400 whitespace-nowrap"
+              style={{ color: colors.textSecondary }}
+            >
               <span className="hidden sm:inline">Recent Mean:</span>
               <span className="sm:hidden">Recent:</span>
             </span>
-            <span className="font-mono font-bold text-emerald-300">{statsSummary.recentMean}s</span>
-            <span className="font-mono text-[11px] text-stone-500 whitespace-nowrap">
+            <span className="font-mono font-bold" style={{ color: colors.series.green }}>
+              {statsSummary.recentMean}s
+            </span>
+            <span
+              className="font-mono text-[11px] text-stone-500 whitespace-nowrap"
+              style={{ color: colors.textMuted }}
+            >
               (#{statsSummary.start2Index}–#{statsSummary.end2Index})
             </span>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-1.5 p-2.5 sm:p-3 text-center">
-            <span className="text-stone-400 whitespace-nowrap">
+            <span
+              className="text-stone-400 whitespace-nowrap"
+              style={{ color: colors.textSecondary }}
+            >
               <span className="hidden sm:inline">Distribution Shift:</span>
               <span className="sm:hidden">Shift:</span>
             </span>
-            <span className="font-mono font-bold text-amber-400 whitespace-nowrap">
+            <span
+              className="font-mono font-bold whitespace-nowrap"
+              style={{ color: colors.accentText }}
+            >
               {Number(statsSummary.diff) > 0
                 ? `-${statsSummary.diff}s faster`
                 : Number(statsSummary.diff) < 0
@@ -689,29 +754,48 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
             }}
           >
             <defs>
-              <linearGradient id="colorBaseline" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
+              <linearGradient
+                id="colorBaseline"
+                key={colors.series.blue}
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
+                <stop offset="5%" stopColor={colors.series.blue} stopOpacity={0.4} />
+                <stop offset="95%" stopColor={colors.series.blue} stopOpacity={0.05} />
               </linearGradient>
-              <linearGradient id="colorRecent" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#22c55e" stopOpacity={0.45} />
-                <stop offset="95%" stopColor="#22c55e" stopOpacity={0.05} />
+              <linearGradient
+                id="colorRecent"
+                key={colors.series.green}
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
+                <stop offset="5%" stopColor={colors.series.green} stopOpacity={0.45} />
+                <stop offset="95%" stopColor={colors.series.green} stopOpacity={0.05} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke={colors.borderSubtle}
+              opacity={0.4}
+              vertical={false}
+            />
             <XAxis
               dataKey="x"
               interval={Math.max(1, Math.floor(kdeData.length / (isMobileScreen ? 6 : 8)))}
-              stroke="#94a3b8"
+              stroke={colors.textMuted}
               fontSize={isMobileScreen ? 10 : 11}
               tickLine={false}
-              axisLine={{ stroke: '#475569' }}
+              axisLine={{ stroke: colors.borderSubtle }}
               tickFormatter={(v: number) => `${Number(v.toFixed(1))}s`}
               label={{
                 value: 'Solve Time (seconds)',
                 position: 'insideBottom',
                 offset: isMobileScreen ? -10 : -12,
-                fill: '#94a3b8',
+                fill: colors.textMuted,
                 fontSize: isMobileScreen ? 11 : 12,
               }}
             />
@@ -719,10 +803,10 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               width={isMobileScreen ? 36 : 48}
               domain={[0, yCeiling]}
               allowDataOverflow={false}
-              stroke="#94a3b8"
+              stroke={colors.textMuted}
               fontSize={isMobileScreen ? 10 : 11}
               tickLine={false}
-              axisLine={{ stroke: '#475569' }}
+              axisLine={{ stroke: colors.borderSubtle }}
               tickFormatter={(v: number) => {
                 if (v === 0) return '0';
                 if (yCeiling < 0.02) return v.toFixed(3);
@@ -736,7 +820,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
                       angle: -90,
                       position: 'insideLeft',
                       offset: 5,
-                      fill: '#94a3b8',
+                      fill: colors.textMuted,
                       fontSize: 12,
                     }
               }
@@ -753,28 +837,30 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               wrapperStyle={{
                 paddingBottom: '12px',
                 fontSize: isMobileScreen ? '11px' : '12px',
+                color: colors.textSecondary,
               }}
+              formatter={(value) => <span style={{ color: colors.textSecondary }}>{value}</span>}
             />
 
-            {/* Baseline Density Area (Red) */}
+            {/* Baseline Density Area */}
             <Area
               isAnimationActive={false}
               type="monotone"
               dataKey="baselineDensity"
               name={baselineSeriesName}
-              stroke="#ef4444"
+              stroke={colors.series.blue}
               strokeWidth={2}
               fillOpacity={1}
               fill="url(#colorBaseline)"
             />
 
-            {/* Recent Density Area (Green) */}
+            {/* Recent Density Area */}
             <Area
               isAnimationActive={false}
               type="monotone"
               dataKey="recentDensity"
               name={recentSeriesName}
-              stroke="#22c55e"
+              stroke={colors.series.green}
               strokeWidth={2}
               fillOpacity={1}
               fill="url(#colorRecent)"
@@ -784,7 +870,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
             {baselinePeak && (
               <ReferenceLine
                 x={baselinePeak.x}
-                stroke="#ef4444"
+                stroke={colors.series.blue}
                 strokeDasharray="3 3"
                 strokeWidth={1.5}
                 label={(props: { viewBox?: { x?: number; y?: number } }) => {
@@ -799,7 +885,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
                     <text
                       x={tx}
                       y={ty}
-                      fill="#fca5a5"
+                      fill={colors.series.blue}
                       fontSize={isMobileScreen ? 9 : 10}
                       fontWeight={600}
                       textAnchor={textAnchor}
@@ -814,7 +900,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
             {recentPeak && (
               <ReferenceLine
                 x={recentPeak.x}
-                stroke="#22c55e"
+                stroke={colors.series.green}
                 strokeDasharray="3 3"
                 strokeWidth={1.5}
                 label={(props: { viewBox?: { x?: number; y?: number } }) => {
@@ -829,7 +915,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
                     <text
                       x={tx}
                       y={ty}
-                      fill="#86efac"
+                      fill={colors.series.green}
                       fontSize={isMobileScreen ? 9 : 10}
                       fontWeight={600}
                       textAnchor={textAnchor}
@@ -848,7 +934,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
                   { x: baselinePeak.x, y: peakBarY },
                   { x: recentPeak.x, y: peakBarY },
                 ]}
-                stroke="#f59e0b"
+                stroke={colors.series.amber}
                 strokeDasharray="3 3"
                 strokeWidth={1.5}
                 label={(props: {
@@ -869,7 +955,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
                     <text
                       x={lx}
                       y={ly}
-                      fill="#fbbf24"
+                      fill={colors.series.amber}
                       fontSize={isMobileScreen ? 9 : 10}
                       fontWeight={600}
                       textAnchor="middle"
@@ -890,7 +976,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
           id="density-mobile-axis-title"
           className="-mt-1.5 flex items-center justify-between px-1 text-[11px] leading-tight select-none"
         >
-          <span style={{ color: '#94a3b8' }}>Density</span>
+          <span style={{ color: colors.textMuted }}>Density</span>
         </div>
       )}
 
@@ -906,6 +992,10 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
           }}
           id="density-scrubber-track"
           className="relative h-12 sm:h-14 md:h-16 lg:h-20 w-full cursor-pointer select-none rounded-xl border border-stone-800 bg-stone-950/90 shadow-inner"
+          style={{
+            backgroundColor: colors.bgSubtle,
+            borderColor: colors.borderSubtle,
+          }}
           aria-label="Solve distribution timeline scrubbers track"
         >
           {/* Visual representation of dataset on the track (sparkline & mean line) */}
@@ -918,15 +1008,15 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
             >
               <defs>
                 <linearGradient id={trackGradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="#38bdf8" stopOpacity={0.03} />
+                  <stop offset="0%" stopColor={colors.accent} stopOpacity={0.3} />
+                  <stop offset="100%" stopColor={colors.accent} stopOpacity={0.03} />
                 </linearGradient>
               </defs>
               <path d={sparklineData.areaPath} fill={`url(#${trackGradientId})`} />
               <path
                 d={sparklineData.linePath}
                 fill="none"
-                stroke="#64748b"
+                stroke={colors.series.neutral}
                 strokeWidth="1.5"
                 opacity={0.8}
               />
@@ -935,7 +1025,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
                 y1={sparklineData.meanY}
                 x2="1000"
                 y2={sparklineData.meanY}
-                stroke="#52525b"
+                stroke={colors.textMuted}
                 strokeDasharray="4 4"
                 strokeWidth="1"
                 opacity={0.6}
@@ -948,7 +1038,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
                     y1={0}
                     x2={b.x}
                     y2={72}
-                    stroke="#94a3b8"
+                    stroke={colors.series.neutral}
                     strokeDasharray="3 3"
                     strokeWidth="1.2"
                     opacity={0.65}
@@ -975,6 +1065,8 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
             style={{
               left: `${leftPercent1}%`,
               width: `${widthPercent}%`,
+              borderColor: colors.series.blue,
+              backgroundColor: `${colors.series.blue}25`,
             }}
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => handleBodyPointerDown(e, 1)}
@@ -1003,7 +1095,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
                 setStart1State(Math.min(maxStart, start1 + step));
               }
             }}
-            className={`group absolute top-0 bottom-0 z-10 flex min-w-[28px] cursor-grab items-center justify-between rounded-lg border-2 border-rose-500/80 bg-rose-500/25 shadow-lg backdrop-blur-[1px] touch-none hover:border-rose-400 hover:bg-rose-500/35 focus:ring-2 focus:ring-rose-400 focus:outline-none active:cursor-grabbing ${
+            className={`group absolute top-0 bottom-0 z-10 flex min-w-[28px] cursor-grab items-center justify-between rounded-lg border-2 shadow-lg backdrop-blur-[1px] touch-none focus:ring-2 focus:outline-none active:cursor-grabbing ${
               activeDrag ? '' : 'transition-all duration-150 ease-out'
             }`}
           >
@@ -1011,7 +1103,8 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
             <button
               id="density-handle-baseline-start"
               type="button"
-              className="group/handle flex h-full w-3.5 cursor-ew-resize touch-none items-center justify-center gap-[2px] rounded-l bg-rose-500/10 transition-colors hover:bg-rose-400/30"
+              style={{ backgroundColor: `${colors.series.blue}15` }}
+              className="group/handle flex h-full w-3.5 cursor-ew-resize touch-none items-center justify-center gap-[2px] rounded-l transition-colors"
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => handleResizePointerDown(e, 1, 'start')}
               onPointerMove={handlePointerMove}
@@ -1021,15 +1114,22 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               aria-label="Baseline left resize handle"
               title="Drag to resize sample window"
             >
-              <span className="h-3.5 sm:h-4 w-[1.5px] rounded-full bg-rose-200/70 transition-colors group-hover/handle:bg-white" />
-              <span className="h-3.5 sm:h-4 w-[1.5px] rounded-full bg-rose-200/70 transition-colors group-hover/handle:bg-white" />
+              <span
+                className="h-3.5 sm:h-4 w-[1.5px] rounded-full transition-all group-hover/handle:brightness-125 group-hover/handle:scale-y-110"
+                style={{ backgroundColor: colors.series.blue }}
+              />
+              <span
+                className="h-3.5 sm:h-4 w-[1.5px] rounded-full transition-all group-hover/handle:brightness-125 group-hover/handle:scale-y-110"
+                style={{ backgroundColor: colors.series.blue }}
+              />
             </button>
 
             {/* Right Ribbed Resize Handle */}
             <button
               id="density-handle-baseline-end"
               type="button"
-              className="group/handle flex h-full w-3.5 cursor-ew-resize touch-none items-center justify-center gap-[2px] rounded-r bg-rose-500/10 transition-colors hover:bg-rose-400/30"
+              style={{ backgroundColor: `${colors.series.blue}15` }}
+              className="group/handle flex h-full w-3.5 cursor-ew-resize touch-none items-center justify-center gap-[2px] rounded-r transition-colors"
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => handleResizePointerDown(e, 1, 'end')}
               onPointerMove={handlePointerMove}
@@ -1039,12 +1139,18 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               aria-label="Baseline right resize handle"
               title="Drag to resize sample window"
             >
-              <span className="h-3.5 sm:h-4 w-[1.5px] rounded-full bg-rose-200/70 transition-colors group-hover/handle:bg-white" />
-              <span className="h-3.5 sm:h-4 w-[1.5px] rounded-full bg-rose-200/70 transition-colors group-hover/handle:bg-white" />
+              <span
+                className="h-3.5 sm:h-4 w-[1.5px] rounded-full transition-all group-hover/handle:brightness-125 group-hover/handle:scale-y-110"
+                style={{ backgroundColor: colors.series.blue }}
+              />
+              <span
+                className="h-3.5 sm:h-4 w-[1.5px] rounded-full transition-all group-hover/handle:brightness-125 group-hover/handle:scale-y-110"
+                style={{ backgroundColor: colors.series.blue }}
+              />
             </button>
           </div>
 
-          {/* Scrubber 2 (Recent - Emerald with opacity, no text badge) */}
+          {/* Scrubber 2 (Recent with dynamic theme color) */}
           <div
             id="density-scrubber-recent"
             tabIndex={0}
@@ -1056,6 +1162,8 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
             style={{
               left: `${leftPercent2}%`,
               width: `${widthPercent}%`,
+              borderColor: colors.series.green,
+              backgroundColor: `${colors.series.green}25`,
             }}
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => handleBodyPointerDown(e, 2)}
@@ -1084,7 +1192,7 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
                 setStart2State(Math.min(maxStart, start2 + step));
               }
             }}
-            className={`group absolute top-0 bottom-0 z-20 flex min-w-[28px] cursor-grab items-center justify-between rounded-lg border-2 border-emerald-500/80 bg-emerald-500/25 shadow-lg backdrop-blur-[1px] touch-none hover:border-emerald-400 hover:bg-emerald-500/35 focus:ring-2 focus:ring-emerald-400 focus:outline-none active:cursor-grabbing ${
+            className={`group absolute top-0 bottom-0 z-20 flex min-w-[28px] cursor-grab items-center justify-between rounded-lg border-2 shadow-lg backdrop-blur-[1px] touch-none focus:ring-2 focus:outline-none active:cursor-grabbing ${
               activeDrag ? '' : 'transition-all duration-150 ease-out'
             }`}
           >
@@ -1092,7 +1200,8 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
             <button
               id="density-handle-recent-start"
               type="button"
-              className="group/handle flex h-full w-3.5 cursor-ew-resize touch-none items-center justify-center gap-[2px] rounded-l bg-emerald-500/10 transition-colors hover:bg-emerald-400/30"
+              style={{ backgroundColor: `${colors.series.green}15` }}
+              className="group/handle flex h-full w-3.5 cursor-ew-resize touch-none items-center justify-center gap-[2px] rounded-l transition-colors"
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => handleResizePointerDown(e, 2, 'start')}
               onPointerMove={handlePointerMove}
@@ -1102,15 +1211,22 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               aria-label="Recent left resize handle"
               title="Drag to resize sample window"
             >
-              <span className="h-3.5 sm:h-4 w-[1.5px] rounded-full bg-emerald-200/70 transition-colors group-hover/handle:bg-white" />
-              <span className="h-3.5 sm:h-4 w-[1.5px] rounded-full bg-emerald-200/70 transition-colors group-hover/handle:bg-white" />
+              <span
+                className="h-3.5 sm:h-4 w-[1.5px] rounded-full transition-all group-hover/handle:brightness-125 group-hover/handle:scale-y-110"
+                style={{ backgroundColor: colors.series.green }}
+              />
+              <span
+                className="h-3.5 sm:h-4 w-[1.5px] rounded-full transition-all group-hover/handle:brightness-125 group-hover/handle:scale-y-110"
+                style={{ backgroundColor: colors.series.green }}
+              />
             </button>
 
             {/* Right Ribbed Resize Handle */}
             <button
               id="density-handle-recent-end"
               type="button"
-              className="group/handle flex h-full w-3.5 cursor-ew-resize touch-none items-center justify-center gap-[2px] rounded-r bg-emerald-500/10 transition-colors hover:bg-emerald-400/30"
+              style={{ backgroundColor: `${colors.series.green}15` }}
+              className="group/handle flex h-full w-3.5 cursor-ew-resize touch-none items-center justify-center gap-[2px] rounded-r transition-colors"
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => handleResizePointerDown(e, 2, 'end')}
               onPointerMove={handlePointerMove}
@@ -1120,14 +1236,23 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
               aria-label="Recent right resize handle"
               title="Drag to resize sample window"
             >
-              <span className="h-3.5 sm:h-4 w-[1.5px] rounded-full bg-emerald-200/70 transition-colors group-hover/handle:bg-white" />
-              <span className="h-3.5 sm:h-4 w-[1.5px] rounded-full bg-emerald-200/70 transition-colors group-hover/handle:bg-white" />
+              <span
+                className="h-3.5 sm:h-4 w-[1.5px] rounded-full transition-all group-hover/handle:brightness-125 group-hover/handle:scale-y-110"
+                style={{ backgroundColor: colors.series.green }}
+              />
+              <span
+                className="h-3.5 sm:h-4 w-[1.5px] rounded-full transition-all group-hover/handle:brightness-125 group-hover/handle:scale-y-110"
+                style={{ backgroundColor: colors.series.green }}
+              />
             </button>
           </div>
         </section>
 
         {/* Track Timeline Labels */}
-        <div className="flex items-center justify-between px-1 text-[11px] text-stone-500">
+        <div
+          className="flex items-center justify-between px-1 text-[11px] text-stone-500"
+          style={{ color: colors.textMuted }}
+        >
           <span>Solve #1</span>
           <span className="hidden sm:inline">
             Drag scrubbers to move · Drag ribbed ends to resize sample window ({sampleCount} solves)

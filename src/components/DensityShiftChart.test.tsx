@@ -2,6 +2,7 @@ import { act, fireEvent, render } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { verifyChartTooltipAutoDismiss } from '../test/tooltipTestUtils';
+import { darkTheme } from '../theme';
 import type { PeriodGroup, Solve } from '../types';
 import { DensityShiftChart } from './DensityShiftChart';
 
@@ -360,9 +361,9 @@ describe('DensityShiftChart component', () => {
     expect(scrubber1).toBeInTheDocument();
     expect(scrubber2).toBeInTheDocument();
 
-    // Verify opacity classes
-    expect(scrubber1).toHaveClass('bg-rose-500/25');
-    expect(scrubber2).toHaveClass('bg-emerald-500/25');
+    // Scrubber fills are driven by the active theme's data-series palette.
+    expect(scrubber1).toHaveStyle({ backgroundColor: `${darkTheme.colors.series.blue}25` });
+    expect(scrubber2).toHaveStyle({ backgroundColor: `${darkTheme.colors.series.green}25` });
 
     // Verify ribbed resize handles
     expect(getById(container, 'density-handle-baseline-start')).toBeInTheDocument();

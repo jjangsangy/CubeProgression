@@ -1,15 +1,58 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   Speedcubing Progression Analyzer Theme System
+   Uses native Tailwind CSS v4 variables with dynamic theme token application.
+   Theme modes (dark / light) establish proper surface and accent contrast.
+   ========================================================================== */
+
 :root {
   color-scheme: dark;
+  background-color: #0c0a09;
+
+  /* Default dark stone theme tokens */
+  --color-stone-950: #0c0a09;
+  --color-stone-900: #1c1917;
+  --color-stone-800: #292524;
+  --color-stone-700: #44403c;
+  --color-stone-600: #57534e;
+  --color-stone-500: #78716c;
+  --color-stone-400: #a8a29e;
+  --color-stone-300: #d6d3d1;
+  --color-stone-200: #e7e5e4;
+  --color-stone-100: #f5f5f4;
+}
+
+/* Light mode surface scale */
+[data-theme-mode="light"] {
+  color-scheme: light;
+
+  /* Light mode default surface scale */
+  --color-stone-950: #f8fafc;
+  --color-stone-900: #ffffff;
+  --color-stone-800: #f1f5f9;
+  --color-stone-700: #e2e8f0;
+  --color-stone-600: #cbd5e1;
+  --color-stone-500: #94a3b8;
+  --color-stone-400: #64748b;
+  --color-stone-300: #475569;
+  --color-stone-200: #334155;
+  --color-stone-100: #0f172a;
 }
 
 html,
 body,
 #root {
   min-height: 100%;
-  background-color: #0c0a09;
-  color: #f5f5f4;
+  background-color: var(--color-stone-950);
+  color: var(--color-stone-100);
+}
+
+/* Light themes: clean subtle elevation shadow on cards */
+[data-theme-mode="light"] .shadow-xl {
+  box-shadow:
+    0 1px 3px 0 rgb(0 0 0 / 0.05),
+    0 1px 2px -1px rgb(0 0 0 / 0.04);
 }
 
 /* Safe area insets for iOS Safari edge-to-edge landscape & notched devices */

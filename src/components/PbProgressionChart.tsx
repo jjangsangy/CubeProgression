@@ -11,8 +11,9 @@ import {
   YAxis,
 } from 'recharts';
 import { useAutoDismissTooltip } from '../hooks/useAutoDismissTooltip';
+import { useTheme } from '../theme';
 import type { GroupingPeriod, PbDataPoint, Solve } from '../types';
-import { calculatePbProgression, getPeriodUnitInfo } from '../utils/statsMath';
+import { calculatePbProgression } from '../utils/statsMath';
 import { ChartCardWrapper } from './ChartCardWrapper';
 
 interface PbProgressionChartProps {
@@ -25,9 +26,10 @@ interface PbProgressionChartProps {
 export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
   id = 'pb-progression-chart',
   solves,
-  groupingPeriod = 'daily',
+  groupingPeriod: _groupingPeriod = 'daily',
   title = 'PB Progression Over Time',
 }) => {
+  const { colors } = useTheme();
   const [showSingle, setShowSingle] = useState(true);
   const [showAo5, setShowAo5] = useState(true);
   const [showAo12, setShowAo12] = useState(true);
@@ -51,8 +53,6 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  const _unitInfo = getPeriodUnitInfo(groupingPeriod);
 
   const pbResult = useMemo(() => calculatePbProgression(solves), [solves]);
   const { dataPoints, summary, pbMilestones } = pbResult;
@@ -110,17 +110,36 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
       (showAo100 && data.isNewPbAo100);
 
     return (
-      <div className="max-w-[240px] sm:max-w-xs rounded-xl border border-stone-700/80 bg-stone-900/95 p-2.5 sm:p-3 text-xs text-stone-200 shadow-2xl backdrop-blur-md">
-        <div className="mb-2 flex items-center justify-between border-b border-stone-800 pb-1.5 font-semibold text-stone-100">
-          <span className="flex items-center gap-1.5">
-            <Trophy className="h-3.5 w-3.5 text-amber-400" /> Solve #{label}
+      <div
+        className="max-w-[240px] sm:max-w-xs rounded-xl border p-2.5 sm:p-3 text-xs shadow-2xl backdrop-blur-md"
+        style={{
+          backgroundColor: colors.bgCard,
+          borderColor: colors.borderSubtle,
+          color: colors.textPrimary,
+        }}
+      >
+        <div
+          className="mb-2 flex items-center justify-between border-b pb-1.5 font-semibold"
+          style={{ borderColor: colors.borderSubtle }}
+        >
+          <span className="flex items-center gap-1.5" style={{ color: colors.accent }}>
+            <Trophy className="h-3.5 w-3.5" style={{ color: colors.accent }} /> Solve #{label}
           </span>
-          <span className="font-normal text-stone-400">{data.dateStr}</span>
+          <span className="font-normal" style={{ color: colors.textMuted }}>
+            {data.dateStr}
+          </span>
         </div>
 
         {hasNewPb && (
-          <div className="mb-2 flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-1.5 text-[11px] font-medium text-amber-300">
-            <Sparkles className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+          <div
+            className="mb-2 flex items-center gap-1.5 rounded-lg border p-1.5 text-[11px] font-medium"
+            style={{
+              borderColor: `${colors.accent}40`,
+              backgroundColor: `${colors.accent}15`,
+              color: colors.accentText,
+            }}
+          >
+            <Sparkles className="h-3.5 w-3.5 shrink-0" style={{ color: colors.accent }} />
             <span>
               New Record Set!{' '}
               {[
@@ -139,22 +158,26 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
         <div className="space-y-1">
           {data.single != null && (
             <div className="flex items-center justify-between gap-2 sm:gap-4">
-              <span className="text-stone-400">Solve Time:</span>
-              <span className="font-mono font-bold text-stone-100">
+              <span style={{ color: colors.textSecondary }}>Solve Time:</span>
+              <span className="font-mono font-bold" style={{ color: colors.textPrimary }}>
                 {data.single.toFixed(2)}s
-                {data.penalty === '+2' && <span className="ml-1 text-amber-400">(+2)</span>}
+                {data.penalty === '+2' && (
+                  <span className="ml-1" style={{ color: colors.series.amber }}>
+                    (+2)
+                  </span>
+                )}
               </span>
             </div>
           )}
           {showSingle && data.pbSingle != null && (
             <div className="flex items-center justify-between gap-2 sm:gap-4">
-              <span className="flex items-center gap-1 text-amber-400">
+              <span className="flex items-center gap-1" style={{ color: colors.series.amber }}>
                 <Flame className="h-3 w-3 shrink-0" /> PB Single:
               </span>
-              <span className="font-mono font-semibold text-amber-300">
+              <span className="font-mono font-semibold" style={{ color: colors.series.amber }}>
                 {data.pbSingle.toFixed(2)}s
                 {data.isNewPbSingle && data.dropSingle != null && data.dropSingle > 0 && (
-                  <span className="ml-1 text-[10px] text-emerald-400">
+                  <span className="ml-1 text-[10px]" style={{ color: colors.series.green }}>
                     (-{data.dropSingle.toFixed(2)}s)
                   </span>
                 )}
@@ -163,13 +186,13 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
           )}
           {showAo5 && data.pbAo5 != null && (
             <div className="flex items-center justify-between gap-2 sm:gap-4">
-              <span className="flex items-center gap-1 text-orange-400">
+              <span className="flex items-center gap-1" style={{ color: colors.series.orange }}>
                 <Zap className="h-3 w-3 shrink-0" /> PB Ao5:
               </span>
-              <span className="font-mono font-semibold text-orange-300">
+              <span className="font-mono font-semibold" style={{ color: colors.series.orange }}>
                 {data.pbAo5.toFixed(2)}s
                 {data.isNewPbAo5 && data.dropAo5 != null && data.dropAo5 > 0 && (
-                  <span className="ml-1 text-[10px] text-emerald-400">
+                  <span className="ml-1 text-[10px]" style={{ color: colors.series.green }}>
                     (-{data.dropAo5.toFixed(2)}s)
                   </span>
                 )}
@@ -178,13 +201,13 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
           )}
           {showAo12 && data.pbAo12 != null && (
             <div className="flex items-center justify-between gap-2 sm:gap-4">
-              <span className="flex items-center gap-1 text-sky-400">
+              <span className="flex items-center gap-1" style={{ color: colors.series.teal }}>
                 <Award className="h-3 w-3 shrink-0" /> PB Ao12:
               </span>
-              <span className="font-mono font-semibold text-sky-300">
+              <span className="font-mono font-semibold" style={{ color: colors.series.teal }}>
                 {data.pbAo12.toFixed(2)}s
                 {data.isNewPbAo12 && data.dropAo12 != null && data.dropAo12 > 0 && (
-                  <span className="ml-1 text-[10px] text-emerald-400">
+                  <span className="ml-1 text-[10px]" style={{ color: colors.series.green }}>
                     (-{data.dropAo12.toFixed(2)}s)
                   </span>
                 )}
@@ -193,13 +216,13 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
           )}
           {showAo50 && data.pbAo50 != null && (
             <div className="flex items-center justify-between gap-2 sm:gap-4">
-              <span className="flex items-center gap-1 text-purple-400">
+              <span className="flex items-center gap-1" style={{ color: colors.series.purple }}>
                 <Trophy className="h-3 w-3 shrink-0" /> PB Ao50:
               </span>
-              <span className="font-mono font-semibold text-purple-300">
+              <span className="font-mono font-semibold" style={{ color: colors.series.purple }}>
                 {data.pbAo50.toFixed(2)}s
                 {data.isNewPbAo50 && data.dropAo50 != null && data.dropAo50 > 0 && (
-                  <span className="ml-1 text-[10px] text-emerald-400">
+                  <span className="ml-1 text-[10px]" style={{ color: colors.series.green }}>
                     (-{data.dropAo50.toFixed(2)}s)
                   </span>
                 )}
@@ -208,13 +231,13 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
           )}
           {showAo100 && data.pbAo100 != null && (
             <div className="flex items-center justify-between gap-2 sm:gap-4">
-              <span className="flex items-center gap-1 text-emerald-400">
+              <span className="flex items-center gap-1" style={{ color: colors.series.green }}>
                 <Award className="h-3 w-3 shrink-0" /> PB Ao100:
               </span>
-              <span className="font-mono font-semibold text-emerald-300">
+              <span className="font-mono font-semibold" style={{ color: colors.series.green }}>
                 {data.pbAo100.toFixed(2)}s
                 {data.isNewPbAo100 && data.dropAo100 != null && data.dropAo100 > 0 && (
-                  <span className="ml-1 text-[10px] text-emerald-400">
+                  <span className="ml-1 text-[10px]" style={{ color: colors.series.green }}>
                     (-{data.dropAo100.toFixed(2)}s)
                   </span>
                 )}
@@ -224,7 +247,10 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
         </div>
 
         {data.scramble && (
-          <div className="mt-2 max-w-[215px] truncate border-t border-stone-800 pt-2 font-mono text-[10px] text-stone-400 sm:max-w-none">
+          <div
+            className="mt-2 max-w-[215px] truncate border-t pt-2 font-mono text-[10px] sm:max-w-none"
+            style={{ borderColor: colors.borderSubtle, color: colors.textMuted }}
+          >
             Scramble: {data.scramble}
           </div>
         )}
@@ -239,8 +265,15 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
       subtitle="Step-down personal record progression curves tracking step functions of historical best single times and WCA averages."
       mobileSubtitle="Step-down curves tracking PB singles and WCA rolling averages."
       headerBadge={
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-300">
-          <Trophy className="h-3.5 w-3.5 text-amber-400" />
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+          style={{
+            borderColor: `${colors.accent}40`,
+            backgroundColor: `${colors.accent}18`,
+            color: colors.accentText,
+          }}
+        >
+          <Trophy className="h-3.5 w-3.5" style={{ color: colors.accent }} />
           PB Records
         </span>
       }
@@ -261,10 +294,19 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               aria-label="Single"
               aria-pressed={showSingle}
               onClick={() => setShowSingle(!showSingle)}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+              style={
                 showSingle
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
-                  : 'text-stone-400 hover:text-stone-200'
+                  ? {
+                      backgroundColor: `${colors.series.amber}26`,
+                      borderColor: `${colors.series.amber}66`,
+                      color: colors.series.amber,
+                    }
+                  : undefined
+              }
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer border ${
+                showSingle
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
+                  : 'text-stone-400 hover:text-stone-200 border-transparent'
               }`}
             >
               <span className="hidden sm:inline">Single</span>
@@ -276,10 +318,19 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               aria-label="Ao5"
               aria-pressed={showAo5}
               onClick={() => setShowAo5(!showAo5)}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+              style={
                 showAo5
-                  ? 'bg-orange-500/20 text-orange-300 border border-orange-500/40 shadow-sm'
-                  : 'text-stone-400 hover:text-stone-200'
+                  ? {
+                      backgroundColor: `${colors.series.orange}26`,
+                      borderColor: `${colors.series.orange}66`,
+                      color: colors.series.orange,
+                    }
+                  : undefined
+              }
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer border ${
+                showAo5
+                  ? 'bg-orange-500/20 text-orange-300 border-orange-500/40 shadow-sm'
+                  : 'text-stone-400 hover:text-stone-200 border-transparent'
               }`}
             >
               <span className="hidden sm:inline">Ao5</span>
@@ -291,10 +342,19 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               aria-label="Ao12"
               aria-pressed={showAo12}
               onClick={() => setShowAo12(!showAo12)}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+              style={
                 showAo12
-                  ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40 shadow-sm'
-                  : 'text-stone-400 hover:text-stone-200'
+                  ? {
+                      backgroundColor: `${colors.series.teal}26`,
+                      borderColor: `${colors.series.teal}66`,
+                      color: colors.series.teal,
+                    }
+                  : undefined
+              }
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer border ${
+                showAo12
+                  ? 'bg-sky-500/20 text-sky-300 border-sky-500/40 shadow-sm'
+                  : 'text-stone-400 hover:text-stone-200 border-transparent'
               }`}
             >
               <span className="hidden sm:inline">Ao12</span>
@@ -306,10 +366,19 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               aria-label="Ao50"
               aria-pressed={showAo50}
               onClick={() => setShowAo50(!showAo50)}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+              style={
                 showAo50
-                  ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm'
-                  : 'text-stone-400 hover:text-stone-200'
+                  ? {
+                      backgroundColor: `${colors.series.purple}26`,
+                      borderColor: `${colors.series.purple}66`,
+                      color: colors.series.purple,
+                    }
+                  : undefined
+              }
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer border ${
+                showAo50
+                  ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 shadow-sm'
+                  : 'text-stone-400 hover:text-stone-200 border-transparent'
               }`}
             >
               <span className="hidden sm:inline">Ao50</span>
@@ -321,10 +390,19 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               aria-label="Ao100"
               aria-pressed={showAo100}
               onClick={() => setShowAo100(!showAo100)}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+              style={
                 showAo100
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
-                  : 'text-stone-400 hover:text-stone-200'
+                  ? {
+                      backgroundColor: `${colors.series.green}26`,
+                      borderColor: `${colors.series.green}66`,
+                      color: colors.series.green,
+                    }
+                  : undefined
+              }
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer border ${
+                showAo100
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
+                  : 'text-stone-400 hover:text-stone-200 border-transparent'
               }`}
             >
               <span className="hidden sm:inline">Ao100</span>
@@ -351,17 +429,36 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
     >
       {/* Top Stat Badges Summary */}
       <div className="mb-2 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
-        <div className="flex flex-col gap-1 rounded-xl border border-amber-500/20 bg-stone-950/60 p-2.5 sm:p-3">
-          <div className="flex items-center justify-between gap-1 text-xs font-medium text-amber-400">
+        <div
+          className="flex flex-col gap-1 rounded-xl border border-amber-500/20 bg-stone-950/60 p-2.5 sm:p-3"
+          style={{
+            borderColor: `${colors.series.amber}40`,
+            backgroundColor: colors.bgSubtle,
+          }}
+        >
+          <div
+            className="flex items-center justify-between gap-1 text-xs font-medium text-amber-400"
+            style={{ color: colors.series.amber }}
+          >
             <span className="flex items-center gap-1 truncate">
               <Flame className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">PB Single</span>
             </span>
-            <span className="shrink-0 whitespace-nowrap rounded-full border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-300">
+            <span
+              className="shrink-0 whitespace-nowrap rounded-full border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-300"
+              style={{
+                borderColor: `${colors.series.amber}40`,
+                backgroundColor: `${colors.series.amber}15`,
+                color: colors.series.amber,
+              }}
+            >
               {summary.totalSinglePbs} set
             </span>
           </div>
-          <div className="font-mono text-lg sm:text-xl font-bold text-amber-200">
+          <div
+            className="font-mono text-lg sm:text-xl font-bold text-amber-200"
+            style={{ color: colors.series.amber }}
+          >
             {summary.currentPbSingle ? `${summary.currentPbSingle.toFixed(2)}s` : '—'}
           </div>
           {summary.singlePbImprovement > 0 && (
@@ -371,62 +468,138 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
           )}
         </div>
 
-        <div className="flex flex-col gap-1 rounded-xl border border-orange-500/20 bg-stone-950/60 p-2.5 sm:p-3">
-          <div className="flex items-center justify-between gap-1 text-xs font-medium text-orange-400">
+        <div
+          className="flex flex-col gap-1 rounded-xl border border-orange-500/20 bg-stone-950/60 p-2.5 sm:p-3"
+          style={{
+            borderColor: `${colors.series.orange}40`,
+            backgroundColor: colors.bgSubtle,
+          }}
+        >
+          <div
+            className="flex items-center justify-between gap-1 text-xs font-medium text-orange-400"
+            style={{ color: colors.series.orange }}
+          >
             <span className="flex items-center gap-1 truncate">
               <Zap className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">PB Ao5</span>
             </span>
-            <span className="shrink-0 whitespace-nowrap rounded-full border border-orange-500/20 bg-orange-500/10 px-1.5 py-0.5 text-[10px] text-orange-300">
+            <span
+              className="shrink-0 whitespace-nowrap rounded-full border border-orange-500/20 bg-orange-500/10 px-1.5 py-0.5 text-[10px] text-orange-300"
+              style={{
+                borderColor: `${colors.series.orange}40`,
+                backgroundColor: `${colors.series.orange}15`,
+                color: colors.series.orange,
+              }}
+            >
               {summary.totalAo5Pbs} set
             </span>
           </div>
-          <div className="font-mono text-lg sm:text-xl font-bold text-orange-200">
+          <div
+            className="font-mono text-lg sm:text-xl font-bold text-orange-200"
+            style={{ color: colors.series.orange }}
+          >
             {summary.currentPbAo5 ? `${summary.currentPbAo5.toFixed(2)}s` : '—'}
           </div>
         </div>
 
-        <div className="flex flex-col gap-1 rounded-xl border border-sky-500/20 bg-stone-950/60 p-2.5 sm:p-3">
-          <div className="flex items-center justify-between gap-1 text-xs font-medium text-sky-400">
+        <div
+          className="flex flex-col gap-1 rounded-xl border border-sky-500/20 bg-stone-950/60 p-2.5 sm:p-3"
+          style={{
+            borderColor: `${colors.series.teal}40`,
+            backgroundColor: colors.bgSubtle,
+          }}
+        >
+          <div
+            className="flex items-center justify-between gap-1 text-xs font-medium text-sky-400"
+            style={{ color: colors.series.teal }}
+          >
             <span className="flex items-center gap-1 truncate">
               <Award className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">PB Ao12</span>
             </span>
-            <span className="shrink-0 whitespace-nowrap rounded-full border border-sky-500/20 bg-sky-500/10 px-1.5 py-0.5 text-[10px] text-sky-300">
+            <span
+              className="shrink-0 whitespace-nowrap rounded-full border border-sky-500/20 bg-sky-500/10 px-1.5 py-0.5 text-[10px] text-sky-300"
+              style={{
+                borderColor: `${colors.series.teal}40`,
+                backgroundColor: `${colors.series.teal}15`,
+                color: colors.series.teal,
+              }}
+            >
               {summary.totalAo12Pbs} set
             </span>
           </div>
-          <div className="font-mono text-lg sm:text-xl font-bold text-sky-200">
+          <div
+            className="font-mono text-lg sm:text-xl font-bold text-sky-200"
+            style={{ color: colors.series.teal }}
+          >
             {summary.currentPbAo12 ? `${summary.currentPbAo12.toFixed(2)}s` : '—'}
           </div>
         </div>
 
-        <div className="flex flex-col gap-1 rounded-xl border border-purple-500/20 bg-stone-950/60 p-2.5 sm:p-3">
-          <div className="flex items-center justify-between gap-1 text-xs font-medium text-purple-400">
+        <div
+          className="flex flex-col gap-1 rounded-xl border border-purple-500/20 bg-stone-950/60 p-2.5 sm:p-3"
+          style={{
+            borderColor: `${colors.series.purple}40`,
+            backgroundColor: colors.bgSubtle,
+          }}
+        >
+          <div
+            className="flex items-center justify-between gap-1 text-xs font-medium text-purple-400"
+            style={{ color: colors.series.purple }}
+          >
             <span className="flex items-center gap-1 truncate">
               <Trophy className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">PB Ao50</span>
             </span>
-            <span className="shrink-0 whitespace-nowrap rounded-full border border-purple-500/20 bg-purple-500/10 px-1.5 py-0.5 text-[10px] text-purple-300">
+            <span
+              className="shrink-0 whitespace-nowrap rounded-full border border-purple-500/20 bg-purple-500/10 px-1.5 py-0.5 text-[10px] text-purple-300"
+              style={{
+                borderColor: `${colors.series.purple}40`,
+                backgroundColor: `${colors.series.purple}15`,
+                color: colors.series.purple,
+              }}
+            >
               {summary.totalAo50Pbs} set
             </span>
           </div>
-          <div className="font-mono text-lg sm:text-xl font-bold text-purple-200">
+          <div
+            className="font-mono text-lg sm:text-xl font-bold text-purple-200"
+            style={{ color: colors.series.purple }}
+          >
             {summary.currentPbAo50 ? `${summary.currentPbAo50.toFixed(2)}s` : '—'}
           </div>
         </div>
 
-        <div className="flex flex-col gap-1 rounded-xl border border-emerald-500/20 bg-stone-950/60 p-2.5 sm:p-3 col-span-2 sm:col-span-1">
-          <div className="flex items-center justify-between gap-1 text-xs font-medium text-emerald-400">
+        <div
+          className="flex flex-col gap-1 rounded-xl border border-emerald-500/20 bg-stone-950/60 p-2.5 sm:p-3 col-span-2 sm:col-span-1"
+          style={{
+            borderColor: `${colors.series.green}40`,
+            backgroundColor: colors.bgSubtle,
+          }}
+        >
+          <div
+            className="flex items-center justify-between gap-1 text-xs font-medium text-emerald-400"
+            style={{ color: colors.series.green }}
+          >
             <span className="flex items-center gap-1 truncate">
               <Award className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">PB Ao100</span>
             </span>
-            <span className="shrink-0 whitespace-nowrap rounded-full border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-300">
+            <span
+              className="shrink-0 whitespace-nowrap rounded-full border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-300"
+              style={{
+                borderColor: `${colors.series.green}40`,
+                backgroundColor: `${colors.series.green}15`,
+                color: colors.series.green,
+              }}
+            >
               {summary.totalAo100Pbs} set
             </span>
           </div>
-          <div className="font-mono text-lg sm:text-xl font-bold text-emerald-200">
+          <div
+            className="font-mono text-lg sm:text-xl font-bold text-emerald-200"
+            style={{ color: colors.series.green }}
+          >
             {summary.currentPbAo100 ? `${summary.currentPbAo100.toFixed(2)}s` : '—'}
           </div>
         </div>
@@ -452,29 +625,34 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               bottom: isMobileScreen ? 20 : 25,
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke={colors.borderSubtle}
+              opacity={0.4}
+              vertical={false}
+            />
             <XAxis
               dataKey="index"
               interval={Math.max(1, Math.floor(dataPoints.length / (isMobileScreen ? 6 : 10)))}
-              stroke="#94a3b8"
+              stroke={colors.textMuted}
               fontSize={isMobileScreen ? 10 : 11}
               tickLine={false}
-              axisLine={{ stroke: '#475569' }}
+              axisLine={{ stroke: colors.borderSubtle }}
               label={{
                 value: `Solve Number (${solves.length} Total Solves)`,
                 position: 'insideBottom',
                 offset: isMobileScreen ? -12 : -15,
-                fill: '#94a3b8',
+                fill: colors.textMuted,
                 fontSize: isMobileScreen ? 11 : 12,
               }}
             />
             <YAxis
               width={isMobileScreen ? 26 : 42}
-              stroke="#94a3b8"
+              stroke={colors.textMuted}
               fontSize={isMobileScreen ? 10 : 11}
               domain={[minY, maxY]}
               tickLine={false}
-              axisLine={{ stroke: '#475569' }}
+              axisLine={{ stroke: colors.borderSubtle }}
               label={
                 isMobileScreen
                   ? undefined
@@ -483,7 +661,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                       angle: -90,
                       position: 'insideLeft',
                       offset: 5,
-                      fill: '#94a3b8',
+                      fill: colors.textMuted,
                       fontSize: 12,
                     }
               }
@@ -510,11 +688,11 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                 type="linear"
                 dataKey="single"
                 name="Individual Solve Time"
-                stroke="#64748b"
+                stroke={colors.series.neutral}
                 strokeWidth={0.75}
                 strokeOpacity={0.25}
-                dot={{ r: 1, fill: '#64748b', stroke: 'none' }}
-                activeDot={{ r: 4, fill: '#94a3b8' }}
+                dot={{ r: 1, fill: colors.series.neutral, stroke: 'none' }}
+                activeDot={{ r: 4, fill: colors.textSecondary }}
               />
             )}
 
@@ -525,7 +703,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                 type="stepAfter"
                 dataKey="pbSingle"
                 name="PB Single"
-                stroke="#f59e0b"
+                stroke={colors.series.amber}
                 strokeWidth={2.5}
                 dot={(props: {
                   cx?: number;
@@ -540,15 +718,20 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                         cx={cx}
                         cy={cy}
                         r={4.5}
-                        fill="#f59e0b"
-                        stroke="#ffffff"
+                        fill={colors.series.amber}
+                        stroke={colors.bgCard}
                         strokeWidth={1.5}
                       />
                     );
                   }
                   return <React.Fragment key={`dot-${payload.index}`} />;
                 }}
-                activeDot={{ r: 6, fill: '#f59e0b', stroke: '#ffffff', strokeWidth: 2 }}
+                activeDot={{
+                  r: 6,
+                  fill: colors.series.amber,
+                  stroke: colors.bgCard,
+                  strokeWidth: 2,
+                }}
               />
             )}
 
@@ -559,7 +742,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                 type="stepAfter"
                 dataKey="pbAo5"
                 name="PB Ao5"
-                stroke="#f97316"
+                stroke={colors.series.orange}
                 strokeWidth={2.5}
                 dot={(props: {
                   cx?: number;
@@ -574,15 +757,20 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                         cx={cx}
                         cy={cy}
                         r={4}
-                        fill="#f97316"
-                        stroke="#ffffff"
+                        fill={colors.series.orange}
+                        stroke={colors.bgCard}
                         strokeWidth={1.5}
                       />
                     );
                   }
                   return <React.Fragment key={`dot-${payload.index}`} />;
                 }}
-                activeDot={{ r: 6, fill: '#f97316', stroke: '#ffffff', strokeWidth: 2 }}
+                activeDot={{
+                  r: 6,
+                  fill: colors.series.orange,
+                  stroke: colors.bgCard,
+                  strokeWidth: 2,
+                }}
               />
             )}
 
@@ -593,7 +781,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                 type="stepAfter"
                 dataKey="pbAo12"
                 name="PB Ao12"
-                stroke="#06b6d4"
+                stroke={colors.series.teal}
                 strokeWidth={2.5}
                 dot={(props: {
                   cx?: number;
@@ -608,15 +796,20 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                         cx={cx}
                         cy={cy}
                         r={4}
-                        fill="#06b6d4"
-                        stroke="#ffffff"
+                        fill={colors.series.teal}
+                        stroke={colors.bgCard}
                         strokeWidth={1.5}
                       />
                     );
                   }
                   return <React.Fragment key={`dot-${payload.index}`} />;
                 }}
-                activeDot={{ r: 6, fill: '#06b6d4', stroke: '#ffffff', strokeWidth: 2 }}
+                activeDot={{
+                  r: 6,
+                  fill: colors.series.teal,
+                  stroke: colors.bgCard,
+                  strokeWidth: 2,
+                }}
               />
             )}
 
@@ -627,7 +820,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                 type="stepAfter"
                 dataKey="pbAo50"
                 name="PB Ao50"
-                stroke="#8b5cf6"
+                stroke={colors.series.purple}
                 strokeWidth={2.5}
                 dot={(props: {
                   cx?: number;
@@ -642,15 +835,20 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                         cx={cx}
                         cy={cy}
                         r={4}
-                        fill="#8b5cf6"
-                        stroke="#ffffff"
+                        fill={colors.series.purple}
+                        stroke={colors.bgCard}
                         strokeWidth={1.5}
                       />
                     );
                   }
                   return <React.Fragment key={`dot-${payload.index}`} />;
                 }}
-                activeDot={{ r: 6, fill: '#8b5cf6', stroke: '#ffffff', strokeWidth: 2 }}
+                activeDot={{
+                  r: 6,
+                  fill: colors.series.purple,
+                  stroke: colors.bgCard,
+                  strokeWidth: 2,
+                }}
               />
             )}
 
@@ -661,7 +859,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                 type="stepAfter"
                 dataKey="pbAo100"
                 name="PB Ao100"
-                stroke="#10b981"
+                stroke={colors.series.green}
                 strokeWidth={2.5}
                 dot={(props: {
                   cx?: number;
@@ -676,15 +874,20 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                         cx={cx}
                         cy={cy}
                         r={4}
-                        fill="#10b981"
-                        stroke="#ffffff"
+                        fill={colors.series.green}
+                        stroke={colors.bgCard}
                         strokeWidth={1.5}
                       />
                     );
                   }
                   return <React.Fragment key={`dot-${payload.index}`} />;
                 }}
-                activeDot={{ r: 6, fill: '#10b981', stroke: '#ffffff', strokeWidth: 2 }}
+                activeDot={{
+                  r: 6,
+                  fill: colors.series.green,
+                  stroke: colors.bgCard,
+                  strokeWidth: 2,
+                }}
               />
             )}
           </ComposedChart>
@@ -697,7 +900,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
           id="pb-mobile-axis-title"
           className="-mt-1.5 flex items-center justify-between px-1 text-[11px] leading-tight select-none"
         >
-          <span style={{ color: '#94a3b8' }}>Personal Best Time (s)</span>
+          <span style={{ color: colors.textMuted }}>Personal Best Time (s)</span>
         </div>
       )}
 
@@ -711,7 +914,7 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
           className="flex w-full cursor-pointer items-center justify-between py-1 text-xs font-semibold text-stone-300 transition-colors hover:text-stone-100"
         >
           <span className="flex items-center gap-2 min-w-0">
-            <History className="h-4 w-4 shrink-0 text-amber-400" />
+            <History className="h-4 w-4 shrink-0 text-amber-400" style={{ color: colors.accent }} />
             <span className="truncate">
               <span className="sm:hidden">Milestones ({pbMilestones.length})</span>
               <span className="hidden sm:inline">
@@ -757,6 +960,15 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                       ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
                       : 'text-stone-400 hover:text-stone-200 border border-stone-800 bg-stone-900/60'
                   }`}
+                  style={
+                    milestoneFilter === cat.key
+                      ? {
+                          backgroundColor: `${colors.accent}26`,
+                          borderColor: `${colors.accent}66`,
+                          color: colors.accentText,
+                        }
+                      : undefined
+                  }
                 >
                   <span className="hidden sm:inline">{cat.label}</span>
                   <span className="sm:hidden">{cat.mobileLabel}</span>
@@ -773,14 +985,23 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
               ) : (
                 filteredMilestones.map((m) => {
                   let badgeColor = 'bg-amber-500/10 text-amber-300 border-amber-500/30';
-                  if (m.type === 'Ao5')
+                  let milestoneColor = colors.series.amber;
+                  if (m.type === 'Ao5') {
                     badgeColor = 'bg-orange-500/10 text-orange-300 border-orange-500/30';
-                  if (m.type === 'Ao12')
+                    milestoneColor = colors.series.orange;
+                  }
+                  if (m.type === 'Ao12') {
                     badgeColor = 'bg-sky-500/10 text-sky-300 border-sky-500/30';
-                  if (m.type === 'Ao50')
+                    milestoneColor = colors.series.teal;
+                  }
+                  if (m.type === 'Ao50') {
                     badgeColor = 'bg-purple-500/10 text-purple-300 border-purple-500/30';
-                  if (m.type === 'Ao100')
+                    milestoneColor = colors.series.purple;
+                  }
+                  if (m.type === 'Ao100') {
                     badgeColor = 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30';
+                    milestoneColor = colors.series.green;
+                  }
 
                   return (
                     <div
@@ -790,6 +1011,11 @@ export const PbProgressionChart: React.FC<PbProgressionChartProps> = ({
                       <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
                         <span
                           className={`px-1.5 py-0.5 sm:px-2 rounded-md text-[10px] sm:text-[11px] font-semibold border ${badgeColor}`}
+                          style={{
+                            borderColor: `${milestoneColor}40`,
+                            backgroundColor: `${milestoneColor}15`,
+                            color: milestoneColor,
+                          }}
                         >
                           PB {m.type}
                         </span>

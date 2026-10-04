@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { verifyChartTooltipAutoDismiss } from '../test/tooltipTestUtils';
+import { darkTheme } from '../theme';
 import type { LinearRegression, PeriodGroup, Solve } from '../types';
 import { ProgressionChart } from './ProgressionChart';
 
@@ -249,6 +250,11 @@ describe('ProgressionChart component', () => {
       fireEvent.click(presetBtn as HTMLElement);
       expect(presetBtn).toHaveAttribute('aria-pressed', 'true');
     }
+
+    // The active preset is painted with the app accent rather than a fixed light pill.
+    expect(chart?.querySelector('#range-preset-all')).toHaveStyle({
+      backgroundColor: `${darkTheme.colors.accent}30`,
+    });
 
     // Switch to Date Range mode
     const dateRangeBtn = chart?.querySelector('#progression-date-range');

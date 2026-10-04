@@ -2,6 +2,7 @@ import { Download, Loader2, Maximize2, Minimize2 } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useTheme } from '../theme';
 
 interface ChartCardWrapperProps {
   id?: string;
@@ -70,6 +71,7 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
   headerControls,
   filenamePrefix = 'speedcubing_plot',
 }) => {
+  const { colors } = useTheme();
   const cardRef = useRef<HTMLDivElement>(null);
   const [isMaximized, setIsMaximized] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -133,7 +135,7 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
       const baseOptions = {
         cacheBust: false,
         skipFonts: true, // Crucial: prevents html-to-image from making cross-origin font requests that fail CORS
-        backgroundColor: '#0c0a09', // stone-950
+        backgroundColor: colors.bgApp,
         pixelRatio: 2,
         width: fullWidth,
         height: fullHeight,
@@ -272,7 +274,10 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
               className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800 px-2.5 py-1.5 text-xs font-medium whitespace-nowrap text-stone-300 shadow-sm transition-all hover:bg-stone-700/80 hover:text-stone-100 active:scale-95 disabled:opacity-50"
             >
               {isDownloading ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-400" />
+                <Loader2
+                  className="h-3.5 w-3.5 animate-spin text-amber-400"
+                  style={{ color: colors.accent }}
+                />
               ) : (
                 <Download className="h-3.5 w-3.5 text-stone-400" />
               )}
@@ -290,7 +295,10 @@ export const ChartCardWrapper: React.FC<ChartCardWrapperProps> = ({
             >
               {isMaximized ? (
                 <>
-                  <Minimize2 className="h-3.5 w-3.5 text-amber-400" />
+                  <Minimize2
+                    className="h-3.5 w-3.5 text-amber-400"
+                    style={{ color: colors.accent }}
+                  />
                   <span className="hidden sm:inline">Exit Fullscreen</span>
                 </>
               ) : (

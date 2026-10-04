@@ -258,11 +258,11 @@ describe('PbProgressionChart component', () => {
     render(<PbProgressionChart solves={longSolves} />);
 
     const series = [
-      { dataKey: 'pbSingle', fill: '#f59e0b', flag: 'isNewPbSingle' },
+      { dataKey: 'pbSingle', fill: '#eab308', flag: 'isNewPbSingle' },
       { dataKey: 'pbAo5', fill: '#f97316', flag: 'isNewPbAo5' },
-      { dataKey: 'pbAo12', fill: '#06b6d4', flag: 'isNewPbAo12' },
-      { dataKey: 'pbAo50', fill: '#8b5cf6', flag: 'isNewPbAo50' },
-      { dataKey: 'pbAo100', fill: '#10b981', flag: 'isNewPbAo100' },
+      { dataKey: 'pbAo12', fill: '#14b8a6', flag: 'isNewPbAo12' },
+      { dataKey: 'pbAo50', fill: '#a855f7', flag: 'isNewPbAo50' },
+      { dataKey: 'pbAo100', fill: '#22c55e', flag: 'isNewPbAo100' },
     ];
 
     for (const { dataKey, fill, flag } of series) {

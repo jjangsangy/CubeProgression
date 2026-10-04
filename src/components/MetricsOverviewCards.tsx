@@ -1,5 +1,6 @@
 import { Activity, Target, TrendingDown, Trophy, Zap } from 'lucide-react';
 import type React from 'react';
+import { useTheme } from '../theme/ThemeContext';
 import type { GlobalStats } from '../types';
 
 interface MetricsOverviewCardsProps {
@@ -11,6 +12,8 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
   stats,
   sessionName: _sessionName,
 }) => {
+  const { colors } = useTheme();
+
   return (
     <div id="metrics-overview" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
       {/* 1. Best Single */}
@@ -22,7 +25,10 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
           <span className="text-xs font-semibold tracking-wider text-stone-400 uppercase">
             Best Single
           </span>
-          <div className="rounded-xl bg-amber-500/10 p-2 text-amber-400">
+          <div
+            className="rounded-xl bg-amber-500/10 p-2 text-amber-400"
+            style={{ backgroundColor: `${colors.series.amber}20`, color: colors.series.amber }}
+          >
             <Trophy className="h-4 w-4" />
           </div>
         </div>
@@ -52,20 +58,32 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
           <span className="text-xs font-semibold tracking-wider text-stone-400 uppercase">
             Best Averages
           </span>
-          <div className="rounded-xl bg-sky-500/10 p-2 text-sky-400">
+          <div
+            className="rounded-xl bg-sky-500/10 p-2 text-sky-400"
+            style={{
+              backgroundColor: `${colors.series.blue}20`,
+              color: colors.series.blue,
+            }}
+          >
             <Zap className="h-4 w-4" />
           </div>
         </div>
         <div className="mt-2 flex items-baseline justify-between gap-2">
           <div>
             <span className="block font-mono text-[10px] text-stone-400">Ao12</span>
-            <span className="font-mono text-xl font-black text-sky-300">
+            <span
+              className="font-mono text-xl font-black text-orange-400"
+              style={{ color: colors.series.orange }}
+            >
               {stats.bestAo12 ? `${stats.bestAo12.toFixed(2)}s` : '—'}
             </span>
           </div>
-          <div className="border-l border-stone-800 pl-3">
+          <div className="border-l border-stone-700/80 pl-3">
             <span className="block font-mono text-[10px] text-stone-400">Ao50</span>
-            <span className="font-mono text-xl font-black text-sky-400">
+            <span
+              className="font-mono text-xl font-black text-sky-400"
+              style={{ color: colors.series.blue }}
+            >
               {stats.bestAo50 ? `${stats.bestAo50.toFixed(2)}s` : '—'}
             </span>
           </div>
@@ -81,7 +99,13 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
           <span className="text-xs font-semibold tracking-wider text-stone-400 uppercase">
             Overall Rate
           </span>
-          <div className="rounded-xl bg-rose-500/10 p-2 text-rose-400">
+          <div
+            className="rounded-xl bg-rose-500/10 p-2 text-rose-400"
+            style={{
+              backgroundColor: `${colors.series.red}20`,
+              color: colors.series.red,
+            }}
+          >
             <TrendingDown className="h-4 w-4" />
           </div>
         </div>
@@ -109,7 +133,10 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
           <span className="text-xs font-semibold tracking-wider text-stone-400 uppercase">
             Progression Gain
           </span>
-          <div className="rounded-xl bg-emerald-500/10 p-2 text-emerald-400">
+          <div
+            className="rounded-xl bg-emerald-500/10 p-2 text-emerald-400"
+            style={{ backgroundColor: `${colors.accent}20`, color: colors.accent }}
+          >
             <Target className="h-4 w-4" />
           </div>
         </div>
@@ -151,7 +178,10 @@ export const MetricsOverviewCards: React.FC<MetricsOverviewCardsProps> = ({
           <span className="text-xs font-semibold tracking-wider text-stone-400 uppercase">
             Session Solves
           </span>
-          <div className="rounded-xl bg-purple-500/10 p-2 text-purple-400">
+          <div
+            className="rounded-xl bg-purple-500/10 p-2 text-purple-400"
+            style={{ backgroundColor: `${colors.accent}20`, color: colors.accent }}
+          >
             <Activity className="h-4 w-4" />
           </div>
         </div>

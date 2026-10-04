@@ -1,5 +1,6 @@
 import { Calendar, Filter, Hash, Layers, RotateCcw, Sparkles } from 'lucide-react';
 import type React from 'react';
+import { useTheme } from '../../theme';
 import type { LinearRegression } from '../../types';
 import type { FocusedRangeStats, RangeMode, RangePreset } from './types';
 
@@ -46,6 +47,8 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
   filteredRegression,
   onResetRange,
 }) => {
+  const { colors } = useTheme();
+
   if (!isOpen) return null;
 
   return (
@@ -54,7 +57,7 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
       <div className="flex flex-col gap-3 border-b border-stone-700/50 pb-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
           <div className="flex shrink-0 items-center gap-1.5 font-semibold text-stone-200">
-            <Filter className="h-4 w-4 text-sky-400" />
+            <Filter className="h-4 w-4" style={{ color: colors.accent }} />
             <span>Range Mode:</span>
           </div>
           <div className="grid w-full grid-cols-3 gap-1 rounded-lg border border-stone-700/60 bg-stone-900/80 p-0.5 sm:flex sm:w-auto">
@@ -68,10 +71,13 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
                 onModeChange('all');
                 onApplyPreset('all');
               }}
-              className={`inline-flex items-center justify-center gap-1.5 rounded px-2 py-1.5 text-center text-[11px] font-medium leading-tight transition-colors cursor-pointer sm:flex-initial sm:px-2.5 sm:py-1 sm:text-xs ${
+              style={
                 rangeMode === 'all'
-                  ? 'bg-sky-500 text-stone-950 font-bold shadow'
-                  : 'text-stone-400 hover:text-stone-200'
+                  ? { backgroundColor: `${colors.accent}30`, color: colors.accentText }
+                  : undefined
+              }
+              className={`inline-flex items-center justify-center gap-1.5 rounded px-2 py-1.5 text-center text-[11px] font-medium leading-tight transition-colors cursor-pointer sm:flex-initial sm:px-2.5 sm:py-1 sm:text-xs ${
+                rangeMode === 'all' ? 'font-bold shadow' : 'text-stone-400 hover:text-stone-200'
               }`}
             >
               <Layers className="h-3.5 w-3.5 shrink-0" />
@@ -87,9 +93,14 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
                 onModeChange('solveIndex');
                 if (preset === 'all') onApplyPreset('last100');
               }}
+              style={
+                rangeMode === 'solveIndex'
+                  ? { backgroundColor: `${colors.accent}30`, color: colors.accentText }
+                  : undefined
+              }
               className={`inline-flex items-center justify-center gap-1.5 rounded px-2 py-1.5 text-center text-[11px] font-medium leading-tight transition-colors cursor-pointer sm:flex-initial sm:px-2.5 sm:py-1 sm:text-xs ${
                 rangeMode === 'solveIndex'
-                  ? 'bg-sky-500 text-stone-950 font-bold shadow'
+                  ? 'font-bold shadow'
                   : 'text-stone-400 hover:text-stone-200'
               }`}
             >
@@ -106,9 +117,14 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
                 onModeChange('dateRange');
                 if (preset === 'all') onApplyPreset('last30d');
               }}
+              style={
+                rangeMode === 'dateRange'
+                  ? { backgroundColor: `${colors.accent}30`, color: colors.accentText }
+                  : undefined
+              }
               className={`inline-flex items-center justify-center gap-1.5 rounded px-2 py-1.5 text-center text-[11px] font-medium leading-tight transition-colors cursor-pointer sm:flex-initial sm:px-2.5 sm:py-1 sm:text-xs ${
                 rangeMode === 'dateRange'
-                  ? 'bg-sky-500 text-stone-950 font-bold shadow'
+                  ? 'font-bold shadow'
                   : 'text-stone-400 hover:text-stone-200'
               }`}
             >
@@ -127,6 +143,11 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
             title={`Reset Range (${rangeStats.count} / ${totalCount})`}
             onClick={onResetRange}
             className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/15 px-2.5 py-1 text-xs font-medium text-amber-300 transition-all hover:bg-amber-500/25 active:scale-95"
+            style={{
+              borderColor: `${colors.accent}66`,
+              backgroundColor: `${colors.accent}20`,
+              color: colors.accentText,
+            }}
           >
             <RotateCcw className="h-3.5 w-3.5 shrink-0" />
             <span>
@@ -157,10 +178,15 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
               id={`range-preset-${p.key}`}
               aria-pressed={preset === p.key}
               onClick={() => onApplyPreset(p.key as RangePreset)}
-              className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer ${
+              style={
                 preset === p.key
-                  ? 'bg-stone-100 text-stone-900 font-bold shadow'
-                  : 'bg-stone-900/60 text-stone-300 hover:text-stone-100 hover:bg-stone-800 border border-stone-700/50'
+                  ? { backgroundColor: `${colors.accent}30`, color: colors.accentText }
+                  : undefined
+              }
+              className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer border ${
+                preset === p.key
+                  ? 'border-transparent font-bold shadow'
+                  : 'bg-stone-900/60 text-stone-300 hover:text-stone-100 hover:bg-stone-800 border-stone-700/50'
               }`}
             >
               {p.label}
@@ -196,14 +222,14 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
                 min={1}
                 max={totalCount}
                 value={startSolve}
-                style={{ touchAction: 'pan-x' }}
+                style={{ touchAction: 'pan-x', accentColor: colors.accent }}
                 onChange={(e) => {
                   const val = parseInt(e.target.value, 10);
                   if (val <= endSolve) {
                     onStartSolveChange(val);
                   }
                 }}
-                className="h-2 flex-1 cursor-pointer rounded-lg bg-stone-800 accent-sky-400 sm:h-1.5"
+                className="h-2 flex-1 cursor-pointer rounded-lg bg-stone-700 sm:h-1.5"
               />
             </div>
 
@@ -222,7 +248,7 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
                   const val = parseInt(e.target.value, 10) || totalCount;
                   onEndSolveChange(Math.min(totalCount, Math.max(val, startSolve)));
                 }}
-                className="w-16 rounded border border-stone-700 bg-stone-950 px-2 py-0.5 text-center font-mono text-xs text-stone-100 focus:border-sky-500 focus:outline-none"
+                className="w-16 rounded border border-stone-700 bg-stone-950 px-2 py-0.5 text-center font-mono text-xs text-stone-100 focus:border-stone-500 focus:outline-none"
               />
               <input
                 type="range"
@@ -230,14 +256,14 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
                 min={1}
                 max={totalCount}
                 value={endSolve}
-                style={{ touchAction: 'pan-x' }}
+                style={{ touchAction: 'pan-x', accentColor: colors.accent }}
                 onChange={(e) => {
                   const val = parseInt(e.target.value, 10);
                   if (val >= startSolve) {
                     onEndSolveChange(val);
                   }
                 }}
-                className="h-2 flex-1 cursor-pointer rounded-lg bg-stone-800 accent-sky-400 sm:h-1.5"
+                className="h-2 flex-1 cursor-pointer rounded-lg bg-stone-700 sm:h-1.5"
               />
             </div>
           </div>
@@ -287,9 +313,16 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
       {/* Focused Range Stats Banner */}
       <div className="flex flex-col gap-2 rounded-lg border border-stone-700/60 bg-stone-900/90 p-2.5 font-mono text-xs">
         <div className="flex flex-wrap items-center gap-2 text-stone-300">
-          <Sparkles className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+          <Sparkles
+            className="h-3.5 w-3.5 shrink-0 text-amber-400"
+            style={{ color: colors.accent }}
+          />
           <span className="font-sans text-[11px] font-medium text-stone-400">Focus:</span>
-          <span id="progression-focus-label" className="font-bold text-sky-300">
+          <span
+            id="progression-focus-label"
+            className="font-bold text-sky-300"
+            style={{ color: colors.accentText }}
+          >
             {rangeMode === 'dateRange'
               ? `${startDate || earliestDate} – ${endDate || latestDate}`
               : `Solves #${startSolve} – #${endSolve}`}
@@ -318,7 +351,10 @@ export const ProgressionRangeControls: React.FC<ProgressionRangeControlsProps> =
           </div>
           <div className="flex items-center gap-1.5 rounded-md border border-stone-800/80 bg-stone-950/60 px-2.5 py-1 text-stone-300">
             <span className="text-stone-400">R²:</span>
-            <span className="font-semibold text-sky-300 whitespace-nowrap">
+            <span
+              className="font-semibold text-sky-300 whitespace-nowrap"
+              style={{ color: colors.accentText }}
+            >
               {(filteredRegression.r2 * 100).toFixed(1)}%
             </span>
           </div>

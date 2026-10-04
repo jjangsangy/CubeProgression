@@ -40,11 +40,11 @@ async function ensureServer() {
 }
 
 async function main() {
-  const args = process.argv.slice(2);
-  const width = parseInt(args[0] || '390', 10);
-  const height = parseInt(args[1] || '844', 10);
-  const rawOutName = args[2] || `mobile_${width}x${height}.png`;
-  const selector = args[3] || null;
+  const positionalArgs = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+  const width = parseInt(positionalArgs[0] || '390', 10);
+  const height = parseInt(positionalArgs[1] || '844', 10);
+  const rawOutName = positionalArgs[2] || `mobile_${width}x${height}.png`;
+  const selector = positionalArgs[3] || null;
 
   const screenshotsDir = path.resolve(process.cwd(), 'screenshots');
   mkdirSync(screenshotsDir, { recursive: true });
@@ -56,11 +56,20 @@ async function main() {
 
   await ensureServer();
 
+  const themeArg = process.argv.find((a) => a.startsWith('--theme='));
+  const themeName = themeArg ? themeArg.split('=')[1] : null;
+
   const browser = await chromium.launch();
   const page = await browser.newPage({
     viewport: { width, height },
     deviceScaleFactor: 2,
   });
+
+  if (themeName) {
+    await page.addInitScript((theme) => {
+      localStorage.setItem('cubeprogression_theme', theme);
+    }, themeName);
+  }
 
   await page.goto(URL, { waitUntil: 'networkidle' });
   // Wait for demo dataset and dashboard to load
@@ -106,6 +115,16 @@ async function main() {
       window.dispatchEvent(event);
     });
     await page.waitForTimeout(300);
+  }
+
+  // If --modal is passed, open the instruction modal
+  if (process.argv.includes('--modal')) {
+    const guideBtn = await page.$('#navbar-guide');
+    if (guideBtn) {
+      await guideBtn.click();
+      await page.waitForSelector('#instruction-modal [role="dialog"]', { timeout: 5000 });
+      await page.waitForTimeout(300);
+    }
   }
 
   if (selector === 'viewport') {

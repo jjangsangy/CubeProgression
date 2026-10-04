@@ -2,9 +2,19 @@ import { BarChart2 } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useAutoDismissTooltip } from '../hooks/useAutoDismissTooltip';
+import { useTheme } from '../theme';
 import type { GroupingPeriod, PeriodGroup } from '../types';
 import { getPeriodUnitInfo } from '../utils/statsMath';
 import { ChartCardWrapper } from './ChartCardWrapper';
+
+function hexToRgb(hex: string): [number, number, number] {
+  const value = hex.replace('#', '');
+  return [
+    Number.parseInt(value.slice(0, 2), 16),
+    Number.parseInt(value.slice(2, 4), 16),
+    Number.parseInt(value.slice(4, 6), 16),
+  ];
+}
 
 export interface DailyDistributionBoxPlotProps {
   id?: string;
@@ -19,6 +29,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
   groupingPeriod = 'daily',
   title,
 }) => {
+  const { colors } = useTheme();
   const unitInfo = getPeriodUnitInfo(groupingPeriod);
   const displayTitle = title || `${unitInfo.adjective} Solve Distribution`;
 
@@ -113,13 +124,14 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
     return (norm - 0.5) * (boxWidth * 0.8);
   };
 
-  // Color palette for boxes across period progression (Light steel blue -> Deep navy blue)
+  // Color palette for boxes across period progression
   const getBoxColor = (idx: number, total: number) => {
     const ratio = total > 1 ? idx / (total - 1) : 0.5;
-    // Interpolate RGB from #dbeafe (light sky) to #1e3a8a (deep blue)
-    const r = Math.round(219 - ratio * (219 - 30));
-    const g = Math.round(234 - ratio * (234 - 58));
-    const b = Math.round(254 - ratio * (254 - 138));
+    const [startR, startG, startB] = hexToRgb(colors.boxGradient.start);
+    const [endR, endG, endB] = hexToRgb(colors.boxGradient.end);
+    const r = Math.round(startR - ratio * (startR - endR));
+    const g = Math.round(startG - ratio * (startG - endG));
+    const b = Math.round(startB - ratio * (startB - endB));
     return `rgb(${r}, ${g}, ${b})`;
   };
 
@@ -150,16 +162,32 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
       subtitle="Box plots (Q1, Median, Q3, Whiskers) overlaid with individual jittered solves and connected Median Trend."
       mobileSubtitle="Box plots with jittered solves and connected Median Trend."
       headerBadge={
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
-          <BarChart2 className="h-3.5 w-3.5 text-emerald-400" />
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-300"
+          style={{
+            borderColor: `${colors.accent}40`,
+            backgroundColor: `${colors.accent}18`,
+            color: colors.accentText,
+          }}
+        >
+          <BarChart2 className="h-3.5 w-3.5 text-emerald-400" style={{ color: colors.accent }} />
           Time Distribution
         </span>
       }
       filenamePrefix={`${unitInfo.adjective.toLowerCase()}_solve_distribution_boxplot`}
       headerControls={
         <div className="flex items-center gap-2 text-xs text-stone-300">
-          <span className="inline-block h-0.5 w-3 border-t border-dashed border-rose-500 bg-rose-500"></span>
-          <span className="inline-block h-2 w-2 rounded-full bg-rose-500"></span>
+          <span
+            className="inline-block h-0.5 w-3 border-t border-dashed"
+            style={{
+              borderColor: colors.series.orange,
+              backgroundColor: colors.series.orange,
+            }}
+          />
+          <span
+            className="inline-block h-2 w-2 rounded-full"
+            style={{ backgroundColor: colors.series.orange }}
+          />
           <span className="font-medium text-stone-300">
             <span className="hidden sm:inline">Median Trend</span>
             <span className="sm:hidden">Median</span>
@@ -187,7 +215,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                   y1={y}
                   x2={width - padding.right}
                   y2={y}
-                  stroke="#334155"
+                  stroke={colors.borderSubtle}
                   strokeOpacity="0.4"
                   strokeDasharray="3 3"
                 />
@@ -195,7 +223,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                   key={tick}
                   x={padding.left - (isMobileScreen ? 6 : 12)}
                   y={y + 4}
-                  fill="#94a3b8"
+                  fill={colors.textMuted}
                   fontSize={isMobileScreen ? 10 : 11}
                   textAnchor="end"
                 >
@@ -210,7 +238,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
             <text
               x={18}
               y={height / 2}
-              fill="#94a3b8"
+              fill={colors.textMuted}
               fontSize="12"
               textAnchor="middle"
               transform={`rotate(-90, 18, ${height / 2})`}
@@ -225,7 +253,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
             y1={height - padding.bottom}
             x2={width - padding.right}
             y2={height - padding.bottom}
-            stroke="#475569"
+            stroke={colors.borderSubtle}
             strokeWidth="1.2"
           />
 
@@ -251,7 +279,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                       y1={yWLow}
                       x2={cx}
                       y2={yWHigh}
-                      stroke="#64748b"
+                      stroke={colors.series.neutral}
                       strokeWidth="1.8"
                     />
 
@@ -261,7 +289,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                       y1={yWHigh}
                       x2={cx + boxWidth / 3}
                       y2={yWHigh}
-                      stroke="#64748b"
+                      stroke={colors.series.neutral}
                       strokeWidth="2"
                     />
 
@@ -271,7 +299,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                       y1={yWLow}
                       x2={cx + boxWidth / 3}
                       y2={yWLow}
-                      stroke="#64748b"
+                      stroke={colors.series.neutral}
                       strokeWidth="2"
                     />
 
@@ -283,7 +311,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                       height={Math.max(2, yQ1 - yQ3)}
                       fill={boxColor}
                       fillOpacity="0.85"
-                      stroke="#1e293b"
+                      stroke={colors.series.blue}
                       strokeWidth="1.5"
                       rx="3"
                     />
@@ -294,7 +322,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                       y1={yMedian}
                       x2={cx + boxWidth / 2}
                       y2={yMedian}
-                      stroke="#0f172a"
+                      stroke={colors.textPrimary}
                       strokeWidth="2.5"
                     />
 
@@ -311,9 +339,9 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                             cy={jY}
                             r={2.2}
                             className="cursor-pointer"
-                            fill="#64748b"
+                            fill={colors.series.neutral}
                             fillOpacity="0.4"
-                            stroke="#f8fafc"
+                            stroke={colors.textPrimary}
                             strokeWidth="0.3"
                             onPointerEnter={() =>
                               setHoveredPoint({
@@ -352,8 +380,8 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                       <polygon
                         key={`outlier-${outlierSolve.id}`}
                         points={`${cx},${oY - 4} ${cx + 4},${oY} ${cx},${oY + 4} ${cx - 4},${oY}`}
-                        fill="#ef4444"
-                        stroke="#0f172a"
+                        fill={colors.series.red}
+                        stroke={colors.textPrimary}
                         strokeWidth="1"
                       />
                     );
@@ -375,7 +403,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                       <text
                         x={cx}
                         y={height - padding.bottom + 18}
-                        fill="#cbd5e1"
+                        fill={colors.textPrimary}
                         fontSize={isMobileScreen ? 10 : 11}
                         fontWeight="600"
                         textAnchor="middle"
@@ -386,7 +414,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                       <text
                         x={cx}
                         y={height - padding.bottom + 32}
-                        fill="#64748b"
+                        fill={colors.textMuted}
                         fontSize={isMobileScreen ? 9 : 10}
                         textAnchor="middle"
                       >
@@ -404,7 +432,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
             <g>
               <polyline
                 fill="none"
-                stroke="#ef4444"
+                stroke={colors.series.orange}
                 strokeWidth="2"
                 strokeDasharray="6 4"
                 points={medianPolylinePoints}
@@ -415,14 +443,14 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                     cx={p.x}
                     cy={p.y}
                     r={5}
-                    fill="#ef4444"
-                    stroke="#ffffff"
+                    fill={colors.series.orange}
+                    stroke={colors.bgCard}
                     strokeWidth="1.5"
                   />
                   <text
                     x={p.x}
                     y={p.y - 9}
-                    fill="#f8fafc"
+                    fill={colors.textPrimary}
                     fontSize="10"
                     fontWeight="bold"
                     textAnchor="middle"
@@ -438,7 +466,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
           <text
             x={width / 2}
             y={height - 10}
-            fill="#94a3b8"
+            fill={colors.textMuted}
             fontSize={isMobileScreen ? 11 : 12}
             textAnchor="middle"
           >
@@ -476,18 +504,24 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
                 style={{
                   left: leftStyle,
                   top: topStyle,
+                  backgroundColor: colors.bgCard,
+                  borderColor: colors.borderSubtle,
+                  color: colors.textPrimary,
                 }}
-                className={`pointer-events-none absolute z-20 transform ${transformClass} rounded-xl border border-stone-700/80 bg-stone-900/95 p-2 text-xs text-stone-200 shadow-2xl backdrop-blur-md sm:p-2.5`}
+                className={`pointer-events-none absolute z-20 transform ${transformClass} rounded-xl border p-2 text-xs shadow-2xl backdrop-blur-md sm:p-2.5`}
               >
-                <div className="mb-1 flex items-center justify-between gap-3 border-b border-stone-800 pb-1 font-semibold text-stone-100">
-                  <span className="text-amber-400">
+                <div
+                  className="mb-1 flex items-center justify-between gap-3 border-b pb-1 font-semibold"
+                  style={{ borderColor: colors.borderSubtle }}
+                >
+                  <span style={{ color: colors.accent }}>
                     {periodGroups[hoveredPoint.periodIdx]?.label ||
                       `${unitInfo.unitSingular} ${hoveredPoint.periodIdx + 1}`}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-stone-400">Solve:</span>{' '}
-                  <span className="font-mono font-bold text-stone-100">
+                  <span style={{ color: colors.textMuted }}>Solve:</span>{' '}
+                  <span className="font-mono font-bold" style={{ color: colors.textPrimary }}>
                     {hoveredPoint.time.toFixed(2)}s
                   </span>
                 </div>
@@ -502,7 +536,7 @@ export const DailyDistributionBoxPlot: React.FC<DailyDistributionBoxPlotProps> =
           id="distribution-mobile-axis-title"
           className="-mt-1.5 flex items-center justify-between px-1 text-[11px] leading-tight select-none"
         >
-          <span style={{ color: '#94a3b8' }}>Time (s)</span>
+          <span style={{ color: colors.textMuted }}>Time (s)</span>
         </div>
       )}
     </ChartCardWrapper>

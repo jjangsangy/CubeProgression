@@ -11,6 +11,7 @@ import {
 import type React from 'react';
 import { useRef, useState } from 'react';
 import { useStorageNotice } from '../hooks/useStorageNotice';
+import { useTheme } from '../theme/ThemeContext';
 import type { GroupingPeriod, Session } from '../types';
 import { CubeLoadingSpinner } from './CubeLoadingSpinner';
 import { LoadingElapsedTimer } from './LoadingElapsedTimer';
@@ -63,6 +64,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   const storageUsageMB = propStorageUsageMB ?? storageNotice.storageUsageMB;
   const savedNotice = propSavedNotice !== undefined ? propSavedNotice : storageNotice.savedNotice;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { colors } = useTheme();
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -133,8 +135,14 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
               <CubeLoadingSpinner size="md" />
 
               {/* Uploaded File Indicator Pill */}
-              <div className="flex max-w-[90%] items-center gap-2 truncate rounded-full border border-amber-500/30 bg-stone-900 px-3 py-1 font-mono text-xs text-stone-200">
-                <FileText className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+              <div
+                className="flex max-w-[90%] items-center gap-2 truncate rounded-full border border-amber-500/30 bg-stone-900 px-3 py-1 font-mono text-xs text-stone-200"
+                style={{ borderColor: `${colors.accent}40` }}
+              >
+                <FileText
+                  className="h-3.5 w-3.5 shrink-0 text-amber-400"
+                  style={{ color: colors.accent }}
+                />
                 <span className="truncate">{uploadingFileName}</span>
               </div>
 
@@ -142,7 +150,9 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
               <div className="flex w-full max-w-xs flex-col gap-1.5">
                 <div className="flex items-center justify-between font-mono text-[11px] text-stone-300">
                   <LoadingElapsedTimer />
-                  <span className="font-bold text-amber-300">{loadingProgress}%</span>
+                  <span className="font-bold text-amber-300" style={{ color: colors.accentText }}>
+                    {loadingProgress}%
+                  </span>
                 </div>
 
                 {/* Bar Track */}
@@ -153,7 +163,11 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                     aria-valuemin={0}
                     aria-valuemax={100}
                     className="h-full rounded-full bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.5)] transition-[width] duration-300 ease-out"
-                    style={{ width: `${Math.max(5, loadingProgress)}%` }}
+                    style={{
+                      width: `${Math.max(5, loadingProgress)}%`,
+                      background: `linear-gradient(to right, ${colors.accent}, ${colors.accentHover})`,
+                      boxShadow: `0 0 12px ${colors.accentMuted}`,
+                    }}
                   />
                 </div>
               </div>
@@ -168,13 +182,22 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
               key="upload-prompt"
               className="animate-fade-in-scale flex flex-col items-center justify-center"
             >
-              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-400">
+              <div
+                className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-400"
+                style={{ backgroundColor: `${colors.accent}15`, color: colors.accent }}
+              >
                 <FileUp className="h-6 w-6 stroke-[2]" />
               </div>
 
               <h3 className="mb-1 text-sm font-bold text-stone-200">
-                Upload <span className="text-amber-400">cstimer.txt</span> or{' '}
-                <span className="text-amber-400">.json</span>
+                Upload{' '}
+                <span className="text-amber-400" style={{ color: colors.accent }}>
+                  cstimer.txt
+                </span>{' '}
+                or{' '}
+                <span className="text-amber-400" style={{ color: colors.accent }}>
+                  .json
+                </span>
               </h3>
 
               <p className="mb-3 max-w-xs text-xs leading-relaxed text-stone-400">
@@ -186,6 +209,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                     if (!isLoading) fileInputRef.current?.click();
                   }}
                   className="cursor-pointer font-medium text-amber-400 underline underline-offset-2 hover:text-amber-300"
+                  style={{ color: colors.accent }}
                 >
                   click to browse
                 </button>
@@ -205,6 +229,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                     onLoadDemo();
                   }}
                   className="inline-flex cursor-pointer items-center gap-1 text-xs font-semibold whitespace-nowrap text-amber-400 underline underline-offset-2 hover:text-amber-300"
+                  style={{ color: colors.accent }}
                 >
                   <Sparkles className="h-3 w-3 shrink-0" />
                   Load Sample Data
@@ -222,7 +247,10 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                   className="mt-3.5 inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium text-stone-400 transition-colors hover:bg-stone-800 hover:text-amber-300 active:scale-95"
                   title="How to export your solves from csTimer"
                 >
-                  <HelpCircle className="h-3.5 w-3.5 text-amber-400" />
+                  <HelpCircle
+                    className="h-3.5 w-3.5 text-amber-400"
+                    style={{ color: colors.accent }}
+                  />
                   <span>How to export from csTimer?</span>
                 </button>
               )}
@@ -238,7 +266,10 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
               htmlFor="session-selector"
               className="mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wider text-stone-300 uppercase"
             >
-              <Layers className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+              <Layers
+                className="h-3.5 w-3.5 shrink-0 text-amber-400"
+                style={{ color: colors.accent }}
+              />
               <span>
                 <span className="hidden sm:inline">Select </span>Session ({sessions.length}
                 <span className="hidden sm:inline"> available</span>)
@@ -262,7 +293,10 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
           <div>
             <div className="mb-2 flex items-center justify-between gap-2">
               <span className="flex items-center gap-1.5 text-xs font-semibold tracking-wider text-stone-300 uppercase">
-                <Calendar className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+                <Calendar
+                  className="h-3.5 w-3.5 shrink-0 text-amber-400"
+                  style={{ color: colors.accent }}
+                />
                 <span>
                   Grouping Period<span className="hidden sm:inline"> for Aggregations</span>
                 </span>
@@ -301,6 +335,15 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                         ? 'bg-amber-500/15 border-amber-500/80 text-amber-300 shadow-md'
                         : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200 hover:border-stone-700'
                     }`}
+                    style={
+                      isActive
+                        ? {
+                            backgroundColor: `${colors.accent}20`,
+                            borderColor: colors.accent,
+                            color: colors.accentText,
+                          }
+                        : undefined
+                    }
                   >
                     <div className="text-xs leading-tight font-bold">{item.label}</div>
                     <div className="mt-0.5 text-[10px] text-stone-500 truncate">
@@ -314,7 +357,10 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
             {/* Custom Batch Size Controls (shown when grouping by solve count) */}
             {(groupingPeriod === 'customBatch' || groupingPeriod === 'batch50') && (
-              <div className="fade-in flex animate-in flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl border border-amber-500/30 bg-stone-900/90 p-3 duration-150">
+              <div
+                className="fade-in flex animate-in flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl border border-amber-500/30 bg-stone-900/90 p-3 duration-150"
+                style={{ borderColor: `${colors.accent}40` }}
+              >
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs font-medium text-stone-300">Solves per group:</span>
 
@@ -331,6 +377,11 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                             ? 'bg-amber-500 text-stone-950 font-bold'
                             : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
                         }`}
+                        style={
+                          customBatchSize === preset
+                            ? { backgroundColor: `${colors.accent}30`, color: colors.accentText }
+                            : undefined
+                        }
                       >
                         {preset}
                       </button>
@@ -367,8 +418,11 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
       {isSaved && (
         <div className="flex flex-row items-center justify-between gap-2 rounded-xl border border-stone-800 bg-stone-950/80 px-3 py-2 sm:px-4 sm:py-2.5 text-xs text-stone-300">
           <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-            <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-emerald-400" />
-            <Database className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+            <span
+              className="h-2 w-2 shrink-0 animate-pulse rounded-full"
+              style={{ backgroundColor: colors.accent }}
+            />
+            <Database className="h-3.5 w-3.5 shrink-0" style={{ color: colors.accent }} />
             <span className="truncate font-semibold text-stone-200">
               <span className="hidden sm:inline">Persistent Storage Active</span>
               <span className="sm:hidden">Storage Active</span>
@@ -405,10 +459,15 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
       {savedNotice && !errorMsg && (
         <div
           role="status"
-          className="flex items-center justify-between gap-2 rounded-xl border border-emerald-800/60 bg-emerald-950/40 px-3.5 py-2 text-xs text-emerald-300"
+          className="flex items-center justify-between gap-2 rounded-xl border px-3.5 py-2 text-xs"
+          style={{
+            borderColor: `${colors.accent}40`,
+            backgroundColor: `${colors.accent}18`,
+            color: colors.accentText,
+          }}
         >
           <div className="flex items-center gap-2">
-            <Database className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+            <Database className="h-3.5 w-3.5 shrink-0" style={{ color: colors.accent }} />
             <span>{savedNotice}</span>
           </div>
         </div>
@@ -418,7 +477,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
       {errorMsg && (
         <div
           role="alert"
-          className="flex items-center gap-2 rounded-xl border border-rose-800/80 bg-rose-950/60 p-3 text-xs text-rose-300"
+          className="flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-400"
         >
           <span className="font-bold tracking-wider uppercase">Error:</span>
           <span>{errorMsg}</span>

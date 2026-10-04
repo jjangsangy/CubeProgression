@@ -122,7 +122,7 @@ describe('DailyDistributionBoxPlot component', () => {
     // Verify outlier diamond polygon is rendered for the 18s solve
     const polygons = container.querySelectorAll('polygon');
     expect(polygons.length).toBeGreaterThan(0);
-    expect(polygons[0].getAttribute('fill')).toBe('#ef4444');
+    expect(polygons[0].getAttribute('fill')).toBe('#e11d48');
   });
 
   it('renders a weekly box plot chart region with plotted boxes when grouping by week', () => {
@@ -178,8 +178,8 @@ describe('DailyDistributionBoxPlot component', () => {
     );
 
     // Box height should clamp to at least 2px
-    const rects = container.querySelectorAll('rect');
-    const boxRect = Array.from(rects).find((r) => r.getAttribute('stroke') === '#1e293b');
+    const boxRect = container.querySelector('rect[rx="3"]');
+    expect(boxRect).not.toBeNull();
     expect(boxRect?.getAttribute('height')).toBe('2');
 
     // Median trend polyline is only drawn if medianPoints.length > 1
