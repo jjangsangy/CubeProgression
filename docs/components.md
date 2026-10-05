@@ -40,7 +40,7 @@ Presentational footer component with safe-area styling (`safe-area-x safe-area-b
 
 ## `Navbar` (`Navbar.tsx`)
 
-Top header. Props: `canInstall`, `onInstall`, `isOnline`, `onOpenInstructions`.
+Top header with safe-area styling (`safe-area-top`). Props: `canInstall`, `onInstall`, `isOnline`, `onOpenInstructions`.
 
 - Brand block with visible title + "csTimer Analytics" badge.
 - Buttons: Theme selector, **csTimer Guide** (when modal handler provided), and PWA install prompt (when installable).

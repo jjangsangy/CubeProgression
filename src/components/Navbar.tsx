@@ -32,7 +32,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   const { colors } = useTheme();
 
   return (
-    <header id="navbar" className="relative border-b border-stone-800 bg-stone-950 w-full">
+    <header
+      id="navbar"
+      className="relative border-b border-stone-800 bg-stone-950 w-full safe-area-top"
+    >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-3 sm:px-6 safe-area-x w-full gap-2 sm:gap-4">
         {/* Brand Logo & Title */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">

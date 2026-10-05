@@ -19,7 +19,7 @@
     <div id="root">
       <div class="flex min-h-screen flex-col bg-stone-950 font-sans text-stone-100 antialiased" style="min-height: 100vh; background-color: #0c0a09; color: #f5f5f4;">
         <!-- Top Navigation Bar Skeleton (Matches Navbar.tsx 1:1) -->
-        <header class="relative border-b border-stone-800 bg-stone-950" style="border-bottom: 1px solid #292524; background-color: #0c0a09;">
+        <header class="relative border-b border-stone-800 bg-stone-950 safe-area-top" style="border-bottom: 1px solid #292524; background-color: #0c0a09; padding-top: env(safe-area-inset-top, 0px);">
           <div class="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 safe-area-x" style="height: 64px; max-width: 80rem; margin: 0 auto; display: flex; align-items: center; justify-content: space-between;">
             <div class="flex shrink-0 items-center">
               <img src="./favicon.svg" alt="CubeProgression Logo" width="40" height="40" class="h-10 w-10 shrink-0 rounded-xl shadow-lg shadow-amber-500/10" style="width: 2.5rem; height: 2.5rem; border-radius: 0.75rem;" />

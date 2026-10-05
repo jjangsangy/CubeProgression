@@ -56,6 +56,10 @@ body,
 }
 
 /* Safe area insets for iOS Safari edge-to-edge landscape & notched devices */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 .safe-area-x {
   padding-left: max(1rem, env(safe-area-inset-left));
   padding-right: max(1rem, env(safe-area-inset-right));

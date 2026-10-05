@@ -44,6 +44,7 @@ describe('iOS Safari Landscape Mode & Safe Area Support', () => {
 
     expect(cssContent).toContain('color-scheme: dark');
     expect(cssContent).toContain('background-color: #0c0a09');
+    expect(cssContent).toContain('safe-area-top');
     expect(cssContent).toContain('safe-area-x');
     expect(cssContent).toContain('safe-area-bottom');
     expect(cssContent).toContain('safe-area-modal');
@@ -55,6 +56,9 @@ describe('iOS Safari Landscape Mode & Safe Area Support', () => {
 
   it('renders App with safe-area-x padding on Navbar and Main container, and safe-area-bottom on Footer', async () => {
     const { container } = render(<App />);
+
+    const navbarElement = container.querySelector('#navbar');
+    expect(navbarElement).toHaveClass('safe-area-top');
 
     const headerContainer = container.querySelector('#navbar > div');
     expect(headerContainer).toHaveClass('safe-area-x');

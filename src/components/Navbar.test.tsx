@@ -17,6 +17,14 @@ describe('Navbar component', () => {
     expect(container.querySelector('#navbar-filename')).toBeNull();
   });
 
+  it('renders header with safe-area-top class for mobile notch inset protection', () => {
+    const { container } = render(<Navbar />);
+
+    const navbar = container.querySelector('#navbar');
+    expect(navbar).toBeInTheDocument();
+    expect(navbar).toHaveClass('safe-area-top');
+  });
+
   it('renders csTimer Guide button when onOpenInstructions is provided and triggers callback', () => {
     const onOpenInstructions = vi.fn();
     const { container } = render(<Navbar onOpenInstructions={onOpenInstructions} />);

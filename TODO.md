@@ -22,7 +22,7 @@
   - [ ] feat(plot): violin plot mode
   - [ ] feat(plot): A/B Testing between two charts, compare IQR's
 - [ ] feat(plot): Create range scrobers for every plot
-- [ ] fix(pwa): top bar cannot be reached due to notches
+- [x] fix(pwa): top bar cannot be reached due to notches
 
 
 ## Long Term

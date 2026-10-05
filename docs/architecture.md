@@ -158,7 +158,7 @@ To guarantee rapid initial mobile paint (<0.5s FCP) and eliminate main-thread bl
 - **Conditional Temporal Polyfilling**: `src/utils/temporalLoader.ts` (`ensureTemporal()`) dynamically imports `temporal-polyfill` only when `typeof globalThis.Temporal === 'undefined'`. Modern browsers execute standard native `Temporal` and transfer 0 bytes of polyfill code.
 - **Cooperative Task Scheduling**: `src/utils/scheduler.ts` (`yieldToMain()`) yields to the browser event loop via `scheduler.yield()` before atomic state flushes, ensuring initialization tasks remain below the 50 ms long-task budget.
 - **Viewport-Driven Rendering**: Below-the-fold charts and heavy tables are wrapped in `<DeferredChart>`, mounting only when within 250px of the viewport using `IntersectionObserver` (or immediately in test/jsdom environments).
-- **Static Inlined Shell**: `index.html` embeds a lightweight static CSS/SVG shell in `#root` matching the exact responsive coordinates (`px-4 sm:px-6 safe-area-x`, `#0c0a09` continuity) to ensure instant first paint before JavaScript hydration completes.
+- **Static Inlined Shell**: `index.html` embeds a lightweight static CSS/SVG shell in `#root` matching the exact responsive coordinates (`px-4 sm:px-6 safe-area-x`, `safe-area-top`, `#0c0a09` continuity) to ensure instant first paint before JavaScript hydration completes.
 - **Atomic Hydration**: Storage queries and dataset checks in `useCubeDatasetCore.ts` resolve concurrently and batch into a single state update, eliminating redundant hydration re-render passes.
 
 ## PWA & Offline Architecture

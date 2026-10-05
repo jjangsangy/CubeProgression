@@ -537,6 +537,9 @@ test.describe('Mobile & Tablet Responsive Devices & Orientations', () => {
     test('applies safe-area insets to Navbar, Main, and Footer to prevent content clipping in landscape mode', async ({
       page,
     }) => {
+      const header = page.locator('header');
+      await expect(header).toHaveClass(/safe-area-top/);
+
       const headerContainer = page.locator('header > div');
       await expect(headerContainer).toHaveClass(/safe-area-x/);
 
