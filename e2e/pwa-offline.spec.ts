@@ -118,4 +118,24 @@ test.describe('PWA & Offline Capability', () => {
     await page.evaluate(() => window.dispatchEvent(new Event('online')));
     await expect(page.locator('#navbar-offline-status')).not.toBeVisible();
   });
+
+  test('bridges PWA install dialog when install button is clicked in environments without beforeinstallprompt', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await expect(page.locator('#session-selector')).toBeVisible({ timeout: 15000 });
+
+    const installBtn = page.locator('#navbar-install');
+    await expect(installBtn).toBeVisible();
+
+    const pwaInstallEl = page.locator('#pwa-install');
+    await expect(pwaInstallEl).toHaveCount(1);
+
+    await installBtn.click();
+
+    const isAvailable = await pwaInstallEl.evaluate(
+      (el: HTMLElement & { isInstallAvailable?: boolean }) => el.isInstallAvailable,
+    );
+    expect(isAvailable).toBe(true);
+  });
 });

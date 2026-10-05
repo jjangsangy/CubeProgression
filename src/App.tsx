@@ -4,6 +4,7 @@ import { FileUploader } from './components/FileUploader';
 import { Footer } from './components/Footer';
 import { InstructionModal } from './components/InstructionModal';
 import { Navbar } from './components/Navbar';
+import { PwaInstallBridge } from './components/PwaInstallBridge';
 import { useCubeDatasetCore } from './hooks/useCubeDatasetCore';
 import { ThemeProvider } from './theme';
 import { registerPwa, skipWaitingAndReload } from './utils/pwaRegister';
@@ -52,6 +53,9 @@ export default function App() {
       <div className="flex min-h-screen flex-col bg-stone-950 font-sans text-stone-100 antialiased selection:bg-amber-500/30 selection:text-amber-200">
         {/* Top Navigation Bar */}
         <Navbar onOpenInstructions={() => setIsInstructionModalOpen(true)} />
+
+        {/* PWA Install Bridge for cross-browser installation support (iOS, Firefox, etc.) */}
+        <PwaInstallBridge />
 
         {/* Main Container */}
         <main

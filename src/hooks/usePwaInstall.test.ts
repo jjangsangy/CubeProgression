@@ -152,4 +152,69 @@ describe('usePwaInstall hook', () => {
     );
     expect(removeEventListenerSpy).toHaveBeenCalledWith('appinstalled', expect.any(Function));
   });
+
+  it('enables canInstall and delegates to pwa-install element when present in DOM', async () => {
+    const mockPwaEl = document.createElement('pwa-install');
+    const showDialogMock = vi.fn();
+    const installMock = vi.fn().mockResolvedValue(undefined);
+    Object.assign(mockPwaEl, {
+      showDialog: showDialogMock,
+      install: installMock,
+    });
+    document.body.appendChild(mockPwaEl);
+
+    try {
+      const { result } = renderHook(() => usePwaInstall());
+      expect(result.current.canInstall).toBe(true);
+
+      let installed = false;
+      await act(async () => {
+        installed = await result.current.promptInstall();
+      });
+
+      expect(showDialogMock).toHaveBeenCalledWith(true);
+      expect(installMock).toHaveBeenCalled();
+      expect(installed).toBe(true);
+    } finally {
+      mockPwaEl.remove();
+    }
+  });
+
+  it('falls back to pwa-install element when native prompt throws', async () => {
+    const mockPwaEl = document.createElement('pwa-install');
+    const showDialogMock = vi.fn();
+    const installMock = vi.fn().mockResolvedValue(undefined);
+    Object.assign(mockPwaEl, {
+      showDialog: showDialogMock,
+      install: installMock,
+    });
+    document.body.appendChild(mockPwaEl);
+
+    try {
+      const { result } = renderHook(() => usePwaInstall());
+
+      const mockEvent = new Event('beforeinstallprompt') as unknown as {
+        preventDefault: () => void;
+        prompt: () => Promise<void>;
+        userChoice: Promise<never>;
+      };
+      mockEvent.preventDefault = vi.fn();
+      mockEvent.prompt = vi.fn().mockRejectedValue(new Error('Prompt error'));
+
+      act(() => {
+        window.dispatchEvent(mockEvent as unknown as Event);
+      });
+
+      let installed = false;
+      await act(async () => {
+        installed = await result.current.promptInstall();
+      });
+
+      expect(showDialogMock).toHaveBeenCalledWith(true);
+      expect(installMock).toHaveBeenCalled();
+      expect(installed).toBe(true);
+    } finally {
+      mockPwaEl.remove();
+    }
+  });
 });

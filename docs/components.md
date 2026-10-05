@@ -45,6 +45,10 @@ Top header. Props: `canInstall`, `onInstall`, `isOnline`, `onOpenInstructions`.
 - Brand block with visible title + "csTimer Analytics" badge.
 - Buttons: Theme selector, **csTimer Guide** (when modal handler provided), and PWA install prompt (when installable).
 
+## `PwaInstallBridge` (`PwaInstallBridge.tsx`)
+
+Bridge component wrapping `@khmyznikov/pwa-install` to provide PWA install instructions and dialogs across browsers that lack native `beforeinstallprompt` (iOS Safari, macOS Safari, Firefox, in-app browsers). Configured with `manual-apple`, `manual-chrome`, and `manual-how-to` so prompts only surface on user intent, themed with active color palette `--tint-color`.
+
 ## `FileUploader` (`FileUploader.tsx`)
 
 The upload + configuration panel.

@@ -68,24 +68,51 @@ export function usePwaInstall(): PwaInstallState {
   }, []);
 
   const promptInstall = useCallback(async (): Promise<boolean> => {
-    if (!deferredPrompt || isPromptingRef.current) return false;
-    isPromptingRef.current = true;
-
-    try {
-      await deferredPrompt.prompt();
-      const choiceResult = await deferredPrompt.userChoice;
-      return choiceResult.outcome === 'accepted';
-    } catch {
-      return false;
-    } finally {
-      cachedPromptEvent = null;
-      setDeferredPrompt(null);
-      isPromptingRef.current = false;
+    if (deferredPrompt && !isPromptingRef.current) {
+      isPromptingRef.current = true;
+      try {
+        await deferredPrompt.prompt();
+        const choiceResult = await deferredPrompt.userChoice;
+        if (choiceResult.outcome === 'accepted') {
+          return true;
+        }
+      } catch {
+        // Fall back to pwa-install component if native prompt fails
+      } finally {
+        cachedPromptEvent = null;
+        setDeferredPrompt(null);
+        isPromptingRef.current = false;
+      }
     }
+
+    // Bridge the gap for iOS, Firefox, and platforms without native beforeinstallprompt
+    if (typeof document !== 'undefined') {
+      const pwaInstallEl = document.querySelector('pwa-install') as
+        | (HTMLElement & {
+            showDialog: (forced?: boolean) => void;
+            install: () => Promise<void>;
+          })
+        | null;
+
+      if (pwaInstallEl) {
+        if (typeof pwaInstallEl.showDialog === 'function') {
+          pwaInstallEl.showDialog(true);
+        }
+        if (typeof pwaInstallEl.install === 'function') {
+          void pwaInstallEl.install();
+        }
+        return true;
+      }
+    }
+
+    return false;
   }, [deferredPrompt]);
 
   return {
-    canInstall: deferredPrompt !== null && !isInstalled,
+    canInstall:
+      (deferredPrompt !== null ||
+        (typeof document !== 'undefined' && Boolean(document.querySelector('pwa-install')))) &&
+      !isInstalled,
     isInstalled,
     promptInstall,
   };
