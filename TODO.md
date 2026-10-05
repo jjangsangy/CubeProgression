@@ -1,17 +1,14 @@
 # TODO
 
 ## Short Term
-- [x] feat(app): Implement app as a PWA
 - [ ] feat(ui): Increase height of charts on desktop
   - [ ] Desktop mode uses up more of the display
-- [x] fix(ui): Make headers use a consistent scheme
 - [x] feat(theme): Introduce themes
   - [x] feat(theme): Light mode
   - [ ] feat(theme): User Defined Themes
 - [ ] feat(ui): Show dates in session
   - [ ] feat(ui): Plots should be sorted by date
 - [ ] fix(plot): Make ui changes smoother for kde plot
-- [x] feat(app): Make a instruction modal
 - [ ] feat(selector): Range selector should use the same scrober as KDE
 - [ ] feat(ui): Click to browse should be a button and more prominent
 - [ ] refactor(component): FilePicker is too large
@@ -22,8 +19,6 @@
   - [ ] feat(plot): violin plot mode
   - [ ] feat(plot): A/B Testing between two charts, compare IQR's
 - [ ] feat(plot): Create range scrobers for every plot
-- [x] fix(pwa): top bar cannot be reached due to notches
-
 
 ## Long Term
 - [ ] test(perf): decide if it makes sense to switch to echarts
@@ -31,3 +26,9 @@
     - [ ] sorting
     - [ ] filtering
     - [ ] scramble generator
+
+## Completed
+- [x] fix(pwa): top bar cannot be reached due to notches
+- [x] feat(app): Implement app as a PWA
+- [x] feat(app): Make a instruction modal
+- [x] fix(ui): Make headers use a consistent scheme
