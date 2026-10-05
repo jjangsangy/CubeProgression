@@ -36,3 +36,4 @@ deferred until viewport entry.
   `src/utils/*.test.ts` in the same commit.
 - The app is browser-only. Any code touching `window`, `indexedDB`, or `navigator` must
   guard for `undefined` (see `dbStorage.ts`) because Vitest runs in `jsdom`.
+- Navigate webpages and inspect rendered DOM with `agent-browser` CLI rather than grabbing raw HTML using `fetch`.
