@@ -57,7 +57,6 @@ describe('useCubeDataset', () => {
               finalTimeSec: 10.0,
               penalty: 'OK',
               timestamp: 1600000000000,
-              date: Temporal.PlainDate.from('2020-09-13'),
               dateStr: '2020-09-13',
             },
           ],
@@ -333,6 +332,7 @@ describe('useCubeDataset', () => {
   });
 
   it('handles FileReader error during file upload', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(FileReader.prototype, 'readAsText').mockImplementationOnce(function (
       this: FileReader,
     ) {

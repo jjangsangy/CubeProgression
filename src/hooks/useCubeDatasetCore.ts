@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { GlobalStats, GroupingPeriod, PeriodGroup, Session } from '../types';
-import { parseCsTimerFile } from '../utils/csTimerParser';
 import {
-  clearSavedDataset,
-  getSavedDataset,
-  getStorageInfo,
-  saveDataset,
-} from '../utils/dbStorage';
-import { generateSampleData } from '../utils/sampleData';
+  type DatasetStage,
+  DEMO_FILE_NAME,
+  datasetLoader,
+  type LoadedDataset,
+} from '../utils/datasetLoader';
+import { clearSavedDataset, getStorageInfo, saveDataset } from '../utils/dbStorage';
 import { yieldToMain } from '../utils/scheduler';
 import { calculateGlobalStats, groupSolvesByPeriod } from '../utils/statsMath';
 import { ensureTemporal } from '../utils/temporalLoader';
@@ -42,6 +41,14 @@ export interface UseCubeDatasetCoreReturn {
   handleChangeCustomBatchSize: (size: number) => void;
 }
 
+/** Loader stages mapped onto the loading overlay's progress bar and copy. */
+const STAGE_LOADING_STATE: Record<DatasetStage, { progress: number; stage: string }> = {
+  reading: { progress: 35, stage: 'Reading csTimer file format...' },
+  parsing: { progress: 60, stage: 'Parsing solves and computing averages...' },
+  persisting: { progress: 85, stage: 'Saving dataset to browser storage...' },
+  ready: { progress: 100, stage: 'Complete!' },
+};
+
 export function useCubeDatasetCore(): UseCubeDatasetCoreReturn {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState<string>('');
@@ -58,9 +65,32 @@ export function useCubeDatasetCore(): UseCubeDatasetCoreReturn {
   );
   const [uploadingFileName, setUploadingFileName] = useState<string>('browser_storage');
 
+  const reportStage = useCallback((stage: DatasetStage) => {
+    const state = STAGE_LOADING_STATE[stage];
+    setLoadingProgress(state.progress);
+    setLoadingStage(state.stage);
+  }, []);
+
+  const commitLoadedDataset = useCallback((loaded: LoadedDataset) => {
+    setSessions(loaded.sessions);
+    setSelectedSessionId(loaded.selectedSessionId);
+    setFileName(loaded.fileName);
+    if (loaded.groupingPeriod) setGroupingPeriod(loaded.groupingPeriod);
+    if (loaded.customBatchSize) setCustomBatchSize(loaded.customBatchSize);
+  }, []);
+
+  const estimateStorage = useCallback((isCancelled?: () => boolean) => {
+    getStorageInfo()
+      .then((info) => {
+        if (info && !isCancelled?.()) storageNoticeStore.setStorageUsageMB(info.usageMB);
+      })
+      .catch(() => null);
+  }, []);
+
   // Initial check for stored dataset in IndexedDB on mount
   useEffect(() => {
     let isCancelled = false;
+    const isAborted = () => isCancelled;
 
     const initializeDataset = async () => {
       await ensureTemporal();
@@ -72,87 +102,66 @@ export function useCubeDatasetCore(): UseCubeDatasetCoreReturn {
       storageNoticeStore.resetStorageState();
 
       try {
-        const saved = await getSavedDataset();
+        const saved = await datasetLoader.loadStored();
 
-        if (isCancelled) return;
+        if (isAborted()) return;
 
-        if (saved?.sessions && saved.sessions.length > 0) {
+        if (saved) {
           storageNoticeStore.setIsSaved(true);
-
-          const totalSolvesCount = saved.sessions.reduce((acc, s) => acc + s.solves.length, 0);
           storageNoticeStore.showNotice(
-            `Restored ${totalSolvesCount.toLocaleString()} solves across ${saved.sessions.length} sessions from IndexedDB (${saved.fileName})`,
+            `Restored ${saved.totalSolvesCount.toLocaleString()} solves across ${saved.sessions.length} sessions from IndexedDB (${saved.fileName})`,
           );
 
           // Yield to main thread so browser can process paint/input before state commit
           await yieldToMain();
+          if (isAborted()) return;
 
           // Atomic state flush unblocks rendering
-          setSessions(saved.sessions);
-          setSelectedSessionId(saved.selectedSessionId || saved.sessions[0].id);
-          setFileName(saved.fileName || 'cstimer_saved.txt');
-          if (saved.groupingPeriod) setGroupingPeriod(saved.groupingPeriod);
-          if (saved.customBatchSize) setCustomBatchSize(saved.customBatchSize);
+          commitLoadedDataset(saved);
           setLoadingProgress(100);
           setLoadingStage('Loaded saved data successfully!');
           setIsLoading(false);
 
-          // Background storage estimate
-          getStorageInfo()
-            .then((info) => {
-              if (info && !isCancelled) storageNoticeStore.setStorageUsageMB(info.usageMB);
-            })
-            .catch(() => null);
+          estimateStorage(isAborted);
           return;
         }
       } catch (err) {
         console.error('Failed to load dataset from IndexedDB:', err);
       }
 
-      if (isCancelled) return;
+      if (isAborted()) return;
 
       // Fall back to sample dataset if nothing was saved
       setIsLoading(true);
-      setUploadingFileName('cstimer_demo_350solves.txt');
+      setUploadingFileName(DEMO_FILE_NAME);
       setLoadingProgress(15);
       setLoadingStage('Initializing sample csTimer dataset...');
       setErrorMsg(null);
       storageNoticeStore.clearNotice();
 
       try {
-        const demoSessions = generateSampleData();
-        const demoFileName = 'cstimer_demo_350solves.txt';
-        const initialSessId = demoSessions[0].id;
-
-        await saveDataset({
-          fileName: demoFileName,
-          sessions: demoSessions,
-          selectedSessionId: initialSessId,
+        const demo = await datasetLoader.loadDemo({
           groupingPeriod: 'daily',
           customBatchSize: 50,
+          onStage: reportStage,
         });
 
-        if (isCancelled) return;
+        if (isAborted()) return;
 
         storageNoticeStore.setIsSaved(true);
-        getStorageInfo()
-          .then((info) => {
-            if (info && !isCancelled) storageNoticeStore.setStorageUsageMB(info.usageMB);
-          })
-          .catch(() => null);
+        estimateStorage(isAborted);
 
         // Yield to main thread before committing state and executing derived math
         await yieldToMain();
+        if (isAborted()) return;
 
         // Atomic state flush
-        setSessions(demoSessions);
-        setSelectedSessionId(initialSessId);
-        setFileName(demoFileName);
+        commitLoadedDataset(demo);
         setLoadingProgress(100);
         setLoadingStage('Complete!');
         setIsLoading(false);
       } catch (err) {
-        if (isCancelled) return;
+        if (isAborted()) return;
         console.error(err);
         setErrorMsg('Failed to load sample dataset.');
         setIsLoading(false);
@@ -164,41 +173,29 @@ export function useCubeDatasetCore(): UseCubeDatasetCoreReturn {
     return () => {
       isCancelled = true;
     };
-  }, []);
+  }, [commitLoadedDataset, estimateStorage, reportStage]);
 
   const loadSampleData = useCallback(async () => {
     await ensureTemporal();
     setIsLoading(true);
-    setUploadingFileName('cstimer_demo_350solves.txt');
+    setUploadingFileName(DEMO_FILE_NAME);
     setLoadingProgress(15);
     setLoadingStage('Initializing sample csTimer dataset...');
     setErrorMsg(null);
     storageNoticeStore.clearNotice();
 
     try {
-      const demoSessions = generateSampleData();
-      const demoFileName = 'cstimer_demo_350solves.txt';
-      const initialSessId = demoSessions[0].id;
-
-      await saveDataset({
-        fileName: demoFileName,
-        sessions: demoSessions,
-        selectedSessionId: initialSessId,
+      const demo = await datasetLoader.loadDemo({
         groupingPeriod,
         customBatchSize,
+        onStage: reportStage,
       });
 
       storageNoticeStore.setIsSaved(true);
-      getStorageInfo()
-        .then((info) => {
-          if (info) storageNoticeStore.setStorageUsageMB(info.usageMB);
-        })
-        .catch(() => null);
+      estimateStorage();
 
       // Atomic synchronous state flush
-      setSessions(demoSessions);
-      setSelectedSessionId(initialSessId);
-      setFileName(demoFileName);
+      commitLoadedDataset(demo);
       setLoadingProgress(100);
       setLoadingStage('Complete!');
       setIsLoading(false);
@@ -207,7 +204,7 @@ export function useCubeDatasetCore(): UseCubeDatasetCoreReturn {
       setErrorMsg('Failed to load sample dataset.');
       setIsLoading(false);
     }
-  }, [groupingPeriod, customBatchSize]);
+  }, [groupingPeriod, customBatchSize, commitLoadedDataset, estimateStorage, reportStage]);
 
   const handleFileUpload = useCallback(
     (file: File) => {
@@ -218,39 +215,26 @@ export function useCubeDatasetCore(): UseCubeDatasetCoreReturn {
       setErrorMsg(null);
       storageNoticeStore.clearNotice();
 
-      const reader = new FileReader();
-      reader.onload = async (e) => {
+      void (async () => {
         try {
           await ensureTemporal();
-          const content = e.target?.result as string;
-          if (!content) throw new Error('File is empty.');
 
-          const parsedSessions = parseCsTimerFile(content);
-          const initialSessionId = parsedSessions[0].id;
-
-          const [, info] = await Promise.all([
-            saveDataset({
-              fileName: file.name,
-              sessions: parsedSessions,
-              selectedSessionId: initialSessionId,
-              groupingPeriod,
-              customBatchSize,
-            }),
-            getStorageInfo().catch(() => null),
-          ]);
+          const loaded = await datasetLoader.loadUploaded(file, {
+            groupingPeriod,
+            customBatchSize,
+            onStage: reportStage,
+          });
 
           storageNoticeStore.setIsSaved(true);
+          const info = await getStorageInfo().catch(() => null);
           if (info) storageNoticeStore.setStorageUsageMB(info.usageMB);
 
-          const totalSolvesCount = parsedSessions.reduce((acc, s) => acc + s.solves.length, 0);
           storageNoticeStore.showNotice(
-            `Saved ${totalSolvesCount.toLocaleString()} solves across ${parsedSessions.length} sessions to browser storage (${file.name})`,
+            `Saved ${loaded.totalSolvesCount.toLocaleString()} solves across ${loaded.sessions.length} sessions to browser storage (${file.name})`,
           );
 
           // Atomic synchronous state flush
-          setSessions(parsedSessions);
-          setSelectedSessionId(initialSessionId);
-          setFileName(file.name);
+          commitLoadedDataset(loaded);
           setLoadingProgress(100);
           setLoadingStage('Done!');
           setIsLoading(false);
@@ -260,14 +244,9 @@ export function useCubeDatasetCore(): UseCubeDatasetCoreReturn {
           setErrorMsg(message);
           setIsLoading(false);
         }
-      };
-      reader.onerror = () => {
-        setErrorMsg('Error reading uploaded file.');
-        setIsLoading(false);
-      };
-      reader.readAsText(file);
+      })();
     },
-    [groupingPeriod, customBatchSize],
+    [groupingPeriod, customBatchSize, commitLoadedDataset, reportStage],
   );
 
   const handleClearStorage = useCallback(() => {

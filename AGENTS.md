@@ -26,8 +26,9 @@ no network calls, no secrets.**
 
 ```mermaid
 flowchart LR
-    A[csTimer file / demo data] --> B[parseCsTimerFile]
-    B --> C[sessions: Session array in App]
+    A[csTimer file / demo data] --> B[Dataset Loader]
+    B --> W[Worker Pool -> Dataset Worker]
+    W --> C[sessions: Session array in App]
     C --> D[groupSolvesByPeriod -> PeriodGroup]
     C --> E[calculateGlobalStats -> GlobalStats]
     D --> F[Charts + SolvesTable]
@@ -35,11 +36,16 @@ flowchart LR
     C <--> G[(IndexedDB active_dataset)]
 ```
 
-- **Data in**: `src/utils/csTimerParser.ts` (`parseCsTimerFile`, `parseSolvesList`).
+- **Data in**: `src/utils/csTimerParser.ts` (`parseCsTimerFile`, `parseSolvesList`), driven by
+  the **Dataset Loader** (`src/utils/datasetLoader.ts`).
+- **Off-thread parse**: `src/worker/` — `workerPool.ts` (reusable dispatcher + in-page
+  fallback), `tasks.ts`/`protocol.ts` (typed task registry), `dataset.worker.ts` (the worker).
 - **Math**: `src/utils/statsMath.ts` (`calculateAoN`, `calculateGlobalStats`,
   `calculatePbProgression`, `groupSolvesByPeriod`, `calculateKDE`, …). Pure and unit-tested.
-- **Persistence**: `src/utils/dbStorage.ts` (IndexedDB, degrades to a no-op when unavailable).
-- **State**: all dataset state lives in `src/App.tsx`; children are presentational.
+- **Persistence**: `src/utils/dbStorage.ts` (the **Dataset Store**; IndexedDB, degrades to a
+  no-op when unavailable).
+- **State**: all dataset state lives in `src/hooks/useCubeDatasetCore.ts`; children are
+  presentational.
 - **Types**: everything cross-module is in `src/types.ts`.
 
 ## Commands
@@ -103,6 +109,10 @@ bun run preview        # preview production bundle → http://localhost:3100
 - Dates are computed in the **runtime local timezone** via standard `Temporal`; avoid
   timezone-sensitive test assertions. Native JS `Date` is strictly forbidden across the entire codebase and tests.
 - `ResponsiveContainer` is mocked to a fixed 800×400 box in `src/setupTests.tsx`.
+- `Worker` is `undefined` under `jsdom`, so the **Worker Pool** falls back to its in-page
+  adapter and unit tests never spawn a real worker; the dedicated-worker path is
+  **E2E-only**. The worker is emitted as an **ES module** (`worker.format: 'es'` in
+  `vite.config.ts`) because it dynamically imports the Temporal polyfill.
 
 ## Where to make common changes
 
@@ -112,6 +122,8 @@ bun run preview        # preview production bundle → http://localhost:3100
 | Change statistics | `src/utils/statsMath.ts` + `src/utils/statsMath.test.ts` |
 | Support a new grouping period | `src/types.ts`, `statsMath.ts`, `src/components/FileUploader.tsx` |
 | Change parsing/penalties/timestamps | `src/utils/csTimerParser.ts` (+ test) |
+| Change dataset loading | `src/utils/datasetLoader.ts` (+ test), `src/hooks/useCubeDatasetCore.ts` |
+| Add/change a worker task | `src/worker/protocol.ts`, `src/worker/tasks.ts` (+ test) |
 | Change persistence | `src/utils/dbStorage.ts` (+ test) |
 | Demo data | `src/utils/sampleData.ts` (+ test) |
 

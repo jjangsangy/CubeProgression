@@ -9,6 +9,13 @@ afterEach(() => {
   storageNoticeStore.reset();
 });
 
+// `@khmyznikov/pwa-install` pulls in Lit, whose development build prints a one-time
+// "Lit is in dev mode" banner on load. Lit supports suppressing warnings by code through
+// this global set, so the test output stays clean without hiding real warnings.
+const litGlobal = globalThis as { litIssuedWarnings?: Set<string> };
+litGlobal.litIssuedWarnings ??= new Set<string>();
+litGlobal.litIssuedWarnings.add('dev-mode');
+
 // Configure async util timeout for testing-library (jsdom + v8 coverage can be slow in CI)
 configure({ asyncUtilTimeout: 10000 });
 

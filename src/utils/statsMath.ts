@@ -126,8 +126,8 @@ export function calculateLinearRegression(solves: Solve[]): LinearRegression {
 export function computeGroupStats(
   groupSolves: Solve[],
   label: string,
-  startDate: Temporal.PlainDate,
-  endDate: Temporal.PlainDate,
+  startDate: string,
+  endDate: string,
 ): PeriodGroup {
   const validTimes = groupSolves
     .filter((s) => s.penalty !== 'DNF')
@@ -281,8 +281,8 @@ export function groupSolvesByPeriod(
     for (let i = 0; i < totalBatches; i++) {
       const slice = solves.slice(i * batchSize, (i + 1) * batchSize);
       const label = `Batch ${i + 1} (${i * batchSize + 1}-${Math.min((i + 1) * batchSize, solves.length)})`;
-      const startDate = slice[0].date;
-      const endDate = slice[slice.length - 1].date;
+      const startDate = slice[0].dateStr;
+      const endDate = slice[slice.length - 1].dateStr;
 
       groups.push(computeGroupStats(slice, label, startDate, endDate));
     }
@@ -291,24 +291,20 @@ export function groupSolvesByPeriod(
 
   // Time-based grouping
   const mapKeyToSolves = new Map<string, Solve[]>();
-  const mapKeyToDates = new Map<
-    string,
-    { start: Temporal.PlainDate; end: Temporal.PlainDate; label: string }
-  >();
-  const tz = Temporal.Now.timeZoneId();
+  const mapKeyToDates = new Map<string, { start: string; end: string; label: string }>();
 
   solves.forEach((s) => {
+    const dateStr = s.dateStr;
     let key = '';
     let label = '';
-    const zdt = Temporal.Instant.fromEpochMilliseconds(s.timestamp).toZonedDateTimeISO(tz);
-    const plainDate = zdt.toPlainDate();
 
     if (period === 'daily') {
-      key = plainDate.toString();
-      label = key;
+      key = dateStr;
+      label = dateStr;
     } else if (period === 'weekly') {
-      const weekNum = zdt.weekOfYear;
-      const weekYear = zdt.yearOfWeek ?? zdt.year;
+      const plainDate = Temporal.PlainDate.from(dateStr);
+      const weekNum = plainDate.weekOfYear;
+      const weekYear = plainDate.yearOfWeek ?? plainDate.year;
       key = `${weekYear}-W${String(weekNum).padStart(2, '0')}`;
       label = `Week ${weekNum} (${weekYear})`;
     } else if (period === 'monthly') {
@@ -326,13 +322,14 @@ export function groupSolvesByPeriod(
         'Nov',
         'Dec',
       ];
-      key = `${zdt.year}-${String(zdt.month).padStart(2, '0')}`;
-      label = `${monthNames[zdt.month - 1]} ${zdt.year}`;
+      const plainDate = Temporal.PlainDate.from(dateStr);
+      key = `${plainDate.year}-${String(plainDate.month).padStart(2, '0')}`;
+      label = `${monthNames[plainDate.month - 1]} ${plainDate.year}`;
     }
 
     if (!mapKeyToSolves.has(key)) {
       mapKeyToSolves.set(key, []);
-      mapKeyToDates.set(key, { start: plainDate, end: plainDate, label });
+      mapKeyToDates.set(key, { start: dateStr, end: dateStr, label });
     }
 
     const solvesList = mapKeyToSolves.get(key);
@@ -341,8 +338,8 @@ export function groupSolvesByPeriod(
     }
     const dateRange = mapKeyToDates.get(key);
     if (dateRange) {
-      if (Temporal.PlainDate.compare(plainDate, dateRange.start) < 0) dateRange.start = plainDate;
-      if (Temporal.PlainDate.compare(plainDate, dateRange.end) > 0) dateRange.end = plainDate;
+      if (dateStr < dateRange.start) dateRange.start = dateStr;
+      if (dateStr > dateRange.end) dateRange.end = dateStr;
     }
   });
 

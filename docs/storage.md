@@ -36,7 +36,7 @@ interface StoredDataset {
 | Function | Behavior |
 | --- | --- |
 | `saveDataset({ fileName, sessions, selectedSessionId, groupingPeriod?, customBatchSize? })` | Opens the DB, `put`s the record. Errors are caught and logged (never throws). |
-| `getSavedDataset(): Promise<StoredDataset | null>` | Reads `active_dataset`, normalizes solve `date` to `Temporal.PlainDate`, returns `null` if absent/error. |
+| `getSavedDataset(): Promise<StoredDataset | null>` | Reads `active_dataset`, normalizes each solve's `dateStr`, returns `null` if absent/error. |
 | `clearSavedDataset(): Promise<void>` | Deletes the `active_dataset` key. Errors caught/logged. |
 | `getStorageInfo(): Promise<StorageEstimateInfo | null>` | Wraps `navigator.storage.estimate()`, returns `{ usageMB, quotaMB? }` in MB (usage to 2 dp, quota to 0 dp). |
 
@@ -48,11 +48,11 @@ interface StoredDataset {
 
 ### Private helper: `normalizeSessionsDates(sessions)`
 
-IndexedDB structured cloning cannot clone custom Temporal prototypes natively.
-When persisting, `saveDataset` stringifies `solve.date`. Upon retrieval,
-`normalizeSessionsDates` reconstructs `solve.date` as a native `Temporal.PlainDate`
-instance from `dateStr` or `timestamp`, guaranteeing downstream code receives
-a genuine `Temporal.PlainDate` object. Native JS `Date` is strictly forbidden.
+Solves carry only primitives (`dateStr` is the canonical `YYYY-MM-DD` string), so the whole
+dataset is structured-cloneable and `saveDataset` stores sessions as-is. On retrieval,
+`normalizeSessionsDates` guarantees every solve has a valid `dateStr`, deriving one from the
+solve `timestamp` (in the local timezone) when it is missing or malformed. No `Temporal.PlainDate`
+is stored on `Solve`; it is derived on demand (see ADR-0002). Native JS `Date` is strictly forbidden.
 
 ## How `App.tsx` uses storage
 

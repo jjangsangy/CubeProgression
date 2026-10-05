@@ -22,3 +22,10 @@ Ubiquitous language for CubeProgression. Terms here name concepts, interfaces, a
 - **Install Adapter**: The platform-specific translation seam bridging standard W3C `beforeinstallprompt` event flows with custom installation guidance required by iOS Safari and Firefox.
 - **Update Readiness**: The state where a newly installed Service Worker is in the `waiting` phase, ready to skip waiting and reload the client upon user acceptance.
 - **Connectivity State**: The current network reachability status (`online` / `offline`) observed from browser network events.
+
+## Dataset Pipeline
+
+- **Dataset Loader**: The page-side seam that turns an uploaded csTimer export or a stored dataset into a ready-to-render session — reading bytes, driving the loading state machine, dispatching computation to the Dataset Worker, and persisting through the Dataset Store.
+- **Dataset Worker**: The dedicated, page-bound compute unit that parses a csTimer export and computes per-solve averages off the main thread. Owns no persistence.
+- **Worker Pool**: The reusable, task-agnostic dispatcher that runs registered tasks on worker threads — today only the Dataset Worker's parse task — and degrades to an in-page adapter when workers are unavailable.
+- **Dataset Store**: The persistence seam that reads and writes the active dataset (sessions and solves) to IndexedDB.

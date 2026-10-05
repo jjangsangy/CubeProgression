@@ -187,8 +187,7 @@ export function parseSolvesList(rawSolves: unknown[]): Solve[] {
 
     // Default synthetic timestamps if timestamps are missing or uniform
     // (Spread solves across realistic timeline if needed)
-    const solveDate = toLocalZonedDateTime(ts).toPlainDate();
-    const dateStr = solveDate.toString();
+    const dateStr = toLocalZonedDateTime(ts).toPlainDate().toString();
 
     solves.push({
       id: validSolveIndex,
@@ -200,7 +199,6 @@ export function parseSolvesList(rawSolves: unknown[]): Solve[] {
       scramble,
       comment,
       timestamp: ts,
-      date: solveDate,
       dateStr,
     });
   }

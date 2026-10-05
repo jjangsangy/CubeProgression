@@ -70,8 +70,8 @@ vi.mock('recharts', async (importOriginal) => {
 const mockPeriodGroups: PeriodGroup[] = [
   {
     label: 'Batch 1 (1-50)',
-    startDate: Temporal.PlainDate.from('2020-09-13'),
-    endDate: Temporal.PlainDate.from('2020-09-13'),
+    startDate: '2020-09-13',
+    endDate: '2020-09-13',
     solves: [],
     timesSec: [10, 11, 12],
     mean: 11.0,

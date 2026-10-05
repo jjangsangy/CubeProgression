@@ -16,7 +16,6 @@ describe('DashboardView', () => {
         finalTimeSec: 12.5,
         penalty: 'OK',
         timestamp: 1600000000000,
-        date: Temporal.PlainDate.from('2020-09-13'),
         dateStr: '2020-09-13',
       },
       {
@@ -27,7 +26,6 @@ describe('DashboardView', () => {
         finalTimeSec: 11.5,
         penalty: 'OK',
         timestamp: 1600000060000,
-        date: Temporal.PlainDate.from('2020-09-13'),
         dateStr: '2020-09-13',
       },
     ],
@@ -60,8 +58,8 @@ describe('DashboardView', () => {
   const mockPeriodGroups: PeriodGroup[] = [
     {
       label: 'Day 1 (Sep 13, 2020)',
-      startDate: Temporal.PlainDate.from('2020-09-13'),
-      endDate: Temporal.PlainDate.from('2020-09-13'),
+      startDate: '2020-09-13',
+      endDate: '2020-09-13',
       solves: mockSession.solves,
       timesSec: [12.5, 11.5],
       mean: 12.0,

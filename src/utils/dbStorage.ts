@@ -46,7 +46,9 @@ function openDB(): Promise<IDBDatabase | null> {
 }
 
 /**
- * Ensures that all Solve objects in sessions have proper Temporal.PlainDate instances for `date`
+ * Ensures every Solve carries a canonical `dateStr` (YYYY-MM-DD). The parser's
+ * local-timezone date string is the source of truth; a missing value is derived
+ * from the solve timestamp.
  */
 export function normalizeSessionsDates(sessions: Session[]): Session[] {
   if (!Array.isArray(sessions)) return [];
@@ -54,27 +56,22 @@ export function normalizeSessionsDates(sessions: Session[]): Session[] {
   return sessions.map((session) => ({
     ...session,
     solves: (session.solves || []).map((solve) => {
-      let plainDate: Temporal.PlainDate;
-      const rawDate = solve.date as unknown;
+      let dateStr: string;
 
-      if (rawDate instanceof Temporal.PlainDate) {
-        plainDate = rawDate;
-      } else if (typeof solve.dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(solve.dateStr)) {
-        plainDate = Temporal.PlainDate.from(solve.dateStr);
-      } else if (typeof rawDate === 'string' && /^\d{4}-\d{2}-\d{2}/.test(rawDate)) {
-        plainDate = Temporal.PlainDate.from(rawDate.slice(0, 10));
+      if (typeof solve.dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(solve.dateStr)) {
+        dateStr = solve.dateStr;
       } else if (typeof solve.timestamp === 'number' && Number.isFinite(solve.timestamp)) {
-        plainDate = Temporal.Instant.fromEpochMilliseconds(solve.timestamp)
+        dateStr = Temporal.Instant.fromEpochMilliseconds(solve.timestamp)
           .toZonedDateTimeISO(tz)
-          .toPlainDate();
+          .toPlainDate()
+          .toString();
       } else {
-        plainDate = Temporal.Now.plainDateISO(tz);
+        dateStr = Temporal.Now.plainDateISO(tz).toString();
       }
 
       return {
         ...solve,
-        date: plainDate,
-        dateStr: plainDate.toString(),
+        dateStr,
       };
     }),
   }));
@@ -100,23 +97,10 @@ export function saveDataset(data: {
       const tx = db.transaction(STORE_NAME, 'readwrite');
       const store = tx.objectStore(STORE_NAME);
 
-      const sanitizedSessions = data.sessions.map((session) => ({
-        ...session,
-        solves: (session.solves || []).map(({ date, ...rest }) => ({
-          ...rest,
-          date:
-            date instanceof Temporal.PlainDate
-              ? date.toString()
-              : typeof date === 'string'
-                ? date
-                : (rest.dateStr ?? ''),
-        })),
-      }));
-
       const record: StoredDataset = {
         id: ACTIVE_KEY,
         fileName: data.fileName,
-        sessions: sanitizedSessions as unknown as Session[],
+        sessions: data.sessions,
         selectedSessionId: data.selectedSessionId,
         groupingPeriod: data.groupingPeriod,
         customBatchSize: data.customBatchSize,

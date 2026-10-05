@@ -152,7 +152,6 @@ const mockSolves: Solve[] = Array.from({ length: 20 }, (_, idx) => ({
   finalTimeSec: (12000 - idx * 100) / 1000,
   penalty: 'OK',
   timestamp: 1600000000000 + idx * 100000,
-  date: Temporal.PlainDate.from('2020-09-13'),
   dateStr: '2020-09-13',
 }));
 
@@ -1389,7 +1388,6 @@ describe('DensityShiftChart component', () => {
           finalTimeSec: 450.0,
           penalty: 'OK',
           timestamp: 1600000000000,
-          date: Temporal.PlainDate.from('2020-09-13'),
           dateStr: '2020-09-13',
         },
       ];
@@ -1515,8 +1513,8 @@ describe('DensityShiftChart component', () => {
         const mockGroups: PeriodGroup[] = [
           {
             label: 'Day 1',
-            startDate: Temporal.PlainDate.from('2020-09-13'),
-            endDate: Temporal.PlainDate.from('2020-09-13'),
+            startDate: '2020-09-13',
+            endDate: '2020-09-13',
             solves: mockSolves.slice(0, 10),
             timesSec: mockSolves.slice(0, 10).map((s) => s.finalTimeSec),
             mean: 11.5,
@@ -1533,8 +1531,8 @@ describe('DensityShiftChart component', () => {
           },
           {
             label: 'Day 2',
-            startDate: Temporal.PlainDate.from('2020-09-14'),
-            endDate: Temporal.PlainDate.from('2020-09-14'),
+            startDate: '2020-09-14',
+            endDate: '2020-09-14',
             solves: mockSolves.slice(10, 20),
             timesSec: mockSolves.slice(10, 20).map((s) => s.finalTimeSec),
             mean: 10.5,
@@ -1576,8 +1574,8 @@ describe('DensityShiftChart component', () => {
         const mockGroups: PeriodGroup[] = [
           {
             label: 'Batch 1',
-            startDate: Temporal.PlainDate.from('2020-09-13'),
-            endDate: Temporal.PlainDate.from('2020-09-13'),
+            startDate: '2020-09-13',
+            endDate: '2020-09-13',
             solves: mockSolves.slice(0, 5),
             timesSec: mockSolves.slice(0, 5).map((s) => s.finalTimeSec),
             mean: 11.5,
@@ -1594,8 +1592,8 @@ describe('DensityShiftChart component', () => {
           },
           {
             label: 'Batch 2',
-            startDate: Temporal.PlainDate.from('2020-09-13'),
-            endDate: Temporal.PlainDate.from('2020-09-13'),
+            startDate: '2020-09-13',
+            endDate: '2020-09-13',
             solves: mockSolves.slice(5, 15),
             timesSec: mockSolves.slice(5, 15).map((s) => s.finalTimeSec),
             mean: 11.0,
@@ -1612,8 +1610,8 @@ describe('DensityShiftChart component', () => {
           },
           {
             label: 'Batch 3',
-            startDate: Temporal.PlainDate.from('2020-09-13'),
-            endDate: Temporal.PlainDate.from('2020-09-13'),
+            startDate: '2020-09-13',
+            endDate: '2020-09-13',
             solves: mockSolves.slice(15, 20),
             timesSec: mockSolves.slice(15, 20).map((s) => s.finalTimeSec),
             mean: 10.2,
@@ -1650,8 +1648,8 @@ describe('DensityShiftChart component', () => {
         const singleGroup: PeriodGroup[] = [
           {
             label: 'Day 1',
-            startDate: Temporal.PlainDate.from('2020-09-13'),
-            endDate: Temporal.PlainDate.from('2020-09-13'),
+            startDate: '2020-09-13',
+            endDate: '2020-09-13',
             solves: mockSolves,
             timesSec: mockSolves.map((s) => s.finalTimeSec),
             mean: 11.0,
@@ -1687,10 +1685,6 @@ describe('DensityShiftChart component', () => {
             idx < 10
               ? 1600000000000 + idx * 1000 // 2020-09-13
               : 1600086400000 + idx * 1000, // 2020-09-14
-          date:
-            idx < 10
-              ? Temporal.PlainDate.from('2020-09-13')
-              : Temporal.PlainDate.from('2020-09-14'),
           dateStr: idx < 10 ? '2020-09-13' : '2020-09-14',
         }));
 
@@ -1713,8 +1707,8 @@ describe('DensityShiftChart component', () => {
         }));
         const manyGroups: PeriodGroup[] = manySolves.map((s, idx) => ({
           label: `Batch ${idx + 1}`,
-          startDate: Temporal.PlainDate.from('2020-09-13'),
-          endDate: Temporal.PlainDate.from('2020-09-13'),
+          startDate: '2020-09-13',
+          endDate: '2020-09-13',
           solves: [s],
           timesSec: [s.finalTimeSec],
           mean: s.finalTimeSec,

@@ -73,9 +73,6 @@ const mockSolves: Solve[] = Array.from({ length: 120 }, (_, idx) => ({
   finalTimeSec: idx === 5 ? Infinity : (12000 - idx * 20) / 1000,
   penalty: idx === 5 ? 'DNF' : idx === 10 ? '+2' : 'OK',
   timestamp: 1600000000000 + idx * 86400000,
-  date: Temporal.Instant.fromEpochMilliseconds(1600000000000 + idx * 86400000)
-    .toZonedDateTimeISO('UTC')
-    .toPlainDate(),
   dateStr: Temporal.Instant.fromEpochMilliseconds(1600000000000 + idx * 86400000)
     .toZonedDateTimeISO('UTC')
     .toPlainDate()
@@ -87,8 +84,8 @@ const mockSolves: Solve[] = Array.from({ length: 120 }, (_, idx) => ({
 const mockPeriodGroups: PeriodGroup[] = [
   {
     label: 'Period 1',
-    startDate: Temporal.PlainDate.from('2020-09-13'),
-    endDate: Temporal.PlainDate.from('2020-11-12'),
+    startDate: '2020-09-13',
+    endDate: '2020-11-12',
     solves: mockSolves.slice(0, 60),
     timesSec: mockSolves.slice(0, 60).map((s) => s.finalTimeSec),
     mean: 11.5,
@@ -105,8 +102,8 @@ const mockPeriodGroups: PeriodGroup[] = [
   },
   {
     label: 'Period 2',
-    startDate: Temporal.PlainDate.from('2020-11-13'),
-    endDate: Temporal.PlainDate.from('2021-01-11'),
+    startDate: '2020-11-13',
+    endDate: '2021-01-11',
     solves: mockSolves.slice(60),
     timesSec: mockSolves.slice(60).map((s) => s.finalTimeSec),
     mean: 10.0,

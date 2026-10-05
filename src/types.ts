@@ -18,8 +18,7 @@ export interface Solve {
   scramble?: string;
   comment?: string;
   timestamp: number; // Unix timestamp in ms
-  date: Temporal.PlainDate;
-  dateStr: string; // YYYY-MM-DD format
+  dateStr: string; // YYYY-MM-DD format (canonical; `Temporal.PlainDate` is derived on demand)
   ao5?: number | null;
   ao12?: number | null;
   ao50?: number | null;
@@ -37,8 +36,8 @@ export type GroupingPeriod = 'daily' | 'weekly' | 'monthly' | 'customBatch' | 'b
 
 export interface PeriodGroup {
   label: string; // e.g. "Day 1", "2026-08-01", "Week 32", "Batch 1 (1-50)"
-  startDate: Temporal.PlainDate;
-  endDate: Temporal.PlainDate;
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
   solves: Solve[];
   timesSec: number[]; // valid non-DNF times
   mean: number;

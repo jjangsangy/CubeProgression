@@ -74,7 +74,6 @@ const mockSolves: Solve[] = [
     finalTimeSec: 15.0,
     penalty: 'OK',
     timestamp: 1600000000000,
-    date: Temporal.PlainDate.from('2020-09-13'),
     dateStr: '2020-09-13',
   },
   {
@@ -85,7 +84,6 @@ const mockSolves: Solve[] = [
     finalTimeSec: 12.0,
     penalty: 'OK',
     timestamp: 1600000100000,
-    date: Temporal.PlainDate.from('2020-09-13'),
     dateStr: '2020-09-13',
   },
   {
@@ -96,7 +94,6 @@ const mockSolves: Solve[] = [
     finalTimeSec: 10.0,
     penalty: 'OK',
     timestamp: 1600000200000,
-    date: Temporal.PlainDate.from('2020-09-13'),
     dateStr: '2020-09-13',
   },
   {
@@ -107,7 +104,6 @@ const mockSolves: Solve[] = [
     finalTimeSec: 11.0,
     penalty: 'OK',
     timestamp: 1600000300000,
-    date: Temporal.PlainDate.from('2020-09-13'),
     dateStr: '2020-09-13',
   },
   {
@@ -118,7 +114,6 @@ const mockSolves: Solve[] = [
     finalTimeSec: 9.0,
     penalty: 'OK',
     timestamp: 1600000400000,
-    date: Temporal.PlainDate.from('2020-09-13'),
     dateStr: '2020-09-13',
   },
 ];
@@ -132,7 +127,6 @@ const longSolves: Solve[] = Array.from({ length: 110 }, (_, i) => ({
   finalTimeSec: (20000 - i * 50) / 1000,
   penalty: 'OK',
   timestamp: 1600000000000 + i * 1000,
-  date: Temporal.PlainDate.from('2020-09-13'),
   dateStr: '2020-09-13',
 }));
 

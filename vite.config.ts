@@ -68,6 +68,11 @@ export default defineConfig(() => {
         '@': path.resolve(import.meta.dirname, '.'),
       },
     },
+    worker: {
+      // The Dataset Worker dynamically imports the Temporal polyfill, which requires
+      // code-splitting; IIFE workers cannot be split, so emit ES-module workers.
+      format: 'es',
+    },
     build: {
       target: 'es2022',
       cssCodeSplit: false,

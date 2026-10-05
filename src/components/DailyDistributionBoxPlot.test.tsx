@@ -9,8 +9,8 @@ import { DailyDistributionBoxPlot } from './DailyDistributionBoxPlot';
 const mockPeriodGroups: PeriodGroup[] = [
   {
     label: 'Day 1 (2020-09-13)',
-    startDate: Temporal.PlainDate.from('2020-09-13'),
-    endDate: Temporal.PlainDate.from('2020-09-13'),
+    startDate: '2020-09-13',
+    endDate: '2020-09-13',
     solves: [
       {
         id: 1,
@@ -20,7 +20,6 @@ const mockPeriodGroups: PeriodGroup[] = [
         finalTimeSec: 12.0,
         penalty: 'OK',
         timestamp: 1600000000000,
-        date: Temporal.PlainDate.from('2020-09-13'),
         dateStr: '2020-09-13',
       },
       {
@@ -31,7 +30,6 @@ const mockPeriodGroups: PeriodGroup[] = [
         finalTimeSec: 18.0,
         penalty: 'OK',
         timestamp: 1600000060000,
-        date: Temporal.PlainDate.from('2020-09-13'),
         dateStr: '2020-09-13',
       },
     ],
@@ -50,8 +48,8 @@ const mockPeriodGroups: PeriodGroup[] = [
   },
   {
     label: 'Day 2 (2020-09-14)',
-    startDate: Temporal.PlainDate.from('2020-09-14'),
-    endDate: Temporal.PlainDate.from('2020-09-14'),
+    startDate: '2020-09-14',
+    endDate: '2020-09-14',
     solves: [],
     timesSec: [11, 12, 13],
     mean: 12,

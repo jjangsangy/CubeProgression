@@ -40,6 +40,7 @@ CubeProgression/
 ├── src/
 │   ├── components/           # all React components (+ colocated *.test.tsx)
 │   ├── hooks/                # custom React hooks (useCubeDataset + *.test.ts)
+│   ├── worker/               # Dataset Worker + reusable Worker Pool (protocol, tasks, pool)
 │   ├── utils/                # pure logic: parsing, stats, storage, sample data (+ *.test.ts)
 │   ├── App.tsx               # presentation shell connecting useCubeDataset to layout
 │   ├── App.test.tsx          # integration test of the shell
@@ -73,30 +74,32 @@ relative imports (e.g. `../../utils/statsMath`). Node built-ins use the `node:` 
 
 ```mermaid
 flowchart TD
-    A[App mount] --> B{IndexedDB has dataset?}
-    B -->|yes| C[getSavedDataset]
-    B -->|no| D[generateSampleData 350 solves]
+    A[App mount] --> B{Dataset Store has dataset?}
+    B -->|yes| C[Dataset Loader: loadStored]
+    B -->|no| D[Dataset Loader: loadDemo]
     D --> E[saveDataset]
     C --> F[sessions + selectedSessionId]
     E --> F
-    G[User uploads .txt/.json] --> H[FileReader.readAsText]
-    H --> I[parseCsTimerFile]
-    I --> J[parseSolvesList]
-    J --> K[calculateAoN per solve]
-    K --> E
-    F --> L[activeSession = memo select]
-    L --> M[groupSolvesByPeriod]
-    L --> N[calculateGlobalStats]
-    M --> O[PeriodGroup array]
-    N --> P[GlobalStats object]
-    O --> Q[Charts + table render]
-    P --> Q
+    G[User uploads .txt/.json] --> H[Dataset Loader: loadUploaded]
+    H --> I[FileReader.readAsText]
+    I --> J[Worker Pool dispatch parse]
+    J --> K[Dataset Worker: parseCsTimerFile]
+    K --> L[calculateAoN per solve]
+    L --> E
+    F --> M[activeSession = memo select]
+    M --> N[groupSolvesByPeriod]
+    M --> O[calculateGlobalStats]
+    N --> P[PeriodGroup array]
+    O --> Q[GlobalStats object]
+    P --> R[Charts + table render]
+    Q --> R
 ```
 
-The single source of truth is `sessions: Session[]` managed by `useCubeDataset()` in `src/hooks/useCubeDataset.ts`. Everything downstream is
-derived with `useMemo` from `activeSession`, `groupingPeriod`, and `customBatchSize`.
+The single source of truth is `sessions: Session[]` managed by `useCubeDatasetCore()` in
+`src/hooks/useCubeDatasetCore.ts`. Everything downstream is derived with `useMemo` from
+`activeSession`, `groupingPeriod`, and `customBatchSize`.
 
-## State ownership (`useCubeDataset.ts`)
+## State ownership (`useCubeDatasetCore.ts`)
 
 | State | Purpose |
 | --- | --- |
@@ -114,7 +117,37 @@ Everything derived (`activeSession`, `periodGroups`, `globalStats`) is computed 
 they do **not** read from a store or context.
 
 Persisted settings: whenever the user changes session, grouping period, or batch size,
-`App.tsx` calls `saveDataset(...)` fire-and-forget to keep IndexedDB in sync.
+`useCubeDatasetCore.ts` calls `saveDataset(...)` fire-and-forget to keep IndexedDB in sync.
+
+## Dataset Pipeline (off-thread loading)
+
+The dataset lifecycle is split into four named seams (see [`GLOSSARY.md`](../GLOSSARY.md)):
+
+- **Dataset Loader** (`src/utils/datasetLoader.ts`) — the page-side seam that turns an
+  uploaded csTimer export, a stored dataset, or the demo into a ready-to-render session. It
+  reads bytes, dispatches the parse to the Worker Pool, persists through the Dataset Store,
+  and reports stage-based progress (`reading → parsing → persisting → ready`). It holds no
+  React state; the hook maps stages onto the loading overlay.
+- **Dataset Worker** (`src/worker/dataset.worker.ts`) — the dedicated, page-bound module
+  worker. It owns no persistence; its `parse` task runs `parseCsTimerFile` off the main
+  thread and returns a structured-cloneable `Session[]`. It calls `ensureTemporal()` in its
+  own realm, because the page's Temporal polyfill does not cross the worker boundary.
+- **Worker Pool** (`src/worker/workerPool.ts`) — the reusable, task-agnostic dispatcher. It
+  is a typed request/response protocol (`src/worker/protocol.ts`) with the shared handlers in
+  `src/worker/tasks.ts`, run on a small `hardwareConcurrency`-bounded pool of long-lived
+  workers. When `Worker` is unavailable (Vitest's jsdom, or a degraded browser) it resolves
+  to an in-page adapter that runs the identical handler on the calling thread, so the port
+  has two adapters behind one interface.
+- **Dataset Store** (`src/utils/dbStorage.ts`) — IndexedDB persistence, unchanged and
+  always page-side.
+
+Parsing is the only offloaded computation: `calculateGlobalStats` is negligible and
+`groupSolvesByPeriod` is interactive, so both stay on the main thread. See
+[`docs/adr/0001-off-thread-dataset-loading-with-a-worker-pool.md`](./adr/0001-off-thread-dataset-loading-with-a-worker-pool.md).
+
+> Build note: the worker dynamically imports the Temporal polyfill, which forces code
+> splitting, so `vite.config.ts` sets `worker.format: 'es'` and the pool constructs workers
+> with `{ type: 'module' }`.
 
 ## Performance & Code-Splitting Architecture
 

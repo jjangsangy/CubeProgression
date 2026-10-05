@@ -16,7 +16,6 @@ const mockGlobalStats: GlobalStats = {
     finalTimeSec: 8.5,
     penalty: 'OK',
     timestamp: 1600000000000,
-    date: Temporal.PlainDate.from('2020-09-13'),
     dateStr: '2020-09-13',
   },
   worstSingle: null,

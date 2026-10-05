@@ -16,7 +16,6 @@ describe('dbStorage IndexedDB utility', () => {
           finalTimeSec: 12.45,
           penalty: 'OK',
           timestamp: 1690000000000,
-          date: Temporal.PlainDate.from('2023-07-22'),
           dateStr: '2023-07-22',
         },
       ],
@@ -141,15 +140,14 @@ describe('dbStorage IndexedDB utility', () => {
     expect(dataset?.groupingPeriod).toBe('weekly');
     expect(dataset?.customBatchSize).toBe(25);
     expect(dataset?.sessions.length).toBe(1);
-    expect(dataset?.sessions[0].solves[0].date).toBeInstanceOf(Temporal.PlainDate);
-    expect(dataset?.sessions[0].solves[0].date.toString()).toBe('2023-07-22');
+    expect(dataset?.sessions[0].solves[0].dateStr).toBe('2023-07-22');
 
     await clearSavedDataset();
     const afterClear = await getSavedDataset();
     expect(afterClear).toBeNull();
   });
 
-  it('normalizes session dates properly when date is missing or invalid', async () => {
+  it('normalizes session dates properly when dateStr is missing or invalid', async () => {
     const { mockFactory, store } = createMockIndexedDB();
     Object.defineProperty(window, 'indexedDB', {
       value: mockFactory,
@@ -175,7 +173,6 @@ describe('dbStorage IndexedDB utility', () => {
               finalTimeSec: 10,
               penalty: 'OK',
               timestamp: 1680000000000,
-              date: null as unknown as Temporal.PlainDate,
             },
             {
               id: 2,
@@ -202,21 +199,18 @@ describe('dbStorage IndexedDB utility', () => {
 
     const dataset = await getSavedDataset();
     expect(dataset).not.toBeNull();
-    expect(dataset?.sessions[0].solves[0].date).toBeInstanceOf(Temporal.PlainDate);
-    expect(dataset?.sessions[0].solves[1].date).toBeInstanceOf(Temporal.PlainDate);
-    expect(dataset?.sessions[0].solves[1].date.toString()).toBe('2023-05-10');
-    expect(dataset?.sessions[0].solves[2].date).toBeInstanceOf(Temporal.PlainDate);
+    expect(dataset?.sessions[0].solves[0].dateStr).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(dataset?.sessions[0].solves[1].dateStr).toBe('2023-05-10');
+    expect(dataset?.sessions[0].solves[2].dateStr).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
-  it('handles existing valid PlainDate instances, string representations, and non-array sessions', async () => {
+  it('handles existing date strings and non-array sessions', async () => {
     const { mockFactory, store } = createMockIndexedDB();
     Object.defineProperty(window, 'indexedDB', {
       value: mockFactory,
       configurable: true,
       writable: true,
     });
-
-    const validDate = Temporal.PlainDate.from('2023-07-22');
 
     // Save directly to the map to test normalization
     store.set('active_dataset', {
@@ -236,7 +230,6 @@ describe('dbStorage IndexedDB utility', () => {
               finalTimeSec: 10,
               penalty: 'OK',
               timestamp: 1690000000000,
-              date: validDate,
               dateStr: '2023-07-22',
             },
             {
@@ -247,8 +240,7 @@ describe('dbStorage IndexedDB utility', () => {
               finalTimeSec: 11,
               penalty: 'OK',
               timestamp: 1690000000000,
-              date: 'invalid-date' as unknown as Temporal.PlainDate,
-              dateStr: '2023-07-22',
+              dateStr: 'not-a-date',
             },
           ],
         },
@@ -257,9 +249,8 @@ describe('dbStorage IndexedDB utility', () => {
     });
 
     const dataset = await getSavedDataset();
-    expect(dataset?.sessions[0].solves[0].date).toBe(validDate);
-    expect(dataset?.sessions[0].solves[1].date).toBeInstanceOf(Temporal.PlainDate);
-    expect(dataset?.sessions[0].solves[1].date.toString()).toBe('2023-07-22');
+    expect(dataset?.sessions[0].solves[0].dateStr).toBe('2023-07-22');
+    expect(dataset?.sessions[0].solves[1].dateStr).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
     // Corrupted record with non-array sessions
     store.set('active_dataset', {

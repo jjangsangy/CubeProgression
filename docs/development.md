@@ -223,6 +223,12 @@ Match these rules when hand-writing code; run `bun run check:write` before finis
 - **Conditional Polyfills**: `temporal-polyfill` is loaded conditionally via `src/utils/temporalLoader.ts` (`ensureTemporal()`) only on older browsers that lack standard `Temporal`. Modern engines run native `Temporal` with zero polyfill transfer overhead.
 - **IndexedDB in tests**: `openDB()` returns `null` under jsdom, so persistence is disabled
   and `App.test.tsx` always exercises the demo fallback.
+- **Worker in tests**: `Worker` is `undefined` under jsdom, so `getWorkerPool()` resolves to
+  the in-page adapter and `parse` runs on the calling thread — unit tests never touch a real
+  worker. The real dedicated-worker path is exercised only by Playwright E2E (`test:e2e`),
+  which is why upload changes are gated on the E2E suite. The worker is bundled as an ES
+  module (`worker.format: 'es'` in `vite.config.ts`) because it dynamically imports the
+  Temporal polyfill.
 - **Determinism**: `generateSampleData()` is seeded, so demo output is stable. Its main
   session is `session1` (`F2L Yellow Cross Progression (Demo)`), asserted at the **data
   layer** in `sampleData.test.ts` — UI tests must not assert that title via `getByText`.

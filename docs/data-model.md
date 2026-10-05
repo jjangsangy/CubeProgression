@@ -36,14 +36,17 @@ interface Solve {
   scramble?: string;
   comment?: string;
   timestamp: number;        // Unix ms
-  date: Temporal.PlainDate; // calendar date in local timezone
-  dateStr: string;          // local YYYY-MM-DD
+  dateStr: string;          // local calendar date, YYYY-MM-DD (canonical)
   ao5/ao12/ao50/ao100?: number | null;
 }
 ```
 
 `finalTimeSec` is the value every statistic uses. DNF solves keep their `finalTimeSec`
 but are filtered out by `penalty !== 'DNF'` checks in the stats layer.
+
+Dates are carried only as `dateStr`: `Solve` holds no `Temporal.PlainDate`, so a session is
+structured-cloneable for the IndexedDB and Worker boundaries. `Temporal.PlainDate` is derived from
+`dateStr` on demand where logic needs it (see ADR-0002).
 
 ### `Session`
 
@@ -56,7 +59,7 @@ A single csTimer export can contain multiple sessions (e.g. `session1`, `session
 ### Grouping / aggregation types
 
 - `GroupingPeriod` — `'daily' | 'weekly' | 'monthly' | 'customBatch' | 'batch50'`.
-- `PeriodGroup` — one aggregated bucket: `label`, `startDate`/`endDate` (`Temporal.PlainDate`), `solves`,
+- `PeriodGroup` — one aggregated bucket: `label`, `startDate`/`endDate` (YYYY-MM-DD strings), `solves`,
   `timesSec`, and computed `mean`, `median`, `min`, `max`, `stdDev`, `q1`, `q3`, `iqr`,
   `whiskerLow`, `whiskerHigh`, `outliers`.
 - `LinearRegression` — `slope`, `intercept`, `r2`, and a preformatted `slopeFormatted`

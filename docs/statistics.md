@@ -29,7 +29,7 @@ Ordinary Least Squares fit of `finalTimeSec` against 1-based `index`, ignoring D
   `-0.0095s/solve`.
 - A negative slope means solve times are decreasing (getting faster).
 
-## `computeGroupStats(groupSolves, label, startDate: Temporal.PlainDate, endDate: Temporal.PlainDate): PeriodGroup`
+## `computeGroupStats(groupSolves, label, startDate: string, endDate: string): PeriodGroup`
 
 Aggregates one bucket of solves:
 
@@ -55,11 +55,13 @@ titles and axis labels stay consistent. `solvesPerUnit` embeds the custom batch 
 Two grouping strategies:
 
 - **Batch modes** (`batch50`, `customBatch`): fixed-size slices of `Math.max(1, customBatchSize)`
-  (50 for `batch50`), labelled `Batch i (start-end)`. Dates come from the first/last solve
-  in the slice.
-- **Time modes** (`daily`, `weekly`, `monthly`): bucket by local calendar key derived from
-  `Temporal` (`toPlainDate`, `weekOfYear`/`yearOfWeek`, `year`+`month`). Timezone lookup (`Temporal.Now.timeZoneId()`) is hoisted outside the iteration loop to avoid redundant system calls. Keys are sorted
-  chronologically, then labelled `Day n (YYYY-MM-DD)`, `Week n (...)`, `Month n (...)`.
+  (50 for `batch50`), labelled `Batch i (start-end)`. Dates come from the first/last solve's
+  `dateStr` in the slice.
+- **Time modes** (`daily`, `weekly`, `monthly`): bucket by the already-computed local `dateStr`.
+  `daily` keys directly on `dateStr`; `weekly`/`monthly` derive `Temporal.PlainDate.from(dateStr)`
+  for `weekOfYear`/`yearOfWeek` and `year`+`month`. No per-solve timezone conversion is needed.
+  Keys are sorted chronologically, then labelled `Day n (YYYY-MM-DD)`, `Week n (...)`, `Month n (...)`.
+  `startDate`/`endDate` are `dateStr` strings and compared lexicographically.
 
 Each bucket is passed to `computeGroupStats`. Empty input returns `[]`.
 
