@@ -1,6 +1,6 @@
 import { Download, ExternalLink, HelpCircle, WifiOff } from 'lucide-react';
 import type React from 'react';
-import { usePwa } from '../pwa';
+import { useAppInstall, useOnlineStatus } from '../pwa';
 import { useTheme } from '../theme/ThemeContext';
 import { ThemeSelector } from './ThemeSelector';
 
@@ -20,14 +20,15 @@ export const Navbar: React.FC<NavbarProps> = ({
   isOnline: propIsOnline,
   onOpenInstructions,
 }) => {
-  const pwa = usePwa();
+  const install = useAppInstall();
+  const hookIsOnline = useOnlineStatus();
 
-  const isOnline = propIsOnline ?? pwa.connectivity.isOnline;
-  const isInstalled = pwa.install.isInstalled;
-  const showAppButton = propCanInstall !== undefined ? propCanInstall : pwa.install.canShowButton;
-  const handleAction = onInstall ?? pwa.install.triggerAction;
-  const actionLabel = pwa.install.actionLabel;
-  const actionTitle = pwa.install.actionTitle;
+  const isOnline = propIsOnline ?? hookIsOnline;
+  const isInstalled = install.isInstalled;
+  const showAppButton = propCanInstall !== undefined ? propCanInstall : install.canShowButton;
+  const handleAction = onInstall ?? install.triggerAction;
+  const actionLabel = install.actionLabel;
+  const actionTitle = install.actionTitle;
   const { colors } = useTheme();
 
   return (

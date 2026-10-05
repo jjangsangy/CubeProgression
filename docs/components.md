@@ -47,7 +47,7 @@ Top header. Props: `canInstall`, `onInstall`, `isOnline`, `onOpenInstructions`.
 
 ## `PwaLifecycleView` (`src/pwa/PwaLifecycleView.tsx`)
 
-Encapsulated presentation module combining the cross-browser install bridge adapter (`PwaInstallBridge`, wrapping `@khmyznikov/pwa-install`) and the Service Worker update toast. Automatically observes `usePwa().update` to render the update notification with animated reload and dismiss actions when an update is waiting.
+Encapsulated presentation module combining the cross-browser install bridge adapter (`PwaInstallBridge`, wrapping `@khmyznikov/pwa-install`) and the Service Worker update toast. The toast observes `useServiceWorkerUpdate().update` to render the update notification with animated reload and dismiss actions when an update is waiting. Its `updateOverride` prop (state, not a hook) lets tests render the toast declaratively.
 
 ## `PwaInstallBridge` (`src/pwa/PwaInstallBridge.tsx`)
 

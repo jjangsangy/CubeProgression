@@ -138,7 +138,9 @@ CubeProgression operates as a fully installable, 100% offline-first Progressive 
   - **Navigation requests (`request.mode === 'navigate'`)**: Network-First with cached fallback to `index.html`. Users receive instantaneous startup offline while getting the latest build when online.
   - **Static assets (`assets/*`)**: Cache-First with network fallback. Because Vite filenames are content-hashed, cached assets are immutable.
   - **Auto-Cleanup**: On `activate`, outdated cache buckets from previous releases are purged, followed by `self.clients.claim()`.
-- **Install & Connectivity UX**:
-  - `src/pwa/usePwa.ts` consolidates `beforeinstallprompt` on Chromium, the `@khmyznikov/pwa-install` bridge adapter for iOS/Firefox, network connectivity (`online`/`offline`), and Service Worker update notifications into a unified deep interface.
-  - `src/pwa/PwaLifecycleView.tsx` encapsulates both the cross-browser install bridge adapter (`pwa-install`) and the Service Worker update toast within a single presentation module.
-  - `Navbar` consumes `usePwa` to surface the tailored "Install App" / "Open in App" button and the "Offline mode" pill.
+- **Install & Connectivity UX**: the client-side browser lifecycle is split into focused deep modules under `src/pwa/`, since application installation and Service Worker lifecycle are independent browser mechanisms with different callers:
+  - `src/pwa/useAppInstall.ts` — the **App Installation Module**: captures `beforeinstallprompt` on Chromium, adapts to the `@khmyznikov/pwa-install` bridge for iOS/Safari/Firefox, detects standalone display mode, and exposes the install / open-in-app action.
+  - `src/pwa/useServiceWorkerUpdate.ts` — the **Service Worker Lifecycle Module**: registers the worker, detects update readiness (`waiting`), and performs the atomic skip-waiting reload. Registration and reload live behind this one seam; there is no separate `utils/pwaRegister` utility.
+  - `src/pwa/useOnlineStatus.ts` — the **Connectivity State** module (`online` / `offline` events).
+  - `src/pwa/PwaLifecycleView.tsx` encapsulates the cross-browser install bridge adapter (`pwa-install`) and the Service Worker update toast within a single presentation module.
+  - `Navbar` consumes `useAppInstall` and `useOnlineStatus` to surface the tailored "Install App" / "Open in App" button and the "Offline mode" pill.

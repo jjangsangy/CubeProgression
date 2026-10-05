@@ -1,12 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { registerPwa, skipWaitingAndReload } from '../utils/pwaRegister';
-import type {
-  PwaConnectivityState,
-  PwaInstallAction,
-  PwaInstallState,
-  PwaLifecycle,
-  PwaUpdateState,
-} from './types';
+import type { PwaInstallAction, PwaInstallState } from './types';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -16,6 +9,8 @@ interface BeforeInstallPromptEvent extends Event {
   }>;
   prompt(): Promise<void>;
 }
+
+const INSTALLED_STORAGE_KEY = 'cubeprogression_pwa_installed';
 
 export function isFirefoxPlatform(): boolean {
   if (typeof navigator === 'undefined') return false;
@@ -41,7 +36,42 @@ export function isBridgePlatform(): boolean {
   return isAppleMobile || isAppleDesktop || isTestEnv;
 }
 
-// Module-level cache to capture early beforeinstallprompt event before React hydration
+function readInstalledFlag(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.localStorage.getItem(INSTALLED_STORAGE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function writeInstalledFlag(installed: boolean): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (installed) {
+      window.localStorage.setItem(INSTALLED_STORAGE_KEY, 'true');
+    } else {
+      window.localStorage.removeItem(INSTALLED_STORAGE_KEY);
+    }
+  } catch {
+    // Storage unavailable (private mode / blocked) — ignore
+  }
+}
+
+function isStandaloneDisplayMode(): boolean {
+  if (typeof window === 'undefined') return false;
+  const matchesDisplayMode = (mode: string): boolean =>
+    window.matchMedia?.(`(display-mode: ${mode})`)?.matches ?? false;
+  return (
+    matchesDisplayMode('standalone') ||
+    matchesDisplayMode('window-controls-overlay') ||
+    ('standalone' in window.navigator &&
+      (window.navigator as { standalone?: boolean }).standalone === true)
+  );
+}
+
+// Module-level cache to capture the early beforeinstallprompt event before React hydration,
+// so the install capability is known on first render.
 let cachedPromptEvent: BeforeInstallPromptEvent | null = null;
 
 if (typeof window !== 'undefined') {
@@ -51,132 +81,34 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// Module-level Service Worker update registration cache
-let activeUpdateRegistration: ServiceWorkerRegistration | null = null;
-let isServiceWorkerRegistered = false;
-const updateListeners = new Set<(reg: ServiceWorkerRegistration | null) => void>();
-
-function setGlobalUpdateRegistration(reg: ServiceWorkerRegistration | null): void {
-  activeUpdateRegistration = reg;
-  for (const listener of updateListeners) {
-    listener(reg);
-  }
-}
-
-export function resetPwaStateForTesting(): void {
+export function resetAppInstallStateForTesting(): void {
   cachedPromptEvent = null;
-  activeUpdateRegistration = null;
-  isServiceWorkerRegistered = false;
-  updateListeners.clear();
 }
 
 /**
- * Deep PWA Lifecycle Module
+ * App Installation Module
  *
- * Encapsulates:
- * - Network connectivity tracking (online/offline)
- * - Installation interception (Chromium beforeinstallprompt + iOS/Firefox bridge adapter)
- * - Service Worker registration, update readiness, and atomic reload
+ * Encapsulates desktop and mobile application installation for the browser platform:
+ * Chromium `beforeinstallprompt` capture, the iOS/Safari `pwa-install` bridge adapter,
+ * standalone display-mode detection, and custom protocol launch.
  */
-export function usePwa(): PwaLifecycle {
-  // --- Connectivity State ---
-  const [isOnline, setIsOnline] = useState<boolean>(() => {
-    if (typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean') {
-      return navigator.onLine;
-    }
-    return true;
-  });
-
-  // --- Install State ---
+export function useAppInstall(): PwaInstallState {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(
     () => cachedPromptEvent,
   );
-  const [isStandalone, setIsStandalone] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    return (
-      window.matchMedia?.('(display-mode: standalone)').matches ||
-      window.matchMedia?.('(display-mode: window-controls-overlay)').matches ||
-      ('standalone' in window.navigator &&
-        (window.navigator as { standalone?: boolean }).standalone === true) ||
-      false
-    );
-  });
+  const [isStandalone, setIsStandalone] = useState<boolean>(() => isStandaloneDisplayMode());
   const [isInstalled, setIsInstalled] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
     if (cachedPromptEvent) return false;
-
-    const standaloneMode =
-      window.matchMedia?.('(display-mode: standalone)').matches ||
-      window.matchMedia?.('(display-mode: window-controls-overlay)').matches ||
-      ('standalone' in window.navigator &&
-        (window.navigator as { standalone?: boolean }).standalone === true);
-    if (standaloneMode) return true;
-
-    try {
-      return localStorage.getItem('cubeprogression_pwa_installed') === 'true';
-    } catch {
-      return false;
-    }
+    if (isStandaloneDisplayMode()) return true;
+    return readInstalledFlag();
   });
 
   const isPromptingRef = useRef(false);
 
-  // --- Update State ---
-  const [updateRegistration, setUpdateRegistration] = useState<ServiceWorkerRegistration | null>(
-    () => activeUpdateRegistration,
-  );
-  const [isUpdating, setIsUpdating] = useState<boolean>(false);
-
-  // Connectivity event listeners
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  // Update subscription listener
-  useEffect(() => {
-    const listener = (reg: ServiceWorkerRegistration | null) => {
-      setUpdateRegistration(reg);
-    };
-    updateListeners.add(listener);
-    return () => {
-      updateListeners.delete(listener);
-    };
-  }, []);
-
-  // Service Worker registration (single execution per session)
-  useEffect(() => {
-    if (isServiceWorkerRegistered) return;
-    isServiceWorkerRegistered = true;
-
-    registerPwa({
-      onNeedRefresh: (reg) => {
-        setGlobalUpdateRegistration(reg);
-      },
-    }).catch(() => {});
-  }, []);
-
-  // Install event listeners & platform checks
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const standaloneMode =
-      window.matchMedia?.('(display-mode: standalone)').matches ||
-      window.matchMedia?.('(display-mode: window-controls-overlay)').matches ||
-      ('standalone' in window.navigator &&
-        (window.navigator as { standalone?: boolean }).standalone === true);
-
-    if (standaloneMode) {
+    if (isStandaloneDisplayMode()) {
       setIsStandalone(true);
       setIsInstalled(true);
     }
@@ -191,9 +123,7 @@ export function usePwa(): PwaLifecycle {
         .then((relatedApps) => {
           if (relatedApps && relatedApps.length > 0) {
             setIsInstalled(true);
-            try {
-              localStorage.setItem('cubeprogression_pwa_installed', 'true');
-            } catch {}
+            writeInstalledFlag(true);
           }
         })
         .catch(() => {});
@@ -213,18 +143,14 @@ export function usePwa(): PwaLifecycle {
       cachedPromptEvent = event as BeforeInstallPromptEvent;
       setDeferredPrompt(event as BeforeInstallPromptEvent);
       setIsInstalled(false);
-      try {
-        localStorage.removeItem('cubeprogression_pwa_installed');
-      } catch {}
+      writeInstalledFlag(false);
     };
 
     const handleAppInstalled = () => {
       cachedPromptEvent = null;
       setDeferredPrompt(null);
       setIsInstalled(true);
-      try {
-        localStorage.setItem('cubeprogression_pwa_installed', 'true');
-      } catch {}
+      writeInstalledFlag(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -237,6 +163,21 @@ export function usePwa(): PwaLifecycle {
     };
   }, []);
 
+  const openInApp = useCallback(() => {
+    if (typeof window === 'undefined') return;
+
+    const currentUrl = window.location.href;
+    const protocolUrl = `web+cubeprogression://open?url=${encodeURIComponent(currentUrl)}`;
+
+    try {
+      const link = document.createElement('a');
+      link.href = protocolUrl;
+      link.click();
+    } catch {
+      // Protocol handler blocked or not supported
+    }
+  }, []);
+
   const promptInstall = useCallback(async (): Promise<boolean> => {
     if (isInstalled || isFirefoxPlatform()) return false;
 
@@ -247,14 +188,12 @@ export function usePwa(): PwaLifecycle {
         const choiceResult = await deferredPrompt.userChoice;
         if (choiceResult.outcome === 'accepted') {
           setIsInstalled(true);
-          try {
-            localStorage.setItem('cubeprogression_pwa_installed', 'true');
-          } catch {}
+          writeInstalledFlag(true);
           return true;
         }
         return false;
       } catch {
-        // Fall back to bridge only on bridge platforms
+        // Fall back to the pwa-install bridge only on bridge platforms
       } finally {
         cachedPromptEvent = null;
         setDeferredPrompt(null);
@@ -284,32 +223,6 @@ export function usePwa(): PwaLifecycle {
     return false;
   }, [deferredPrompt, isInstalled]);
 
-  const openInApp = useCallback(() => {
-    if (typeof window === 'undefined') return;
-
-    const currentUrl = window.location.href;
-    const protocolUrl = `web+cubeprogression://open?url=${encodeURIComponent(currentUrl)}`;
-
-    try {
-      const link = document.createElement('a');
-      link.href = protocolUrl;
-      link.click();
-    } catch {
-      // Protocol handler blocked or not supported
-    }
-  }, []);
-
-  const applyUpdateAndReload = useCallback(() => {
-    if (activeUpdateRegistration) {
-      setIsUpdating(true);
-      skipWaitingAndReload(activeUpdateRegistration);
-    }
-  }, []);
-
-  const dismissUpdate = useCallback(() => {
-    setGlobalUpdateRegistration(null);
-  }, []);
-
   const isFirefox = isFirefoxPlatform();
 
   const canInstall =
@@ -326,6 +239,7 @@ export function usePwa(): PwaLifecycle {
   const actionTitle = isInstalled
     ? 'Open CubeProgression in the installed app'
     : 'Install CubeProgression as a Progressive Web App';
+
   const triggerAction = useCallback(async (): Promise<boolean> => {
     if (isInstalled) {
       openInApp();
@@ -334,11 +248,7 @@ export function usePwa(): PwaLifecycle {
     return promptInstall();
   }, [isInstalled, openInApp, promptInstall]);
 
-  const connectivity: PwaConnectivityState = {
-    isOnline,
-  };
-
-  const install: PwaInstallState = {
+  return {
     canInstall,
     isInstalled,
     isStandalone,
@@ -349,18 +259,5 @@ export function usePwa(): PwaLifecycle {
     triggerAction,
     promptInstall,
     openInApp,
-  };
-
-  const update: PwaUpdateState = {
-    isUpdateAvailable: Boolean(updateRegistration),
-    isUpdating,
-    applyUpdateAndReload,
-    dismissUpdate,
-  };
-
-  return {
-    connectivity,
-    install,
-    update,
   };
 }

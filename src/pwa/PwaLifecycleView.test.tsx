@@ -3,11 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ThemeProvider } from '../theme/ThemeContext';
 import { PwaLifecycleView } from './PwaLifecycleView';
 import type { PwaUpdateState } from './types';
-import { resetPwaStateForTesting } from './usePwa';
+import { resetServiceWorkerUpdateForTesting } from './useServiceWorkerUpdate';
 
 describe('PwaLifecycleView presentation module', () => {
   beforeEach(() => {
-    resetPwaStateForTesting();
+    resetServiceWorkerUpdateForTesting();
     vi.restoreAllMocks();
   });
 

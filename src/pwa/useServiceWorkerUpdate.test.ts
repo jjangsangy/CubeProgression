@@ -1,7 +1,13 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { registerPwa, skipWaitingAndReload } from './pwaRegister';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  registerServiceWorker,
+  resetServiceWorkerUpdateForTesting,
+  skipWaitingAndReload,
+  useServiceWorkerUpdate,
+} from './useServiceWorkerUpdate';
 
-describe('pwaRegister', () => {
+describe('registerServiceWorker', () => {
   const originalNavigator = globalThis.navigator;
 
   afterEach(() => {
@@ -15,11 +21,14 @@ describe('pwaRegister', () => {
   });
 
   it('returns null gracefully when navigator.serviceWorker is not supported', async () => {
-    const reg = await registerPwa();
+    const reg = await registerServiceWorker(vi.fn());
     expect(reg).toBeNull();
   });
 
   it('unregisters dev service workers when running in development mode', async () => {
+    vi.stubEnv('PROD', false);
+    vi.stubEnv('DEV', true);
+
     const unregisterMock = vi.fn().mockResolvedValue(true);
     const mockRegistration = { unregister: unregisterMock } as unknown as ServiceWorkerRegistration;
     const getRegistrationsMock = vi.fn().mockResolvedValue([mockRegistration]);
@@ -35,13 +44,16 @@ describe('pwaRegister', () => {
       writable: true,
     });
 
-    const reg = await registerPwa();
+    const reg = await registerServiceWorker(vi.fn());
     expect(reg).toBeNull();
     expect(getRegistrationsMock).toHaveBeenCalled();
     expect(unregisterMock).toHaveBeenCalledTimes(1);
   });
 
   it('handles dev unregistration errors gracefully without throwing', async () => {
+    vi.stubEnv('PROD', false);
+    vi.stubEnv('DEV', true);
+
     Object.defineProperty(globalThis, 'navigator', {
       value: {
         ...originalNavigator,
@@ -53,11 +65,11 @@ describe('pwaRegister', () => {
       writable: true,
     });
 
-    const reg = await registerPwa();
+    const reg = await registerServiceWorker(vi.fn());
     expect(reg).toBeNull();
   });
 
-  it('registers sw.js and fires onNeedRefresh when registration.waiting is active in PROD', async () => {
+  it('registers sw.js and signals readiness when registration.waiting is active in PROD', async () => {
     vi.stubEnv('PROD', true);
     vi.stubEnv('DEV', false);
 
@@ -84,7 +96,7 @@ describe('pwaRegister', () => {
       writable: true,
     });
 
-    const reg = await registerPwa({ onNeedRefresh });
+    const reg = await registerServiceWorker(onNeedRefresh);
     expect(reg).toBe(mockRegistration);
     expect(registerMock).toHaveBeenCalledWith(`${import.meta.env.BASE_URL}sw.js`, {
       scope: import.meta.env.BASE_URL,
@@ -92,53 +104,7 @@ describe('pwaRegister', () => {
     expect(onNeedRefresh).toHaveBeenCalledWith(mockRegistration);
   });
 
-  it('fires onOfflineReady on initial install without existing controller in PROD', async () => {
-    vi.stubEnv('PROD', true);
-    vi.stubEnv('DEV', false);
-
-    const onOfflineReady = vi.fn();
-    let updateFoundListener: (() => void) | undefined;
-    let stateChangeListener: (() => void) | undefined;
-
-    const mockInstallingWorker = {
-      state: 'installing',
-      addEventListener: vi.fn((event: string, cb: () => void) => {
-        if (event === 'statechange') stateChangeListener = cb;
-      }),
-    };
-
-    const mockRegistration = {
-      waiting: null,
-      installing: mockInstallingWorker,
-      addEventListener: vi.fn((event: string, cb: () => void) => {
-        if (event === 'updatefound') updateFoundListener = cb;
-      }),
-      update: vi.fn().mockResolvedValue(undefined),
-    } as unknown as ServiceWorkerRegistration;
-
-    Object.defineProperty(globalThis, 'navigator', {
-      value: {
-        ...originalNavigator,
-        serviceWorker: {
-          register: vi.fn().mockResolvedValue(mockRegistration),
-          controller: null, // First install, no active controller
-        },
-      },
-      configurable: true,
-      writable: true,
-    });
-
-    await registerPwa({ onOfflineReady });
-
-    // Trigger updatefound -> statechange -> installed
-    updateFoundListener?.();
-    mockInstallingWorker.state = 'installed';
-    stateChangeListener?.();
-
-    expect(onOfflineReady).toHaveBeenCalledTimes(1);
-  });
-
-  it('fires onNeedRefresh when an update installs while a controller is active in PROD', async () => {
+  it('signals readiness when an update finishes installing while a controller is active', async () => {
     vi.stubEnv('PROD', true);
     vi.stubEnv('DEV', false);
 
@@ -167,14 +133,14 @@ describe('pwaRegister', () => {
         ...originalNavigator,
         serviceWorker: {
           register: vi.fn().mockResolvedValue(mockRegistration),
-          controller: {} as ServiceWorker, // Active controller already present
+          controller: {} as ServiceWorker,
         },
       },
       configurable: true,
       writable: true,
     });
 
-    await registerPwa({ onNeedRefresh });
+    await registerServiceWorker(onNeedRefresh);
 
     updateFoundListener?.();
     mockInstallingWorker.state = 'installed';
@@ -183,7 +149,52 @@ describe('pwaRegister', () => {
     expect(onNeedRefresh).toHaveBeenCalledWith(mockRegistration);
   });
 
-  it('catches registration errors, logs to console, and returns null', async () => {
+  it('does not signal readiness on first install when there is no active controller', async () => {
+    vi.stubEnv('PROD', true);
+    vi.stubEnv('DEV', false);
+
+    const onNeedRefresh = vi.fn();
+    let updateFoundListener: (() => void) | undefined;
+    let stateChangeListener: (() => void) | undefined;
+
+    const mockInstallingWorker = {
+      state: 'installing',
+      addEventListener: vi.fn((event: string, cb: () => void) => {
+        if (event === 'statechange') stateChangeListener = cb;
+      }),
+    };
+
+    const mockRegistration = {
+      waiting: null,
+      installing: mockInstallingWorker,
+      addEventListener: vi.fn((event: string, cb: () => void) => {
+        if (event === 'updatefound') updateFoundListener = cb;
+      }),
+      update: vi.fn().mockResolvedValue(undefined),
+    } as unknown as ServiceWorkerRegistration;
+
+    Object.defineProperty(globalThis, 'navigator', {
+      value: {
+        ...originalNavigator,
+        serviceWorker: {
+          register: vi.fn().mockResolvedValue(mockRegistration),
+          controller: null,
+        },
+      },
+      configurable: true,
+      writable: true,
+    });
+
+    await registerServiceWorker(onNeedRefresh);
+
+    updateFoundListener?.();
+    mockInstallingWorker.state = 'installed';
+    stateChangeListener?.();
+
+    expect(onNeedRefresh).not.toHaveBeenCalled();
+  });
+
+  it('catches registration errors, logs them, and returns null', async () => {
     vi.stubEnv('PROD', true);
     vi.stubEnv('DEV', false);
 
@@ -199,15 +210,28 @@ describe('pwaRegister', () => {
       writable: true,
     });
 
-    const reg = await registerPwa();
+    const reg = await registerServiceWorker(vi.fn());
     expect(reg).toBeNull();
     expect(consoleSpy).toHaveBeenCalledWith(
       'Service worker registration failed:',
       expect.any(Error),
     );
   });
+});
 
-  it('posts SKIP_WAITING to waiting worker and reloads on controllerchange', () => {
+describe('skipWaitingAndReload', () => {
+  const originalNavigator = globalThis.navigator;
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    Object.defineProperty(globalThis, 'navigator', {
+      value: originalNavigator,
+      configurable: true,
+      writable: true,
+    });
+  });
+
+  it('posts SKIP_WAITING to the waiting worker and reloads on controllerchange', () => {
     const postMessageMock = vi.fn();
     const mockWaiting = {
       postMessage: postMessageMock,
@@ -245,28 +269,25 @@ describe('pwaRegister', () => {
       writable: true,
     });
 
-    skipWaitingAndReload(mockReg);
-    expect(postMessageMock).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
-    expect(addEventListenerMock).toHaveBeenCalledWith('controllerchange', expect.any(Function), {
-      once: true,
-    });
+    try {
+      skipWaitingAndReload(mockReg);
+      expect(postMessageMock).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
+      expect(addEventListenerMock).toHaveBeenCalledWith('controllerchange', expect.any(Function), {
+        once: true,
+      });
 
-    // Simulate controllerchange
-    controllerChangeHandler?.();
-    expect(reloadMock).toHaveBeenCalledTimes(1);
-
-    Object.defineProperty(window, 'location', {
-      value: originalLocation,
-      configurable: true,
-      writable: true,
-    });
+      controllerChangeHandler?.();
+      expect(reloadMock).toHaveBeenCalledTimes(1);
+    } finally {
+      Object.defineProperty(window, 'location', {
+        value: originalLocation,
+        configurable: true,
+        writable: true,
+      });
+    }
   });
 
-  it('does nothing when skipWaitingAndReload is called with no waiting worker', () => {
-    const mockReg = {
-      waiting: null,
-    } as unknown as ServiceWorkerRegistration;
-
+  it('does nothing when there is no waiting worker', () => {
     const addEventListenerMock = vi.fn();
     Object.defineProperty(globalThis, 'navigator', {
       value: {
@@ -279,7 +300,110 @@ describe('pwaRegister', () => {
       writable: true,
     });
 
-    skipWaitingAndReload(mockReg);
+    skipWaitingAndReload({ waiting: null } as unknown as ServiceWorkerRegistration);
     expect(addEventListenerMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('useServiceWorkerUpdate', () => {
+  const originalNavigator = globalThis.navigator;
+
+  beforeEach(() => {
+    resetServiceWorkerUpdateForTesting();
+    vi.stubEnv('PROD', true);
+    vi.stubEnv('DEV', false);
+  });
+
+  afterEach(() => {
+    resetServiceWorkerUpdateForTesting();
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+    Object.defineProperty(globalThis, 'navigator', {
+      value: originalNavigator,
+      configurable: true,
+      writable: true,
+    });
+  });
+
+  it('exposes an idle update interface with a pending registration', async () => {
+    const registerMock = vi.fn().mockResolvedValue({
+      waiting: null,
+      installing: null,
+      addEventListener: vi.fn(),
+      update: vi.fn().mockResolvedValue(undefined),
+    });
+    Object.defineProperty(globalThis, 'navigator', {
+      value: {
+        ...originalNavigator,
+        serviceWorker: { register: registerMock },
+      },
+      configurable: true,
+      writable: true,
+    });
+
+    const { result } = renderHook(() => useServiceWorkerUpdate());
+
+    expect(result.current.isUpdateAvailable).toBe(false);
+    expect(result.current.isUpdating).toBe(false);
+    expect(typeof result.current.applyUpdateAndReload).toBe('function');
+    expect(typeof result.current.dismissUpdate).toBe('function');
+
+    await waitFor(() => expect(registerMock).toHaveBeenCalled());
+  });
+
+  it('surfaces update readiness and applies the atomic reload', async () => {
+    const postMessageMock = vi.fn();
+    const waitingWorker = { postMessage: postMessageMock } as unknown as ServiceWorker;
+    const mockRegistration = {
+      waiting: waitingWorker,
+      installing: null,
+      addEventListener: vi.fn(),
+      update: vi.fn().mockResolvedValue(undefined),
+    } as unknown as ServiceWorkerRegistration;
+
+    Object.defineProperty(globalThis, 'navigator', {
+      value: {
+        ...originalNavigator,
+        serviceWorker: {
+          register: vi.fn().mockResolvedValue(mockRegistration),
+          controller: {} as ServiceWorker,
+          addEventListener: vi.fn(),
+        },
+      },
+      configurable: true,
+      writable: true,
+    });
+
+    const originalLocation = window.location;
+    Object.defineProperty(window, 'location', {
+      value: { ...originalLocation, reload: vi.fn() },
+      configurable: true,
+      writable: true,
+    });
+
+    try {
+      const { result } = renderHook(() => useServiceWorkerUpdate());
+
+      await waitFor(() => expect(result.current.isUpdateAvailable).toBe(true));
+
+      act(() => {
+        result.current.applyUpdateAndReload();
+      });
+
+      expect(postMessageMock).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
+      expect(result.current.isUpdating).toBe(true);
+
+      act(() => {
+        result.current.dismissUpdate();
+      });
+
+      expect(result.current.isUpdateAvailable).toBe(false);
+    } finally {
+      Object.defineProperty(window, 'location', {
+        value: originalLocation,
+        configurable: true,
+        writable: true,
+      });
+    }
   });
 });

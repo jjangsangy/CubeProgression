@@ -15,9 +15,10 @@ Ubiquitous language for CubeProgression. Terms here name concepts, interfaces, a
 - **Period Group**: Aggregation of solves bucketed by calendar duration (daily, weekly, monthly) or solve count (custom batch, batch 50) for trend and distribution tracking.
 - **Density Shift**: Statistical comparison of two solve time distributions (baseline vs recent) using Kernel Density Estimation (KDE) and Earth Mover's Distance (EMD).
 
-## PWA & Offline Lifecycle
+## Application Lifecycle & Offline Operations
 
-- **PWA Lifecycle Module**: The deep module that encapsulates web application installation, offline connectivity, Service Worker update readiness, and browser platform adaptation.
+- **App Installation Module**: Encapsulates desktop and mobile application installation, `beforeinstallprompt` event capture, standalone display-mode detection, and browser platform installation guidance.
+- **Service Worker Lifecycle Module**: Encapsulates background Service Worker registration, cache precaching, update readiness detection (`waiting` phase), and atomic skip-waiting page reload.
 - **Install Adapter**: The platform-specific translation seam bridging standard W3C `beforeinstallprompt` event flows with custom installation guidance required by iOS Safari and Firefox.
 - **Update Readiness**: The state where a newly installed Service Worker is in the `waiting` phase, ready to skip waiting and reload the client upon user acceptance.
 - **Connectivity State**: The current network reachability status (`online` / `offline`) observed from browser network events.

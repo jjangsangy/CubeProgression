@@ -1,62 +1,38 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import * as pwaRegister from '../utils/pwaRegister';
-import { resetPwaStateForTesting, usePwa } from './usePwa';
+import { resetAppInstallStateForTesting, useAppInstall } from './useAppInstall';
+import { useOnlineStatus } from './useOnlineStatus';
 
-describe('usePwa hook', () => {
+describe('useAppInstall', () => {
   beforeEach(() => {
-    resetPwaStateForTesting();
+    resetAppInstallStateForTesting();
     localStorage.clear();
     vi.restoreAllMocks();
   });
 
   afterEach(() => {
-    resetPwaStateForTesting();
+    resetAppInstallStateForTesting();
     localStorage.clear();
     vi.restoreAllMocks();
   });
 
-  it('provides structured connectivity, install, and update interfaces', () => {
-    const { result } = renderHook(() => usePwa());
+  it('provides the full installation interface with idle defaults', () => {
+    const { result } = renderHook(() => useAppInstall());
 
-    expect(typeof result.current.connectivity.isOnline).toBe('boolean');
-    expect(result.current.connectivity.isOnline).toBe(true);
-
-    expect(result.current.install.canInstall).toBe(false);
-    expect(result.current.install.isInstalled).toBe(false);
-    expect(result.current.install.isStandalone).toBe(false);
-    expect(result.current.install.canShowButton).toBe(true);
-    expect(result.current.install.actionType).toBe('install');
-    expect(result.current.install.actionLabel).toBe('Install App');
-    expect(result.current.install.actionTitle).toBe(
-      'Install CubeProgression as a Progressive Web App',
-    );
-    expect(typeof result.current.install.triggerAction).toBe('function');
-    expect(typeof result.current.install.promptInstall).toBe('function');
-    expect(typeof result.current.install.openInApp).toBe('function');
-
-    expect(result.current.update.isUpdateAvailable).toBe(false);
-    expect(result.current.update.isUpdating).toBe(false);
-    expect(typeof result.current.update.applyUpdateAndReload).toBe('function');
-    expect(typeof result.current.update.dismissUpdate).toBe('function');
+    expect(result.current.canInstall).toBe(false);
+    expect(result.current.isInstalled).toBe(false);
+    expect(result.current.isStandalone).toBe(false);
+    expect(result.current.canShowButton).toBe(true);
+    expect(result.current.actionType).toBe('install');
+    expect(result.current.actionLabel).toBe('Install App');
+    expect(result.current.actionTitle).toBe('Install CubeProgression as a Progressive Web App');
+    expect(typeof result.current.triggerAction).toBe('function');
+    expect(typeof result.current.promptInstall).toBe('function');
+    expect(typeof result.current.openInApp).toBe('function');
   });
 
-  it('updates connectivity state when offline and online events fire', () => {
-    const { result } = renderHook(() => usePwa());
-
-    act(() => {
-      window.dispatchEvent(new Event('offline'));
-    });
-    expect(result.current.connectivity.isOnline).toBe(false);
-
-    act(() => {
-      window.dispatchEvent(new Event('online'));
-    });
-    expect(result.current.connectivity.isOnline).toBe(true);
-  });
-
-  it('captures beforeinstallprompt event and enables install capability', async () => {
-    const { result } = renderHook(() => usePwa());
+  it('captures beforeinstallprompt and enables installation through the native prompt', async () => {
+    const { result } = renderHook(() => useAppInstall());
 
     const preventDefaultMock = vi.fn();
     const promptMock = vi.fn().mockResolvedValue(undefined);
@@ -74,41 +50,67 @@ describe('usePwa hook', () => {
     });
 
     expect(preventDefaultMock).toHaveBeenCalled();
-    expect(result.current.install.canInstall).toBe(true);
+    expect(result.current.canInstall).toBe(true);
 
     let installed = false;
     await act(async () => {
-      installed = await result.current.install.promptInstall();
+      installed = await result.current.promptInstall();
     });
 
     expect(promptMock).toHaveBeenCalled();
     expect(installed).toBe(true);
-    expect(result.current.install.canInstall).toBe(false);
+    expect(result.current.canInstall).toBe(false);
   });
 
-  it('marks app as installed when appinstalled event fires', () => {
-    const { result } = renderHook(() => usePwa());
+  it('marks the app as installed when the appinstalled event fires', () => {
+    const { result } = renderHook(() => useAppInstall());
 
     act(() => {
       window.dispatchEvent(new Event('appinstalled'));
     });
 
-    expect(result.current.install.isInstalled).toBe(true);
-    expect(result.current.install.canInstall).toBe(false);
+    expect(result.current.isInstalled).toBe(true);
+    expect(result.current.canInstall).toBe(false);
   });
 
   it('invokes custom protocol navigation on openInApp', () => {
     const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
-    const { result } = renderHook(() => usePwa());
+    const { result } = renderHook(() => useAppInstall());
 
     act(() => {
-      result.current.install.openInApp();
+      result.current.openInApp();
     });
 
     expect(clickSpy).toHaveBeenCalled();
   });
 
-  it('enables canInstall and delegates to pwa-install element when present in DOM', async () => {
+  it('reports standalone display mode as not installable on first render', () => {
+    const matchMediaSpy = vi.spyOn(window, 'matchMedia').mockImplementation(
+      (query: string) =>
+        ({
+          matches: query.includes('display-mode: standalone'),
+          media: query,
+          onchange: null,
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          dispatchEvent: vi.fn(),
+        }) as unknown as MediaQueryList,
+    );
+
+    try {
+      const { result } = renderHook(() => useAppInstall());
+
+      expect(result.current.isStandalone).toBe(true);
+      expect(result.current.isInstalled).toBe(true);
+      expect(result.current.canShowButton).toBe(false);
+    } finally {
+      matchMediaSpy.mockRestore();
+    }
+  });
+
+  it('delegates to the pwa-install element when present on a bridge platform', async () => {
     const mockPwaEl = document.createElement('pwa-install');
     const showDialogMock = vi.fn();
     const installMock = vi.fn().mockResolvedValue(undefined);
@@ -119,12 +121,12 @@ describe('usePwa hook', () => {
     document.body.appendChild(mockPwaEl);
 
     try {
-      const { result } = renderHook(() => usePwa());
-      expect(result.current.install.canInstall).toBe(true);
+      const { result } = renderHook(() => useAppInstall());
+      expect(result.current.canInstall).toBe(true);
 
       let installed = false;
       await act(async () => {
-        installed = await result.current.install.promptInstall();
+        installed = await result.current.promptInstall();
       });
 
       expect(showDialogMock).toHaveBeenCalledWith(true);
@@ -135,7 +137,7 @@ describe('usePwa hook', () => {
     }
   });
 
-  it('falls back to pwa-install element when native prompt throws', async () => {
+  it('falls back to the pwa-install element when the native prompt throws', async () => {
     const mockPwaEl = document.createElement('pwa-install');
     const showDialogMock = vi.fn();
     const installMock = vi.fn().mockResolvedValue(undefined);
@@ -146,7 +148,7 @@ describe('usePwa hook', () => {
     document.body.appendChild(mockPwaEl);
 
     try {
-      const { result } = renderHook(() => usePwa());
+      const { result } = renderHook(() => useAppInstall());
 
       const mockEvent = new Event('beforeinstallprompt') as unknown as {
         preventDefault: () => void;
@@ -162,7 +164,7 @@ describe('usePwa hook', () => {
 
       let installed = false;
       await act(async () => {
-        installed = await result.current.install.promptInstall();
+        installed = await result.current.promptInstall();
       });
 
       expect(showDialogMock).toHaveBeenCalledWith(true);
@@ -173,7 +175,7 @@ describe('usePwa hook', () => {
     }
   });
 
-  it('detects already installed state from localStorage and suppresses installation', async () => {
+  it('detects an installed app from localStorage and suppresses installation', async () => {
     localStorage.setItem('cubeprogression_pwa_installed', 'true');
     const mockPwaEl = document.createElement('pwa-install');
     const showDialogMock = vi.fn();
@@ -181,13 +183,13 @@ describe('usePwa hook', () => {
     document.body.appendChild(mockPwaEl);
 
     try {
-      const { result } = renderHook(() => usePwa());
-      expect(result.current.install.isInstalled).toBe(true);
-      expect(result.current.install.canInstall).toBe(false);
+      const { result } = renderHook(() => useAppInstall());
+      expect(result.current.isInstalled).toBe(true);
+      expect(result.current.canInstall).toBe(false);
 
       let installed = true;
       await act(async () => {
-        installed = await result.current.install.promptInstall();
+        installed = await result.current.promptInstall();
       });
 
       expect(installed).toBe(false);
@@ -197,7 +199,7 @@ describe('usePwa hook', () => {
     }
   });
 
-  it('detects already installed state from navigator.getInstalledRelatedApps', async () => {
+  it('detects an installed app from navigator.getInstalledRelatedApps', async () => {
     const originalNavigator = window.navigator;
     const getInstalledRelatedAppsMock = vi
       .fn()
@@ -217,17 +219,17 @@ describe('usePwa hook', () => {
     document.body.appendChild(mockPwaEl);
 
     try {
-      const { result } = renderHook(() => usePwa());
+      const { result } = renderHook(() => useAppInstall());
       await act(async () => {
         await Promise.resolve();
       });
 
-      expect(result.current.install.isInstalled).toBe(true);
-      expect(result.current.install.canInstall).toBe(false);
+      expect(result.current.isInstalled).toBe(true);
+      expect(result.current.canInstall).toBe(false);
 
       let installed = true;
       await act(async () => {
-        installed = await result.current.install.promptInstall();
+        installed = await result.current.promptInstall();
       });
 
       expect(installed).toBe(false);
@@ -242,7 +244,7 @@ describe('usePwa hook', () => {
     }
   });
 
-  it('does not trigger pwa-install dialog on non-bridge platforms when deferredPrompt is null', async () => {
+  it('does not trigger the pwa-install dialog on non-bridge platforms without a deferred prompt', async () => {
     const originalUserAgent = navigator.userAgent;
     Object.defineProperty(navigator, 'userAgent', {
       value:
@@ -260,12 +262,12 @@ describe('usePwa hook', () => {
     document.body.appendChild(mockPwaEl);
 
     try {
-      const { result } = renderHook(() => usePwa());
-      expect(result.current.install.canInstall).toBe(false);
+      const { result } = renderHook(() => useAppInstall());
+      expect(result.current.canInstall).toBe(false);
 
       let installed = true;
       await act(async () => {
-        installed = await result.current.install.promptInstall();
+        installed = await result.current.promptInstall();
       });
 
       expect(installed).toBe(false);
@@ -280,7 +282,7 @@ describe('usePwa hook', () => {
     }
   });
 
-  it('disables canInstall and suppresses prompt on Firefox platforms', async () => {
+  it('disables installation and suppresses the prompt on Firefox platforms', async () => {
     const originalUserAgent = navigator.userAgent;
     Object.defineProperty(navigator, 'userAgent', {
       value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0',
@@ -288,12 +290,13 @@ describe('usePwa hook', () => {
     });
 
     try {
-      const { result } = renderHook(() => usePwa());
-      expect(result.current.install.canInstall).toBe(false);
+      const { result } = renderHook(() => useAppInstall());
+      expect(result.current.canInstall).toBe(false);
+      expect(result.current.canShowButton).toBe(false);
 
       let installed = true;
       await act(async () => {
-        installed = await result.current.install.promptInstall();
+        installed = await result.current.promptInstall();
       });
       expect(installed).toBe(false);
     } finally {
@@ -303,45 +306,25 @@ describe('usePwa hook', () => {
       });
     }
   });
+});
 
-  it('surfaces update readiness when service worker signals onNeedRefresh', async () => {
-    let capturedOptions: pwaRegister.PwaRegisterOptions | undefined;
-    vi.spyOn(pwaRegister, 'registerPwa').mockImplementation((options) => {
-      capturedOptions = options;
-      return Promise.resolve(null);
-    });
+describe('useOnlineStatus', () => {
+  it('reports connectivity from the initial navigator.onLine value', () => {
+    const { result } = renderHook(() => useOnlineStatus());
+    expect(result.current).toBe(true);
+  });
 
-    const { result } = renderHook(() => usePwa());
-
-    expect(result.current.update.isUpdateAvailable).toBe(false);
-
-    const mockReg = {
-      waiting: {
-        postMessage: vi.fn(),
-      },
-    } as unknown as ServiceWorkerRegistration;
+  it('tracks offline and online window events', () => {
+    const { result } = renderHook(() => useOnlineStatus());
 
     act(() => {
-      capturedOptions?.onNeedRefresh?.(mockReg);
+      window.dispatchEvent(new Event('offline'));
     });
-
-    expect(result.current.update.isUpdateAvailable).toBe(true);
-
-    const skipWaitingSpy = vi
-      .spyOn(pwaRegister, 'skipWaitingAndReload')
-      .mockImplementation(() => {});
+    expect(result.current).toBe(false);
 
     act(() => {
-      result.current.update.applyUpdateAndReload();
+      window.dispatchEvent(new Event('online'));
     });
-
-    expect(skipWaitingSpy).toHaveBeenCalledWith(mockReg);
-    expect(result.current.update.isUpdating).toBe(true);
-
-    act(() => {
-      result.current.update.dismissUpdate();
-    });
-
-    expect(result.current.update.isUpdateAvailable).toBe(false);
+    expect(result.current).toBe(true);
   });
 });

@@ -1,7 +1,3 @@
-export interface PwaConnectivityState {
-  isOnline: boolean;
-}
-
 export type PwaInstallAction = 'install' | 'open';
 
 export interface PwaInstallState {
@@ -22,10 +18,4 @@ export interface PwaUpdateState {
   isUpdating: boolean;
   applyUpdateAndReload: () => void;
   dismissUpdate: () => void;
-}
-
-export interface PwaLifecycle {
-  connectivity: PwaConnectivityState;
-  install: PwaInstallState;
-  update: PwaUpdateState;
 }
