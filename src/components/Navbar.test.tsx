@@ -56,6 +56,24 @@ describe('Navbar component', () => {
     expect(container.querySelector('#navbar-install')).toBeNull();
   });
 
+  it('does not render Install App button when running in Firefox', () => {
+    const originalUserAgent = navigator.userAgent;
+    Object.defineProperty(navigator, 'userAgent', {
+      value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0',
+      configurable: true,
+    });
+
+    try {
+      const { container } = render(<Navbar />);
+      expect(container.querySelector('#navbar-install')).toBeNull();
+    } finally {
+      Object.defineProperty(navigator, 'userAgent', {
+        value: originalUserAgent,
+        configurable: true,
+      });
+    }
+  });
+
   it('renders Open in App button when app is already installed and invokes openInApp on click without opening new tab', () => {
     localStorage.setItem('cubeprogression_pwa_installed', 'true');
     const windowOpenSpy = vi.spyOn(window, 'open').mockReturnValue(null);

@@ -139,6 +139,6 @@ CubeProgression operates as a fully installable, 100% offline-first Progressive 
   - **Static assets (`assets/*`)**: Cache-First with network fallback. Because Vite filenames are content-hashed, cached assets are immutable.
   - **Auto-Cleanup**: On `activate`, outdated cache buckets from previous releases are purged, followed by `self.clients.claim()`.
 - **Install & Connectivity UX**:
-  - `usePwaInstall.ts` captures `beforeinstallprompt` on Chromium and bridges the gap for iOS and Firefox via `PwaInstallBridge` (`@khmyznikov/pwa-install`) to surface an in-app "Install App" button in `Navbar` with tailored installation dialogs across all browsers.
-  - `useOnlineStatus.ts` tracks browser connectivity and displays a subtle "Offline mode" pill in `Navbar` to reassure users that solve imports and statistics are functioning locally without network access.
-  - An update notification banner prompts users to activate new Service Worker versions seamlessly.
+  - `src/pwa/usePwa.ts` consolidates `beforeinstallprompt` on Chromium, the `@khmyznikov/pwa-install` bridge adapter for iOS/Firefox, network connectivity (`online`/`offline`), and Service Worker update notifications into a unified deep interface.
+  - `src/pwa/PwaLifecycleView.tsx` encapsulates both the cross-browser install bridge adapter (`pwa-install`) and the Service Worker update toast within a single presentation module.
+  - `Navbar` consumes `usePwa` to surface the tailored "Install App" / "Open in App" button and the "Offline mode" pill.

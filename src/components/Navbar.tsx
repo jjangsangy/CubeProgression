@@ -1,7 +1,6 @@
 import { Download, ExternalLink, HelpCircle, WifiOff } from 'lucide-react';
 import type React from 'react';
-import { useOnlineStatus } from '../hooks/useOnlineStatus';
-import { usePwaInstall } from '../hooks/usePwaInstall';
+import { isFirefoxPlatform, usePwa } from '../pwa';
 import { useTheme } from '../theme/ThemeContext';
 import { ThemeSelector } from './ThemeSelector';
 
@@ -21,17 +20,19 @@ export const Navbar: React.FC<NavbarProps> = ({
   isOnline: propIsOnline,
   onOpenInstructions,
 }) => {
-  const hookOnlineStatus = useOnlineStatus();
-  const pwaInstall = usePwaInstall();
+  const pwa = usePwa();
 
-  const isOnline = propIsOnline ?? hookOnlineStatus;
-  const isInstalled = pwaInstall.isInstalled;
-  const isStandalone = pwaInstall.isStandalone;
+  const isOnline = propIsOnline ?? pwa.connectivity.isOnline;
+  const isInstalled = pwa.install.isInstalled;
+  const isStandalone = pwa.install.isStandalone;
 
   // The button should be shown when not running inside the standalone app window.
   // When installed, it acts as "Open in App"; when not installed, it acts as "Install App".
-  const showAppButton = propCanInstall !== undefined ? propCanInstall : !isStandalone;
-  const handleAction = onInstall ?? (isInstalled ? pwaInstall.openInApp : pwaInstall.promptInstall);
+  // Disabled/hidden completely on Firefox due to platform incompatibility.
+  const isFirefox = isFirefoxPlatform();
+  const showAppButton = propCanInstall !== undefined ? propCanInstall : !isStandalone && !isFirefox;
+  const handleAction =
+    onInstall ?? (isInstalled ? pwa.install.openInApp : pwa.install.promptInstall);
   const actionLabel = isInstalled ? 'Open in App' : 'Install App';
   const actionTitle = isInstalled
     ? 'Open CubeProgression in the installed app'

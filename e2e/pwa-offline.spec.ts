@@ -134,7 +134,7 @@ test.describe('PWA & Offline Capability', () => {
     await expect(page.locator('#navbar-offline-status')).not.toBeVisible();
   });
 
-  test('bridges PWA install dialog when install button is clicked in iOS and Firefox environments', async ({
+  test('bridges PWA install dialog when install button is clicked in iOS environment', async ({
     page,
   }) => {
     // Emulate iOS Safari environment
@@ -165,5 +165,20 @@ test.describe('PWA & Offline Capability', () => {
       (el: HTMLElement & { isInstallAvailable?: boolean }) => el.isInstallAvailable,
     );
     expect(isAvailable).toBe(true);
+  });
+
+  test('hides PWA install button completely in Firefox environments', async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'userAgent', {
+        value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0',
+        configurable: true,
+      });
+    });
+
+    await page.goto('/');
+    await expect(page.locator('#session-selector')).toBeVisible({ timeout: 15000 });
+
+    const installBtn = page.locator('#navbar-install');
+    await expect(installBtn).not.toBeVisible();
   });
 });
