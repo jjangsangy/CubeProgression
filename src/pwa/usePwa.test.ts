@@ -101,6 +101,178 @@ describe('usePwa hook', () => {
     expect(clickSpy).toHaveBeenCalled();
   });
 
+  it('enables canInstall and delegates to pwa-install element when present in DOM', async () => {
+    const mockPwaEl = document.createElement('pwa-install');
+    const showDialogMock = vi.fn();
+    const installMock = vi.fn().mockResolvedValue(undefined);
+    Object.assign(mockPwaEl, {
+      showDialog: showDialogMock,
+      install: installMock,
+    });
+    document.body.appendChild(mockPwaEl);
+
+    try {
+      const { result } = renderHook(() => usePwa());
+      expect(result.current.install.canInstall).toBe(true);
+
+      let installed = false;
+      await act(async () => {
+        installed = await result.current.install.promptInstall();
+      });
+
+      expect(showDialogMock).toHaveBeenCalledWith(true);
+      expect(installMock).toHaveBeenCalled();
+      expect(installed).toBe(true);
+    } finally {
+      mockPwaEl.remove();
+    }
+  });
+
+  it('falls back to pwa-install element when native prompt throws', async () => {
+    const mockPwaEl = document.createElement('pwa-install');
+    const showDialogMock = vi.fn();
+    const installMock = vi.fn().mockResolvedValue(undefined);
+    Object.assign(mockPwaEl, {
+      showDialog: showDialogMock,
+      install: installMock,
+    });
+    document.body.appendChild(mockPwaEl);
+
+    try {
+      const { result } = renderHook(() => usePwa());
+
+      const mockEvent = new Event('beforeinstallprompt') as unknown as {
+        preventDefault: () => void;
+        prompt: () => Promise<void>;
+        userChoice: Promise<never>;
+      };
+      mockEvent.preventDefault = vi.fn();
+      mockEvent.prompt = vi.fn().mockRejectedValue(new Error('Prompt error'));
+
+      act(() => {
+        window.dispatchEvent(mockEvent as unknown as Event);
+      });
+
+      let installed = false;
+      await act(async () => {
+        installed = await result.current.install.promptInstall();
+      });
+
+      expect(showDialogMock).toHaveBeenCalledWith(true);
+      expect(installMock).toHaveBeenCalled();
+      expect(installed).toBe(true);
+    } finally {
+      mockPwaEl.remove();
+    }
+  });
+
+  it('detects already installed state from localStorage and suppresses installation', async () => {
+    localStorage.setItem('cubeprogression_pwa_installed', 'true');
+    const mockPwaEl = document.createElement('pwa-install');
+    const showDialogMock = vi.fn();
+    Object.assign(mockPwaEl, { showDialog: showDialogMock });
+    document.body.appendChild(mockPwaEl);
+
+    try {
+      const { result } = renderHook(() => usePwa());
+      expect(result.current.install.isInstalled).toBe(true);
+      expect(result.current.install.canInstall).toBe(false);
+
+      let installed = true;
+      await act(async () => {
+        installed = await result.current.install.promptInstall();
+      });
+
+      expect(installed).toBe(false);
+      expect(showDialogMock).not.toHaveBeenCalled();
+    } finally {
+      mockPwaEl.remove();
+    }
+  });
+
+  it('detects already installed state from navigator.getInstalledRelatedApps', async () => {
+    const originalNavigator = window.navigator;
+    const getInstalledRelatedAppsMock = vi
+      .fn()
+      .mockResolvedValue([{ platform: 'webapp', id: './' }]);
+    Object.defineProperty(window, 'navigator', {
+      value: {
+        ...originalNavigator,
+        getInstalledRelatedApps: getInstalledRelatedAppsMock,
+      },
+      configurable: true,
+      writable: true,
+    });
+
+    const mockPwaEl = document.createElement('pwa-install');
+    const showDialogMock = vi.fn();
+    Object.assign(mockPwaEl, { showDialog: showDialogMock });
+    document.body.appendChild(mockPwaEl);
+
+    try {
+      const { result } = renderHook(() => usePwa());
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(result.current.install.isInstalled).toBe(true);
+      expect(result.current.install.canInstall).toBe(false);
+
+      let installed = true;
+      await act(async () => {
+        installed = await result.current.install.promptInstall();
+      });
+
+      expect(installed).toBe(false);
+      expect(showDialogMock).not.toHaveBeenCalled();
+    } finally {
+      mockPwaEl.remove();
+      Object.defineProperty(window, 'navigator', {
+        value: originalNavigator,
+        configurable: true,
+        writable: true,
+      });
+    }
+  });
+
+  it('does not trigger pwa-install dialog on non-bridge platforms when deferredPrompt is null', async () => {
+    const originalUserAgent = navigator.userAgent;
+    Object.defineProperty(navigator, 'userAgent', {
+      value:
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      configurable: true,
+    });
+
+    const mockPwaEl = document.createElement('pwa-install');
+    const showDialogMock = vi.fn();
+    const installMock = vi.fn();
+    Object.assign(mockPwaEl, {
+      showDialog: showDialogMock,
+      install: installMock,
+    });
+    document.body.appendChild(mockPwaEl);
+
+    try {
+      const { result } = renderHook(() => usePwa());
+      expect(result.current.install.canInstall).toBe(false);
+
+      let installed = true;
+      await act(async () => {
+        installed = await result.current.install.promptInstall();
+      });
+
+      expect(installed).toBe(false);
+      expect(showDialogMock).not.toHaveBeenCalled();
+      expect(installMock).not.toHaveBeenCalled();
+    } finally {
+      mockPwaEl.remove();
+      Object.defineProperty(navigator, 'userAgent', {
+        value: originalUserAgent,
+        configurable: true,
+      });
+    }
+  });
+
   it('disables canInstall and suppresses prompt on Firefox platforms', async () => {
     const originalUserAgent = navigator.userAgent;
     Object.defineProperty(navigator, 'userAgent', {
