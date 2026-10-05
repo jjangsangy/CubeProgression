@@ -34,9 +34,11 @@ async function registerServiceWorker(
   }
 
   try {
-    const swUrl = `${import.meta.env.BASE_URL}sw.js`;
+    const rawBase = import.meta.env.BASE_URL || './';
+    const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
+    const swUrl = `${base}sw.js`;
     const registration = await navigator.serviceWorker.register(swUrl, {
-      scope: import.meta.env.BASE_URL,
+      scope: base,
     });
 
     // Check if an update is already waiting

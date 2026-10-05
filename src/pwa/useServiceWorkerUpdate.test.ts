@@ -98,10 +98,46 @@ describe('registerServiceWorker', () => {
 
     const reg = await registerServiceWorker(onNeedRefresh);
     expect(reg).toBe(mockRegistration);
-    expect(registerMock).toHaveBeenCalledWith(`${import.meta.env.BASE_URL}sw.js`, {
-      scope: import.meta.env.BASE_URL,
+    const rawBase = import.meta.env.BASE_URL || './';
+    const expectedBase = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
+    expect(registerMock).toHaveBeenCalledWith(`${expectedBase}sw.js`, {
+      scope: expectedBase,
     });
     expect(onNeedRefresh).toHaveBeenCalledWith(mockRegistration);
+  });
+
+  it('normalizes base URL with a trailing slash for swUrl and scope when BASE_URL lacks one', async () => {
+    vi.stubEnv('PROD', true);
+    vi.stubEnv('DEV', false);
+    vi.stubEnv('BASE_URL', '/CubeProgression');
+
+    const onNeedRefresh = vi.fn();
+    const mockRegistration = {
+      waiting: null,
+      installing: null,
+      addEventListener: vi.fn(),
+      update: vi.fn().mockResolvedValue(undefined),
+    } as unknown as ServiceWorkerRegistration;
+
+    const registerMock = vi.fn().mockResolvedValue(mockRegistration);
+
+    Object.defineProperty(globalThis, 'navigator', {
+      value: {
+        ...originalNavigator,
+        serviceWorker: {
+          register: registerMock,
+          controller: {} as ServiceWorker,
+        },
+      },
+      configurable: true,
+      writable: true,
+    });
+
+    const reg = await registerServiceWorker(onNeedRefresh);
+    expect(reg).toBe(mockRegistration);
+    expect(registerMock).toHaveBeenCalledWith('/CubeProgression/sw.js', {
+      scope: '/CubeProgression/',
+    });
   });
 
   it('signals readiness when an update finishes installing while a controller is active', async () => {

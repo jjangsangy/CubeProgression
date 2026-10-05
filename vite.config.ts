@@ -46,7 +46,11 @@ function inlineCriticalCss(): Plugin {
 
 export default defineConfig(() => {
   return {
-    base: process.env.BASE_PATH || './',
+    base: process.env.BASE_PATH
+      ? process.env.BASE_PATH.endsWith('/')
+        ? process.env.BASE_PATH
+        : `${process.env.BASE_PATH}/`
+      : './',
     plugins: [
       react({
         compiler: {
