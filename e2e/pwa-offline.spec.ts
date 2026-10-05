@@ -25,19 +25,36 @@ test.describe('PWA & Offline Capability', () => {
     expect(manifest.theme_color).toBe('#0c0a09');
     expect(manifest.background_color).toBe('#0c0a09');
 
-    // Verify icons exist and are accessible
+    // Verify icons exist and are accessible (WebP optimized for minimal footprint)
     expect(Array.isArray(manifest.icons)).toBe(true);
-    expect(manifest.icons.length).toBeGreaterThanOrEqual(4);
+    expect(manifest.icons.length).toBeGreaterThanOrEqual(3);
 
     const iconSrcs = manifest.icons.map((icon: { src: string }) => icon.src);
-    expect(iconSrcs).toContain('./favicon.svg');
-    expect(iconSrcs).toContain('./pwa-192x192.png');
-    expect(iconSrcs).toContain('./pwa-512x512.png');
-    expect(iconSrcs).toContain('./pwa-maskable-512x512.png');
+    expect(iconSrcs).toContain('./pwa-192x192.webp');
+    expect(iconSrcs).toContain('./pwa-512x512.webp');
+    expect(iconSrcs).toContain('./pwa-maskable-512x512.webp');
 
     for (const src of iconSrcs) {
       const iconRes = await request.get(src);
       expect(iconRes.status()).toBe(200);
+    }
+
+    // Verify Richer PWA Install UI screenshots exist for both desktop (wide) and mobile (narrow)
+    expect(Array.isArray(manifest.screenshots)).toBe(true);
+    expect(manifest.screenshots.length).toBeGreaterThanOrEqual(2);
+
+    const wideScreenshot = manifest.screenshots.find(
+      (s: { form_factor?: string }) => s.form_factor === 'wide',
+    );
+    expect(wideScreenshot).toBeDefined();
+    const narrowScreenshot = manifest.screenshots.find(
+      (s: { form_factor?: string }) => s.form_factor === 'narrow' || !s.form_factor,
+    );
+    expect(narrowScreenshot).toBeDefined();
+
+    for (const screenshot of manifest.screenshots) {
+      const shotRes = await request.get(screenshot.src);
+      expect(shotRes.status()).toBe(200);
     }
 
     // Verify application shortcuts are configured with valid destinations and accessible icons
@@ -72,7 +89,7 @@ test.describe('PWA & Offline Capability', () => {
     );
     await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute(
       'href',
-      './apple-touch-icon.png',
+      './apple-touch-icon.webp',
     );
   });
 

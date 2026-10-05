@@ -27,6 +27,22 @@
       "id": "./"
     }
   ],
+  "screenshots": [
+    {
+      "src": "./screenshot-desktop.webp",
+      "sizes": "1280x800",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "CubeProgression Density Shift and KDE Probability Distribution Analysis"
+    },
+    {
+      "src": "./screenshot-mobile.webp",
+      "sizes": "390x844",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "CubeProgression Mobile Density Shift and Solve Window Comparison"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Solve Progression",
@@ -35,14 +51,9 @@
       "url": "./#progression-chart",
       "icons": [
         {
-          "src": "./favicon.svg",
-          "sizes": "any",
-          "type": "image/svg+xml"
-        },
-        {
-          "src": "./pwa-192x192.png",
+          "src": "./pwa-192x192.webp",
           "sizes": "192x192",
-          "type": "image/png"
+          "type": "image/webp"
         }
       ]
     },
@@ -53,14 +64,9 @@
       "url": "./#deferred-pb-progression",
       "icons": [
         {
-          "src": "./favicon.svg",
-          "sizes": "any",
-          "type": "image/svg+xml"
-        },
-        {
-          "src": "./pwa-192x192.png",
+          "src": "./pwa-192x192.webp",
           "sizes": "192x192",
-          "type": "image/png"
+          "type": "image/webp"
         }
       ]
     },
@@ -71,14 +77,9 @@
       "url": "./#deferred-density-shift",
       "icons": [
         {
-          "src": "./favicon.svg",
-          "sizes": "any",
-          "type": "image/svg+xml"
-        },
-        {
-          "src": "./pwa-192x192.png",
+          "src": "./pwa-192x192.webp",
           "sizes": "192x192",
-          "type": "image/png"
+          "type": "image/webp"
         }
       ]
     },
@@ -89,41 +90,30 @@
       "url": "./#deferred-solves-table",
       "icons": [
         {
-          "src": "./favicon.svg",
-          "sizes": "any",
-          "type": "image/svg+xml"
-        },
-        {
-          "src": "./pwa-192x192.png",
+          "src": "./pwa-192x192.webp",
           "sizes": "192x192",
-          "type": "image/png"
+          "type": "image/webp"
         }
       ]
     }
   ],
   "icons": [
     {
-      "src": "./favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "./pwa-192x192.png",
+      "src": "./pwa-192x192.webp",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/webp",
       "purpose": "any"
     },
     {
-      "src": "./pwa-512x512.png",
+      "src": "./pwa-512x512.webp",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/webp",
       "purpose": "any"
     },
     {
-      "src": "./pwa-maskable-512x512.png",
+      "src": "./pwa-maskable-512x512.webp",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/webp",
       "purpose": "maskable"
     }
   ]

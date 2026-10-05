@@ -24,7 +24,9 @@ export const PwaInstallBridge: React.FC<PwaInstallBridgeProps> = ({
   const defaultManifest = baseUrl.endsWith('/')
     ? `${baseUrl}manifest.webmanifest`
     : `${baseUrl}/manifest.webmanifest`;
-  const defaultIcon = baseUrl.endsWith('/') ? `${baseUrl}favicon.svg` : `${baseUrl}/favicon.svg`;
+  const defaultIcon = baseUrl.endsWith('/')
+    ? `${baseUrl}pwa-192x192.webp`
+    : `${baseUrl}/pwa-192x192.webp`;
 
   const finalManifest = manifestUrl ?? defaultManifest;
   const finalIcon = icon ?? defaultIcon;

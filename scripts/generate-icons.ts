@@ -1,4 +1,5 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { execSync } from 'node:child_process';
+import { readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { chromium } from '@playwright/test';
 
@@ -26,10 +27,10 @@ async function generateIcons() {
   const page = await browser.newPage();
 
   const iconSizes = [
-    { name: 'pwa-192x192.png', size: 192, svg: svgContent },
-    { name: 'pwa-512x512.png', size: 512, svg: svgContent },
-    { name: 'apple-touch-icon.png', size: 180, svg: svgContent },
-    { name: 'pwa-maskable-512x512.png', size: 512, svg: maskableSvg },
+    { name: 'pwa-192x192.webp', size: 192, svg: svgContent },
+    { name: 'pwa-512x512.webp', size: 512, svg: svgContent },
+    { name: 'apple-touch-icon.webp', size: 180, svg: svgContent },
+    { name: 'pwa-maskable-512x512.webp', size: 512, svg: maskableSvg },
   ];
 
   for (const { name, size, svg } of iconSizes) {
@@ -49,9 +50,13 @@ async function generateIcons() {
 
     await page.setViewportSize({ width: size, height: size });
     await page.setContent(html);
+    const tempPngPath = path.join(publicDir, `temp-${size}.png`);
+    const finalWebpPath = path.join(publicDir, name);
     const buffer = await page.screenshot({ omitBackground: true });
-    writeFileSync(path.join(publicDir, name), buffer);
-    console.log(`Generated public/${name} (${size}x${size})`);
+    writeFileSync(tempPngPath, buffer);
+    execSync(`cwebp -q 75 "${tempPngPath}" -o "${finalWebpPath}"`);
+    unlinkSync(tempPngPath);
+    console.log(`Generated public/${name} (${size}x${size}, webp q75)`);
   }
 
   await browser.close();

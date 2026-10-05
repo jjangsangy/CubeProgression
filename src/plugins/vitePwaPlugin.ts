@@ -20,11 +20,13 @@ export function vitePwaPlugin(): Plugin {
       const publicAssets = [
         'favicon.svg',
         'manifest.webmanifest',
-        'pwa-192x192.png',
-        'pwa-512x512.png',
-        'pwa-maskable-512x512.png',
-        'apple-touch-icon.png',
+        'pwa-192x192.webp',
+        'pwa-512x512.webp',
+        'pwa-maskable-512x512.webp',
+        'apple-touch-icon.webp',
         'instruction.webp',
+        'screenshot-desktop.webp',
+        'screenshot-mobile.webp',
       ];
 
       for (const asset of publicAssets) {
@@ -112,10 +114,21 @@ self.addEventListener('message', (event) => {
   }
 });
 
+self.addEventListener('unhandledrejection', (event) => {
+  event.preventDefault();
+});
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
   if (!request.url.startsWith('http')) return;
+
+  // Prevent Chrome error when cache mode is only-if-cached and mode is not same-origin
+  if (request.cache === 'only-if-cached' && request.mode !== 'same-origin') return;
+
+  const url = new URL(request.url);
+  // Only intercept same-origin requests; allow third-party / extensions to pass through
+  if (url.origin !== self.location.origin) return;
 
   // Navigation requests: Network-First with cached fallback
   if (request.mode === 'navigate') {
@@ -124,19 +137,33 @@ self.addEventListener('fetch', (event) => {
         try {
           const networkResponse = await fetch(request);
           if (networkResponse && networkResponse.ok) {
-            const cache = await caches.open(CACHE_NAME);
-            cache.put(request, networkResponse.clone());
+            try {
+              const cache = await caches.open(CACHE_NAME);
+              await cache.put(request, networkResponse.clone());
+            } catch {
+              // Ignore cache storage errors
+            }
             return networkResponse;
           }
-          throw new Error('Non-OK network navigation response');
         } catch {
+          // Network failed or offline - fall through to cached fallback
+        }
+
+        try {
           const indexFallback =
             (await caches.match(new URL('index.html', self.location.href).href)) ||
             (await caches.match(new URL('./', self.location.href).href)) ||
             (await caches.match(request));
           if (indexFallback) return indexFallback;
-          throw new Error('Offline fallback unavailable');
+        } catch {
+          // Ignore cache match error
         }
+
+        return new Response('Offline - application shell unavailable', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+        });
       })()
     );
     return;
@@ -145,21 +172,35 @@ self.addEventListener('fetch', (event) => {
   // Static assets: Cache-First with network fallback
   event.respondWith(
     (async () => {
-      const cached =
-        (await caches.match(request)) ||
-        (await caches.match(request.url)) ||
-        (await caches.match(new URL(request.url).pathname));
-      if (cached) return cached;
+      try {
+        const cached =
+          (await caches.match(request)) ||
+          (await caches.match(request.url)) ||
+          (await caches.match(url.pathname));
+        if (cached) return cached;
+      } catch {
+        // Ignore cache lookup error
+      }
 
       try {
         const networkResponse = await fetch(request);
         if (networkResponse && networkResponse.ok) {
-          const cache = await caches.open(CACHE_NAME);
-          cache.put(request, networkResponse.clone());
+          try {
+            const cache = await caches.open(CACHE_NAME);
+            await cache.put(request, networkResponse.clone());
+          } catch {
+            // Ignore cache storage error
+          }
         }
         return networkResponse;
       } catch {
-        return cached || Response.error();
+        try {
+          const fallback = await caches.match(request);
+          if (fallback) return fallback;
+        } catch {
+          // Ignore
+        }
+        return new Response('', { status: 408, statusText: 'Request Timed Out' });
       }
     })()
   );

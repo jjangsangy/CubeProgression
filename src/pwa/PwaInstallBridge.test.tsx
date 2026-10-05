@@ -24,7 +24,7 @@ describe('PwaInstallBridge component', () => {
     expect(el?.getAttribute('manual-how-to')).toBe('true');
     expect(el?.name || el?.getAttribute('name')).toBe('CubeProgression');
     expect(el?.getAttribute('manifest-url')).toContain('manifest.webmanifest');
-    expect(el?.icon || el?.getAttribute('icon')).toContain('favicon.svg');
+    expect(el?.icon || el?.getAttribute('icon')).toContain('pwa-192x192.webp');
   });
 
   it('accepts custom manifestUrl, icon, name, and description props', () => {
