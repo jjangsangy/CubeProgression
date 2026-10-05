@@ -422,29 +422,24 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
           id="storage-status"
           className="flex flex-row items-center justify-between gap-2 rounded-xl border border-stone-800 bg-stone-950/80 px-3 py-2 sm:px-4 sm:py-2.5 text-xs text-stone-300"
         >
-          <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
             <span
               className="h-2 w-2 shrink-0 animate-pulse rounded-full"
               style={{ backgroundColor: colors.accent }}
             />
             <Database className="h-3.5 w-3.5 shrink-0" style={{ color: colors.accent }} />
-            <span className="shrink-0 font-semibold text-stone-200">
-              <span className="hidden sm:inline">Persistent Storage Active</span>
-              <span className="sm:hidden">Storage Active</span>
-            </span>
+            <span className="shrink-0 font-semibold text-stone-200">Storage</span>
             {fileName && (
               <span
                 id="storage-filename"
-                className="flex items-center gap-1 rounded-md border border-stone-700/60 bg-stone-800/80 p-1 sm:px-2 sm:py-0.5 font-mono text-[11px] text-stone-300 min-w-0 shrink-0"
+                className="flex items-center gap-1 rounded-md border border-stone-700/60 bg-stone-800/80 p-1 sm:px-2 sm:py-0.5 font-mono text-[11px] text-stone-300 min-w-0 overflow-hidden shrink max-w-[130px] sm:max-w-[240px] md:max-w-[340px] lg:max-w-[460px]"
                 title={fileName}
               >
                 <FileText
                   className="h-3.5 w-3.5 sm:h-3 sm:w-3 shrink-0 text-amber-400"
                   style={{ color: colors.accent }}
                 />
-                <span className="sr-only sm:not-sr-only sm:inline max-w-[150px] md:max-w-[220px] lg:max-w-[280px] truncate">
-                  {fileName}
-                </span>
+                <span className="sr-only sm:not-sr-only sm:inline-block truncate">{fileName}</span>
               </span>
             )}
             {storageUsageMB !== undefined && storageUsageMB > 0 && (
@@ -459,12 +454,12 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
               id="clear-saved-storage"
               type="button"
               onClick={onClearStorage}
-              aria-label="Clear Saved Storage"
+              aria-label="Clear Saved"
               className="flex shrink-0 cursor-pointer items-center gap-1 font-medium text-stone-400 transition-colors hover:text-rose-400 hover:underline whitespace-nowrap text-xs"
               title="Clear saved data from browser storage"
             >
               <Trash2 className="h-3.5 w-3.5 sm:h-3 sm:w-3 shrink-0" />
-              <span className="hidden sm:inline">Clear Saved Storage</span>
+              <span className="hidden sm:inline">Clear Saved</span>
               <span className="sm:hidden">Clear</span>
             </button>
           )}

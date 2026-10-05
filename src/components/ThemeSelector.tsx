@@ -105,14 +105,14 @@ export const ThemeSelector: FC = () => {
         aria-haspopup="listbox"
         aria-label="Select theme"
         title="Select color theme"
-        className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800/90 px-2.5 py-1.5 sm:px-3 text-xs font-medium text-stone-200 transition-all hover:border-amber-500/40 hover:bg-stone-700/80 active:scale-95 shadow-sm shrink-0"
+        className="inline-flex cursor-pointer items-center justify-center gap-1 sm:gap-1.5 rounded-xl border border-stone-700/60 bg-stone-800/90 px-2 py-1.5 sm:px-3 text-xs font-medium text-stone-200 transition-all hover:border-amber-500/40 hover:bg-stone-700/80 active:scale-95 shadow-sm shrink-0"
       >
         <Palette className="h-3.5 w-3.5 shrink-0 text-amber-400" />
         <span
           className="h-2 w-2 rounded-full shrink-0 shadow-sm"
           style={{ backgroundColor: colors.accent }}
         />
-        <span className="hidden sm:inline max-w-[110px] truncate text-stone-300 font-medium">
+        <span className="hidden md:inline max-w-[110px] truncate text-stone-300 font-medium">
           {currentTheme.name}
         </span>
       </button>
