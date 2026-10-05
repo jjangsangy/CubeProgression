@@ -4,6 +4,7 @@ import { usePwaInstall } from './usePwaInstall';
 
 describe('usePwaInstall hook', () => {
   afterEach(() => {
+    localStorage.clear();
     vi.restoreAllMocks();
   });
 
@@ -216,5 +217,132 @@ describe('usePwaInstall hook', () => {
     } finally {
       mockPwaEl.remove();
     }
+  });
+
+  it('detects already installed state from localStorage and suppresses installation', async () => {
+    localStorage.setItem('cubeprogression_pwa_installed', 'true');
+    const mockPwaEl = document.createElement('pwa-install');
+    const showDialogMock = vi.fn();
+    Object.assign(mockPwaEl, { showDialog: showDialogMock });
+    document.body.appendChild(mockPwaEl);
+
+    try {
+      const { result } = renderHook(() => usePwaInstall());
+      expect(result.current.isInstalled).toBe(true);
+      expect(result.current.canInstall).toBe(false);
+
+      let installed = true;
+      await act(async () => {
+        installed = await result.current.promptInstall();
+      });
+
+      expect(installed).toBe(false);
+      expect(showDialogMock).not.toHaveBeenCalled();
+    } finally {
+      mockPwaEl.remove();
+    }
+  });
+
+  it('detects already installed state from navigator.getInstalledRelatedApps', async () => {
+    const originalNavigator = window.navigator;
+    const getInstalledRelatedAppsMock = vi
+      .fn()
+      .mockResolvedValue([{ platform: 'webapp', id: './' }]);
+    Object.defineProperty(window, 'navigator', {
+      value: {
+        ...originalNavigator,
+        getInstalledRelatedApps: getInstalledRelatedAppsMock,
+      },
+      configurable: true,
+      writable: true,
+    });
+
+    const mockPwaEl = document.createElement('pwa-install');
+    const showDialogMock = vi.fn();
+    Object.assign(mockPwaEl, { showDialog: showDialogMock });
+    document.body.appendChild(mockPwaEl);
+
+    try {
+      const { result } = renderHook(() => usePwaInstall());
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(result.current.isInstalled).toBe(true);
+      expect(result.current.canInstall).toBe(false);
+
+      let installed = true;
+      await act(async () => {
+        installed = await result.current.promptInstall();
+      });
+
+      expect(installed).toBe(false);
+      expect(showDialogMock).not.toHaveBeenCalled();
+    } finally {
+      mockPwaEl.remove();
+      Object.defineProperty(window, 'navigator', {
+        value: originalNavigator,
+        configurable: true,
+        writable: true,
+      });
+    }
+  });
+
+  it('does not trigger pwa-install dialog on non-bridge platforms when deferredPrompt is null', async () => {
+    const originalUserAgent = navigator.userAgent;
+    Object.defineProperty(navigator, 'userAgent', {
+      value:
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      configurable: true,
+    });
+
+    const mockPwaEl = document.createElement('pwa-install');
+    const showDialogMock = vi.fn();
+    const installMock = vi.fn();
+    Object.assign(mockPwaEl, {
+      showDialog: showDialogMock,
+      install: installMock,
+    });
+    document.body.appendChild(mockPwaEl);
+
+    try {
+      const { result } = renderHook(() => usePwaInstall());
+      expect(result.current.canInstall).toBe(false);
+
+      let installed = true;
+      await act(async () => {
+        installed = await result.current.promptInstall();
+      });
+
+      expect(installed).toBe(false);
+      expect(showDialogMock).not.toHaveBeenCalled();
+      expect(installMock).not.toHaveBeenCalled();
+    } finally {
+      mockPwaEl.remove();
+      Object.defineProperty(navigator, 'userAgent', {
+        value: originalUserAgent,
+        configurable: true,
+      });
+    }
+  });
+
+  it('navigates to registered protocol URL without opening a new tab when openInApp is invoked', () => {
+    const windowOpenSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+    let clickedHref = '';
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      clickedHref = this.href;
+    });
+
+    const { result } = renderHook(() => usePwaInstall());
+
+    act(() => {
+      result.current.openInApp();
+    });
+
+    expect(windowOpenSpy).not.toHaveBeenCalled();
+    expect(clickSpy).toHaveBeenCalled();
+    expect(clickedHref).toContain('web+cubeprogression://open?url=');
   });
 });

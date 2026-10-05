@@ -45,6 +45,7 @@ export const PwaInstallBridge: React.FC<PwaInstallBridgeProps> = ({
       manual-apple="true"
       manual-chrome="true"
       manual-how-to="true"
+      disable-chrome="true"
       manifest-url={finalManifest}
       name={name}
       description={description}

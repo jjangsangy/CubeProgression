@@ -1,4 +1,4 @@
-# 🧩 Speedcubing Progression Analyzer
+# 🧩 CubeProgression
 
 [![Test Runner](https://github.com/jjangsangy/CubeProgression/actions/workflows/test.yml/badge.svg)](https://github.com/jjangsangy/CubeProgression/actions/workflows/test.yml)
 [![Deploy to GitHub Pages](https://github.com/jjangsangy/CubeProgression/actions/workflows/deploy.yml/badge.svg)](https://github.com/jjangsangy/CubeProgression/actions/workflows/deploy.yml)
@@ -139,7 +139,7 @@ bun run preview
 1. Open [csTimer.net](https://cstimer.net/).
 2. Click on **Option** / **Export** in the top navigation bar.
 3. Select **Export to file**.
-4. Upload the generated `.txt` or `.json` file into the Speedcubing Progression Analyzer.
+4. Upload the generated `.txt` or `.json` file into CubeProgression.
 
 ---
 

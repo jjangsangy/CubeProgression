@@ -1,8 +1,8 @@
 # CubeProgression — Agent Documentation
 
-This directory is the reference documentation for **CubeProgression** (also titled
-*Speedcubing Progression Analyzer*), a client-only React + TypeScript single-page app that
-turns [csTimer](https://cstimer.net/) solve exports into progression and statistics dashboards.
+This directory is the reference documentation for **CubeProgression**, a client-only
+React + TypeScript single-page app that turns [csTimer](https://cstimer.net/) solve
+exports into progression and statistics dashboards.
 
 If you are an AI agent working in this repo, start at the root [`AGENTS.md`](../AGENTS.md)
 entrypoint, then drill into the pages below.

@@ -48,6 +48,47 @@ export default function App() {
     });
   }, []);
 
+  // Handle application shortcut navigation targets (e.g. #progression-chart, #deferred-pb-progression)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleHashNavigation = () => {
+      const hash = window.location.hash;
+      if (!hash) return;
+      try {
+        const target = document.querySelector(hash);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      } catch {
+        // Ignore malformed hash selectors
+      }
+    };
+
+    if (!isLoading && activeSession) {
+      const timer = setTimeout(handleHashNavigation, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, activeSession]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (!hash) return;
+      try {
+        const target = document.querySelector(hash);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      } catch {
+        // Ignore malformed hash selectors
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
   return (
     <ThemeProvider>
       <div className="flex min-h-screen flex-col bg-stone-950 font-sans text-stone-100 antialiased selection:bg-amber-500/30 selection:text-amber-200">

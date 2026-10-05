@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <title>CubeProgression - Speedcubing Progression Analyzer</title>
+  <title>CubeProgression</title>
   <defs>
     <!-- Background: Obsidian / Dark Slate matching #0c0a09 app theme -->
     <linearGradient id="cp-bg" x1="0%" y1="0%" x2="100%" y2="100%">

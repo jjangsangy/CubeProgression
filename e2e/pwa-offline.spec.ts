@@ -18,7 +18,7 @@ test.describe('PWA & Offline Capability', () => {
     expect(response.status()).toBe(200);
 
     const manifest = await response.json();
-    expect(manifest.name).toBe('Speedcubing Progression Analyzer');
+    expect(manifest.name).toBe('CubeProgression');
     expect(manifest.short_name).toBe('CubeProgression');
     expect(manifest.display).toBe('standalone');
     expect(manifest.start_url).toBe('./');
@@ -38,6 +38,21 @@ test.describe('PWA & Offline Capability', () => {
     for (const src of iconSrcs) {
       const iconRes = await request.get(src);
       expect(iconRes.status()).toBe(200);
+    }
+
+    // Verify application shortcuts are configured with valid destinations and accessible icons
+    expect(Array.isArray(manifest.shortcuts)).toBe(true);
+    expect(manifest.shortcuts.length).toBeGreaterThanOrEqual(4);
+
+    for (const shortcut of manifest.shortcuts) {
+      expect(shortcut.name).toBeTruthy();
+      expect(shortcut.url).toBeTruthy();
+      if (Array.isArray(shortcut.icons)) {
+        for (const icon of shortcut.icons) {
+          const iconRes = await request.get(icon.src);
+          expect(iconRes.status()).toBe(200);
+        }
+      }
     }
   });
 
@@ -119,9 +134,22 @@ test.describe('PWA & Offline Capability', () => {
     await expect(page.locator('#navbar-offline-status')).not.toBeVisible();
   });
 
-  test('bridges PWA install dialog when install button is clicked in environments without beforeinstallprompt', async ({
+  test('bridges PWA install dialog when install button is clicked in iOS and Firefox environments', async ({
     page,
   }) => {
+    // Emulate iOS Safari environment
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'userAgent', {
+        value:
+          'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+        configurable: true,
+      });
+      Object.defineProperty(navigator, 'maxTouchPoints', {
+        value: 5,
+        configurable: true,
+      });
+    });
+
     await page.goto('/');
     await expect(page.locator('#session-selector')).toBeVisible({ timeout: 15000 });
 

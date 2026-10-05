@@ -56,6 +56,31 @@ describe('Navbar component', () => {
     expect(container.querySelector('#navbar-install')).toBeNull();
   });
 
+  it('renders Open in App button when app is already installed and invokes openInApp on click without opening new tab', () => {
+    localStorage.setItem('cubeprogression_pwa_installed', 'true');
+    const windowOpenSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+    let clickedHref = '';
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      clickedHref = this.href;
+    });
+
+    try {
+      const { container } = render(<Navbar />);
+      const appBtn = container.querySelector('#navbar-install');
+      expect(appBtn).toBeInTheDocument();
+      expect(appBtn).toHaveAttribute('aria-label', 'Open in App');
+
+      if (appBtn) fireEvent.click(appBtn);
+      expect(windowOpenSpy).not.toHaveBeenCalled();
+      expect(clickSpy).toHaveBeenCalled();
+      expect(clickedHref).toContain('web+cubeprogression://open?url=');
+    } finally {
+      localStorage.clear();
+    }
+  });
+
   it('renders Offline mode pill with status role when isOnline is false', () => {
     const { container } = render(<Navbar isOnline={false} />);
 

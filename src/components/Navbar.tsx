@@ -1,4 +1,4 @@
-import { Download, HelpCircle, WifiOff } from 'lucide-react';
+import { Download, ExternalLink, HelpCircle, WifiOff } from 'lucide-react';
 import type React from 'react';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { usePwaInstall } from '../hooks/usePwaInstall';
@@ -25,8 +25,17 @@ export const Navbar: React.FC<NavbarProps> = ({
   const pwaInstall = usePwaInstall();
 
   const isOnline = propIsOnline ?? hookOnlineStatus;
-  const canInstall = propCanInstall !== undefined ? propCanInstall : !pwaInstall.isInstalled;
-  const handleInstall = onInstall ?? pwaInstall.promptInstall;
+  const isInstalled = pwaInstall.isInstalled;
+  const isStandalone = pwaInstall.isStandalone;
+
+  // The button should be shown when not running inside the standalone app window.
+  // When installed, it acts as "Open in App"; when not installed, it acts as "Install App".
+  const showAppButton = propCanInstall !== undefined ? propCanInstall : !isStandalone;
+  const handleAction = onInstall ?? (isInstalled ? pwaInstall.openInApp : pwaInstall.promptInstall);
+  const actionLabel = isInstalled ? 'Open in App' : 'Install App';
+  const actionTitle = isInstalled
+    ? 'Open CubeProgression in the installed app'
+    : 'Install CubeProgression as a Progressive Web App';
   const { colors } = useTheme();
 
   return (
@@ -86,25 +95,32 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           )}
 
-          {canInstall && (
+          {showAppButton && (
             <button
               id="navbar-install"
               type="button"
-              onClick={handleInstall}
-              aria-label="Install App"
+              onClick={handleAction}
+              aria-label={actionLabel}
               className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-2 lg:px-3 lg:py-1.5 text-xs font-medium whitespace-nowrap text-amber-300 shadow-sm transition-all hover:bg-amber-500/20 active:scale-95 shrink-0"
               style={{
                 borderColor: `${colors.accent}40`,
                 backgroundColor: `${colors.accent}15`,
                 color: colors.accentText,
               }}
-              title="Install CubeProgression as a Progressive Web App"
+              title={actionTitle}
             >
-              <Download
-                className="h-3.5 w-3.5 shrink-0 text-amber-400"
-                style={{ color: colors.accent }}
-              />
-              <span className="hidden sm:inline">Install App</span>
+              {isInstalled ? (
+                <ExternalLink
+                  className="h-3.5 w-3.5 shrink-0 text-amber-400"
+                  style={{ color: colors.accent }}
+                />
+              ) : (
+                <Download
+                  className="h-3.5 w-3.5 shrink-0 text-amber-400"
+                  style={{ color: colors.accent }}
+                />
+              )}
+              <span className="hidden sm:inline">{actionLabel}</span>
             </button>
           )}
 
