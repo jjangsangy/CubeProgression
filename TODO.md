@@ -8,7 +8,7 @@
   - [ ] feat(theme): User Defined Themes
 - [ ] feat(ui): Show dates in session
   - [ ] feat(ui): Plots should be sorted by date
-- [ ] fix(plot): Make ui changes smoother for kde plot
+- [x] fix(plot): Make ui changes smoother for kde plot
 - [ ] feat(selector): Range selector should use the same scrober as KDE
 - [ ] feat(ui): Click to browse should be a button and more prominent
 - [ ] refactor(component): FilePicker is too large

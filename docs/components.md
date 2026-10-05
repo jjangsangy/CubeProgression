@@ -143,7 +143,7 @@ A **hand-authored SVG** box-and-whisker plot (zero Recharts overhead). Props: `p
 
 Full-width Recharts `AreaChart` of KDE curves with an interactive solve timeline track and dual scrubbers. Props: `solves`, `groupingPeriod?`, `periodGroups?`, `customBatchSize?`, `title?`.
 
-- Disables non-composited SVG animations (`isAnimationActive={false}`) on baseline and recent areas.
+- Features debounced smooth curve animations (`isAnimationActive={true}`, `animationDuration={180}`, `animationEasing="ease-out"`); the timeline scrubbers update with zero lag at 60fps during dragging, while the KDE plot updates and smoothly morphs when dragging pauses (100ms delay), on drag release, on track clicks, and on keyboard arrow steps. This prevents CPU animation contention and rapid-fire animation restarts during active movement.
 - Uses `calculateKDEFromSamples(sample1Solves, sample2Solves, 120, globalDomain)` to compute probability density curves between any two sampled subsets over an anchored session-wide domain to prevent X-axis jitter.
 - Normalizes Y-axis ceiling dynamically (`getNormalizedYCeiling`) so peaks comfortably fill ~75-80% of chart height regardless of sample size or clustering, preventing peaks from being too small (flat) or too large (clipping).
 - Plots `baselineDensity` (red/rose) and `recentDensity` (green/emerald) areas.

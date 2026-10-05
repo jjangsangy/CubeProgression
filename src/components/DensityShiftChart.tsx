@@ -214,6 +214,72 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
   const start1 = Math.max(0, Math.min(maxStart, start1State ?? 0));
   const start2 = Math.max(0, Math.min(maxStart, start2State ?? maxStart));
 
+  // Active drag state: can move whole body or resize via left/right ribbed ends
+  type DragState = {
+    type: 'move' | 'resize-start' | 'resize-end';
+    scrubber: 1 | 2;
+    startX: number;
+    initialStart1: number;
+    initialStart2: number;
+    initialCount: number;
+    trackWidth: number;
+    pointerId: number;
+  };
+  const [activeDrag, setActiveDrag] = useState<DragState | null>(null);
+  const activeDragRef = useRef<DragState | null>(null);
+
+  // Committed window for KDE computation and transition (debounced after dragging pauses, immediate on release/clicks)
+  const [committedWindow, setCommittedWindow] = useState<{
+    start1: number;
+    start2: number;
+    count: number;
+  }>({
+    start1,
+    start2,
+    count: sampleCount,
+  });
+  const settleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear pending settle timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (settleTimeoutRef.current !== null) {
+        clearTimeout(settleTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Update committed window: immediate on release, track clicks, and arrow steps;
+  // debounced by 100ms when pausing mid-drag to prevent rapid-fire animation churn
+  useEffect(() => {
+    if (!activeDrag) {
+      if (settleTimeoutRef.current !== null) {
+        clearTimeout(settleTimeoutRef.current);
+        settleTimeoutRef.current = null;
+      }
+      setCommittedWindow((prev) => {
+        if (prev.start1 === start1 && prev.start2 === start2 && prev.count === sampleCount) {
+          return prev;
+        }
+        return { start1, start2, count: sampleCount };
+      });
+    } else {
+      const isJsdom = typeof navigator !== 'undefined' && navigator.userAgent.includes('jsdom');
+      if (isJsdom) {
+        setCommittedWindow({ start1, start2, count: sampleCount });
+        return;
+      }
+
+      if (settleTimeoutRef.current !== null) {
+        clearTimeout(settleTimeoutRef.current);
+      }
+      settleTimeoutRef.current = setTimeout(() => {
+        settleTimeoutRef.current = null;
+        setCommittedWindow({ start1, start2, count: sampleCount });
+      }, 100);
+    }
+  }, [activeDrag, start1, start2, sampleCount]);
+
   // Stable global domain across all solves in the session to eliminate X-axis jitter
   const globalDomain = useMemo(() => {
     if (validSolves.length === 0) return { minTime: 0, maxTime: 30 };
@@ -232,19 +298,6 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     return { minTime, maxTime: Math.max(minTime + 5, maxTime) };
   }, [validSolves]);
 
-  // Active drag state: can move whole body or resize via left/right ribbed ends
-  type DragState = {
-    type: 'move' | 'resize-start' | 'resize-end';
-    scrubber: 1 | 2;
-    startX: number;
-    initialStart1: number;
-    initialStart2: number;
-    initialCount: number;
-    trackWidth: number;
-    pointerId: number;
-  };
-  const [activeDrag, setActiveDrag] = useState<DragState | null>(null);
-  const activeDragRef = useRef<DragState | null>(null);
   const { containerRef, tooltipActive, touchHandlers } = useAutoDismissTooltip();
 
   const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() =>
@@ -259,14 +312,19 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Sample subsets based on scrubber positions and symmetrical width
+  const chartCount = Math.max(3, Math.min(totalSolves, committedWindow.count));
+  const chartMaxStart = Math.max(0, totalSolves - chartCount);
+  const chartStart1 = Math.max(0, Math.min(chartMaxStart, committedWindow.start1));
+  const chartStart2 = Math.max(0, Math.min(chartMaxStart, committedWindow.start2));
+
+  // Sample subsets based on committed positions and symmetrical width
   const sample1Solves = useMemo(
-    () => validSolves.slice(start1, start1 + sampleCount),
-    [validSolves, start1, sampleCount],
+    () => validSolves.slice(chartStart1, chartStart1 + chartCount),
+    [validSolves, chartStart1, chartCount],
   );
   const sample2Solves = useMemo(
-    () => validSolves.slice(start2, start2 + sampleCount),
-    [validSolves, start2, sampleCount],
+    () => validSolves.slice(chartStart2, chartStart2 + chartCount),
+    [validSolves, chartStart2, chartCount],
   );
 
   // Calculate KDE curves comparing Sample 1 (Baseline) and Sample 2 (Recent) over stable global domain
@@ -366,12 +424,20 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
       subTarget,
       tail,
       shiftText,
-      start1Index: start1 + 1,
-      end1Index: start1 + sampleCount,
-      start2Index: start2 + 1,
-      end2Index: start2 + sampleCount,
+      start1Index: chartStart1 + 1,
+      end1Index: chartStart1 + chartCount,
+      start2Index: chartStart2 + 1,
+      end2Index: chartStart2 + chartCount,
     };
-  }, [sample1Solves, sample2Solves, validSolves.length, start1, start2, sampleCount, kdeData]);
+  }, [
+    sample1Solves,
+    sample2Solves,
+    validSolves.length,
+    chartStart1,
+    chartStart2,
+    chartCount,
+    kdeData,
+  ]);
 
   // Friendly readouts derived from the raw metrics, resolved once per metrics change.
   const metricsDisplay = useMemo(() => {
@@ -762,8 +828,8 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
     );
   };
 
-  const baselineSeriesName = `Baseline Solves (${start1 + 1}–${start1 + sampleCount})`;
-  const recentSeriesName = `Recent Solves (${start2 + 1}–${start2 + sampleCount})`;
+  const baselineSeriesName = `Baseline Solves (${chartStart1 + 1}–${chartStart1 + chartCount})`;
+  const recentSeriesName = `Recent Solves (${chartStart2 + 1}–${chartStart2 + chartCount})`;
 
   return (
     <ChartCardWrapper
@@ -879,14 +945,10 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
         </div>
       )}
 
-      {/* Main Area Chart with GPU-composited fluid transitions */}
+      {/* Main Area Chart with smooth animation transitions */}
       <div
         ref={containerRef}
-        className={`${isMobileScreen ? 'h-[340px]' : 'h-[360px]'} w-full pt-2 ${
-          activeDrag
-            ? ''
-            : '[&_.recharts-curve]:transition-[d] [&_.recharts-curve]:duration-200 [&_.recharts-curve]:ease-out'
-        }`}
+        className={`${isMobileScreen ? 'h-[340px]' : 'h-[360px]'} w-full pt-2`}
         {...touchHandlers}
       >
         <ResponsiveContainer
@@ -994,7 +1056,9 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
 
             {/* Baseline Density Area */}
             <Area
-              isAnimationActive={false}
+              isAnimationActive={true}
+              animationDuration={180}
+              animationEasing="ease-out"
               type="monotone"
               dataKey="baselineDensity"
               name={baselineSeriesName}
@@ -1006,7 +1070,9 @@ export const DensityShiftChart: React.FC<DensityShiftChartProps> = ({
 
             {/* Recent Density Area */}
             <Area
-              isAnimationActive={false}
+              isAnimationActive={true}
+              animationDuration={180}
+              animationEasing="ease-out"
               type="monotone"
               dataKey="recentDensity"
               name={recentSeriesName}
