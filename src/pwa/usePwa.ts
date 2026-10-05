@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { registerPwa, skipWaitingAndReload } from '../utils/pwaRegister';
-import type { PwaConnectivityState, PwaInstallState, PwaLifecycle, PwaUpdateState } from './types';
+import type {
+  PwaConnectivityState,
+  PwaInstallAction,
+  PwaInstallState,
+  PwaLifecycle,
+  PwaUpdateState,
+} from './types';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -314,6 +320,20 @@ export function usePwa(): PwaLifecycle {
         typeof document !== 'undefined' &&
         Boolean(document.querySelector('pwa-install'))));
 
+  const canShowButton = !isStandalone && !isFirefox;
+  const actionType: PwaInstallAction = isInstalled ? 'open' : 'install';
+  const actionLabel = isInstalled ? 'Open in App' : 'Install App';
+  const actionTitle = isInstalled
+    ? 'Open CubeProgression in the installed app'
+    : 'Install CubeProgression as a Progressive Web App';
+  const triggerAction = useCallback(async (): Promise<boolean> => {
+    if (isInstalled) {
+      openInApp();
+      return true;
+    }
+    return promptInstall();
+  }, [isInstalled, openInApp, promptInstall]);
+
   const connectivity: PwaConnectivityState = {
     isOnline,
   };
@@ -322,6 +342,11 @@ export function usePwa(): PwaLifecycle {
     canInstall,
     isInstalled,
     isStandalone,
+    canShowButton,
+    actionType,
+    actionLabel,
+    actionTitle,
+    triggerAction,
     promptInstall,
     openInApp,
   };

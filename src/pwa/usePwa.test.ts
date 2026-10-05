@@ -25,6 +25,13 @@ describe('usePwa hook', () => {
     expect(result.current.install.canInstall).toBe(false);
     expect(result.current.install.isInstalled).toBe(false);
     expect(result.current.install.isStandalone).toBe(false);
+    expect(result.current.install.canShowButton).toBe(true);
+    expect(result.current.install.actionType).toBe('install');
+    expect(result.current.install.actionLabel).toBe('Install App');
+    expect(result.current.install.actionTitle).toBe(
+      'Install CubeProgression as a Progressive Web App',
+    );
+    expect(typeof result.current.install.triggerAction).toBe('function');
     expect(typeof result.current.install.promptInstall).toBe('function');
     expect(typeof result.current.install.openInApp).toBe('function');
 

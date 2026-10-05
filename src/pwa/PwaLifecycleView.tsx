@@ -1,6 +1,6 @@
 import { RefreshCw, X } from 'lucide-react';
 import type React from 'react';
-import { PwaInstallBridge } from '../components/PwaInstallBridge';
+import { PwaInstallBridge } from './PwaInstallBridge';
 import type { PwaUpdateState } from './types';
 import { usePwa } from './usePwa';
 

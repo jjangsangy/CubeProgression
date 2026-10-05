@@ -49,7 +49,7 @@ Top header. Props: `canInstall`, `onInstall`, `isOnline`, `onOpenInstructions`.
 
 Encapsulated presentation module combining the cross-browser install bridge adapter (`PwaInstallBridge`, wrapping `@khmyznikov/pwa-install`) and the Service Worker update toast. Automatically observes `usePwa().update` to render the update notification with animated reload and dismiss actions when an update is waiting.
 
-## `PwaInstallBridge` (`PwaInstallBridge.tsx`)
+## `PwaInstallBridge` (`src/pwa/PwaInstallBridge.tsx`)
 
 Bridge component wrapping `@khmyznikov/pwa-install` to provide PWA install instructions and dialogs across browsers that lack native `beforeinstallprompt` (iOS Safari, macOS Safari, Firefox, in-app browsers). Configured with `manual-apple`, `manual-chrome`, and `manual-how-to` so prompts only surface on user intent, themed with active color palette `--tint-color`.
 
